@@ -1,0 +1,553 @@
+\section{Graphcode}\label{graphcode}
+\psection{Graph}
+
+A {\em Graph}\index{Graph} is a container of references to
+\hyperref{{\em objects}}{ (\S}{)}{object}\index{object}
+(called \hyperref{{\em objrefs}}{
+    (\S}{)}{objref})\index{objref} that may be linked to an arbitrary
+  number of other objects. The objects themselves may be located on
+  other processors, ie the Graph may be distributed. Objects are
+  polymorphic --- the only properties Graph needs to know is how
+  create, copy, and serialise them, as well as what other objects they
+  are linked to.
+
+Because the objects are polymorphic, it is possible to create
+hypergraphs. Simply have two types of object in the graph --- {\em
+  pins} and {\em wires}, say. A pin may be connected to multiple wire
+objects, just as wires may be connected to multiple pins.
+
+The objrefs themselves are stored in a maplike object called an
+\hyperref{{\em omap}}{ (\S}{)}{omap}, which is replicated
+across all processors. 
+
+A short synopsis of Graph is as follows:
+\begin{verbatim}
+class Graph: public Ptrlist
+{
+public:
+  omap objects;
+
+  Graph& operator=(const Graph&);
+  Graph(Graph&);
+  Graph();
+
+  /* object management */
+  objref& AddObject(object* o, GraphID_t id, bool managed=false); 
+  template <class T>
+  objref& AddObject(GraphID_t id); 
+  template <class T>
+  objref& AddObject(const T& master_copy, GraphID_t id); 
+
+  /* these methods must be called on all processors simultaneously */
+  void Prepare_Neighbours(bool cache_requests=false);
+  void Partition_Objects();
+  void Distribute_Objects();
+  void gather();
+
+  void rebuild_local_list();   
+  void clear_non_local()
+  void print(int proc) 
+};                 
+
+\end{verbatim}
+
+%  void DelObject(GraphID_t id);
+
+\begin{description}
+\item[Ptrlist](see \S\ref{Ptrlist})\index{Ptrlist} is a list of
+  references to \hyperref{{\em objrefs}}{
+    (\S}{)}{objref})\index{objref}, pointing to objects stored locally
+  on the current processor.
+\item[AddObject]\index{AddObject} In the first form, add an already
+  created object to the Graph. In the second form create a new object
+  of type {\em T}, and add it to the Graph. {\em T} must be derived
+  from the abstract base class \verb+object+\index{object}. You must
+  explicitly supply the type of the object to be created as a template
+  argument:
+  \begin{verbatim}
+    g.AddObject<foo>(id);
+  \end{verbatim}
+  In the third form, create a new object, and initialise its data with
+  the contents of argument \verb+master_copy+.
+%\item[DelObject] removes an object from the Graph, destroying all
+%  links to that object.
+\item[Prepare\_Neighbours()]\index{Prepare\_Neighbours} For each
+  object on the local processor, ensure that all objects connected to
+  it are brought up to date, by obtaining data from remote processors
+  if necessary. If the network structure has not changed since the
+  last call to this method, set the flag
+  \verb+cache_requests+\index{cache\_requests} to \verb+true+, which
+  substantially reduces the amount of interprocessor communication
+  required.
+\item[Partition\_Objects()] \index{Partition\_Objects}Call the ParMETIS
+  partitioner to redistribute the graph in an optimal way over the
+  processors. ParMETIS executes in parallel, and requires that the
+  objects be distributed before this call. One way of achieving this is
+  to make a simple assignment of objects to processors (by setting the
+  \verb+proc+ member of each objref), then call \verb+Distribute_Objects()+.
+\item[Distribute\_Objects()]\index{Distribute\_Objects} Broadcast graph data
+  from processor 0, and call \\\verb+rebuild_local_list()+ on each
+  processor.
+\item[gather()]\index{gather} Bring the entire graph on processor 0 up
+  to date, copying information from remote processors as necessary. A
+  \verb+gather()+, followed by \verb+Distribute_Pins()+ brings all
+  processors' graphs up-to-date. This is, naturally, an expensive
+  operation, and should be done for startup or checkpointing purposes.
+\item[rebuild\_local\_list()]\index{rebuild\_local\_list} Reconstruct
+  the list of objrefs local to the current processor, according to the
+  \verb+proc+\index{proc} member of the objrefs.
+\item[clear\_non\_local()]\index{clear\_non\_local()} Nullify all
+  objrefs that don't belong to the current processor. This can be used
+  to save memory usage.
+\end{description}
+
+\psubsection{Basic usage of Graph}
+
+{\em Graph} is designed to be used in a SPMD parallel environment,
+using MPI to handle messages between processors. A copy of the Graph
+object is maintained on each process. Each process has a copy of the
+objref database (of type \verb+omap+), called
+\verb+GRAPHCODE_NS::objectMap+. The \verb+Graph::objects+ reference
+refers to this database. However the payload pointer of each objref
+will tend to only point to an object if the object is located in the
+current processes address space, or a cached copy of the remote object
+is needed for some reason. Otherwise it may be set to NULL to save
+space.
+
+To call a method \verb+foo()+ on all objects of a Graph \verb+g+ (in
+parallel), execute the following code:
+\begin{verbatim}
+for (Graph::iterator i=g.begin(); i!=g.end(); i++)
+   (*i)->foo();
+\end{verbatim}
+
+If the method \verb+foo+ needs to know the values of neighbouring
+nodes, then you may call \verb+Graph::Prepare_Neighbours()+, which
+ensures that a cached copy of any remotely located node linked to a
+local nodes is retrieved from the remote node. Thus arbitrary
+communication patterns can be expressed simply by the form of the
+network structure of the Graph.
+
+\psection{Objects}\index{object}\label{object}
+
+\verb+object+ is an abstract base class, from which all objects stored
+in the graph must be derived. A synopsis of the ABC is:
+\begin{verbatim}
+  class object: public Ptrlist
+  {
+  public:
+    /* serialisation methods */
+    virtual void lpack(pack_t *buf)=0; 
+    virtual void lunpack(pack_t *buf)=0;
+    /* virtual "constructors" */
+    virtual object* lnew() const=0;  
+    virtual object* lcopy() const=0;  
+    virtual ~object() {}
+    virtual int type() const=0;     /* return index into archetype table */
+    /* partition weightings - redefine in derived type if needed */
+    virtual idxtype weight() const {return 1;}
+    virtual idxtype edgeweight(const objref& x) const {return 1;}
+  };
+\end{verbatim}
+
+\psubsection{Serialisation methods}
+
+The first two virtual methods allow Graphcode to access Classdesc
+generated serialisation routines. Assuming you have declared a class
+foo as follows:\index{lpack}\index{lunpack}
+
+\begin{verbatim}
+class foo: public object
+{
+  ...
+  virtual void lpack(pack_t *buf);
+  virtual void lunpack(pack_t *buf);
+}
+\end{verbatim}
+
+Then you may define the virtual functions as follows:
+\begin{verbatim}
+inline void pack(pack_t *,eco_string,foo&);
+inline void unpack(pack_t *,eco_string,foo&);
+inline void foo::lpack(pack_t *buf) {pack(buf,eco_string(),*this);}
+inline void foo::lunpack(pack_t *buf) {unpack(buf,eco_string(),*this);}
+\end{verbatim}
+
+The definitions for \verb+pack(,,foo&)+ and \verb+unpack(,,foo&)+ will
+then be created in the usual way by Classdesc.
+
+It is important that \verb+pack(,,foo&)+ and \verb+unpack(,,foo&)+ be explicitly
+declared before use, otherwise a default template function will be
+linked in which will not work as expected. See the note on using
+polymorphic objects under Classdesc.
+
+\psubsection{Virtual Constructors}
+
+Defining the virtual constructors for your objects type is also a
+simple matter. Unlike the case of the serialisation routines, they can
+even be done inline in the class definition:\index{lnew}\index{lcopy}
+\begin{verbatim}
+class foo: public object
+{
+ ...
+ virtual object *lnew() {return vnew(this);}
+ virtual object *lcopy() {return vcopy(this);}
+};
+\end{verbatim}
+
+\psubsection{Run Time Type Identification}
+
+To migrate an object from one thread to another, Graphcode needs to be
+able to create an object of the correct type in the destination
+address space. This is achieved by means of a {\em run time type
+  identification} (RTTI)\index{RTTI} system. Given a type token
+\verb+t+, an object of that type can be created by the call:\index{archetype}\index{lnew}
+\begin{verbatim}
+object *o=archetype[t]->lnew();
+\end{verbatim}
+
+Instead of using C++'s built-in RTTI system, where tokens are compound
+objects of somewhat indeterminate size, Graphcode implements a simple
+RTTI system using template programming, in which a type token is a
+simple unsigned integer. This implies that each type of object
+to be used with Graph must be registered first, before use. This is
+taken care for you automatically if you use \verb+Graph::AddObject()+ to
+add your object to the Graph.
+
+Adding the virtual type method to your class is also easy:\index{type}
+
+
+
+\begin{verbatim}
+class foo: public object
+{
+ ...
+ virtual int type() {return vtype(*this);}
+};
+\end{verbatim}
+
+The first \verb+vtype+\index{vtype} is called on an object, an object
+of that type is created (via its \verb+lcopy+ method), and added to
+the archetype\index{archetype} vector. The index of that object within
+the archetype vector become the type token. {\em It is vitally
+  important that types are added to the archetype vector in the same
+  order on all threads.} Clearly this is a trivial requirement if only
+one type is used, but slightly more care needs to be taken in the case
+of multiple types of object.
+
+If you have multiple object types, consider using the
+\verb+register_type+ template to ensure a consistent type registration
+across the different address spaces.
+
+\psubsection{Node and edge weights}
+
+By default, the graph partitioning algorithm used in Graphcode weights
+each node and link equally. However, it is possible to perform load
+balancing by specifying a computational weight function on each node,
+and a communication weight function for each edge. For example:
+\begin{verbatim}
+class foo: public object
+{
+  ...
+  virtual idxtype weight() {return size()*size();}
+  vitural idxtype edgeweight(const objref& x) {return (*x)->size();}
+};
+\end{verbatim}
+
+\psubsection{Edge list}
+
+An object is derived from \hyperref{Ptrlist}{
+  (\S}{)}{Ptrlist}\index{Ptrlist}, which contains a list of objrefs
+that the current object is connected to.
+
+\psubsection{Self linking nodes}
+
+If there is any reason for your node to access its objref (eg to find
+out its GraphID, for example), then you can add the objref to its edge
+list (say the first item on the edgelist by convention). Then you can
+refer to things like \verb+begin()->ID+, \verb+begin()->proc+ etc.
+
+The \verb+Graph::Prepare_Neighbours()+ and
+\verb+Graph::Partition_Objects()+ methods ignore self-linking edges.
+
+\psection{objref}\index{objref}\label{objref}
+
+For every object in the Graphcode system, there is an \verb+objref+ on
+every processor referring to it.
+
+Synopsis:
+\begin{verbatim}
+  class objref
+  {
+  public:
+    GraphID_t ID;
+    unsigned int proc;
+
+    objref(GraphID_t id=0, int proc=myid(), object *o=NULL);
+    objref(GraphID_t id, int proc, object &o); 
+    objref(const objref& x);
+    ~objref();
+
+    objref& operator=(const objref& x); 
+    object& operator*();
+    object* operator->();
+    const object* operator->() const;
+    const object* operator->() const;
+    void addref(object* o, bool mflag=false); 
+    bool nullref() const;
+    void nullify();
+  };
+\end{verbatim}
+
+\begin{description}
+\item[ID] A unique integer value that identifies the object within a Graph
+\item[proc] The location of the active copy of the object
+\item[{\tt *, ->}] Dereferencing an objref allows one to access the
+  object. It is an error to dereference a nullified objref.
+\item[addref] Add an object to this reference. The \verb+mflag+
+  parameter indicates whether the object is managed (created by \verb+new+ or
+  \verb+lnew()+), and can be safely \verb+deleted+ when nullified, or
+  is an external object that should not be deleted. An objref can also
+  be instantiated already pointing to an unmanaged object via its constructor.
+\item[nullref] whether this objref points to an object or not. If the
+  active copy is on this processor, then nullref should be false.
+  Otherwise, it may true or false depending on whether this processor
+  has a cached copy of the object.
+\item[nullify] Remove the object from the Graph (but leaving the
+  objref in place). It is an error to remove the active copy, without
+  replacing it with another object.
+\end{description}
+
+
+\psection{Ptrlist}\index{Ptrlist}\label{Ptrlist}
+
+Ptrlists work a bit like \verb+std::vector<objref>+ --- objrefs can be
+added with \verb+Ptrlist::push_back()+, indexed with standard array
+indexing \verb+Ptrlist::operator[]+, and iterated over in the usual
+way with \verb+Ptrlist::iterator+. However, unlike
+\verb+std::vector<objref>+, only pointers to the objref is stored
+within \verb+Ptrlist+, not copies.
+
+Synopsis:
+
+\begin{verbatim}
+class Ptrlist 
+  {
+  public:
+    
+    class iterator
+    {
+    public:
+      objref& operator*();
+      objref* operator->();
+      iterator operator++();
+      iterator operator--();
+      iterator operator++(int);
+      iterator operator--(int);
+      bool operator==(const iterator& x);
+      bool operator!=(const iterator& x);
+    };
+    iterator begin() const;
+    iterator end() const;
+    objref &    front ()
+    objref &    back ()
+    unsigned size() const;
+    objref& operator[](unsigned i) const; 
+    void push_back(objref* x);
+    void push_back(objref& x);
+    void erase(GraphID_t i);
+    void clear();
+    Ptrlist& operator=(const Ptrlist &x);
+  };
+\end{verbatim}
+
+Ptrlists can only refer to objects stored in objectMap.
+Ptrlists can be serialised --- Ptrlists must be unpacked within the
+context of an omapthe objectMap.
+
+If you need to use a backing map, you can declare another omap object
+and assign objectMap to it. This will create copies of all the objects
+contained within objectMap.
+
+\psection{omap}\index{omap}\label{omap}
+
+An omap is a container for storing \hyperref{{\em objrefs}}{
+  \S(}{)}{objref}\index{objref}, indexed by ID.
+
+\begin{verbatim}
+  class omap: public MAP
+  {
+  public:
+    objref& operator[](GraphID_t i);
+    omap& operator=(omap& x);
+  };
+\end{verbatim}
+
+There are a few different possible ways of implementing omaps, with
+differing performance characteristics.  Graphcode provides two
+different models, {\em vmap} and {\em hmap} that may be readily
+deployed by the user, however users can fairly easily provide their
+own implementation if desired. Different implementations can be
+selected by defining the \verb+MAP+ macro\index{MAP} to be the desired
+omap implementation before including \verb+graphcode.h+. This will
+declare everything in the namespace
+\verb+graphcode_vmap+\index{graphcode\_vmap} or
+\verb+graphcode_hmap+\index{graphcode\_hmap} as appropriate. Using
+this scheme, it is possible to have two different omap types in the
+one object file, by including graphcode.h twice. However, if you do
+this, you will need to \verb+#undef GRAPHCODE_H+ guard variable prior
+to subsequent includes.
+
+vmap is intended for use with contiguous GraphID ranges. If there are
+holes in the identifier range, then the iterator will return invalid
+references for these holes, and the size() method will be incorrect.
+
+If you need to have non-contiguous ID ranges (perhaps for dynamic
+graph management --- note this is not currently supported), then please
+use the hmap\index{hmap} implementation instead (which will have some performance
+penalty).
+
+
+MAP must provide the following members:
+\begin{verbatim}
+class MAP
+{
+  protected:
+    objref& at(GraphID_t i);
+  public:
+    MAP();
+    MAP(const MAP&)
+    class iterator
+     {
+       iterator();
+       iterator(const iterator&);
+       iterator& operator=(const iterator&); 
+       iterator operator++(int);
+       iterator operator++();
+       iterator operator--(int);
+       iterator operator--();
+       bool operator==(const iterator& x) const;
+       bool operator!=(const iterator& x) const;
+       objref& operator*();
+       objref* operator->();
+     };
+    iterator begin();
+    iterator end();
+    unsigned size();
+}
+\end{verbatim}
+   
+The \verb+at+\index{at} method is essentially a replacement for \verb+operator[]()+. A
+simple example of an omap implementation is provided by \verb+vmap+\index{vmap}:
+\begin{verbatim}
+class vmap: public std::vector<objref>
+{
+protected:
+  objref& at(GraphID_t i) 
+  {
+    if (i>=size()) resize(i+1);
+    return std::vector<objref>::operator[](i);
+  }
+};
+\end{verbatim}
+
+hmap is a hash map implementation. With all hash maps, performance of
+the map is critically dependent upon the choice of hash function, which
+is application dependent. hmap is simply defined as:
+\begin{verbatim}
+class hmap: public hashmap<simple_hash> {};
+\end{verbatim}
+You can provide your own omap definition (umap, say), with your own
+user defined hash function in the following way:
+\begin{enumerate}
+\item Create a file ``umap'' somewhere in the default search path with
+  the following:
+\begin{verbatim}
+#include "hashmap.h"
+struct myhash
+{
+  unsigned operator()(GraphID_t i) {...}
+};
+class umap: public hashmap<myhash> {};
+\end{verbatim}
+\item Add the new omap definitions to the Graphcode library:
+\begin{verbatim}
+make MAP=umap
+\end{verbatim}
+\item Include the declarations of the \verb+graphcode_umap+ namespace
+  in your application source file:
+\begin{verbatim}
+#define MAP umap
+#undef GRAPHCODE_H
+#include <graphcode.h>
+\end{verbatim}
+\end{enumerate}
+
+\psubsection{Note on using macros to parametrise omap}
+
+It might seem obvious that omap could be made a templated type, with a
+single template parameter being the implementation of the
+omap. Unfortunately, omaps contain objects, which in turn have
+Ptrlists (the edge list), which used to maintain a reference to an
+omap. So objects and objrefs must be similarly parametrised by by the
+omap implementation type. However the omap implementation type will
+also need to reference the parametrised objrefs, leading to an
+implementation type parametrised by itself, an unparsable situation.
+
+The way out of this dilemma is to make omap an abstract base class,
+which can be made into a concrete implementation as part of the
+definition of Graph. However, this introduces an extra level of
+overhead in calling virtual functions when performing object
+lookup, which is not insignificant. It also dramatically increases the complexity of coding
+\verb+object::iterator+, which also would need to be an abstract base
+class.
+
+In view of this, the macro based solution finally chosen, seemed the
+cleanest, and most efficient means of implementing different omap
+implementations.
+
+Obviously, this reason is no longer relevant, however there doesn't seem to
+be any burning reason to change the macro parametrisation to a
+template argument.
+
+\psection{Building Graphcode}
+
+In building graphcode, you configure the options you want by setting
+Make variables on the command line:
+\begin{description}
+\item[MPI=1] Build the MPI version of Graphcode
+\item[MAP=] specify which map to use for omap. hmap is the
+  default. You can build a library supporting multiple different omap
+  types by issuing successive make commands:
+\begin{verbatim}
+make MAP=vmap
+make MAP=hmap
+\end{verbatim}
+\item[DEBUGGING=1] Used to enable assertions, as well as debugger
+  symbols. Optimisation is turned off
+\item[PREFIX=] specify an install directory when building the
+  \verb+install+ target (default \verb+~/usr+).
+\end{description}
+
+\psection{Using graphcode in parallel}
+
+To use graphcode in parallel, you need to install
+Classdesc,\index{Classdesc} ParMETIS\index{Metis}\index{ParMETIS} and
+MPI.\index{MPI} Define the preprocessor symbol
+\verb+MPI_SUPPORT+\index{MPI\_SUPPORT} to enable the parallel
+processing code. An example Makefile for the \verb+poisson_demo+
+example illustrate how this is done.\index{poisson\_demo}
+
+You will need to arrange the class definitions for your objects, as
+well as the graphcode.h file to be processed by 
+classdesc. One way of doing this is to \verb+#include+ .cd files into one of
+the C++ source files, and have a \verb+.h.cd+ rule in your Makefile, as
+suggested in the classdesc documentation.
+
+
+\psection{Examples}
+
+Graphcode comes with an example of solving the Poisson
+equation. Graphcode is also deployed for implementing the spatial
+Ecolab model, and the Palauan jellyfish model within the \EcoLab{}
+package. The latter model illustrates a dynamic load balancing.

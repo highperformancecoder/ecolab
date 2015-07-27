@@ -1,0 +1,9 @@
+cat <<EOF
+configure is not necessary, do one of:
+
+make
+
+make install
+
+make install PREFIX=/usr/local/ecolab
+EOF

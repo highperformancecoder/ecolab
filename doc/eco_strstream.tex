@@ -1,0 +1,85 @@
+\section{eco\_strstream class}
+
+\subsection{eco\_string class}\index{eco\_string}
+
+\begin{verbatim}
+class eco_string
+{
+public:
+  eco_string();
+  eco_string(const eco_string& x);
+  eco_string(const char *x);
+  ~eco_string();
+
+  eco_string& operator=(const eco_string& x);
+  eco_string& operator=(const char* x);
+  eco_string operator+(const char* y);
+  eco_string& operator+=(const char* y); 
+  eco_string operator+(const char y); 
+  eco_string& operator+=(const char y); 
+  eco_string operator+(const eco_string& y);
+  eco_string& operator+=(const eco_string& y);
+  operator char *() const;
+  int length();
+  void freeze(int x);
+};
+\end{verbatim}
+
+Basic string class, broadly compatible with the STL string class, but
+can be used in the classdesc\index{classdesc} generated code. The
+pointer returned by {\tt char *} refers to an ordinary C string, but
+is no longer valid once the destructor is called. This behaviour can
+be altered calling {\tt freeze(1)}. Unlike the GNU string class,
+casting the string to a {\tt char *} does not freeze the string.
+
+\subsection{eco\_strstream}\index{eco\_strstream}
+
+This is a modified version of ostrstream for \EcoLab{} use, with
+slightly altered behaviour making it more suited for \EcoLab{} use.
+
+In particular, \verb+operator<<+ add spaces in between its arguments,
+and a new \verb+operator|+ is defined that is similar to ostrstream
+\verb+operator<<+. This makes it easier to construct TCL commands.
+
+Note that \verb+|+ has higher precedence than \verb+<<+, so when
+mixing the two, ensure that no \verb+<<+ operator appears to the right
+of \verb+|+, or use brackets to ensure the correct interpretaion:
+
+eg.
+\begin{verbatim}
+    s << a << b | c;
+\end{verbatim}
+or
+\begin{verbatim}
+    (s | a) << b | c;
+\end{verbatim}
+but not
+\begin{verbatim}
+    s | a << b | c;
+\end{verbatim}
+
+In any case, you'll most likely get a compiler warning if you do the
+wrong thing.
+
+{\tt eco\_strstream} is derived from {\tt eco\_string} class, so has
+all the string behaviour. The \verb+str()+ member is defiend as
+equivalent to a \verb+(char*)+ cast for compatibility with ostrstream.
+However, the contents of the \verb+char*+ are not frozen, unless
+explicitly specified with freeze() (opposite to ostrstream behaviour).
+
+\begin{verbatim}
+class eco_strstream: public eco_string
+{
+  public:
+    char* str() const;
+    
+    template<class T>
+    eco_strstream& operator<<(const T x); 
+
+    template<class T>
+    eco_strstream& operator|(T);
+}
+
+inline ostream& operator<<(ostream& x, eco_strstream& y);
+\end{verbatim}
+

@@ -1,0 +1,217 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>TCL_obj_stl</TITLE>
+<META NAME="description" CONTENT="TCL_obj_stl">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="previous" HREF="node86.html">
+<LINK REL="up" HREF="node53.html">
+<LINK REL="next" HREF="node88.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html1561"
+  HREF="node88.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html1555"
+  HREF="node53.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html1551"
+  HREF="node86.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html1557"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html1559"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1562"
+  HREF="node88.html">Graphcode</A>
+<B> Up:</B> <A NAME="tex2html1556"
+  HREF="node53.html">Classdesc</A>
+<B> Previous:</B> <A NAME="tex2html1552"
+  HREF="node86.html">TCL_obj</A>
+ &nbsp; <B>  <A NAME="tex2html1558"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1560"
+  HREF="node144.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION0001412000000000000000"></A><A NAME="TCL_obj_stl"></A>
+<BR>
+TCL_obj_stl
+</H2>
+
+<P>
+The header file <code>TCL_obj_stl</code> provides <code>TCL_obj</code> support for
+STL containers. If the <code>value_type</code> of an STL container (vector, deque
+or list) or set is streamable to an iostream, then it is possible to
+directly access the elements of the container as a simple list:
+
+<P>
+<PRE>
+std::vector&lt;int&gt; vec;
+make_model(vec);
+   ...
+vec {1 2 3}
+set vec_elems [vec]
+</PRE>
+If the <code>value_type</code> is not streamable, an exception will be thrown. This
+feature makes the <code>#members</code> functionality of sets redundant.
+
+<P>
+The following TCL procedures are defined for the
+following STL containers, which can be used from a TCL script or the
+object browser to manipulate STL container objects. Procedures that do
+not call member names are prefixed by the ``@'' symbol, which is a
+valid identifier character in TCL, but is not a valid C++ identifier
+character. This avoids any possible clash of member names.
+
+<P>
+<DL>
+<DT><STRONG>vector, dequeue, list</STRONG></DT>
+<DD>
+  <DL>
+<DT><STRONG>@is_vector</STRONG></DT>
+<DD>A ``do nothing'' command, the presence of which
+    indicates the object is a vector.
+  
+</DD>
+<DT><STRONG>@is_deque</STRONG></DT>
+<DD>A ``do nothing'' command, the presence of which
+    indicates the object is a deque (double ended queue).
+  
+</DD>
+<DT><STRONG>@is_list</STRONG></DT>
+<DD>A ``do nothing'' command, the presence of which
+    indicates the object is a list.
+  
+</DD>
+<DT><STRONG>size</STRONG></DT>
+<DD>returns the size of the vector
+  
+</DD>
+<DT><STRONG>@elem</STRONG></DT>
+<DD>takes one argument, the <EM>index</EM> of an element. It creates a
+    TCL command <EM>name</EM>(<EM>index</EM>) that can be used in the usual
+    way to access or modify the element's value.
+  
+</DD>
+</DL>
+
+<P>
+</DD>
+<DT><STRONG>set, map</STRONG></DT>
+<DD>
+  <DL>
+<DT><STRONG>@is_set</STRONG></DT>
+<DD>A ``do nothing'' command, the presence of which
+    indicates the object is a set.
+  
+</DD>
+<DT><STRONG>@is_map</STRONG></DT>
+<DD>A ``do nothing'' command, the presence of which
+    indicates the object is a map.
+  
+</DD>
+<DT><STRONG>size</STRONG></DT>
+<DD>Return number of entries in the set or map
+  
+</DD>
+<DT><STRONG>count</STRONG></DT>
+<DD>Takes a single argument, and returns 1 or 0, according to
+    whether that argument present within the set or map (as a member or
+    key respectively).
+  
+</DD>
+<DT><STRONG>#members</STRONG></DT>
+<DD>Returns list of members of a set
+  
+</DD>
+<DT><STRONG>#keys</STRONG></DT>
+<DD>Returns list of keys of a map
+  
+</DD>
+<DT><STRONG>@elem</STRONG></DT>
+<DD>Returns a TCL command name for accessing individual
+    elements of a set or map. In the case of a set, the command accesses
+  the <IMG
+ WIDTH="10" HEIGHT="17" ALIGN="BOTTOM" BORDER="0"
+ SRC="img6.png"
+ ALT="$i$">th element of the set. In the case of a map, the argument can
+  be an arbitrary string (so long as it converts to the key type of
+  the map), that can be used to address the map element. For example,
+  if the map is <code>map</code>&lt;string,string&gt;+, one can create an element
+  <code>m["hello"]="foo"</code> by means of the following TCL commands:
+<PRE>
+m.@elem hello
+m(hello) foo
+</PRE>
+</DD>
+</DL>
+</DD>
+</DL>
+
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html1561"
+  HREF="node88.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html1555"
+  HREF="node53.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html1551"
+  HREF="node86.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html1557"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html1559"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1562"
+  HREF="node88.html">Graphcode</A>
+<B> Up:</B> <A NAME="tex2html1556"
+  HREF="node53.html">Classdesc</A>
+<B> Previous:</B> <A NAME="tex2html1552"
+  HREF="node86.html">TCL_obj</A>
+ &nbsp; <B>  <A NAME="tex2html1558"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1560"
+  HREF="node144.html">Index</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Russell Standish
+2014-09-10
+</ADDRESS>
+</BODY>
+</HTML>

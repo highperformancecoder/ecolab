@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Types of database</TITLE>
+<META NAME="description" CONTENT="Types of database">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="previous" HREF="node141.html">
+<LINK REL="up" HREF="node139.html">
+<LINK REL="next" HREF="node143.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html2365"
+  HREF="node143.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html2359"
+  HREF="node139.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html2355"
+  HREF="node141.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html2361"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html2363"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html2366"
+  HREF="node143.html">Bibliography</A>
+<B> Up:</B> <A NAME="tex2html2360"
+  HREF="node139.html">cachedDBM</A>
+<B> Previous:</B> <A NAME="tex2html2356"
+  HREF="node141.html">TCL access</A>
+ &nbsp; <B>  <A NAME="tex2html2362"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html2364"
+  HREF="node144.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION000233000000000000000">
+Types of database</A>
+</H2>
+
+<P>
+By default, if EcoLab's Makefile detects the presence of Berkeley DB on
+your system, it will be used. Otherwise it use the ndbm API. If
+libgdbm and/or libgdbm_compat (the NDBM compatibility layer in GDBM)
+these will be added to the linker flags, otherwise it will assume that
+ndbm is available as part of the standard system library.
+
+<P>
+You can't mix and match database types. If you have some data stored
+in one type, and need to access it using a different database type,
+the utilities convtoNDBM and convtoBDB found in the util directory may
+be useful.
+
+<BR><HR>
+<ADDRESS>
+Russell Standish
+2014-09-10
+</ADDRESS>
+</BODY>
+</HTML>

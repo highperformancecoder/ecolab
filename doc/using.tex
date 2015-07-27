@@ -1,0 +1,1000 @@
+\section{License}
+
+\EcoLab{} is distributed as unrestricted public domain open-source
+software, which you can use as you wish. The netcomplexity module
+makes use of {\em nauty}, which has license restrictions documented in
+include/nauty.h. Commercial or military applications of \EcoLab{} must
+make do without netcomplexity functionality.
+
+\section{Making \protect\EcoLab}
+
+Once you have unpacked the gzipped tar file, you should be able to
+make \EcoLab{} by running ``make'' or ``gmake'' in the top level
+directory. \EcoLab{} needs GNU make (which available by default on
+Linux, Cygwin/Windows or MacOS, but can be installed from sources on
+most operating systems if needed). If you have a multiprocessor, or
+multicore computer, you can speed up the build time by spreading the
+compilation over multiple processors using the \verb+-j+ option to \verb+make+.
+Currently \EcoLab{} has been developed against TCL/Tk 8.5 and gcc 4.5,
+but should build with other versions.
+
+\EcoLab{}'s Makefile searches for the software it needs, and sets
+Makefile flags appropriately depending on what it finds. The only
+software that is an absolute requirement is TCL, however it will also
+use Tk, BLT (version 2.4.z), Cairo, zlib, readline, XDR, UNURAN or GNUSL,
+Berkley DB or gdbm if available. 
+
+For the plotting widgets, EcoLab will use Cairo by preference - if you
+wish to use the older BLT-based widgets, specify BLT=1 on the makefile
+build line. If Cairo is not installed on the system, Ecolab will fall
+back to using BLT, and if that is not available either, will not
+provide the plotting widgets.
+
+For parallel programming, it also uses MPI and ParMETIS. \EcoLab{}'s
+Makefile searches for the software in \verb+$HOME/usr+, then
+\verb+/usr/local+ and finally \verb+/usr+. When installing 3rd party
+libraries, please install them in either \verb+$HOME/usr+ or
+\verb+/usr/local+, usually by specify the \verb+--prefix+ option to
+the ``configure'' command of the package.
+
+You can override the default settings by passing options to make. In
+the following table, you can define an option by specifying (eg MPI=1)
+on the make command line, or undefine it using (eg MPI=).
+
+\noindent
+\begin{tabular}{|l|p{9cm}|}
+\hline
+DEBUGGING & Turns on -g, and assertions\\
+MEMDEBUG & replaces \verb+new+ and \verb+delete+ with a version that
+tracks and reports memory usage\\
+PROFILING & logs times executed by each \hyperref{TCL
+  command}{TCL command (\S}{)}{NEWCMD}\\
+GCOV & Prepares executable for test coverage analysis\\
+VPROF & Prepares executables for use by the \htmladdnormallinkfoot{vprof}{http://aros.ca.sandia.gov/\~{}cljanss/perf/vprof/} tool \\
+MPI & Enable distributed parallel version \\
+OPENMP & Enable the use of OpenMP shared memory parallel constructs \\
+PARALLEL & Enable the use of automatic parallelisation (Intel compiler) \\
+XDR & Enable use of \hyperref{XDR}{XDR (\S}{)}{XDR} for checkpoints and
+client-server. On some systems, XDR needs to be disabled for correct
+compilation in MPI mode. This bug should be fixed in this version of \EcoLab.\\
+GCC & Force use of gcc compiler. \\ 
+NOGUI & Disables all GUI functionality. \\
+BDB & Use Berkley database from Sleepycat for the
+\hyperref{cachedDBM}{cachedDBM \S}{)}{cachedDBM} class. \\
+UNURAN & select UNURAN random number library \\
+GNUSL & select GNUSL random number library \\
+PREFIX & installation location for ``make install''. Defaults to
+\verb+$HOME/usr/ecolab+.\\
+\hline
+\end{tabular}
+
+\EcoLab{} will use the \htmladdnormallinkfoot{UNURAN non-uniform
+  random number library}{http://statistik.wu-wien.ac.at/unuran/} or
+  the \htmladdnormallinkfoot{GNU Scientific
+  Library}{http://www.gnu.org/software/gsl/} if
+available. Note that the author uses UNURAN, so GNUSL is typically not
+  tested. If neither library is available, a limited library based on
+  the libc \verb+rand()+ function is used instead. The Make flags
+  \verb+UNURAN+ and \verb+GNUSL+ can be used to override the defaults.
+
+
+  Please note the following point when installing unuran (tested
+  against unuran 1.6.0):
+\begin{itemize}
+\item EcoLab assumes that if PRNG is available on the system, then
+  UNURAN will use it. However, UNURAN will not detect PRNG if it is installed
+  in {\tt\$HOME/usr}. If you have a linkage error complaining about
+  missing prng functions, either reinstall UNURAN with the
+  --with-urng-prng option to its configure script, or compile EcoLab
+  with the ``{\tt PRNG=}'' Makefile option. The former is the
+  preferred option, as it allows runtime configuration of the uniform
+  random generator via PRNG's string interface.
+\end{itemize}
+
+
+The other options are relatively straight forward.  
+Define {\tt MPI}\index{MPI} if you wish to run \EcoLab{} in parallel
+using the MPI message passing library. You will also need to install
+the
+\htmladdnormallinkfoot{ParMETIS}{http://www-users.cs.umn.edu/~karypis/metis/parmetis/}
+library.
+
+The standard build will also build in the example models directory.
+You may also do a {\tt make install}, which will install the \EcoLab{}
+software into the directory given by the {\tt PREFIX}\index{PREFIX}
+variable in the top level Makefile. By default, this is {\tt
+  \~/usr/ecolab}. You can change this value to something else (eg
+/usr/local/ecolab) by giving the command {\tt make
+  PREFIX=/usr/local/ecolab install}. After that, you can compile the
+{\tt models} directory completely independently of the rest of the
+distribution --- use the example Makefile in the {\tt models}
+directory as a template. If you have installed \EcoLab{} in a
+non-standard location, you may need to modify the {\tt ECOLAB\_HOME}
+Makefile variable to point to the installed directory.
+
+\section{Using Ecolab on Windows}
+
+The preferred way of using \EcoLab{} on windows is to use the \htmladdnormallinkfoot{Cygwin
+posix emulation environment}{http://cygwin.com}, which has most the dependent packages
+available as installable options. However \EcoLab{} can also be built
+using the MinGW compilers, although you will need some sort of
+posix-like shell, eg Cygwin, or Msys to do the actual build on
+Windows. EcoLab{} is, however, validated to build on
+\htmladdnormallinkfoot{MXE}{http://mxe.cc}, a cross-compiler
+environment based on MinGW to build Windows executables using Linux. Check out
+\htmladdnormallinkfoot{my fork of
+  MXE}{https://github.com/highperformancecoder/mxe} which may contain
+additional packages needed for \EcoLab{}, that have not yet been
+integrated into the MXE master branch.
+
+\subsection{Cygwin}
+
+\htmladdnormallinkfoot{Cygwin}{http://cygwin.com} is a
+port of the GNU development environment to 32 bit Windows (Windows
+95/98/ME and Windows NT/2000/XP), and runs fine in 64 bits too. As such, it provides as near to
+Posix like environment as is possible in Windows. There are a few
+hints needed to get Ecolab compiled and running under Cygwin.
+\begin{itemize}
+\item When installing Cygwin, select the following additional
+  packages:
+  \begin{description}
+    \item[Devel] gcc-g++ and make
+    \item[Libs] libcairo-devel, libdb4.8-devel, gsl-devel, libreadline-devel, zlib-devel,
+    \item[Tcl] tcl-tk-devel
+    \item[X11] xorg-server and xinit
+  \end{description}
+\item Optionally install the PRNG/UNURAN libraries by building them
+  from source code. UNURAN is required for running the jellyfish model.
+\item Unpack Ecolab and do {\tt make} in top level directory. 
+\end{itemize}
+
+\EcoLab{} must be used under X11 on Cygwin. To start the X11 server,
+type ``startx'' at the Cygwin console. X11 programs run under this
+server appear to be running natively under Windows --- its quite neat!
+
+Once the X server has started, it will pop another shell window from
+which you can run Xwindows programs. {\tt cd} to the {\tt models}
+directory, and run the example ecolab script as {\tt ./ecolab
+  ecolab.tcl}. The \verb+#!+ mechanism does not work with Cygwin!
+
+\subsection{MXE}
+
+To build EcoLab using MXE, you first need to build MXE by cloning the
+mxe repository, and building everything:
+\begin{verbatim}
+git clone https://github.com/highperformancecoder/mxe.git
+cd mxe
+make
+PATH=$PATH:`pwd`/usr/bin
+\end{verbatim}
+Now you can build ecolab by building in the toplevel source directory:
+\begin{verbatim}
+make MXE=1
+\end{verbatim}
+If you need to build additional third party packages, such as unuran,
+install these into \verb+$HOME/usr/mxe+ It is generally quite easy to
+build packages for MXE if they use autogen, cmake or qmake Makefile
+generators.
+
+To run a MXE-built ecolab executable, copy the entire Ecolab source
+directory with the MXE binaries to your windows system. Then run
+\verb+install.bat+, which installs the TCL libraries required to
+support \EcoLab{} in the standard APPDATA location on Windows. Then
+you can run \EcoLab{} as usual from any command line tool (Cygwin not
+required, X-windows not required).
+
+Whilst MXE can be used to build \EcoLab{} models for running, using
+Cygwin is a lot simpler. However, MXE is useful for building
+standalone applications that use the \EcoLab{} library, such as
+\htmladdnormallinkfoot{Minsky}{http://minsky.sf.net}.
+
+
+\section{Using Ecolab under Mac OSX}
+
+\EcoLab{} compiles out of the box on OSX\index{OSX} using the Mac OSX
+Dev Tools package, which is available for free download from
+\htmladdnormallink{http://connect.apple.com}. You will also need a
+copy of TCL/Tk - the
+\htmladdnormallink{ActiveTCL}{http://www.activestate.com/activetcl}
+works well, although building TCL/Tk from source is also possible. If
+you do the latter, choose the unix build directory, not the macosx
+one. 
+
+You need to make a choice whether you want to run \EcoLab{} as a
+native Aqua application, or as an X-windows application under the
+XFree86 server software. Specify
+\verb+--enable-aqua+ on the Tk configure line to build for Aqua,
+rather than X11. On the \EcoLab build line, specify \verb+AQUA=1+ on
+the make command line.
+
+You may also use
+\htmladdnormallink{MacPorts}{https://www.macports.org/} to easily
+build the prerequisite packages. \EcoLab{}'s Makefiles will search for
+Macports software located in \verb+/opt/local+ prior to searching
+system locations. Note that if you install the MacPorts version of Tk,
+it uses X11 only, Aqua mode is unavailable.
+
+\subsection{Compiling and running \protect\EcoLab{} for Aqua}
+
+Build \EcoLab{} with \verb+AQUA=1+. In the models directory, an
+``application bundle'' is created for each model, for example
+\verb+ecolab.app+, using the utility script mkmacapp.\index{mkmacapp}
+If you try to run \EcoLab{} scripts in the usual way, you will get an
+error message:\index{SetFrontProcess}
+\begin{verbatim}
+SetFrontProcess failed,-606
+\end{verbatim}
+Instead, you must invoke \EcoLab{} in a rather cumbersome way:
+\begin{verbatim}
+ecolab.app/Contents/MacOS/ecolab ecolab.tcl
+\end{verbatim}
+To make it a little easier, the \verb+macrun+\index{macrun} script is
+provided to do this for you --- try
+\begin{verbatim}
+macrun jellyfish.tcl lakes/OTM
+\end{verbatim}
+
+\section{Structure of the \protect\EcoLab{} Simulation System}
+
+\EcoLab{} is built on the following components:
+\begin{description}
+\item[tcl++] which provides bindings to the TCL scripting language,
+\item[TCL\_obj] which exposes the internals of C++ objects to TCL
+\item[pack] performs serialisation of objects, for checkpoint, and
+  client/server applications
+\item[ClassdescMP] parallel programming support
+\item[Graphcode] provides an abstraction of objects moving on a
+  distributed graph.
+\item[arrays] which implements dynamic arrays used in a number of
+  \EcoLab models
+\item[analysis/Xecolab] which provides a number of generic instruments
+  for observing the \EcoLab{} models
+\item[random] a thin abstraction on random number generators, kindly
+  supplied by UNURAN or GNUSSL (as preferred)
+\item[cacheDBM] Persistent object map
+\item[eco\_strstream] classdesc stringstream class
+\item[eco\_hashmap] hashmap --- using either std::map or TCL's hash map
+\item[netcomplexity] Network complexity measure
+\item[C++ Standard Library] (of course!)
+\end{description}
+
+The \EcoLab{} model itself is defined in the model specific file {\tt
+  ecolab.cc}. To define another model, replace this file by another
+  one with similar functions. An example of this is {\tt
+  jellyfish.cc}. See \S\ref{new model} for more details.
+
+The whole computation is constructed from a TCL\cite{Ousterhout94}
+script. Example scripts include {\tt ecolab.tcl}, {\tt pred-prey.tcl}
+ and {\tt console.tcl/engine.tcl} for a sample
+client/server system.
+
+\begin{figure}
+\pspicture(2,0)(15,7)
+\rput(7,7){\rnode{ecolabtcl}{\psframebox[fillstyle=solid,fillcolor=lightgray]{ecolab.tcl}}}
+\rput(3,5){\rnode{modeltcl}{\psframebox[fillstyle=solid,fillcolor=lightgray]{model.tcl}}}
+\rput(5,5){\rnode{Xecolab}{\psframebox{Xecolab}}}
+\rput(11,7){\rnode{ecolabcc}{\psframebox[fillstyle=solid,fillcolor=lightgray]{ecolab.cc}}}
+\rput(8,5){\rnode{TCL_obj}{\psframebox{TCL\_obj}}}
+\rput(5,3){\rnode{analysis}{\psframebox{analysis.cc}}}
+\rput(3,3){\rnode{BLT}{\psframebox{BLT}}}
+\rput(13,3){\rnode{pack}{\psframebox{pack}}}
+\rput(13,4){\rnode{classdescMP}{\psframebox{ClassdescMP}}}
+\rput(13,5){\rnode{graphcode}{\psframebox{Graphcode}}}
+\rput(15,4){\rnode{MPI}{\psframebox{MPI}}}
+\rput(10,3){\rnode{tclarrays}{\psframebox{tcl\_arrays.cc}}}
+\rput(6,1){\rnode{ecostrstream}{\psframebox{eco\_strstream.cc}}}
+\rput(8,0){\rnode{ecostring}{\psframebox{eco\_string.cc}}}
+\rput(3,1){\rnode{tclpp}{\psframebox{tcl++.h}}}
+\rput(12,1){\rnode{arrays}{\psframebox{arrays.h}}}
+\rput(12,0){\rnode{carrays}{\psframebox{c\_arrays.c}}}
+\rput(3,0){\rnode{tcltk}{\psframebox{TCL/TK}}}
+\ncline{ecolabtcl}{modeltcl}
+\ncline{ecolabtcl}{Xecolab}
+\ncline{ecolabtcl}{TCL_obj}
+\ncline{TCL_obj}{ecolabcc}
+\ncline{Xecolab}{analysis}
+%\ncline{ecolabcc}{tclpp}
+\ncline{TCL_obj}{pack}
+\ncdiagg[angleA=280,arm=2]{ecolabcc}{arrays}
+\ncline{analysis}{tclpp}
+\ncline{arrays}{carrays}
+\ncdiagg[arm=2,angleA=90]{tclarrays}{ecolabtcl}
+\ncline{tclarrays}{tclpp}
+\ncline{tclarrays}{arrays}
+\ncdiagg[arm=1.5,angleA=250]{TCL_obj}{tclpp}
+\ncline{TCL_obj}{ecostring}
+\ncline{tclpp}{ecostrstream}
+\ncline{pack}{ecostring}
+\ncline{ecostrstream}{ecostring}
+\ncline{classdescMP}{pack}
+\ncline{graphcode}{classdescMP}
+\ncline{classdescMP}{MPI}
+\ncline{ecolabcc}{graphcode}
+\ncline{BLT}{analysis}
+\ncline{BLT}{Xecolab}
+\ncline{tcltk}{tclpp}
+\endpspicture
+\caption{Structure of the \protect\EcoLab{} Simulation System for
+  the \protect\EcoLab{} model. Shaded boxes are specific to the
+  \protect\EcoLab{} model, and are replaced by equivalent modules for other models.} 
+\end{figure}
+
+\begin{figure}
+\pspicture(2,0)(15,7)
+\rput(7,7){\rnode{jellyfishtcl}{\psframebox[fillstyle=solid,fillcolor=lightgray]{jellyfish.tcl}}}
+\rput(3,5){\rnode{lakes}{\psframebox[fillstyle=solid,fillcolor=lightgray]{lakes/}}}
+\rput(5,5){\rnode{Xecolab}{\psframebox{Xecolab}}}
+\rput(11,7){\rnode{jellyfishcc}{\psframebox[fillstyle=solid,fillcolor=lightgray]{jellyfish.cc}}}
+\rput(8,5){\rnode{TCL_obj}{\psframebox{TCL\_obj}}}
+\rput(5,3){\rnode{analysis}{\psframebox{analysis.cc}}}
+\rput(3,3){\rnode{BLT}{\psframebox{BLT}}}
+\rput(10,2){\rnode{pack}{\psframebox{pack}}}
+\rput(10,3){\rnode{classdescMP}{\psframebox{ClassdescMP}}}
+\rput(10,4){\rnode{graphcode}{\psframebox{Graphcode}}}
+\rput(12,3){\rnode{MPI}{\psframebox{MPI}}}
+\rput(6,1){\rnode{ecostrstream}{\psframebox{eco\_strstream.cc}}}
+\rput(8,0){\rnode{ecostring}{\psframebox{eco\_string.cc}}}
+\rput(3,1){\rnode{tclpp}{\psframebox{tcl++.h}}}
+\rput(3,0){\rnode{tcltk}{\psframebox{TCL/TK}}}
+\rput(11,6){\rnode{arrays}{\psframebox{arrays.h}}}
+\rput(11,5){\rnode{carrays}{\psframebox{c\_arrays.c}}}
+\rput(13,7){\rnode{tk}{\psframebox{TK}}}
+\rput(13,6){\rnode{random}{\psframebox{random}}}
+\rput(13,5){\rnode{UNURAN}{\psframebox{UNURAN}}}
+\ncline{jellyfishtcl}{lakes}
+\ncline{jellyfishtcl}{Xecolab}
+\ncline{jellyfishtcl}{TCL_obj}
+\ncline{TCL_obj}{jellyfishcc}
+\ncline{Xecolab}{analysis}
+\ncdiagg[arm=2,angle=285]{TCL_obj}{pack}
+\ncline{jellyfishcc}{arrays}
+\ncline{analysis}{tclpp}
+\ncline{tcltk}{tclpp}
+\ncline{arrays}{carrays}
+\ncline{jellyfishcc}{random}
+\ncline{jellyfishcc}{tk}
+\ncline{random}{UNURAN}
+\ncdiagg[arm=1.5,angleA=250]{TCL_obj}{tclpp}
+\ncline{TCL_obj}{ecostring}
+\ncline{tclpp}{ecostrstream}
+\ncline{pack}{ecostring}
+\ncline{ecostrstream}{ecostring}
+\ncline{classdescMP}{pack}
+\ncline{graphcode}{classdescMP}
+\ncline{classdescMP}{MPI}
+\ncdiagg[arm=.85,angle=220]{jellyfishcc}{graphcode}
+\ncline{BLT}{analysis}
+\ncline{BLT}{Xecolab}
+\endpspicture
+\caption{Structure of the \protect\EcoLab{} Simulation System for
+  the Jellyfish model. Shaded boxes are specific to the
+  Jellyfish model, and are replaced by equivalent modules for other models.} 
+\end{figure}
+
+\section{Constructing an experiment}
+
+An experiment consists of a TCL\cite{Ousterhout94} script, which binds
+the various elements used (the model system, input parameters,
+instruments) into an experimental run. An example experiment is {\tt
+  ecolab.tcl}\index{ecolab.tcl}. This is an executable script --- once
+you have made \EcoLab, you can run this script.
+
+The script consists of several parts --- the first being a simulation
+loop which steps the model through the generate and mutate operators,
+then updates the various instruments ({\tt display, plot,
+  connect\_plot} etc.) 
+There is a {\tt running}\index{running} flag which controls whether
+the simulation is running or not. This is used by the {\bf
+  run}\index{run} and {\bf stop}\index{stop} buttons to control the
+execution of the simulation.
+
+The other parts of the experimental script have been broken into
+separate TCL files --- model.tcl\index{model.tcl} contains the input
+parameters to the model, and Xecolab.tcl\index{Xecolab.tcl} has the
+TCL code relating to the X-windows interface.
+
+\subsection{Input parameters}
+
+\EcoLab{} exports all the members of the object named in the
+\verb+make_model+ macro\index{make\_model} to the TCL environment. For
+example, if the model object is called \verb+ecolab+, accessor
+TCL commands for the members are created --- \verb+ecolab.sp_sep+ to
+access the \verb+sp_sep+ member of the ecolab object. Calling the
+accessor command with no arguments returns the current value of the
+member. Calling it with an argument sets the value of the member.
+
+The \verb+use_namespace+ \index{use\_namespace}(\S\ref{use_namespace})
+command can be used to dump all model commands into global
+namespace. This unclutters the setting of model parameters considerably.
+
+An alternative technique for getting TCL data into your model is to
+use a \hyperref{{\tt tcl\_var}}{{\tt tcl\_var}
+  (\S}{)}{tclvar}\index{tcl\_var}. Of the two methods discussed here,
+the former is recommended.
+
+\subsection{The main button bar}
+
+The main button bar has five predefined buttons, {\bf
+  quit}\index{quit} (which causes the application to quit), {\bf
+  run}\index{run}, which calls the {\tt simulate}\index{simulate}
+procedure, and {\bf stop}\index{stop} which sets the {\tt
+  running}\index{running} flag to zero, suspending the experiment.
+{\bf Command} calls the \hyperref{command line
+  interpreter}{(\S}{)}{cli}, allowing you to interact directly with
+the TCL interpreter. {\bf Object Browser} is a widget allowing you to
+graphically drill down into the objects defined in the model.
+
+Additionally, there are two user defined
+buttons\index{buttons, user
+  defined}\index{.user1}\index{.user2}\index{.user3}, which can have
+functions bound to them by adding TCL code after the {\tt
+  GUI}\index{GUI} command like the following example:
+\begin{verbatim}
+GUI
+.user1 configure -text condense -command condense
+\end{verbatim}
+
+\subsection{use\_namespace}\label{use_namespace}\index{use\_namespace}
+
+The \verb+use_namespace+ {\em name} TCL command searches for all TCL
+commands of the form {\em name}.{\em x}, and creates a new TCL command
+{\em x} that calls {\em name}.{\em x}. This allows a simple ``dump''
+of \EcoLab{} model methods and instance variables into TCL's current
+namespace. The term ``namespace'' in \verb+use_namespace+ is unrelated
+to TCL's namespace concept.
+
+Note that \verb+use_namespace+ does not override an any existing
+commands in the current namespace. Imagine what havoc an instance
+variable called ``proc'' would make! Thus it may be necessary to refer
+to an instance variable or method by its fully qualified name fro TCL
+scripts to get the desired behaviour.
+
+\subsection{Command Line Interpreter}\index{cli}\label{cli}
+
+The command line interpreter allows you to type any TCL command at the
+console, rather like the wish tool from Tk. Unlike wish though, the
+GNU readline library is employed, so expect the usual command and
+history editing functionality you expect from bash. It is simply
+invoked by the TCL command \verb+cli+.
+
+If the readline library is not available, then \verb+cli+ will not
+provide command line editing. However, you can still supply a script
+to \EcoLab's standard input.
+
+TCL is not a thread aware system (since it runs on Windows and MacOS),
+so when the command line interpreter is running, nothing else is --- eg
+GUI widgets or the model. This restriction may be lifted in the future
+on Posix compliant systems.
+
+\subsection{Object Browser}\label{object-browser}
+
+The object browser is a drilldown widget for probing the values of
+model variables. Since model variables are implemented as TCL
+commands, this tool lists all TCL commands. Commands containg a ``.''
+in their name belong to objects, so these commands are grouped and
+labelled in blue. TCL namespaces are grouped and labelled in green.
+Clicking on this blue group opens another window containing just that
+group of commands. Clicking on a green name drills down into a
+namespace. Clicking on a red command runs it, and the result is
+displayed next to it --- if this is a Tcl\_obj instance variable, the
+result is the value of the variable. You can specify an argument to
+the command in the {\bf Args} input box.
+
+Shift clicking allows you to select a range of commands to execute, and
+Control clicking allows a non-contiguous selection to be made. This is
+more useful for the {\bf Repeat} option, which repeats the selected
+commands every second, allowing you to dynamically follow a model's variables.
+
+Right mouse click on any item brings up a menu of options. 
+\begin{itemize}
+\item ``hide'', which removes that command from the
+display. In this way, you can customize what's in the display. This is
+particularly useful when using the {\bf Repeat} option.
+\item ``plot'' Feed the value of the variable into a plot widget, to
+  track its value over time. Note that the x access in this case is
+  approximate wallclock time --- it may have no connection whatsoever
+  on model time. It is, however, a convenient diagnostic for model
+  exploration and debugging.
+\end{itemize}
+
+\subsection{Instrumentation}
+
+Currently four instrumented widgets are included in the \EcoLab{}
+distribution. The first time these widgets are called, they
+instantiate themselves in a separate window. This follows the
+philosophy that initialisation should be a transparent operation. A
+number of these widgets depend on the BLT toolkit, so it is wise to
+include BLT\index{BLT} at the compilation stage. Each widget is
+independent, and so multiple instruments can be operating at the same
+time.
+
+\label{widgets namespace}
+Each such widget creates a new namespace {\em x}, the name of which is either
+supplied by the user, or generated from the arguments. Also created is
+a window heirarchy starting with .{\em x}. The widget command returns
+the namespace name which can be captured for future reference. 
+
+
+One of the uses of this namespace is to call the widget specific
+\verb+print+ command\index{print}, which dumps a postscript
+representation of the widget to a named file. For example, a plot
+window start with \verb+plot nsp ...+ can be printed to ``plot.ps''
+using
+\begin{verbatim}
+nsp::print plot.ps
+\end{verbatim} 
+
+\subsubsection{Plot}
+
+Plot a number of TCL variables
+
+Usage:
+
+{\tt plot}\index{plot} {\em plotname} [{\tt -title} {\em title
+  string}] {\em x y1} [{\em y2\ldots}]
+
+The arguments can be TCL variable names, and the names are used as
+labels in the graph. If you just supply numerical values, then the
+variables will be just names arbitrarily x, y1, y2 etc. {\em plotname}
+labels the particular widget, so multiple plots can be performed
+simultaneously.
+
+The plot can be zoomed by selecting a rectangular region using the
+left mouse button. The right mouse button reverts to the original scale.
+
+plot supports the following methods:
+\begin{itemize}
+\item {\em plotname}::print {\em filename} --- produce a postscript
+  representation to a file
+\item {\em  plotname}::clear --- clear the plot
+\end{itemize}
+
+\subsubsection{Histogram}
+
+Usage:
+
+{\tt histogram}\index{histogram} {\em plotname} [{\tt -title} {\em
+  title string}] {\em list of values}
+
+This command adds the values to a histogram plot. A record of all data
+values so far added to the histogram is stored in the file {\em
+  plotname}{\tt .dat}\index{.dat files}. This allows automatic
+recalculation of the histogram's bins whenever a data value goes out
+of bounds. The number of bins is also dynamically controlled by the
+scale widget on the side. The histogram is recalculated next time {\tt
+  histogram} is called after the number of bins has been altered. This
+can be a time consuming business, so it is recommended that the
+experiment is suspended before changing the number of bins.
+
+There is also the option of plotting the histogram with logarithmic scales.
+
+histogram supports the following methods:
+\begin{itemize}
+\item {\em plotname}::print {\em filename} --- produce a postscript
+  representation to a file
+\item {\em  plotname}::clear --- clear the plot
+\item {\em  plotname}::outputdat {\em filename} --- output histogram
+  to a text file
+\item {\em  plotname}::xlogscale --- toggle logarithmic x axis
+\item {\em  plotname}::ylogscale --- toggle logarithmic y axis
+\item {\em  plotname}::setnbins {\em nbins} --- set the number of bins
+\end{itemize}
+
+\subsubsection{Display}\label{display}
+
+Usage:
+
+{\tt display}\index{display} {\em model\_var} {\em identity\_var}
+
+This command plots each component of the {\em model variable} as a function
+of time. The {\em identity variable} is used to ensure continuity of
+the curves, and colouring them to aid identification of species. The
+index of the component is not a good proxy for this, as the index of a
+particular species may have changed through a {\tt condense}
+operation. 
+
+Traditional \EcoLab{} usage of this command is
+\begin{verbatim}
+display ecolab.density ecolab.species
+\end{verbatim}
+
+The colour of the lines used are controlled by the {\tt
+  palette} TCL variable.(\S\ref{palette}) This is a list of X-window
+colours to use.
+
+The namespace for this widget is constructed by appending the 1st
+argument to the string ``display\_''. Any unacceptable characters are
+replaced by '\_', so it may take a little experimentation to find the
+correct namespace name.
+display supports the following methods:
+\begin{itemize}
+\item display\_{\em model\_var}::print {\em filename} --- produce a postscript
+  representation to a file
+\item display\_{\em  model\_var}::clear --- clear the plot
+\end{itemize}
+
+\subsubsection{Connect\_plot}\label{connect}
+
+Usage:
+
+{\tt connect\_plot} {\em interaction} {\em density} 
+
+
+This command displays the connectivity of the interaction matrix. The
+ecologies are ordered to show up the independent subecologies, and if
+the {\tt palette} variable (\S\ref{palette}) has been defined, each of
+the independent subecology is coloured differently.
+
+The integer array {\em density} is used to mark rows and columns that
+have become extinct. The are marked in a wheat colour.
+
+There are two buttons which allow the user to zoom in and out by a
+scale factor of two.  One can also zoom in by clicking with the right
+mouse button at the location you wish to zoom in on.  The plot can
+also be dragged with the left mouse button to change the view.
+
+The namespace for this widget is constructed by appending the 1st
+argument to the string ``connect\_''. Any unacceptable characters are
+replaced by '\_', so it may take a little experienmtation to find the
+correct namespace name.
+display supports the following methods:
+\begin{itemize}
+\item connect\_{\em interaction}::print {\em filename} --- produce a postscript
+  representation to a file
+\end{itemize}
+
+
+\subsection{Palette Variable}\label{palette}
+
+This variable is used by the {\tt display}\index{display} and {\tt
+  connect\_plot}\index{connect\_plot} and {\tt plot}\index{plot}
+commands to define a palette of colours for colouring the species in
+the instruments. If the TCL variable {\tt palette}\index{palette} is
+assigned a list of X-windows colours (on many systems, a list of such
+colours is found in {\tt /usr/lib/X11/rgb.txt}), then the palette
+class can be used like an array within C++, returning the colour name
+as a string:
+\begin{verbatim}
+palette[i]
+\end{verbatim}
+returns the \verb|i%n|th colour, where {\tt n} is the number of
+colours in the palette list.
+
+\subsection{Making movies}
+
+Its actually quite easy to make a movie of an Ecolab run. Each of the
+base widgets of the instruments has a method called \verb+print+
+defined in the \hyperref{widgets namespace}{widgets namespace (\S}{)}{widgets namespace},
+which will output a postscript representation of the widget to a
+file. See {\tt gen-move.tcl}\index{gen-movie.tcl} for an example,
+which produced these \htmladdnormallinkfoot{animated GIFs}
+{http://parallel.hpc.unsw.edu.au/rks/ecolab-snaps/example-anim-gifs.html}.
+
+Once a series of postscript files are created, you can convert them
+into GIFs using the {\tt pstoimg}\index{pstoimg}\footnote{Requires
+  ghostscript, perl and netpbm to be installed} utility that comes
+with \htmladdnormallinkfoot{\LaTeX2HTML}
+{http://parallel.hpc.unsw.edu.au/htmldocs/latex2html}, using something
+like the following\footnote{The current {\tt pstoimg} script doesn't
+  seem to work properly in any directory other than /tmp --- I will
+  need to fix it and post a copy for \EcoLab{} users}:
+\begin{verbatim}
+cp *.ps /tmp
+for i in *.ps; do pstoimg -gif  $i; done
+cp /tmp/*.gif .
+\end{verbatim}
+%$
+
+
+Finally, use {\tt gifmerge}\index{gifmerge}\footnote{gifmerge is
+  available from a number of open source repositories} to produce an
+animated GIF.
+\begin{verbatim}
+gifmerge *.gif >movie.gif
+\end{verbatim}
+
+An alternative is to produce an AVI file using the \verb+mencoder+
+software that comes as part of the
+\htmladdnormallinkfoot{mplayer}{http://www.mplayerhq.hu}
+package. First you need to prepare a collection of jpeg files:
+\begin{verbatim}
+for i in *.ps; do 
+  f=${i%%.ps}
+  gs -sDEVICE=ppm -sOutputFile=$f.ppm -dNOPAUSE -dBATCH -g700x400 -r50  $i
+  cjpeg $f.ppm >$f.jpg
+  done
+\end{verbatim}
+You can control the final size of the bitmap using the \verb+-g+
+option to gs, and control the scale with the \verb+-r+ option
+(``pixels per inch''). Mplayer has problems if the bitmap is too
+large, and if the dimensions are odd.
+
+Finally, you can create an mpeg1 encoding using mencoder:
+\begin{verbatim}
+mencoder -mf on:type=jpeg -ovc lavc -lavcopts vcodec=mpeg1video \
+              \*.jpg -o movie.avi
+\end{verbatim}
+Consult the mencoder man page for more details on codec options.
+
+\subsection{Auxilliary Commands}
+
+\subsubsection{get\_vars/data\_server}\label{get_vars/data_server}
+
+Syntax:
+
+{\em model.}{\tt get\_vars}\index{get\_vars} {\em server port}
+
+{\em model.}{\tt data\_server}\index{data\_server} {\em port}
+
+This pair implements a client server connection. {\tt
+  data\_server}\index{data\_server}  is
+executed on the compute server, and services any requests coming in on
+the given port. {\tt get\_vars}\index{get\_vars} attaches to the compute
+server, and downloads the compute server's model variable into
+the client's model variable. The client can the follow on with the
+usual instruments for analysing the data. The advantage in this
+approach is that  X-window traffic can be avoided, the total amount of
+traffic between client and server can be controlled by how often these
+routines are called. An example setup is located in {\tt console.tcl}
+and {\tt engine.tcl}. An alternative client/server scenario can be
+contructed using Tcl sockets, and the console2.tcl/engine.tcl give an
+example of just transferring the \bn{} of the predator-prey
+example. This has a great deal of flexibility, allowing, for example,
+messages to be propagated from client back to the server to allow user
+interactivity into the model
+
+\subsubsection{checkpoint/restart}\label{checkpoint/restart}
+
+Syntax:
+
+{\em model}.{\tt checkpoint}\index{checkpoint} {\em filename}
+
+{\em model}.{\tt restart}\index{restart} {\em filename}
+
+These commands dump the contents of the model's variables into a file,
+and correspondingly reload the model's state variables from the file,
+in order to implement checkpoint-restart for a batch, or long running
+environment. These commands are defined in the \hyperref{{\tt
+  TCL\_obj\_t} class}{(\S}{)}{TCL_obj}\index{TCL\_obj\_t}, and can be
+overridden if desired.
+
+By setting the variable {\em model}{\tt .xdr\_check}\index{xdr\_check}
+to 1 (default value is zero), the checkpoint is written out using XDR
+routines, so the checkpoint file can be restarted on a computer with a
+different processor.
+
+\subsubsection{Trapping signals}
+
+{\tt trap} {\em signal} {\em command}\\
+{\tt trapabort} [off]
+
+Arrange for {\em command} to be executed whenever the signal {\em
+  signal} is received. {\em signal} may be specified symbolically (eg
+\verb+TERM+ or \verb+XCPU+) or numerically (15 and 24 in previous
+example).
+
+{\tt trapabort} arranges for the TCL error handler to be called
+whenever a segmentation violation, illegal instruction or bus error
+occurs. Often the error is mild enough, that processing can continue
+--- it is used in particular with the Object Browser. Specifying {\tt
+  trapabort off} turns off this behaviour --- you definitely need this
+disabled when running \EcoLab{} in a debugger.
+
+\subsection{ecolab\_version}\index{ecolab\_version}
+
+This reports the version number of the EcoLab system, eg 4.D22. This
+version number is also available in the file {\tt version.h} as the
+macro {\tt VERSION}\index{VERSION}.
+
+\section{Creating New Instruments}
+
+The best way to proceed is to copy an existing instrument, and modify
+it to your needs. The interface to the TCL language can be done almost
+entirely through the \hyperref{{\tt tcl++} class library}
+{{\tt tcl++} class library (\S}{)}{tcl++}\index{tcl++}. Use the {\tt
+  NEWCMD}\index{NEWCMD} macro to instantiate a new TCL
+command. This may be the complete widget, or merely a component of it.
+The instrument may be encoded entirely in TCL code, accessing the
+model's state variables in the usual way.  Alternatively, you may
+write C++ code to access the state variables directly through the
+model's class defintion. 
+
+An alternative approach is taken in {\tt
+  analysis.cc}\index{analysis.cc}. A variable that has been registered
+  in the {\tt TCL\_obj} database can have a reference set up to it
+  using the {\tt declare}\index{declare} macro, defined in {\tt
+  TCL\_obj\_base.h}\index{TCL\_obj\_base.h}. For example, in the
+  ecolab model, {\tt ecolab.density} is the TCL name for the {\tt
+  density} member of the ecolab model. Then
+\begin{verbatim}
+declare(density,iarray,"ecolab.density");
+\end{verbatim}
+declares a variable of type \verb+iarray&+ that may be used to refer to
+this member. Argument 3, the string parameter needn't be a constant
+string, but can be any string, eg a string passed through {\tt argv[]}.
+
+\section{Creating a New Model}\label{new model}
+
+The code that explicitly defines the \EcoLab{} model is contained in
+{\tt ecolab.cc}. Several examples of a completely different models is
+provided with the \EcoLab{} distribution. Most of these are described
+in different papers:
+\begin{description}
+\item[shadow] Ecolab model with a neutral shadow model, as described in
+  \cite{Standish00c} and \cite{Standish02b}.
+\item[newman] A variation of Mark Newman's evolutionary model,
+  described in \cite{Standish98a}
+\item[webworld] An implementation of Drossel {\em et al.}'s Webworld
+  model, described in \cite{Drossel-etal01} and \cite{Standish04a}.
+\item[jellyfish] A model of Jellyfish migration in Palauan lakes, in
+  collaboration with Mike Dawson. This model will be described in more
+  detail in \S\ref{jellyfish}.
+\item[netcomplexity] A class providing TCL methods for computing
+  network complexities. Used in the study reported in \cite{Standish05a}
+\end{description}
+
+A model typically consists of an interface file (.h), which is
+processed by Classdesc, an implementation file (.cc) and one or more
+experiment scripts (.tcl).
+
+The model should, as far as possible, be implemented as a single
+object (which may be a container). Let's call the model JoesFolly. The
+model class (eg \verb+JoesFolly_t+) is defined in the interface file in a
+regular C++ fashion. It is simplest if all members of the model class
+are public, however read the \hyperref{Classdesc chapter}{Classdesc
+  chapter (\S}{)}{classdesc}\index{classdesc} for how to handle
+private members.
+
+Consider whether your model maps naturally to the notion of objects
+related by a network. In that case, you may find that
+\hyperref{Graphcode}{Graphcode (\S}{)}{graphcode}\index{graphcode}
+will effectively distribute your model across multiple processors of
+an MPI parallel job. Both the spatial EcoLab model, and the Jellyfish
+model are examples of Graphcode deployment.
+
+Your model class needs to be derived from \verb+TCL_obj_t+. This adds
+a few extra methods to your class, such as checkpoint/restart, and
+client/server functionality.
+
+\begin{verbatim}
+class JoesFolly_t: public TCL_obj_t
+{
+  public:
+   int an_instance_var;
+   double a_method(TCL_args);
+};
+\end{verbatim}
+
+You then define your model object in the implementation file, and pass
+this object to the macro \verb+make_model+\index{make\_model}.
+
+\begin{verbatim}
+#include <ecolab.h>
+#include "JoesFolly.h"
+#include "JoesFolly.cd"
+#include <ecolab_epilogue.h>
+
+JoesFolly_t JoesFolly;
+make_model(JoesFolly);
+
+double JoesFolly(TCL_args args)
+{
+  double x=args, y=args;
+  ...
+}
+\end{verbatim}
+
+The supplied Makefile in the models directory can be used as a
+template for your own project. It contains rules that generate
+Makefile dependencies for all include files included with
+\verb+""+. It will launch classdesc to generate descriptors for all
+class definitions in \verb+JoesFolly.h+. All public instance variables
+are visible to TCL, as are methods that take no arguments, or a single
+\hyperref{TCL\_args}{TCL\_args (\S}{)}{TCL_obj}\index{TCL\_args} argument.
+
+Of course these instance variables or members are only actual accessible from
+TCL if their type \verb+T+ has a \verb+operator<<(ostream&,T)+
+defined. Accessing other types of object will result in a runtime error.
+
+Note that Standard C++ requires functions used by templates be
+declared prior to templates being defined. Since the .cd files are
+declaring functions like pack, TCL\_obj etc., templates that call
+these functions must be declared after all .cd files are included,
+otherwise the templates will not pick up the definitions in the .cd
+files. This is achieved by including
+\verb+ecolab_epilogue.h+\index{ecolab\_epilogue.h} after the all the
+.cd files have been included in the .cc file. In fact, now \EcoLab{}
+insists on the presence of this file if classdesc is used, and will
+generate a link time failure if not provided:
+\begin{verbatim}
+undefined reference to `(anonymous namespace)::classdesc_epilogue_not_included()'
+undefined reference to `(anonymous namespace)::TCL_obj_template_not_included()'
+\end{verbatim}
+\index{classdesc\_epilogue\_not\_included}\index{TCL\_obj\_template\_not\_included}
+
+\section{Error reporting}
+
+\EcoLab{} now uses C++ standard exceptions to report errors --- the
+old \verb+longjmp+ mechanism has now gone. When you want to report an
+error from within your user written commands and methods, throw an
+object of type \verb+error+\index{error}, which is defined in
+\verb%tcl++.h%\index{tcl++}. \verb+error+ has a convenient constructor
+that works a bit like printf, eg
+\begin{verbatim}
+  throw error("%d arguments is too many!",nargs);
+\end{verbatim}
+
+\EcoLab{} will trap all exceptions in user written routines and
+methods, and return a \verb+TCL_ERROR+ result. If its an exception derived
+from the standard \verb+exception+ class (which \verb+error+ is), then
+it will place the value returned by its \verb+what()+ method as the
+result field of the TCL command. Any other caught exception will
+report ``Unknown exception caught''.
+
+What happens when \EcoLab{} traps an exception depends on exactly
+where it occurs --- if it occurs as a result of executing a script,
+the error is reported on standard output, and \EcoLab{} exits with a
+non-zero return value (useful for writing test scripts, for
+example). If it occurs while the GUI environment is in operation, then
+a dialog box pops up, offering information to debug what went
+wrong. If it occurs as part of the command line interpreter (ie when
+\EcoLab{} is reading its commands from standard input) then the error
+result is reported on standard output, and execution continues.
+
+When the DEBUGGING flag set at make time, the error constructor will
+call \verb+abort()+, which can be caught by a debugger.
+
+\section{\protect\EcoLab{} coding style}
+
+There is no particular \EcoLab{} coding style in terms of things like
+choice of identifier capitalisation, indentation, use of whitespace,
+naming schemes and the like. Non-syntactical information is always
+misleading, and I can well advise studying the output of doxygen to
+work what a particular identifier actually is. For singleton classes,
+I have a habit of following the Java convention of capitalising the
+class name, and using a lower case for the object. Similarly, for
+namespaces, I append a \verb+_ns+.
+
+Within header files, I tend to write more compactly, for instance
+placing an opening brace on the previous line, or putting several
+simple statements together on one line. In implementation files I tend
+to space things out a bit more. Obviously, the idea is to only place
+members with a few lines of definition in the interface file,
+otherwise migrate the definition to an implementation file.
+
+More important is information that the compiler can use to enforce
+correctness and performance. The concept of const-correctness is very
+important in determining flows of data dependencies, similarly
+exception correctness is important for determining code flow. Use
+references instead of pointers whereever possible.
+
+Of crucial importance is a concept known as ``Resource Acquisition Is
+Initialisation''. If you need to access some resource such as memory,
+process or file, put the resource acquisition into the constructor of
+some object, and the corresponding resource release as the
+destructor. This has numerous benefits, ranging from eliminating
+resource leaks to ensuring exeception-correctness. 
+
+Much C++ code is written in a style I would call C/Java style. Objects
+are allocated on the heap using \verb+new+, and users of class
+libraries must ensure that the corresponding \verb+delete+ is called
+to correctly clean up the opbject when it is destroyed. This style of
+programming leads to a whole host of subtle problems that RAII avoids.
+
+\EcoLab{} code tends to assume that objects are default constructible,
+copiable, assignable and serialisable (DCAS). These concepts are heirarchical
+--- a class composed of members satisfying these criteria, also
+satisfies these criteria (or at least can be arranged to saisfy it
+through automated technques such as Classdesc). Unless absolutely
+necessary, try to ensure classes introduced in your \EcoLab{} model
+satisfy DCAS. Pointers are not DCAS, so if you need to use a pointer
+(eg to use a library having objects pointed to), then consider
+wrapping the pointer in an RAII style. \EcoLab{} provides the
+\verb+ref+ class, which is a DCAS type allowing shared
+references. \verb+ref+ is not suitable for polymorphic data, however
+\EcoLab{} provides \verb+poly{}+ type for handling polymorphic
+objects, that is DCAS. The Boost classes \verb+shared_ptr+ and
+\verb+intrusive_ptr+ (which are part of the TR1 standard addition to
+C++) are DCA, but unfortunately are not serialisable per se. Depending on
+your need, you may be better off using the \EcoLab{} \verb+ref+ and
+\verb+poly+ data types instead of the boost routines.

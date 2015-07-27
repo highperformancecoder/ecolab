@@ -1,0 +1,194 @@
+\section{tcl++}\label{tcl++}\index{tcl++}
+
+This section describes a light weight class library for creating
+Tcl/Tk applications. \cite{Ousterhout94} It consists of a header file
+\verb|tcl++.h|, and a main program \verb|tclmain.cc|. All you need to
+do to create a Tcl/Tk application is write any application specific
+Tcl commands using the {\tt NEWCMD}\index{NEWCMD}\label{NEWCMD} macro, link your code with the
+\verb|tclmain| code, and then proceed to write the rest of your
+application as a Tcl script. The \verb|tclmain| code uses argv[1] to
+get the name of a script to execute, so assuming that the executable
+image part of your application is called \verb|appl|, you would
+start off your application script with
+\begin{verbatim}
+#!appl
+...Your Tcl/Tk code goes here...
+\end{verbatim}
+then your script becomes the application, directly launchable from the
+shell.
+
+EcoLab processes any pending TCL events prior to executing the C++
+implementation method. This keeps the GUI lively. However, it may
+cause problems if TCL scripts depend on C++ state that may be changed
+by event processing. There is a boolean global variable {\tt
+  processEvents}\index{processEvents}, that disables the background
+even processing if set to false. TCL commands {\tt
+  enableEventProcessing}\index{enableEventProcessing} and {\tt
+  disableEventProcessing}\index{disableEventProcessing} can be used to
+set/clear this flag from the TCL interface.
+
+\subsection{Global Variables}
+
+The following global symbols are defined by \verb|tcl++|:
+\begin{description}
+\item[interp]\index{interp} The default interpreter used by Tcl/Tk
+\item[mainWin]\index{mainWin} The window used by Tk, of type
+  \verb|Tk_Window|, useful for obtaining X information such as
+  colourmaps
+\item[error]\index{error} To flag an error, throw a variable of type
+  \verb+error+. Use \verb|error(char *format,...)| to construct such
+  an object.
+The format string is passed to sprintf, along with all remaining
+arguments. The resulting string is what is return by the
+  \verb+error::what()+ method. Standard execptions are usually caught,
+  and the error message return by \verb+what()+ is attached to TCL's
+  error log, and \verb+TCL_ERROR+ return back to the interpreter.
+\end{description}
+
+\subsection{Creating a Tcl command}
+To register a procedure, use the \verb|NEWCMD| macro. It takes two
+arguments, the first is the name of the Tcl command to be created, the
+second is the number of arguments that the Tcl command takes.
+
+Here is an example.
+\begin{verbatim}
+#include "tcl++.h"
+
+NEWCMD(silly_cmd,1)
+{printf("argv[1]=%s\n", argv[1]);}
+\end{verbatim}
+This creates a Tcl command that prints out its argument.
+
+\subsection{tclvar}\index{tclvar}\label{tclvar}
+
+Tcl variables can be accessed by means of the tclvar class. For
+example, if the programmer declares:
+
+\verb|tclvar hello("hello"); float floatvar;|
+
+then the variable hello can be used just like a normal C variable in
+expression such as 
+
+\verb|floatvar=hello*3.4;|.
+
+The class allows assignment to and from \verb|double| and \verb|char*|
+variables, incrementing and decrementing the variables, compound
+assignment and accessing array Tcl variables by means of the C array
+syntax. The is also a function that tests for the existence of a Tcl
+variable.
+
+The complete class definition is given by:
+
+\begin{verbatim}
+class tclvar
+{ 
+ public:
+
+/* constructors */
+  tclvar();
+  tclvar(char *nm, char* val=NULL);
+  tclvar(tclvar&);
+  ~tclvar();
+
+/* These four statements allow tclvars to be freely mixed with arithmetic 
+ expressions */
+  double operator=(double x);
+  char* operator=(char* x);
+  operator double ();
+  operator char* ();
+
+  double operator++();
+  double operator++(int);
+  double operator--();
+  double operator--(int); 
+  double operator+=(double x);
+  double operator-=(double x);
+  double operator*=(double x);
+  double operator/=(double x);
+
+  tclvar operator=(tclvar x); 
+/* arrays can be indexed either by integers, or by strings */
+  tclvar operator[](int index);
+  tclvar operator[](char* index);
+
+  friend int exists(tclvar x);
+};
+\end{verbatim}
+
+\subsection{tclcmd}\index{tclcmd}
+
+A tclcmd allows Tcl commands to be executed by a simple \verb|x <<|
+{\em Tcl command} syntax. The commands can be stacked, or
+accumulated. Each time a linefeed is obtained, the command is
+evaluated.
+
+\pagebreak[4]
+For example:
+\begin{verbatim}
+tclcmd cmd;
+
+cmd << "set a 1\n puts stdout $a";
+cmd << "for {set i 0} {$i < 10} {incr i}"
+cmd << "{set a [expr $a+$i]; puts stdout $a}\n";
+\end{verbatim}
+
+The behaviour of this command is slightly different from the usual
+stream classes (but identical to {\tt
+  eco\_strstream}\index{eco\_strstream} from which it is derived, as a space is
+automatically inserted between arguments of a \verb|<<|. This means
+that arguments can be easily given - eg
+\begin{verbatim}
+cmd << "plot" << 1.2 << 3.4 << "\n";
+\end{verbatim}
+will perform the command {\tt plot 1.2 3.4}. In order to build up a
+symbol from multiple arguments, use the append operator. So
+\begin{verbatim}
+(cmd << "plot"|3) << "\n";
+\end{verbatim} 
+executes the command {\tt plot3}.
+
+
+\subsection{tclreturn}\index{tclreturn}
+
+The {\tt tclreturn} class is used to supply a return value to a TCL
+command. It inherits from {\tt eco\_strstream}\index{eco\_strstream},
+so has exactly the same behaviour as that class. When this variable
+goes out of scope, the contents of the stream buffer is written as the
+TCL return value. It is an error to have more than one {\tt tclreturn}
+in a TCL command, the result is undefined in this case.
+
+\subsection{tclindex}\index{tclindex}
+
+This class is used to index through a TCL array. TCL arrays can have
+arbitrary strings for indices, and are not necessarily ordered. The
+class has three main methods: {\tt start}, which takes a {\tt tclvar}
+variable that refers to the array, and returns the first element in
+the array; {\tt incr}, which returns the next element of the array;
+and {\tt last} which returns 1 if the last element has been read. A
+sample usage might be (for computing the product of all elements in
+the array {\tt dims}):
+\begin{verbatim}
+tclvar dims="dims";
+tclindex idx;
+for (ncells *= (int)idx.start(dims); !idx.last(); ncells *= (int)idx.incr() );
+\end{verbatim}
+
+The class definition is given by:
+\begin{verbatim}
+class tclindex  
+{
+public:
+  tclindex();
+  tclindex(tclindex&);
+  ~tclindex() {done();}
+  tclvar start(tclvar&);
+  inline tclvar incr();
+  tclvar incr(tclvar& x) {incr();}  
+  int last();
+};
+\end{verbatim}
+
+
+
+
+

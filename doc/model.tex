@@ -1,0 +1,452 @@
+\section{The \protect\EcoLab{} Model}\label{model}
+
+The \EcoLab{} model is but one model implemented using the \EcoLab{}
+software. This section documents the model itself, and may be skipped
+if your intention is to use \EcoLab{} for other models.
+
+We start with a generalised form of the Lotka-Volterra equation 
+\begin{equation}\label{lotka-volterra}
+\dot{\bn} = \br*\bn + \bn*\bbeta\bn.
+\end{equation}
+Here \bn\ is the population density, the component $n_i$ being the
+number of individuals of species $i$, \br\ is the difference
+between reproduction and death, \bbeta\ is the interaction matrix,
+with $\beta_{ij}$ being the interaction between species $i$ and $j$, *
+referring to elementwise multiplication and {\tt mutate} is the
+mutation operator.
+
+\subsection{Lotka-Volterra Dynamics}
+
+The most obvious thing about equation (\ref{lotka-volterra}) is its
+fixed point 
+\begin{equation}\label{fixed point}
+\hat{\bn} = -\bbeta^{-1}\br,
+\end{equation}
+where $\dot{\bn}=0$. For this point to be biologically meaningful, all
+components of $\hat{\bn}$ must be positive, giving rise to the following
+inequalities:
+\begin{equation}\label{positive species}
+\hat n_i = \left(\bbeta^{-1}\br\right)_i>0, \forall i
+\end{equation}
+The stability of this point is related to the
+negative definiteness of derivative of $\dot{\bn}$ at $\hat{\bn}$. The
+components of the derivative are given by
+\begin{equation}\label{derivative}
+\frac{\partial\dot{n}_i}{\partial n_j} =
+\delta_{ij}\left(r_i+\sum_k\beta_{ik}n_k\right) + \beta_{ij}n_i
+\end{equation}
+Substituting eq (\ref{fixed point}) gives
+\begin{equation}
+\left.\frac{\partial\dot{n}_i}{\partial n_j}\right|_{\hat{\bn}}=
+-\beta_{ij}\left(\bbeta^{-1}\br\right)_i
+\end{equation}
+
+Stability of the fixed point requires that this matrix should be
+negative definite. Since the $\left(\bbeta^{-1}\br\right)_i$ are
+all negative by virtue of (\ref{positive species}), each minor
+determinant of this matrix is equal to a minor determinant of \bbeta\
+multiplied by a positive number, stability of the equilibrium is
+equivalent to \bbeta\ being negative definite.
+
+A weaker condition is to require that the system remain bounded with
+time:
+\begin{equation}\label{boundedness}
+\sum_i\dot{n_i}=\br\cdot\bn + \bn\cdot\bbeta\bn < 0, \;\forall \bn:
+\sum_in_i>N \;\exists N
+\end{equation}
+
+As \bn\ becomes large in any direction, this functional is dominated
+by the quadratic term, so this implies that  $\bn\cdot\bbeta\bn\leq0
+\; \forall\bn: n_i>0$. Negative definiteness of \bbeta\ is sufficient,
+but not necessary for this condition. For example, the predator-prey
+relations (heavily normalised) have the following matrix as \bbeta:
+\begin{math}
+\bbeta=\left(\begin{array}{cc}
+-1 & 2\\
+-2 & 0\\
+\end{array}\right)
+\end{math}
+which has eigenvalues $3/2, -5/2$. If we let $\bn=(x,y), x,y\geq0$, then
+$\bn\cdot\bbeta\bn=-2x^2$, which is clearly non-positive
+for all $x$.
+
+Consider adding a new row and column to \bbeta. What is condition is
+the new row and column required to satisfy such that equation
+(\ref{boundedness}) is satisfied. Break up \bbeta\ in the following
+way:
+\begin{displaymath}
+\left(
+  \mbox{
+     \begin{tabular}{c|c}
+       $\begin{array}{ccc}\ddots\\&{\bf A}\\&&\ddots\end{array}$ & 
+       $\begin{array}{c}\vdots\\{\bf B}\\\vdots\end{array}$ \\
+       \hline
+       $\begin{array}{ccc}\cdots&{\bf C}&\cdots\end{array}$ & D
+     \end{tabular}
+   }
+\right)
+\left(
+  \mbox{
+     \begin{tabular}{c}
+     $\begin{array}{c}\vdots\\{\bf n_1}\\\vdots\end{array}$\\
+     \hline
+     $n_2$
+     \end{tabular}
+    }
+\right)
+\end{displaymath}
+
+Condition (\ref{boundedness}) becomes:
+\begin{equation}\label{boundedness2}
+{\bf n_1}\cdot{\bf A}{\bf n_1} + {\bf n_1}\cdot({\bf B}+{\bf C})n_2 +
+Dn_2^2 \leq 0
+\end{equation}
+
+Let 
+\begin{displaymath}
+a=\max_{n=1} \bn\cdot A\bn,\mbox{ and } b=\max_{i}B_i+C_i.
+\end{displaymath}
+ Then a sufficient but
+not necessary condition for condition (\ref{boundedness2}) is
+\begin{displaymath}
+an_1^2+bn_1n_2+Dn_2^2\leq0
+\end{displaymath}
+
+The maximum value with respect to $n_2$ is $an_1^2-(bn_1)^2/4D$, so
+this requires that
+\begin{equation}\label{boundedness3}
+b \geq 2\sqrt{aD}
+\end{equation}
+
+\subsection{Mutation}\label{mutation}
+
+With mutation, equation (\ref{lotka-volterra}) reads
+\begin{equation}
+\dot{\bn} = \br*\bn + \bn*\bbeta\bn + {\tt mutate}(\bmu,\br,\bn).
+\end{equation}
+
+
+The difficulty with adding mutation to this model is how to define the
+mapping between genotype space and phenotype space, or in other words,
+what defines the {\em embryology}. A few studies, including Ray's
+Tierra world, do this with an explicit mapping from the genotype to to
+some particular organism property (e.g. interpreted as machine language
+instructions, or as weight in a neural net). These organisms then
+interact with one another to determine the population dynamics. In
+this model, however, we are doing away with the organismal layer, and
+so an explicit embryology is impossible. The only possibility left is
+to use a statistical model of embryology. The mapping between
+genotype space and the population parameters $\br$,
+$\bbeta{}$  is expected to look like a rugged
+landscape, however, if two genotypes are close together (in a Hamming
+sense) then one might expect that the phenotypes are likely to be
+similar, as would the population parameters. This I call {\em random
+embryology with locality}.
+
+In the simple case of point mutations, the probability $P(x)$ of any
+child lying distance $x$ in genotype space from its parent follows a
+Poisson distribution. Random embryology with locality implies that the
+phenotypic parameters are distributed randomly about the parent
+species, with a standard deviation that depends monotonically on the
+genotypic displacement. The simplest such model is to distribute the
+phenotypic parameters in a Gaussian fashion about the parent's values,
+with standard deviation proportional to the genotypic displacement.
+This constant of proportionality can be conflated with the species'
+intrinsic mutation rate, to give rise another phenotypic parameter
+$\bmu$.  It is assumed that the probability of a mutation generating a
+previously existing species is negligible, and can be ignored. We also
+need another arbitrary parameter $\rho$, ``species radius'', or
+\verb+ecolab.sp_sep+,\index{sp\_sep} which can be understood as the
+minimum genotypic distance separating species, conflated with the same
+constant of proportionality as $\bmu$.
+
+In summary, the mutation algorithm is as follows:
+\begin{enumerate}
+\item The number of mutant species arising from species $i$ within a
+timestep is $\mu_i\alpha_in_i/\rho$. This number is rounded
+stochastically to the nearest integer, e.g. 0.25 is rounded up to 1
+25\% of the time and down to 0 75\% of the time.
+
+\item Roll a random number from a Poisson distribution
+$e^{-x/\mu+\rho}$ to determine the standard deviation $\sigma$ of phenotypic
+variation. 
+
+\item Vary $\br$ according to a Gaussian distribution about the
+  parents' values, with $\sigma\alpha_0$ as the standard deviation,
+  where $\alpha_0$ is the range of values that $\br$ is initialised to,
+  ie $\alpha_0$=\verb|ecolab.repro_max|\index{ecolab.repro\_max}$-$
+  \verb|ecolab.repro_min|\index{ecolab.repro\_min}
+
+\item The diagonal part of $\bbeta$ must be negative, so vary $\bbeta$
+according to a log-normal distribution. This means that if the old
+value is $\beta$, the new value becomes
+$\beta'=-\exp(\log_e(\beta)+\sigma)$. These values cannot become
+arbitrarily small, however, as this would imply that some species make
+arbitrarily small demands on the environment, and will become infinite
+in number. In \EcoLab{}, the diagonal interactions terms are prevented from
+becoming larger than $-r/(.1*{\tt INT\_MAX})$.
+
+\item The offdiagonal components of $\bbeta$, are varied in a similar
+fashion to $\br$. However new connections are added, or old ones
+removed according to $\lfloor 1/r\rfloor$, where $r\in(-2,2)$ is
+chosen from a stepped uniform distribution 
+\begin{displaymath}
+P(x)=\left\{
+\begin{array}{ll}
+0.25(1-g) & \mathrm{if}\; x\leq0\\
+0.25(1+g) & \mathrm{if}\; x>0\\
+\end{array}
+\right.
+\end{displaymath}
+where $g\in[-1,1]$ (default of 0) is specified by the TCL variable
+\verb+generalization_bias+\index{generalization\_bias}. The values on
+the new connections are chosen from the same initial distribution that
+the offdiagonal values where originally set with, ie the range
+\verb|ecolab.odiag_min|\index{ecolab.odiag\_min} to
+\verb|ecolab.odiag_max|\index{ecolab.odiag\_max}. Since $a$ in
+condition (\ref{boundedness3}) is computationally expensive, we use a
+slightly stronger criterion that is sufficient, computationally
+tractable yet still allows ``interesting'' non-definite matrix
+behaviour namely that the sum $\beta_{ij}+\beta_{ji}$ should be
+nonpositive.
+
+
+\item $\bmu$ must be positive, so should evolve according to the
+  log-normal distribution like the diagonal components of $\bbeta$.
+  Similar to $\bbeta$, it is a catastrophe to allow $\bmu$ to become
+  arbitrarily large. In the real world, mutation normally exists at
+  some fixed background rate --- species can reduce the level of
+  mutation by improving their genetic repair algorithms. In \EcoLab{},
+  this ceiling on $\bmu$ is given by the
+  \verb|ecolab.mut_max|\index{ecolab.mut\_max} variable.
+
+\end{enumerate}
+
+\subsection{Input Parameters}\label{input parameters}
+
+The model's parameters are set by TCL variables in {\tt model.tcl}.
+The actual data structures of the model are initialised the first time
+the model's generate step is called. An example input set is:
+\begin{verbatim}
+# initial condition
+ecolab.species {1 2}
+ecolab.density {100 100} 
+ecolab.create {0 0}
+ecolab.repro_rate {.1 -.1}
+ecolab.interaction.diag {-.0001 -1e-5}
+ecolab.interaction.val {-0.001 0.001}
+ecolab.interaction.row {0 1}
+ecolab.interaction.col {1 0}
+ecolab.migration {.1 .1}
+
+
+# mutation parameters
+ecolab.mutation {.01 .01}
+ecolab.sp_sep .1
+ecolab.repro_min -.1
+ecolab.repro_max .1
+ecolab.odiag_min -1e-3
+ecolab.odiag_max 1e-3
+ecolab.mut_max .01
+\end{verbatim}
+
+Model variables define a TCL command of the same name as they appear
+in the C++ source. So in the \EcoLab{} model, the C++ object {\tt
+  ecolab} defines a set of TCL commands such as {\tt ecolab.density}
+that can be used for setting or querying the values of {\tt ecolab}'s
+members.  If an argument is specified, then that argument is used to
+set the variable's value, otherwise, the variable's value is returned.
+Array members in the model are initialised by specifying an TCL list
+argument to the variables name, and return TCL lists when no argument
+is specified. The above example starts the ecology off with a single
+predator and prey (based on {\tt pred-prey.tcl}\index{pred-prey.tcl}).
+
+\subsection{\protect\EcoLab{} Model commands}
+
+\subsubsection{generate}\index{generate}
+
+This implements the basic Lotka-Volterra equations:
+
+\begin{math}
+\dot{\bn} = \br*\bn + \bn*\bbeta\bn
+\end{math}
+
+with \br\ being the reproduction rate and \bbeta\ being the
+interspecies interaction. This is implemented as a single line:
+
+\begin{verbatim}
+  density += repro_rate * density + (interaction * density) * density;
+\end{verbatim}
+
+This command also increments the timestep counter {\tt tstep}.
+
+An optional argument specifies a number of timesteps to run the
+generate step. This improves the speed by amortising the real to
+integer conversion operation over a number of timesteps. The downside
+is that computation may fail if the problem is ill-conditioned
+(offdiagonal elements of \bbeta\ too large with respect to the
+diagonal elements).
+
+\subsubsection{condense}\label{condense}\index{condense}
+
+This command compacts the systems of equations by removing extinct
+species where $n_i=0$.
+
+\subsubsection{mutate}\label{mutate}\index{mutate}
+
+This applies the point mutations to the system. The precise algorithm
+is described in \S\ref{mutation}. 
+
+\subsubsection{migrate}\label{migrate}\index{migrate}
+
+This operator implements migration within cellular \EcoLab{}. This
+updates density values according to the difference with the 4 nearest
+neighbours: $\bn+=\bgamma*(0.25(\bn_n+\bn_e+\bn_s+\bn_w)-\bn)$, where the
+$n,e,s,w$ index the north, east, south and west neigbouring cells.
+
+\subsubsection{maxeig}\label{maxeig}\index{maxeig}
+
+\verb|maxeig| returns the maximum eigenvalue of \bbeta. If this number
+is negative, the equilibrium point is stable, if positive, it is
+unstable. As reported in Standish (1994)\cite{Standish94}, the mutation
+drives the maximum eigenvalue slightly positive, then instabilities
+act to push the eigenvalue back to zero. This command requires LAPACK\index{LAPACK}).
+
+\subsubsection{lifetimes}\label{lifetimes}\index{lifetimes}
+
+\verb|lifetimes| records the timestep when a
+species passes a threshold (hardwired at 10) in the {\tt create}\index{create}
+iarray. If a species has yet to pass the threshold, or has gone
+extinct, the value in {\tt create} is zero. Upon return, this routine
+returns the lifetime of the species that have gone extinct. This can
+then be passed to a histogram routine, or written to a file.
+
+\subsubsection{random\_interaction}\label{random_interaction}
+\index{random\_interaction}
+
+Calls \hyperref{{\protect\tt sparse\_mat::init\_rand()}}{(See \S}{)}{sparse_mat} to randomly initialising the nonzero pattern of
+the offdiagonal elements. The average number of nonzeros per row is
+{\tt conn}, and the standard deviation of the number of nonzeros is
+{\tt sigma}.
+
+\subsubsection{set\_grid}
+
+Synopsis
+
+{\tt ecolab.set\_grid} {\em x} {\em y}
+
+\noindent Set up an $x\times y$ grid in spatial \EcoLab. See
+\verb+ecolab_spatial.tcl+ for an example using this.
+
+\subsubsection{get}
+
+Synopsis
+
+{\tt ecolab.get} {\em x} {\em y}
+
+\noindent Create TCL method for accessing the internals of cell $x$
+$y$. The new commands look like array elements, eg
+\begin{verbatim}
+ecolab(1,0).density
+\end{verbatim}
+
+\subsubsection{forall}
+
+Synopsis
+
+{\tt ecolab.forall ecolab.}{\em command} {\em args}
+
+Run {\em command} on all cells.
+
+\subsection{Spatial Variation}\label{spatial}
+
+The ecolab model can run in multicellular mode by calling
+\verb+ecolab.set_grid+ from TCL, specifying the dimensions of the
+grid.\index{set\_grid}. See
+\verb+ecolab_spatial.tcl+\index{ecolab\_spatial} for an example.
+
+Only population density varies between the cells --- all other
+variables are members of the ecolab variable so can be set or queried
+in the usual way.
+
+The usual ecolab model methods (generate, mutate, condense and
+lifetimes)\index{generate}\index{mutate}\index{condense}\index{lifetimes}
+can now be called, but operate on the entire grid. A new {\tt
+migrate}\index{migrate} is defined to handle migration between
+cells. You can also call a method of the ecolab cell on all cells
+using the \verb+forall+\index{forall} command. For instance, to set
+all cells to same initial density, use:
+\begin{verbatim}
+ecolab.forall ecolab.density [constant $nsp 100]
+\end{verbatim}
+
+Access to the individual cells can obtain by creating a TCL\_obj to
+refer to it by using the \verb+ecolab.get+\index{get} method, which
+creates commands like {\tt ecolab({\em x},{\em y})} to refer to the
+cell. These can be fed to visualisers in the usual way.
+
+\subsubsection{Parallel Execution}
+
+Since the cells are pins in a \hyperref{graphcode Graph}{graphcode
+  Graph (\S}{)}{graphcode}\index{graphcode}, they are distributed over
+parallel processes if available.
+
+Remember to call the \verb+gather+\index{gather} method to ensure node
+0 is updated before running a visualiser on global data.
+
+\begin{description}
+\item[ecolab.gather] Bring processor 0's data up to date with the rest
+  of the grid
+\item[ecolab.distribute\_cells] Broadcast processor 0's data out to the
+  rest of the grid.
+\end{description}
+
+\section{Palauan Jellyfish model}\label{jellyfish}
+
+This is a model being developed by Mike Dawson and Russell Standish to
+model the behaviour of jellyfish in a number of lakes on the island of
+Palau. Jellyfish are photosynthetic animals, so have have a preference
+for the sun and avoiding shadows. In this model, the jellyfish are
+represented by agents that have a position and velocity. If the
+jellyfish moves into shadow, or bumps into the side of the lake, it
+will reverse its direction. From time to time, the jellyfish will
+change direction and speed. The random generators governing these are
+selectable at runtime through the experimental script. Also, jellyfish
+do bump into each other. In the model display, a jellyfish will flash
+green if it bumps into another one.
+
+To run the jellyfish model, run the jellyfish.tcl script (located in
+the models directory), specifying the lake as an argument, eg:
+\begin{verbatim}
+jellyfish.tcl lakes/OTM
+\end{verbatim}
+
+You can choose whether to compile the 2D version of the model or the
+3D version, by (not) defining the preprocessor flag
+\verb+THREE_D+\index{THREE\_D} (see Makefile).
+
+The lake itself is represented by a Tk pixmap, with the blue component
+representing water. The lake shapes were scanned into a GIF file, and
+edited with a run-of-the-mill paint program to produce the lakes.
+
+Visualising the lake involved creating a Tk canvas widget, displaying
+the lake image in it, then overlaying it with shadow lines extending
+from the pixels lying on the boundary, and finally representing the
+jellyfish with arrow symbols (to indicate position and velocity).
+
+This model illustrates the use of probes. Mouse clicks in the canvas
+region are bound to a short method that determines which agent is
+closest to the mouse position. It then colours that agent red (for
+tracking purposes), creates a TCL\_obj representing that agent, and
+returns the name back to TCL. TCL then calls the object browser
+(\S\ref{object-browser}) on that TCL\_obj. In all, 14 lines of C++
+code, and 3 lines of TCL code. The result is very effective.
+
+The jellyfish model is written to be run in parallel using
+\hyperref{Graphcode}{Graphcode
+  (\S}{)}{graphcode}\index{graphcode}. The strategy is effectively a
+{\em particle-in-cell} method. The lake is subdivided into a Cartesion
+grid of cells, and each Jellyfish only needs to consult the cell that
+it is in, as well as neighbouring cells to determine if it will
+collide with any other jellyfish.
+

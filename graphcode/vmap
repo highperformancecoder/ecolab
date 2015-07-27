@@ -1,0 +1,21 @@
+class vmap: public std::vector<objref>
+{
+protected:
+  objref& at(GraphID_t i) 
+  {
+    if (i>=size()) 
+      {
+         if (i>=capacity())
+           {
+             size_t newsize=i+1;
+             if (2*size()>i+1) newsize=2*size(); //allocate extra space
+             std::vector<objref> tmp(newsize);
+             std::vector<objref>::swap(tmp);
+             std::vector<objref>::operator=(tmp);
+           }
+         resize(i+1);
+      }
+    return std::vector<objref>::operator[](i);
+  }
+};
+

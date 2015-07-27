@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Basic urand algorithm not efficient</TITLE>
+<META NAME="description" CONTENT="Basic urand algorithm not efficient">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node131.html">
+<LINK REL="previous" HREF="node129.html">
+<LINK REL="up" HREF="node128.html">
+<LINK REL="next" HREF="node131.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html2197"
+  HREF="node131.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html2191"
+  HREF="node128.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html2185"
+  HREF="node129.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html2193"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html2195"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html2198"
+  HREF="node131.html">Basic Gaussrand is correlated</A>
+<B> Up:</B> <A NAME="tex2html2192"
+  HREF="node128.html">Problems with the basic</A>
+<B> Previous:</B> <A NAME="tex2html2186"
+  HREF="node129.html">Basic urand objects are</A>
+ &nbsp; <B>  <A NAME="tex2html2194"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html2196"
+  HREF="node144.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H3><A NAME="SECTION000202200000000000000">
+Basic urand algorithm not efficient</A>
+</H3>
+
+<P>
+Since the basic urand object depends on Unix <code>rand()</code>, it is
+neither the most efficient algorithm available (the Mersenne Twister
+is generally better), nor is it necessarily acceptible in all cases.
+All pseudo-random generators have some kind of structure to their
+outputs, which may or may not be significant in the simulation. With
+the UNURAN library or with GNUSL it is possible to select from a range
+of different algorithms at runtime, making it easy to check that the
+simulation results do not depend on the type of generator used.
+
+<P>
+<BR><HR>
+<ADDRESS>
+Russell Standish
+2014-09-10
+</ADDRESS>
+</BODY>
+</HTML>

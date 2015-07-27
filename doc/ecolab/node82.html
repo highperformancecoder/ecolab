@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>MPIslave</TITLE>
+<META NAME="description" CONTENT="MPIslave">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node83.html">
+<LINK REL="previous" HREF="node81.html">
+<LINK REL="up" HREF="node78.html">
+<LINK REL="next" HREF="node83.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html1495"
+  HREF="node83.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html1489"
+  HREF="node78.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html1483"
+  HREF="node81.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html1491"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html1493"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1496"
+  HREF="node83.html">Remote Procedures</A>
+<B> Up:</B> <A NAME="tex2html1490"
+  HREF="node78.html">classdescMP</A>
+<B> Previous:</B> <A NAME="tex2html1484"
+  HREF="node81.html">MPIbuf_array</A>
+ &nbsp; <B>  <A NAME="tex2html1492"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1494"
+  HREF="node144.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H3><A NAME="SECTION000149400000000000000"></A><A NAME="3669"></A>
+<BR>
+MPIslave
+</H3>
+
+<P>
+<PRE>
+template&lt;class S&gt;
+class MPIslave
+{
+public:
+  int nprocs, myid;
+  vector&lt;int&gt; idle; /* list of waiting slaves, valid on master */
+  MPIslave();
+  ~MPIslave() {finalize();}
+  void init();
+  void finalize();
+  MPIbuf&amp; operator&lt;&lt;(void (S::*m)(MPIbuf&amp;))
+  template &lt;class T&gt; MPIbuf&amp; operator&lt;&lt;(const T&amp; x);
+  void exec(MPIbuf&amp; x);
+  MPIbuf&amp; get_returnv();
+  void wait_all_idle();
+  void bcast(MPIbuf&amp; c=cmd);
+};
+</PRE>
+
+<P>
+MPIslave is an implementation of a master-slave application. An
+MPIslave object must be created within an MPI parallel region (eg
+created by MPISPMD). The slave
+code is implemented as a class (S say), with each method
+implementing a <A HREF="node83.html#slave-method">remote procedure</A>
+being of type <code>void (MPIbuf&amp;)</code>. Declaring a variable of type
+<code>MPIslave&lt;S&gt;</code> will set up an interpreter on the slave processor. The remote processes
+are closed down once the variable is finalised, or goes out of scope. 
+
+<P>
+See the file <TT>mandelbrot.cc</TT> in the <TT>mpi-examples</TT> for an
+example of how this works.
+
+<P>
+<code>operator&lt;&lt;</code> is provided as a convenience -- one can compose a
+message of the form:
+<PRE>
+MPIslave&lt;S&gt; slave;
+slave &lt;&lt; &amp;S::foo &lt;&lt; x &lt;&lt; send(1);
+</PRE>
+without needing to declare additional <TT>MPIbufs</TT>.
+
+<P>
+For managing a list of idle slaves, the <TT>idle</TT><A NAME="3682"></A> vector
+is employed, and is manipulated through the <TT>exec</TT><A NAME="3684"></A>
+method, which dispatches a command to be executed on a slave, and the
+<TT>get_returnv()</TT><A NAME="3686"></A> which returns the returned
+result as an MPIbuf, and places the processor from which it received a
+value back on the idle list. This technique is only valid for slave
+methods returning a message (even if its a null message). The <TT>wait_all_idle</TT><A NAME="3688"></A> method waits for all slaves to
+return.
+
+<P>
+The <TT>bcast()</TT> method is a convenience method for sending the
+contents of MPISlave::cmd, or the optional MPIbuf argument to all
+slaves. 
+
+<P>
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html1495"
+  HREF="node83.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html1489"
+  HREF="node78.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html1483"
+  HREF="node81.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html1491"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html1493"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1496"
+  HREF="node83.html">Remote Procedures</A>
+<B> Up:</B> <A NAME="tex2html1490"
+  HREF="node78.html">classdescMP</A>
+<B> Previous:</B> <A NAME="tex2html1484"
+  HREF="node81.html">MPIbuf_array</A>
+ &nbsp; <B>  <A NAME="tex2html1492"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1494"
+  HREF="node144.html">Index</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Russell Standish
+2014-09-10
+</ADDRESS>
+</BODY>
+</HTML>

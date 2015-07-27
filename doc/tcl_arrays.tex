@@ -1,0 +1,43 @@
+\section{tcl\_arrays.cc}
+
+This module defines number of utility TCL commands for initialising
+array variables from TCL. Aside from {\tt srand}\index{srand}, they
+all return a list of values, suitable for initialising an array:
+
+\subsection{list generation}
+
+\begin{description}
+\item[srand {\em seed}] Initialises the random seed
+\item[unirand {\em size} [{\em max} [{\em min}]]] \index{unirand} Returns
+  a list (of length {\em size}) of uniform random numbers, in the range {\em
+  min}--{\em max}. {\em max} and {\em min} default to 1 and 0
+  respectively.
+\item[grand {\em n} [{\em std} [{\em mean}]]] \index{grand} Returns
+  a list (of length {\em size}) of normally distributed random
+  numbers, with mean {\em mean} and standard deviation {\em std}. {\em
+  std} and {\em mean} default to 1 and 0 respectively.
+\item[prand {\em n} [{\em std} [{\em mean}]]] \index{prand} Returns
+  a list (of length {\em size}) of Poisson distributed random
+  numbers, with mean {\em mean} and standard deviation {\em std}. {\em
+  std} and {\em mean} default to 1 and 0 respectively.
+\item[unique\_rand {\em size} [{\em max} [{\em min}]]]
+  \index{unique\_rand} Returns a list of unique random integers of
+  length {\em size} between {\em min} and {\em max}, which default to
+  0 and {\em size} respectively.
+\item[constant {\em size} {\em value}] \index{constant} returns a list
+  of {\em size} elements, each of value {\em value}.
+\item[pcoord {\em size}] \index{pcoord} returns a list of {\em size}
+  elements, whose values are the numbers 0\ldots{\em size}.
+\end{description}
+
+\subsection{Reduction Functions}
+
+Syntax:\index{max}\index{min}\index{av}
+\begin{quote}
+{\tt max} {\em tcllist}\\
+{\tt min} {\em tcllist}\\
+{\tt av} {\em tcllist}\\
+\end{quote}
+
+The maximum, minimum and average of a TCL list.
+

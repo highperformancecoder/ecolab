@@ -1,0 +1,104 @@
+\section{cachedDBM}\label{cachedDBM}
+
+{\tt cachedDBM} implements a notion of persistent objects. First and
+foremostly, it has the syntax of std::map, ie it is a template map
+object, with a key and value type pair. However, by calling the
+\verb+init()+ method, you can attach a database file, so that values
+saved in the cachedDBM are stored on disk, to be accessible at a later
+time.
+
+The iterator range \verb+begin()+ to \verb+end()+ refers to everything
+stored in the database. An alternative interface that iterates over
+the database keys is provided by \verb+keys.begin()+ and
+\verb+keys.end()+ The database is committed when \verb+begin()+ is
+called, unless the database was opened readonly. In this latter case,
+there are potentially items stored in the map which will not be
+iterated over. The alternative iteration
+methods \verb+firstkey()+, \verb+nextkey()+ and \verb+eof()+ is an
+older interface for iterating over \verb+keys.begin()+ to
+\verb+keys.end()+.  In this instance, the cachedDBM is not committed
+when \verb+firstkey()+ is called.
+
+Elements stored in the cachedDBM are not actually written to disk until
+\verb+commit()+ is called (or the cachedDBM object is
+destroyed). 
+
+Entries in the database can be removed via \verb+del()+. However, if
+an item with the same key is in the cache, it will need to be removed via
+\verb+erase()+ as well, otherwise it will be reinserted in the
+database at commit time.
+
+Only a very simple caching algorithm is employed, but it seems
+sufficient for many purposes. If the member \verb+max_elem+ is set,
+then this acts as an upper limit to the number of items stored in
+memory. If you request a new item to be loaded via the [] operator,
+and it will cause the number of items to be exceeded, the cachedDBM
+object is committed. At least the oldest quarter of the cache is cleared,
+and up to half of the cache. So if \verb+max_elem+=100, then one is
+guaranteed that the previous 50 accessed objects will always be in
+memory, so can be assigned to a reference.
+
+Classdesc serialisation (XDR serialisation) is used store both keys
+and value data. The database file are therefore machine independent.
+As a special exception to serialisation rules, \verb+char*+ can be
+used as key and data types.
+
+\subsection{Synopsis}
+
+\begin{verbatim}
+template<class key, class val>
+class cachedDBM_base : public base_map<key,val>
+{
+public:
+  int max_elem;   /* limit number of elements to this value */
+  void init(const char *fname, char mode='w'); /* open database file */
+  void Init(TCL_args args); /* TCL access to init() */
+  void close();    /* commit and close database file */
+  bool opened();   /* is a database attached? */
+  bool key_exists(const key& k); /* does the key exist in db */
+  val& operator[] (const key& k); /* access element with key k */
+  void commit();    /* write any changes out to the file, and clear cache */
+  void del(key k); /* delete key from database (but not cache!) */    
+  key firstkey();  /* return first key in database */
+  key nextkey();   /* return next key in database in an iteration */ 
+  int eof();       /* true if all keys have been accessed */
+  KeyValueIterator begin() const;
+  KeyValueIterator end() const;
+  KeyIterator keys.begin() const;
+  KeyIterator keys.end() const;
+};
+\end{verbatim}
+
+\subsection{TCL access}
+
+cachedDBM objects are addressable from TCL. Individual
+objects stored in the cachedDBM are addressable from TCL by means of
+the \verb+elem()+ method, but also the following members are
+exported to the TCL interface, allowing scripting access to
+manipulating the database:
+
+\begin{itemize}
+\item \verb+cachedDBM::max_elem+
+\item \verb+cachedDBM::Init+ {\em filename} {\em r$|$w}
+\item \verb+cachedDBM::close+
+\item \verb+cachedDBM::opened+
+\item \verb+cachedDBM::elem+ With one argument, get the element value,
+  with two arguments, set it.
+\item \verb+cachedDBM::commit+
+\item \verb+cachedDBM::firstkey+
+\item \verb+cachedDBM::nextkey+
+\item \verb+cachedDBM::eof+
+\end{itemize}
+
+\subsection{Types of database}
+
+By default, if EcoLab's Makefile detects the presence of Berkeley DB on
+your system, it will be used. Otherwise it use the ndbm API. If
+libgdbm and/or libgdbm\_compat (the NDBM compatibility layer in GDBM)
+these will be added to the linker flags, otherwise it will assume that
+ndbm is available as part of the standard system library.
+
+You can't mix and match database types. If you have some data stored
+in one type, and need to access it using a different database type,
+the utilities convtoNDBM and convtoBDB found in the util directory may
+be useful.

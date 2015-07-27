@@ -1,0 +1,90 @@
+\section{Statistical Analysis}
+
+The Analysis module contains some simple statistics support in the
+form of a \hyperref{TCL exported C++ data type}{TCL exported C++ data
+  type (\S}{)}{TCLTYPE}. The class definition is:
+
+\begin{verbatim}
+
+struct Stats: public array_ns::array<float>
+{
+  double sum, sumsq;
+  float max, min;
+  Stats(): sum(0), sumsq(0), max(-std::numeric_limits<float>::max()), 
+           min(std::numeric_limits<float>::max()) {}
+
+  void clear();
+  double av();
+  double median();
+  double stddev();
+
+  Stats& operator<<=(float x);
+  Stats& operator<<=(const array_ns::array<float>& x);
+  Stats& operator<<=(const array_ns::array<double>& x);
+
+  void add_data(TCL_args args); 
+};
+
+struct HistoStats: public Stats
+{
+  unsigned nbins;
+  bool logbins;
+  HistoStats(): nbins(100), logbins(false) {}
+  array_ns::array<double> histogram();
+  array_ns::array<double> bins();
+
+  double loglikelihood(TCL_args args);
+
+  array_ns::array<double> fitPowerLaw(); //< fit x^{-a} - return a and x_min
+  double fitExponential()                //< fit exp(-x/a) - return a 
+  array_ns::array<double> fitNormal();   //< fit exp(-(x-m)^2/2s, return m, s
+    
+  array_ns::array<double> fitLogNormal(); //< fit exp(-(log(x)-log m)^2/2s, return m, s
+};
+\end{verbatim}
+
+These classes can be used from the TCL programming environment like
+this example:
+
+\begin{verbatim}
+
+HistoStats h
+
+
+unuran rand
+rand.set_gen {distr=pareto(.5,1.7);}
+
+for {set i 0} {$i<10000} {incr i} {
+    h.add_data [rand.rand]
+}
+
+# obtain average, median, min, max, standard deviation and no. samples
+puts stdout "[h.av] [h.median] [h.min] [h.max] [h.stddev] [h.size]"
+
+# fit power law distribution, returning slope and xmin
+puts stdout "[h.fitPowerLaw]"
+
+# return log likelihood ratio for power law versus lognormal
+array set pl [h.fitPowerLaw]
+array set ln [h.fitLogNormal]
+set R [h.loglikelihood powerlaw($pl(0),$pl(1)) 
+                       lognormal($ln(0),$ln(1) $pl(1)]
+puts stdout "R=$R p=[expr fabs([erfc $R])]"
+\end{verbatim}
+
+Fitting parameters is achieved using the likelihood method as
+described in \cite{Clauset-etal07}.
+
+The log likelihood ratio function returns ${\cal R}/\sqrt{2n}\sigma$,
+where ${\cal R}=\ln \prod_i p_1(x_i)/p_2(x_i)$ is the logarithm of the
+ratio of likelihoods for the two distributions $p_1$ and $p_2$.
+
+If the log likelihood ratio is positive, it means the $p_1$ is more
+likely to fit the data than $p_2$, and negative is the other way
+around. $p=|\mathrm{erfc}({\cal R})|$ is the probability that this conclusion
+is wrong.\cite{Clauset-etal07}
+
+The histogram function allows one to do histograms without using the
+GUI widget, which is useful for larger collections of data. The
+parameters to the histogram method are the number of bins (default
+100) and whether linear or logarithmic binning is used.

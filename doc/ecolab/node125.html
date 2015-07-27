@@ -1,0 +1,199 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Statistical Analysis</TITLE>
+<META NAME="description" CONTENT="Statistical Analysis">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node126.html">
+<LINK REL="previous" HREF="node122.html">
+<LINK REL="up" HREF="ecolab.html">
+<LINK REL="next" HREF="node126.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html2121"
+  HREF="node126.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html2115"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html2109"
+  HREF="node124.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html2117"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html2119"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html2122"
+  HREF="node126.html">random.cc</A>
+<B> Up:</B> <A NAME="tex2html2116"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html2110"
+  HREF="node124.html">Reduction Functions</A>
+ &nbsp; <B>  <A NAME="tex2html2118"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html2120"
+  HREF="node144.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION000190000000000000000">
+Statistical Analysis</A>
+</H1>
+
+<P>
+The Analysis module contains some simple statistics support in the
+form of a <A HREF="node86.html#TCLTYPE">TCL exported C++ data type</A>. The class definition is:
+
+<P>
+<PRE>
+struct Stats: public array_ns::array&lt;float&gt;
+{
+  double sum, sumsq;
+  float max, min;
+  Stats(): sum(0), sumsq(0), max(-std::numeric_limits&lt;float&gt;::max()), 
+           min(std::numeric_limits&lt;float&gt;::max()) {}
+
+  void clear();
+  double av();
+  double median();
+  double stddev();
+
+  Stats&amp; operator&lt;&lt;=(float x);
+  Stats&amp; operator&lt;&lt;=(const array_ns::array&lt;float&gt;&amp; x);
+  Stats&amp; operator&lt;&lt;=(const array_ns::array&lt;double&gt;&amp; x);
+
+  void add_data(TCL_args args); 
+};
+
+struct HistoStats: public Stats
+{
+  unsigned nbins;
+  bool logbins;
+  HistoStats(): nbins(100), logbins(false) {}
+  array_ns::array&lt;double&gt; histogram();
+  array_ns::array&lt;double&gt; bins();
+
+  double loglikelihood(TCL_args args);
+
+  array_ns::array&lt;double&gt; fitPowerLaw(); //&lt; fit x^{-a} - return a and x_min
+  double fitExponential()                //&lt; fit exp(-x/a) - return a 
+  array_ns::array&lt;double&gt; fitNormal();   //&lt; fit exp(-(x-m)^2/2s, return m, s
+    
+  array_ns::array&lt;double&gt; fitLogNormal(); //&lt; fit exp(-(log(x)-log m)^2/2s, return m, s
+};
+</PRE>
+
+<P>
+These classes can be used from the TCL programming environment like
+this example:
+
+<P>
+<PRE>
+HistoStats h
+
+
+unuran rand
+rand.set_gen {distr=pareto(.5,1.7);}
+
+for {set i 0} {$i&lt;10000} {incr i} {
+    h.add_data [rand.rand]
+}
+
+# obtain average, median, min, max, standard deviation and no. samples
+puts stdout "[h.av] [h.median] [h.min] [h.max] [h.stddev] [h.size]"
+
+# fit power law distribution, returning slope and xmin
+puts stdout "[h.fitPowerLaw]"
+
+# return log likelihood ratio for power law versus lognormal
+array set pl [h.fitPowerLaw]
+array set ln [h.fitLogNormal]
+set R [h.loglikelihood powerlaw($pl(0),$pl(1)) 
+                       lognormal($ln(0),$ln(1) $pl(1)]
+puts stdout "R=$R p=[expr fabs([erfc $R])]"
+</PRE>
+
+<P>
+Fitting parameters is achieved using the likelihood method as
+described in [<A
+ HREF="node143.html#Clauset-etal07">1</A>].
+
+<P>
+The log likelihood ratio function returns <!-- MATH
+ ${\cal R}/\sqrt{2n}\sigma$
+ -->
+<IMG
+ WIDTH="66" HEIGHT="37" ALIGN="MIDDLE" BORDER="0"
+ SRC="img68.png"
+ ALT="${\cal R}/\sqrt{2n}\sigma$">,
+where <!-- MATH
+ ${\cal R}=\ln \prod_i p_1(x_i)/p_2(x_i)$
+ -->
+<IMG
+ WIDTH="170" HEIGHT="32" ALIGN="MIDDLE" BORDER="0"
+ SRC="img69.png"
+ ALT="${\cal R}=\ln \prod_i p_1(x_i)/p_2(x_i)$"> is the logarithm of the
+ratio of likelihoods for the two distributions <IMG
+ WIDTH="19" HEIGHT="30" ALIGN="MIDDLE" BORDER="0"
+ SRC="img70.png"
+ ALT="$p_1$"> and <IMG
+ WIDTH="19" HEIGHT="30" ALIGN="MIDDLE" BORDER="0"
+ SRC="img71.png"
+ ALT="$p_2$">.
+
+<P>
+If the log likelihood ratio is positive, it means the <IMG
+ WIDTH="19" HEIGHT="30" ALIGN="MIDDLE" BORDER="0"
+ SRC="img70.png"
+ ALT="$p_1$"> is more
+likely to fit the data than <IMG
+ WIDTH="19" HEIGHT="30" ALIGN="MIDDLE" BORDER="0"
+ SRC="img71.png"
+ ALT="$p_2$">, and negative is the other way
+around. <!-- MATH
+ $p=|\mathrm{erfc}({\cal R})|$
+ -->
+<IMG
+ WIDTH="93" HEIGHT="32" ALIGN="MIDDLE" BORDER="0"
+ SRC="img72.png"
+ ALT="$p=\vert\mathrm{erfc}({\cal R})\vert$"> is the probability that this conclusion
+is wrong.[<A
+ HREF="node143.html#Clauset-etal07">1</A>]
+
+<P>
+The histogram function allows one to do histograms without using the
+GUI widget, which is useful for larger collections of data. The
+parameters to the histogram method are the number of bins (default
+100) and whether linear or logarithmic binning is used.
+<BR><HR>
+<ADDRESS>
+Russell Standish
+2014-09-10
+</ADDRESS>
+</BODY>
+</HTML>

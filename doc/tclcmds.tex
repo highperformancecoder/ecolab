@@ -1,0 +1,196 @@
+\section{Tcl variables and Commands defined}
+
+\subsection{global variables}\label{globvar}
+The following global variables are defined:
+
+\begin{verbatim}
+tclvar nsp;
+array repro_rate;
+sparse_mat interaction;
+array mutation;
+iarray density;
+iarray tags;
+\end{verbatim}
+The above data types are defined in \S\ref{array} and \S\ref{sparse_mat}.
+
+\verb|nsp| is the number of species registered in the system, \nsp.
+\verb|repro_rate|, \verb|interaction| and \verb|mutation| are the
+systems parameters \br, \bbeta, \bmu\ respectively. \verb|density|
+is \bn. \verb|tags| is used for tracking species through
+extinctions, for lifetime and extinction distributions. A species is
+given a non-zero tag once it grows past a threshold (10 individuals),
+and that tag is not reused once a species goes extinct. See
+\S\ref{track_tags} for details.
+
+The parameters may be initialised by assigning values to Tcl arrays
+\verb|repro_rate|, \verb|interaction|,  \verb|mutation| and
+\verb|density|. Variables of type \verb|array| or \verb|iarray| may be
+initialised by assigning the following array elements:
+\begin{description}
+\item[list] The value of the array element is either a value, which is
+copied into each element of the variable, or it is a Tcl list of
+exactly \nsp\ elements, once repetitions have been expanded.
+Repetition can be expressed by the syntax $n$\verb|*|{\em tcl-list},
+where {\em tcl-list} may be a single value, or a list of values which
+is repeated. One may also specify a range by means of the syntax {\em
+low}:{\em high}[:{\em step}], where the step parameter may be
+ommitted.
+\item[random] if this array element is true, then the arrays values
+are assigned randomly. Sub indices of this are \verb|seed|,
+\verb|maxval| and \verb|minval|. The random values are allocated
+uniformly in the range \verb|minval|\ldots\verb|maxval|.
+\end{description}
+
+Examples of the preceding (assuming \nsp=5):
+
+\begin{tabular}{lcl}
+\verb|set density(list) 10| &$\Longrightarrow$& \verb|density| =
+\{10,10,10,10,10\}\\
+\verb|set density(list) {1,2*{2,3}}| &$\Longrightarrow$& \verb|density| =
+\{1,2,3,2,3\}\\
+\verb|set repro_rate(list) .1:.5:.1| &$\Longrightarrow$& \verb|repro_rate|
+= \{.1,.2,.3,.4,.5\}\\
+\verb|set repro_rate(random) true|\\
+\verb|set repro_rate(random,seed) 10|&$\Longrightarrow$&
+        \verb|repro_rate| is randomly assigned\\
+\verb|set repro_rate(random,maxval) .1| & & values in the range $[-.05,.1]$\\
+\verb|set repro_rate(random,minval) -.05| 
+\end{tabular}
+
+The diagonal part of \verb|interaction| is treated exactly as if it
+were an \verb|array|, so \verb|set interaction(diag,list) 0.1| sets
+the diagonal elements of \bbeta\ to 0.1.
+
+The offdiagonal elements of \bbeta\ are set by either the
+\verb|random| means above, viz.
+\begin{verbatim}
+set interaction(offdiag,random) true
+set interaction(offdiag,random,minval) -0.01
+set interaction(offdiag,random,maxval) 0.01
+set interaction(offdiag,random,connectivity) 3
+set interaction(offdiag,random,seed) 12
+\end{verbatim}
+where \verb|connectivity| (default \nsp/2) is the average number of
+non-zero elements in each row, or by means of the \verb|list|
+mechanism. In this case three lists need to be set, \verb|row|, {\tt
+col} which contain the indices of the non-zero elements and
+\verb|val|, which contains the interaction strength. So the standard
+predator-prey equation may be specified by:
+\begin{verbatim}
+set repro_rate(list) {.1 -.1}
+set interaction(diag,list) {-.0001 0}
+set interaction(offdiag,val) {-0.001 0.001}
+set interaction(offdiag,row) {0 1}
+set interaction(offdiag,col) {1 0}
+\end{verbatim}
+
+\subsection{generate}
+
+This implements the basic Lotka-Volterra equations:
+
+\begin{math}
+\dot{\bn} = \br*\bn + \bn*\bbeta\bn
+\end{math}
+
+with \br\ being the reproduction rate and \bbeta\ being the
+interspecies interaction. This is implemented as a single line:
+
+\begin{verbatim}
+  density += repro_rate * density + (interaction * density) * density;
+\end{verbatim}
+
+\subsection{condense}\label{condense}
+
+This command compacts the systems of equations by removing extinct
+species where $n_i=0$.
+
+\subsection{mutate}\label{mutate}
+
+This applies the point mutations to the system. In this case, the
+number of mutants each species produces is calculated from
+(\verb|sp_sep|)\br\bmu\bn. For each of these new species, mutate
+calculates a ``genetic drift'' probabilistically according a Poisson
+distribution with mean given by \bmu. It then arranges for the values
+of \br, \bbeta\ and \bmu\ to be mutated according to a Gaussian
+distribution, with standard error given by the ``genetic drift''. The
+skeleton of the code follows:
+
+\begin{verbatim}
+  /* calculate the number of mutants each species produces */
+  new_sp = (double) sp_sep * repro_rate * mutation * density;
+
+  /* generate index list of old species that mutate to the new */
+  new_sp = gen_index(new_sp); 
+
+  /* collect the old phenotypes */
+  new_repro_rate = repro_rate[new_sp];
+  new_mutation = mutation[new_sp];
+... and the same for interaction, but messy ...
+
+  /* calculate the genetic distances for the mutants from the parents */
+  array gdist(new_sp.size);
+  gdist.fillprand();
+  gdist *= new_mutation;
+
+  /* 
+    change phenotypes randomly, according a normal distribution 
+    with std dev gdist 
+  */
+  gspread( new_repro_rate, gdist );
+  gspread( new_interaction, gdist );
+  gspread( new_mutation, gdist );
+
+  /* concatonate new species */
+  density <<= new_sp;
+  repro_rate <<= new_repro_rate;
+  interaction <<= new_interaction;
+  mutation <<= new_mutation;
+
+  nsp += new_sp.size;
+\end{verbatim}
+
+\subsection{Palette}
+
+The palette variable determines the colours of the different graph
+lines used in \verb|display| and \verb|plot| and in colouring the
+connected webs of species in \verb|connect_plot|. It takes a Tcl list
+of standard X-window colour identifiers which is assigned cyclically
+to make up a full palette of \nsp\ entries.
+
+Eg.
+\begin{verbatim}
+set palette {black red green blue cyan magenta yellow}
+\end{verbatim}
+
+\subsection{maxeig}\label{maxeig}
+
+\verb|maxeig| returns the maximum eigenvalue of \bbeta. If this number
+is negative, the equilibrium point is stable, if positive, it is
+unstable. As reported in Standish (1994)\cite{Standish94}, the mutation
+drives the maximum eigenvalue slightly positive, then instabilities
+act to push the eigenvalue back to zero.
+
+\subsection{ngt10}
+
+Returns the numbers of species greater than 10 (the threshhold used in
+\verb|track_tags|.
+
+\subsection{track\_tags}\label{track_tags}
+
+For each species that has more than some threshold number of entities
+(hardwired at 10), \verb|track_tags| assigns a unique tag to that
+species. If a species has gone extinct, tag 0 is assigned to it.
+\verb|track_tags| returns the list with two entries; the first being a
+list of tag values corresponding to the species that have exceeded the
+threshold for the first time, and the second being a list of tag
+values corresponding to species that have gone extinct since the last
+call to \verb|track_tags|. Note that \verb|condense| \S\ref{condense}
+will delete tags for extinct species to maintain correspondence, and
+\verb|mutate| \S\ref{mutate} will assign the tag value 0 to a newly
+created species.
+
+\subsection{checkpoint, reload}\label{checkpoint}
+
+Both of these commands take a filename, and implement
+checkpoint/restart, for the globval variables defined in \S\ref{globvar}.
+

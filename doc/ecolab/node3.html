@@ -1,0 +1,256 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Making Eco Lab</TITLE>
+<META NAME="description" CONTENT="Making Eco Lab">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node4.html">
+<LINK REL="previous" HREF="node2.html">
+<LINK REL="up" HREF="ecolab.html">
+<LINK REL="next" HREF="node4.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html297"
+  HREF="node4.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html291"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html285"
+  HREF="node2.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html293"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html295"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html298"
+  HREF="node4.html">Using Ecolab under Cygwin</A>
+<B> Up:</B> <A NAME="tex2html292"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html286"
+  HREF="node2.html">License</A>
+ &nbsp; <B>  <A NAME="tex2html294"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html296"
+  HREF="node144.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00030000000000000000">
+Making <I><I>    Eco Lab</I></I></A>
+</H1>
+
+<P>
+Once you have unpacked the gzipped tar file, you should be able to
+make <I><I>    Eco Lab</I></I> by running ``make'' or ``gmake'' in the top level
+directory. <I><I>    Eco Lab</I></I> needs GNU make (which available by default on
+Linux, Cygwin/Windows or MacOS, but can be installed from sources on
+most operating systems if needed). If you have a multiprocessor, or
+multicore computer, you can speed up the build time by spreading the
+compilation over multiple processors using the <code>-j</code> option to <code>make</code>.
+Currently <I><I>    Eco Lab</I></I> has been developed against TCL/Tk 8.5 and gcc 4.5,
+but should build with other versions.
+
+<P>
+<I><I>    Eco Lab</I></I>'s Makefile searches for the software it needs, and sets
+Makefile flags appropriately depending on what it finds. The only
+software that is an absolute requirement is TCL, however it will also
+use Tk, BLT (version 2.4.z), Cairo, zlib, readline, XDR, UNURAN or GNUSL,
+Berkley DB or gdbm if available. 
+
+<P>
+For the plotting widgets, EcoLab will use Cairo by preference - if you
+wish to use the older BLT-based widgets, specify BLT=1 on the makefile
+build line. If Cairo is not installed on the system, Ecolab will fall
+back to using BLT, and if that is not available either, will not
+provide the plotting widgets.
+
+<P>
+For parallel programming, it also uses MPI and ParMETIS. <I><I>    Eco Lab</I></I>'s
+Makefile searches for the software in <code>$HOME/usr</code>, then
+<code>/usr/local</code> and finally <code>/usr</code>. When installing 3rd party
+libraries, please install them in either <code>$HOME/usr</code> or
+<code>/usr/local</code>, usually by specify the <code>--prefix</code> option to
+the ``configure'' command of the package.
+
+<P>
+You can override the default settings by passing options to make. In
+the following table, you can define an option by specifying (eg MPI=1)
+on the make command line, or undefine it using (eg MPI=).
+
+<P>
+
+<TABLE CELLPADDING=3 BORDER="1">
+<TR><TD ALIGN="LEFT">DEBUGGING</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>Turns on -g, and assertions</TD>
+</TR>
+<TR><TD ALIGN="LEFT">MEMDEBUG</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>replaces <code>new</code> and <code>delete</code> with a version that
+tracks and reports memory usage</TD>
+</TR>
+<TR><TD ALIGN="LEFT">PROFILING</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>logs times executed by each <A HREF="node105.html#NEWCMD">TCL
+  command</A></TD>
+</TR>
+<TR><TD ALIGN="LEFT">GCOV</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>Prepares executable for test coverage analysis</TD>
+</TR>
+<TR><TD ALIGN="LEFT">VPROF</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>Prepares executables for use by the <A NAME="tex2html1"
+  HREF="http://aros.ca.sandia.gov/~cljanss/perf/vprof/">vprof</A>
+tool</TD>
+</TR>
+<TR><TD ALIGN="LEFT">MPI</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>Enable distributed parallel version</TD>
+</TR>
+<TR><TD ALIGN="LEFT">OPENMP</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>Enable the use of OpenMP shared memory parallel constructs</TD>
+</TR>
+<TR><TD ALIGN="LEFT">PARALLEL</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>Enable the use of automatic parallelisation (Intel compiler)</TD>
+</TR>
+<TR><TD ALIGN="LEFT">XDR</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>Enable use of <A HREF="node62.html#XDR">XDR</A> for checkpoints and
+client-server. On some systems, XDR needs to be disabled for correct
+compilation in MPI mode. This bug should be fixed in this version of <I><I>Eco Lab</I></I>.</TD>
+</TR>
+<TR><TD ALIGN="LEFT">GCC</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>Force use of gcc compiler.</TD>
+</TR>
+<TR><TD ALIGN="LEFT">NOGUI</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>Disables all GUI functionality.</TD>
+</TR>
+<TR><TD ALIGN="LEFT">BDB</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>Use Berkley database from Sleepycat for the
+<A HREF="node139.html#cachedDBM">cachedDBM</A> class.</TD>
+</TR>
+<TR><TD ALIGN="LEFT">UNURAN</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>select UNURAN random number library</TD>
+</TR>
+<TR><TD ALIGN="LEFT">GNUSL</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>select GNUSL random number library</TD>
+</TR>
+<TR><TD ALIGN="LEFT">PREFIX</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=255>installation location for ``make install''. Defaults to
+<code>$HOME/usr/ecolab</code>.</TD>
+</TR>
+</TABLE>
+
+<P>
+<I><I>    Eco Lab</I></I> will use the <A NAME="tex2html2"
+  HREF="http://statistik.wu-wien.ac.at/unuran/">UNURAN non-uniform
+  random number library</A>
+or
+  the <A NAME="tex2html3"
+  HREF="http://www.gnu.org/software/gsl/">GNU Scientific
+  Library</A>
+if
+available. Note that the author uses UNURAN, so GNUSL is typically not
+  tested. If neither library is available, a limited library based on
+  the libc <code>rand()</code> function is used instead. The Make flags
+  <code>UNURAN</code> and <code>GNUSL</code> can be used to override the defaults.
+
+<P>
+Please note the following point when installing unuran (tested
+  against unuran 1.6.0):
+
+<UL>
+<LI>EcoLab assumes that if PRNG is available on the system, then
+  UNURAN will use it. However, UNURAN will not detect PRNG if it is installed
+  in <TT>$HOME/usr</TT>. If you have a linkage error complaining about
+  missing prng functions, either reinstall UNURAN with the
+  -with-urng-prng option to its configure script, or compile EcoLab
+  with the ``<TT>PRNG=</TT>'' Makefile option. The former is the
+  preferred option, as it allows runtime configuration of the uniform
+  random generator via PRNG's string interface.
+</LI>
+</UL>
+
+<P>
+The other options are relatively straight forward.  
+Define <TT>MPI</TT><A NAME="178"></A> if you wish to run <I><I>    Eco Lab</I></I> in parallel
+using the MPI message passing library. You will also need to install
+the
+<A NAME="tex2html4"
+  HREF="http://www-users.cs.umn.edu/~karypis/metis/parmetis/">ParMETIS</A>
+library.
+
+<P>
+The standard build will also build in the example models directory.
+You may also do a <TT>make install</TT>, which will install the <I><I>    Eco Lab</I></I>
+software into the directory given by the <TT>PREFIX</TT><A NAME="185"></A>
+variable in the top level Makefile. By default, this is <TT>  /usr/ecolab</TT>. You can change this value to something else (eg
+/usr/local/ecolab) by giving the command <TT>make
+  PREFIX=/usr/local/ecolab install</TT>. After that, you can compile the
+<TT>models</TT> directory completely independently of the rest of the
+distribution -- use the example Makefile in the <TT>models</TT>
+directory as a template. If you have installed <I><I>    Eco Lab</I></I> in a
+non-standard location, you may need to modify the <TT>ECOLAB_HOME</TT>
+Makefile variable to point to the installed directory.
+
+<P>
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html297"
+  HREF="node4.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html291"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html285"
+  HREF="node2.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html293"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html295"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html298"
+  HREF="node4.html">Using Ecolab under Cygwin</A>
+<B> Up:</B> <A NAME="tex2html292"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html286"
+  HREF="node2.html">License</A>
+ &nbsp; <B>  <A NAME="tex2html294"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html296"
+  HREF="node144.html">Index</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Russell Standish
+2014-09-10
+</ADDRESS>
+</BODY>
+</HTML>

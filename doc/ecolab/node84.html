@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>MPISPMD</TITLE>
+<META NAME="description" CONTENT="MPISPMD">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="previous" HREF="node83.html">
+<LINK REL="up" HREF="node78.html">
+<LINK REL="next" HREF="node85.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html1521"
+  HREF="node85.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html1515"
+  HREF="node78.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html1511"
+  HREF="node83.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html1517"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html1519"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1522"
+  HREF="node85.html">Workarounds</A>
+<B> Up:</B> <A NAME="tex2html1516"
+  HREF="node78.html">classdescMP</A>
+<B> Previous:</B> <A NAME="tex2html1512"
+  HREF="node83.html">Remote Procedures</A>
+ &nbsp; <B>  <A NAME="tex2html1518"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1520"
+  HREF="node144.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H3><A NAME="SECTION000149600000000000000"></A><A NAME="3707"></A>
+<BR>
+MPISPMD
+</H3>
+
+<P>
+<PRE>
+class MPISPMD
+{
+public:
+  int nprocs, myid;
+  MPISPMD() {nprocs=1, myid=0;}
+  MPISPMD(int&amp; argc, char**&amp; argv) {init(argc,argv);};
+  ~MPISPMD() {finalize();}
+  void init(int&amp; argc, char**&amp; argv);
+  void finalize() {MPI_Finalize();}
+};
+</PRE>
+
+<P>
+<TT>MPISPMD</TT> is a simple class that arranges for <code>MPI_Init</code> to
+be called when initialised, and <code>MPI_Finalise</code> when destroyed. It
+use is primarily to construct SPMD style programs. See the <TT>heat.cc</TT> example program to see how it might be used.
+
+<P>
+<BR><HR>
+<ADDRESS>
+Russell Standish
+2014-09-10
+</ADDRESS>
+</BODY>
+</HTML>

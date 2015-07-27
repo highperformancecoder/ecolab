@@ -1,0 +1,3 @@
+set lakef "lakes/BJCK.gif"
+set scale [expr 364/50.0]
+lake.mangrove_height [expr 27*$scale]

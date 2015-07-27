@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Synopsis of pack_t</TITLE>
+<META NAME="description" CONTENT="Synopsis of pack_t">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node70.html">
+<LINK REL="previous" HREF="node68.html">
+<LINK REL="up" HREF="node64.html">
+<LINK REL="next" HREF="node70.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html1309"
+  HREF="node70.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html1303"
+  HREF="node64.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html1297"
+  HREF="node68.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html1305"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html1307"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1310"
+  HREF="node70.html">Polymorphism</A>
+<B> Up:</B> <A NAME="tex2html1304"
+  HREF="node64.html">Graph serialisation</A>
+<B> Previous:</B> <A NAME="tex2html1298"
+  HREF="node68.html">Roll your own</A>
+ &nbsp; <B>  <A NAME="tex2html1306"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1308"
+  HREF="node144.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H3><A NAME="SECTION000143500000000000000">
+Synopsis of <TT>pack_t</TT></A>
+</H3>
+
+<P>
+<A NAME="3505"></A>
+<PRE>
+struct pack_t
+{
+  char *data;
+  size_t size;
+  size_t pos;
+  Ptr_flag ptr_flag;
+  std::vector&lt;PtrStoreRef&gt; alloced; //allocated data used for cleaning up 
+  pack_t(size_t sz=0);
+  pack_t(const char* filename, const char* mode); //pack to file
+  pack_t&amp; reseti();
+  pack_t&amp; reseto();
+  pack_t&amp; seeki(int offs);
+  pack_t&amp; seeko(int offs);
+  void packraw(char *x, int sz); 
+  void unpackraw(char *x, int sz);
+};
+</PRE>
+
+<P>
+<code>data</code> points to the beginning of the buffer maintained by
+<code>pack_t</code>. <code>size</code> refers to the current position of the input
+stream (ie the size of current valid data). <code>pos</code> refers to the
+current position of the output stream. It is an error to assign values
+directly to <TT>pos</TT>. It is OK to assign a value to size when setting
+up a <code>pack_t</code> variable for unpacking. Do not update <TT>size</TT>
+whilst packing. It is OK to assign a pointer value to <TT>data</TT> for
+unpacking only, however one should note that <TT>delete</TT> is called on
+the pointer during destruction, so in general you should reset <TT>data</TT> to NULL before the <code>pack_t</code> variable goes out of scope, if
+you don't want the object deleted (for instance if you've set it to
+the address of a static array).
+
+<P>
+<TT>size</TT> and <TT>pos</TT> can be reset to 0 using the <TT>reseti()</TT> and
+<TT>reseto()</TT> routines respectively. <TT>seeki()</TT> and <TT>seeko()</TT>
+allows arbitrary positioning of the streams -- the seek offset in
+this case is relative to the current position.
+
+<P>
+The constructor takes an integer argument which specifies the size of
+an initial buffer. For example:
+<PRE>
+pack_t b(N); b.size=N;
+fread(b,N,1,f);
+b&gt;&gt;foo;
+</PRE>
+is a common idiom for reading some data in from a file.
+
+<P>
+<code>packraw</code> and <code>unpackraw</code> allow arbitrary byte data to be
+pushed onto the buffer and taken off. This involves an extra copy
+operation, but is the safest way of manipulating the buffer directly.
+
+<P>
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html1309"
+  HREF="node70.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html1303"
+  HREF="node64.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html1297"
+  HREF="node68.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html1305"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html1307"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1310"
+  HREF="node70.html">Polymorphism</A>
+<B> Up:</B> <A NAME="tex2html1304"
+  HREF="node64.html">Graph serialisation</A>
+<B> Previous:</B> <A NAME="tex2html1298"
+  HREF="node68.html">Roll your own</A>
+ &nbsp; <B>  <A NAME="tex2html1306"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1308"
+  HREF="node144.html">Index</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Russell Standish
+2014-09-10
+</ADDRESS>
+</BODY>
+</HTML>

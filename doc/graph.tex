@@ -1,0 +1,186 @@
+\section{Graph library}
+
+The \EcoLab{} graph library is a library providing a simple and
+lightweight structure for representing graphs (aka networks). A graph
+consists of a set of nodes labelled $N=\{0\ldots n-1\}$, and a set of
+edges $E\subset N\times N$, which have an optional weight factor
+attached.
+
+An edge is represented by\index{Edge}
+\begin{verbatim}
+struct Edge: public std::pair<unsigned,unsigned>
+{
+    unsigned source();
+    unsigned target();
+    float weight;
+};
+\end{verbatim}
+
+The abstract Graph\index{Graph} interface has the following definition:
+\begin{verbatim}
+struct Graph
+{
+  struct const_iterator
+  {
+    Edge operator*() const;
+    const Edge* operator->() const;
+    const_iterator& operator++();
+    bool operator==(const const_iterator& x) const;
+    bool operator!=(const const_iterator& x) const;
+  };
+ 
+  virtual const_iterator begin() const;
+  virtual const_iterator end() const;
+
+  virtual unsigned nodes() const;
+  virtual unsigned links() const;
+  virtual void push_back(const Edge& e);
+  virtual bool contains(const Edge& e) const;
+  virtual bool directed() const;
+  virtual void clear(unsigned nodes=0);
+  const Graph& operator=(const Graph& x);
+  void input(const std::string& format, const std::string& filename);
+  void output(const std::string& format, const std::string& filename) const;
+  template <class BG> Graph_back_insert_iterator<Graph,BG>
+    back_inserter(const BG& bg);
+}
+\end{verbatim}
+
+The \verb+begin/end+ methods allow one to iterate over the edges. Only a \verb+const_iterator+
+is supplied, as it is an error to change the value of an edge. One can
+only reset a graph to the empty graph via clear, and construct the
+graph incrementally using the \verb+push_back()+ method.
+
+The \verb+contains+ method allows one to test whether a given edge is
+in the graph, and \verb+directed+ indicates whether the underlying graph
+structure has directed edges or not. A bidirectional graph otherwise
+appears as a directed graph where each edge appears twice, once for
+each direction.
+
+The input/output methods allow for the graph to be read/written
+from/to a file, in a variety of formats, given by the format
+parameter. Currently, the following formats are supported:
+\begin{tabular}{|l|l|}
+\hline
+name & description\\
+\hline
+pajek\index{pajek} & Pajek's .net format\\
+lgl\index{lgl} & LGL's .lgl format\\
+dot\index{dot} & Graphviz\index{Graphviz} format\\
+gengraph & Gengraph\index{Gengraph}\\
+\hline
+\end{tabular}
+Also graphs can be streamed to/from standard I/O streams, and will appear
+in dot format. In particular, this means that TCL scripts can access
+Graph objects as strings containing the Graphviz representation. See
+some of the examples in the \verb+models/netcomplexity_scripts+ directory.
+
+\verb+back_inserter+ creates an output iterator suitable for use with
+Boost Graph algorithms. As a simple example, to construct an \EcoLab{}
+graph from a Boost Graph, do
+\begin{verbatim}
+  std::pair<BG::edge_iterator,BG::edge_iterator> r=edges(bg);
+  ConcreteGraph<DiGraph> g1;
+  copy(r.first, r.second, g1.back_inserter(bg));
+\end{verbatim}
+
+
+This interface can be used in both a dynamic polymorphism fashion (ie
+Graph is an abstract base class) and in a static polymorphism fashion.
+
+The \verb+graph.h+ header file provides two concrete graph types -
+DiGraph\index{DiGraph} and BiDirectionalGraph\index{BiDirectionalGraph}, which differ just in whether each edge
+is directed or not.
+
+\subsection{Boost}
+
+\EcoLab{} has a deliberate policy of not having a dependency on
+Boost, but to be as compatible with Boost as far as it is
+possible. The \EcoLab{} graph library has been designed to be
+interoperable with the Boost Graph Library. The file
+\verb+test/test_boostgraph.cc+ gives some examples of interoperation
+with Boost.
+
+\subsection{Graph Library Functions}
+
+\verb+Degrees degrees(const G& g)+ returns array of node degrees
+return as the following structure:
+\begin{verbatim}
+struct Degrees
+{
+  array<unsigned> in_degree, out_degree;
+};
+\end{verbatim}
+
+\verb+void ErdosRenyi_generate(Graph& g, unsigned nodes, unsigned
+links, urand& uni);+
+
+Generate an Erd\"os-R\'enyi random graph with given nodes and
+links. Links are attached randomly to the nodes, drawn from uni.
+
+\verb+PreferentialAttach_generate(Graph& g, unsigned nodes, urand& uni,
+                                 random_gen& indegree_dist=default_indegree)+
+
+Barabasi-Albert Preferential attachment algorithm. For each node, an
+indegree value is drawn from \verb+indegree_dist+ (defaults to a
+constant value of 1). This many links are then preferentially attached
+to other nodes, according to their outdegree. 
+
+\subsection{Network complexity}
+
+\begin{verbatim}
+class BitRep implements Graph
+{
+  BiDirectionalBitRep symmetrise() const;
+  bool operator()(i,j);
+  bool next_perm();
+};
+
+class BiDirectionalBitRep implements Graph
+{
+  bool operator()(i,j);
+  bool next_perm();
+};
+ 
+class NautyRep implements Graph
+{
+  bool operator()(i,j);
+  double lnomega() const;
+  NautyRep canonicalise() const;
+};
+
+\end{verbatim}
+These classes implement the Graph interface by storing the linklist as
+a bitset. NautyRep specifically uses the bitset representation of the
+Nauty package. One can freely convert between these types and others
+implementing the Graph interface. All of these types support direct
+setting/testing of the i,j th edge through the operator(i,j).
+
+BitRep and BiDirectionalBitRep allow one to iterate through the
+permutations (thus cycling over all graph representations of a given
+edge count). This function returns false when no further permutations exist.
+
+NautyRep has member functions for calling the Nauty library. If you
+need both the lnomega and canonical representations, then it is more
+efficient to call them at the same time via the \verb+ecolab_nauty()+
+function.
+
+\begin{verbatim}
+void ecolab_nauty(const NautyRep& g, NautyRep& canonical, double& lnomega, bool do_canonical);
+\end{verbatim}
+call Nauty on g, returning a canonical representation canonical and
+lnomega ($\ln\Omega$). If canonical is not needed, then set \verb+do_canonical+ to
+false.
+
+\begin{verbatim}
+double canonical(BitRep& canon, const Graph& g);
+\end{verbatim}
+SuperNOVA canonical algorithm. Returns $\ln\Omega$ and canonical
+representation (which needn't correspond to that returned by Nauty).
+
+\begin{verbatim}
+double complexity(const Graph& g);
+\end{verbatim}
+Network complexity. If all links have the same weight, this
+corresponds to $2\lceil\log_2(n+1)\rceil+\lceil\log_2(n(n-1))\rceil+1+
+\log_2\left(\begin{array}{c}n(n-1)\\l\end{array}\right) - \log_2\Omega$.

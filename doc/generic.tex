@@ -1,0 +1,60 @@
+\section{Analysis}\label{analysis}
+
+\subsection{newwin}\label{TCLnewwin}
+
+Syntax:
+
+{\tt newwin} {\em name}
+
+Creates a new toplevel window for a TCL widget, with Tk identifier
+{\em name}. {\em name} must start with a full stop.
+
+\subsection{Reduction Functions}
+
+Syntax:
+
+{\tt max} {\em tcllist}\\
+{\tt min} {\em tcllist}\\
+{\tt av} {\em tcllist}\\
+
+The maximum, minimum and average of a TCL list.
+
+\subsection{Palette Variable}\label{palette}
+
+This variable is used by both the {\tt display\_stub} and {\tt
+  connect\_stub} routines to define a palette of colours for colouring
+  the species in the instruments. If the TCL variable {\tt palette} is
+  assigned a list of X-windows colours (on many systems, a list of
+  such colours is found in {\tt /usr/lib/X11/rgb.txt}),
+  then the palette class can be used like an array within C++,
+  returning the colour name as a string:
+\begin{verbatim}
+palette[i]
+\end{verbatim}
+returns the \verb|i%n|th colour, where {\tt n} is the number of
+colours in the palette list.
+
+\subsection{trap}\label{trap}
+
+Syntax:
+
+{\tt trap} {\em signal} {\em TCL command}\\
+{\tt trapabort}\\
+{\tt trapabort off}
+
+{\tt trap}\index{trap} allows a specific handler to
+be called when a signal is received. {\em signal} may be a numeric
+value, or a symbolic value (eg {\tt TERM}).
+
+{\tt trapabort}\index{trapabort} captures a few fatal signals such as
+{\tt SIGABRT} or {\tt SIGSEGV}, and calls the tcl++ {\tt error()}
+function. This gracefully returns control back to the TCL
+interpreter. {\tt trapabort off} reverses this effect. It is not
+desirable to have {\tt trapabort} set when running under a debugger
+such as gdb, or in batch mode, but it is desirable when using the
+system in an exploratory GUI mode.
+
+
+
+
+

@@ -1,0 +1,24 @@
+. /usr/local/share/aegis/profile
+aecp ecolab.ps
+rm *~ *.aux *.dvi *.log *.blg *.toc *.lof *.ilg *.idx
+latex ecolab
+makeindex ecolab.idx
+bibtex ecolab
+latex ecolab
+latex ecolab
+dvips ecolab
+TMP=/tmp/eco-doc$$
+mkdir $TMP
+aecp ecolab
+rm -rf ecolab
+latex2html -tmp $TMP ecolab
+rm -rf $TMP
+rm *~ *.aux *.dvi *.log *.blg *.toc *.lof *.ilg *.idx
+# remove extraneous file from repository
+aegis -list -terse project_files|grep doc/ecolab/|while read nm; do 
+  if [ ! -f ../$nm ]; then 
+    aecpu ../$nm
+    aerm -no_whiteout ../$nm
+    fi
+  done
+aenf ecolab

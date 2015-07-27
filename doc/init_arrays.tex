@@ -1,0 +1,87 @@
+\section{init\_arrays module}\label{init_arrays}
+
+\begin{verbatim}
+void initialize(array& data, char *tclname)
+void initialize_offdiag(sparse_mat& interact, char *nm, int size)
+\end{verbatim}
+
+This module provides routines for initialising the model state
+variables. {\tt initalize} provides a means of initialising an array
+(or iarray) using a TCL handle {\tt tclname}. The Ecolab model arrays
+are defined by the following code:
+\begin{verbatim}
+density = iarray(sum(nsp));
+initialize( density,"density");
+repro_rate = array(density.size);
+initialize( repro_rate,"repro_rate");
+mutation = array(density.size);
+initialize( mutation,"mutation");
+interaction = sparse_mat(density.size);
+initialize( interaction.diag, "interaction(diag)" );
+\end{verbatim}
+
+Variables of type
+\verb|array| or \verb|iarray| may be initialised by assigning the
+following array elements:
+\begin{description}
+\item[list] The value of the array element is either a value, which is
+copied into each element of the variable, or it is a Tcl list of
+exactly \nsp\ elements, once repetitions have been expanded.
+Repetition can be expressed by the syntax $n$\verb|*|{\em tcl-list},
+where {\em tcl-list} may be a single value, or a list of values which
+is repeated. One may also specify a range by means of the syntax {\em
+low}:{\em high}[:{\em step}], where the step parameter may be
+ommitted.
+\item[random] if this array element is true, then the arrays values
+are assigned randomly. Sub indices of this are \verb|seed|,
+\verb|maxval| and \verb|minval|. The random values are allocated
+uniformly in the range \verb|minval|\ldots\verb|maxval|.
+\end{description}
+
+Examples of the preceding (assuming \nsp=5, and the Ecolab model):
+
+\begin{tabular}{lcl}
+\verb|set density(list) 10| &$\Longrightarrow$& \verb|density| =
+\{10,10,10,10,10\}\\
+\verb|set density(list) {1,2*{2,3}}| &$\Longrightarrow$& \verb|density| =
+\{1,2,3,2,3\}\\
+\verb|set repro_rate(list) .1:.5:.1| &$\Longrightarrow$& \verb|repro_rate|
+= \{.1,.2,.3,.4,.5\}\\
+\verb|set repro_rate(random) true|\\
+\verb|set repro_rate(random,seed) 10|&$\Longrightarrow$&
+        \verb|repro_rate| is randomly assigned\\
+\verb|set repro_rate(random,maxval) .1| & & values in the range $[-.05,.1]$\\
+\verb|set repro_rate(random,minval) -.05| 
+\end{tabular}
+
+
+{\tt initialize\_offdiag} initializes the offdiagonal components of a
+{\tt sparse\_mat}. The size parameter is the dimension of the matrix.
+The diagonal component of a {\tt sparse\_mat} is just an array, so can
+be initialized by {\tt initialize}. In terms of Ecolab, the call is:
+\begin{verbatim}
+initialize_offdiag( interaction, "interaction(offdiag)", density.size);
+\end{verbatim}
+
+The offdiagonal elements of a {\tt sparse\_mat} are set by either the
+\verb|random| means above, viz.
+\begin{verbatim}
+set interaction(offdiag,random) true
+set interaction(offdiag,random,minval) -0.01
+set interaction(offdiag,random,maxval) 0.01
+set interaction(offdiag,random,connectivity) 3
+set interaction(offdiag,random,seed) 12
+\end{verbatim}
+where \verb|connectivity| (default \nsp/2) is the average number of
+non-zero elements in each row, or by means of the \verb|list|
+mechanism. In this case three lists need to be set, \verb|row|, {\tt
+col} which contain the indices of the non-zero elements and
+\verb|val|, which contains the interaction strength. So the standard
+predator-prey equation may be specified by:
+\begin{verbatim}
+set repro_rate(list) {.1 -.1}
+set interaction(diag,list) {-.0001 0}
+set interaction(offdiag,val) {-0.001 0.001}
+set interaction(offdiag,row) {0 1}
+set interaction(offdiag,col) {1 0}
+\end{verbatim}

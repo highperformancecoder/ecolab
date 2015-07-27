@@ -1,0 +1,934 @@
+\batchmode
+\documentstyle[pstricks,pst-node,html,epsf,makeidx]{article}
+
+\let\providecommand\newcommand
+\RequirePackage{ifthen}
+
+
+\title{{\sffamily\slshape
+    \mbox{\raisebox{.5ex}{Eco}\hspace{-.4em}{\makebox[.5em]{L}ab}}}{} Documentation}
+\author{Russell K. Standish}%
+\providecommand{\br}{\mbox{${\bf r}$}}  %reproductive rate%
+\providecommand{\bbeta}{\mbox{\boldmath{$\beta$}}}    %interaction matrix%
+\providecommand{\bgamma}{\mbox{\boldmath{$\gamma$}}}  %dispersal%
+\providecommand{\bmu}{\mbox{\boldmath{$\mu$}}}        %mutation rate%
+\providecommand{\bn}{\mbox{\boldmath{$n$}}}           %species density%
+\providecommand{\nsp}{\mbox{$n_{\rm sp}$}}            %no. of species           
+
+%
+\providecommand{\EcoLab}{{\sffamily\slshape
+    \mbox{\raisebox{.5ex}{Eco}\hspace{-.4em}{\makebox[.5em]{L}ab}}}} 
+
+%
+\providecommand{\psection}[1]{\subsection{#1}}%
+\providecommand{\psubsection}[1]{\subsubsection{#1}} 
+
+
+\makeindex
+
+
+
+
+
+
+
+
+\usepackage[latin1]{inputenc}
+
+
+
+\makeatletter
+
+\makeatletter
+\count@=\the\catcode`\_ \catcode`\_=8 
+\newenvironment{tex2html_wrap}{}{}%
+\catcode`\<=12\catcode`\_=\count@
+\newcommand{\providedcommand}[1]{\expandafter\providecommand\csname #1\endcsname}%
+\newcommand{\renewedcommand}[1]{\expandafter\providecommand\csname #1\endcsname{}%
+  \expandafter\renewcommand\csname #1\endcsname}%
+\newcommand{\newedenvironment}[1]{\newenvironment{#1}{}{}\renewenvironment{#1}}%
+\let\newedcommand\renewedcommand
+\let\renewedenvironment\newedenvironment
+\makeatother
+\let\mathon=$
+\let\mathoff=$
+\ifx\AtBeginDocument\undefined \newcommand{\AtBeginDocument}[1]{}\fi
+\newbox\sizebox
+\setlength{\hoffset}{0pt}\setlength{\voffset}{0pt}
+\addtolength{\textheight}{\footskip}\setlength{\footskip}{0pt}
+\addtolength{\textheight}{\topmargin}\setlength{\topmargin}{0pt}
+\addtolength{\textheight}{\headheight}\setlength{\headheight}{0pt}
+\addtolength{\textheight}{\headsep}\setlength{\headsep}{0pt}
+\setlength{\textwidth}{349pt}
+\newwrite\lthtmlwrite
+\makeatletter
+\let\realnormalsize=\normalsize
+\global\topskip=2sp
+\def\preveqno{}\let\real@float=\@float \let\realend@float=\end@float
+\def\@float{\let\@savefreelist\@freelist\real@float}
+\def\liih@math{\ifmmode$\else\bad@math\fi}
+\def\end@float{\realend@float\global\let\@freelist\@savefreelist}
+\let\real@dbflt=\@dbflt \let\end@dblfloat=\end@float
+\let\@largefloatcheck=\relax
+\let\if@boxedmulticols=\iftrue
+\def\@dbflt{\let\@savefreelist\@freelist\real@dbflt}
+\def\adjustnormalsize{\def\normalsize{\mathsurround=0pt \realnormalsize
+ \parindent=0pt\abovedisplayskip=0pt\belowdisplayskip=0pt}%
+ \def\phantompar{\csname par\endcsname}\normalsize}%
+\def\lthtmltypeout#1{{\let\protect\string \immediate\write\lthtmlwrite{#1}}}%
+\newcommand\lthtmlhboxmathA{\adjustnormalsize\setbox\sizebox=\hbox\bgroup\kern.05em }%
+\newcommand\lthtmlhboxmathB{\adjustnormalsize\setbox\sizebox=\hbox to\hsize\bgroup\hfill }%
+\newcommand\lthtmlvboxmathA{\adjustnormalsize\setbox\sizebox=\vbox\bgroup %
+ \let\ifinner=\iffalse \let\)\liih@math }%
+\newcommand\lthtmlboxmathZ{\@next\next\@currlist{}{\def\next{\voidb@x}}%
+ \expandafter\box\next\egroup}%
+\newcommand\lthtmlmathtype[1]{\gdef\lthtmlmathenv{#1}}%
+\newcommand\lthtmllogmath{\dimen0\ht\sizebox \advance\dimen0\dp\sizebox
+  \ifdim\dimen0>.95\vsize
+   \lthtmltypeout{%
+*** image for \lthtmlmathenv\space is too tall at \the\dimen0, reducing to .95 vsize ***}%
+   \ht\sizebox.95\vsize \dp\sizebox\z@ \fi
+  \lthtmltypeout{l2hSize %
+:\lthtmlmathenv:\the\ht\sizebox::\the\dp\sizebox::\the\wd\sizebox.\preveqno}}%
+\newcommand\lthtmlfigureA[1]{\let\@savefreelist\@freelist
+       \lthtmlmathtype{#1}\lthtmlvboxmathA}%
+\newcommand\lthtmlpictureA{\bgroup\catcode`\_=8 \lthtmlpictureB}%
+\newcommand\lthtmlpictureB[1]{\lthtmlmathtype{#1}\egroup
+       \let\@savefreelist\@freelist \lthtmlhboxmathB}%
+\newcommand\lthtmlpictureZ[1]{\hfill\lthtmlfigureZ}%
+\newcommand\lthtmlfigureZ{\lthtmlboxmathZ\lthtmllogmath\copy\sizebox
+       \global\let\@freelist\@savefreelist}%
+\newcommand\lthtmldisplayA{\bgroup\catcode`\_=8 \lthtmldisplayAi}%
+\newcommand\lthtmldisplayAi[1]{\lthtmlmathtype{#1}\egroup\lthtmlvboxmathA}%
+\newcommand\lthtmldisplayB[1]{\edef\preveqno{(\theequation)}%
+  \lthtmldisplayA{#1}\let\@eqnnum\relax}%
+\newcommand\lthtmldisplayZ{\lthtmlboxmathZ\lthtmllogmath\lthtmlsetmath}%
+\newcommand\lthtmlinlinemathA{\bgroup\catcode`\_=8 \lthtmlinlinemathB}
+\newcommand\lthtmlinlinemathB[1]{\lthtmlmathtype{#1}\egroup\lthtmlhboxmathA
+  \vrule height1.5ex width0pt }%
+\newcommand\lthtmlinlineA{\bgroup\catcode`\_=8 \lthtmlinlineB}%
+\newcommand\lthtmlinlineB[1]{\lthtmlmathtype{#1}\egroup\lthtmlhboxmathA}%
+\newcommand\lthtmlinlineZ{\egroup\expandafter\ifdim\dp\sizebox>0pt %
+  \expandafter\centerinlinemath\fi\lthtmllogmath\lthtmlsetinline}
+\newcommand\lthtmlinlinemathZ{\egroup\expandafter\ifdim\dp\sizebox>0pt %
+  \expandafter\centerinlinemath\fi\lthtmllogmath\lthtmlsetmath}
+\newcommand\lthtmlindisplaymathZ{\egroup %
+  \centerinlinemath\lthtmllogmath\lthtmlsetmath}
+\def\lthtmlsetinline{\hbox{\vrule width.1em \vtop{\vbox{%
+  \kern.1em\copy\sizebox}\ifdim\dp\sizebox>0pt\kern.1em\else\kern.3pt\fi
+  \ifdim\hsize>\wd\sizebox \hrule depth1pt\fi}}}
+\def\lthtmlsetmath{\hbox{\vrule width.1em\kern-.05em\vtop{\vbox{%
+  \kern.1em\kern0.8 pt\hbox{\hglue.17em\copy\sizebox\hglue0.8 pt}}\kern.3pt%
+  \ifdim\dp\sizebox>0pt\kern.1em\fi \kern0.8 pt%
+  \ifdim\hsize>\wd\sizebox \hrule depth1pt\fi}}}
+\def\centerinlinemath{%
+  \dimen1=\ifdim\ht\sizebox<\dp\sizebox \dp\sizebox\else\ht\sizebox\fi
+  \advance\dimen1by.5pt \vrule width0pt height\dimen1 depth\dimen1 
+ \dp\sizebox=\dimen1\ht\sizebox=\dimen1\relax}
+
+\def\lthtmlcheckvsize{\ifdim\ht\sizebox<\vsize 
+  \ifdim\wd\sizebox<\hsize\expandafter\hfill\fi \expandafter\vfill
+  \else\expandafter\vss\fi}%
+\providecommand{\selectlanguage}[1]{}%
+\makeatletter \tracingstats = 1 
+
+
+\begin{document}
+\pagestyle{empty}\thispagestyle{empty}\lthtmltypeout{}%
+\lthtmltypeout{latex2htmlLength hsize=\the\hsize}\lthtmltypeout{}%
+\lthtmltypeout{latex2htmlLength vsize=\the\vsize}\lthtmltypeout{}%
+\lthtmltypeout{latex2htmlLength hoffset=\the\hoffset}\lthtmltypeout{}%
+\lthtmltypeout{latex2htmlLength voffset=\the\voffset}\lthtmltypeout{}%
+\lthtmltypeout{latex2htmlLength topmargin=\the\topmargin}\lthtmltypeout{}%
+\lthtmltypeout{latex2htmlLength topskip=\the\topskip}\lthtmltypeout{}%
+\lthtmltypeout{latex2htmlLength headheight=\the\headheight}\lthtmltypeout{}%
+\lthtmltypeout{latex2htmlLength headsep=\the\headsep}\lthtmltypeout{}%
+\lthtmltypeout{latex2htmlLength parskip=\the\parskip}\lthtmltypeout{}%
+\lthtmltypeout{latex2htmlLength oddsidemargin=\the\oddsidemargin}\lthtmltypeout{}%
+\makeatletter
+\if@twoside\lthtmltypeout{latex2htmlLength evensidemargin=\the\evensidemargin}%
+\else\lthtmltypeout{latex2htmlLength evensidemargin=\the\oddsidemargin}\fi%
+\lthtmltypeout{}%
+\makeatother
+\setcounter{page}{1}
+\onecolumn
+
+% !!! IMAGES START HERE !!!
+
+\stepcounter{section}
+\stepcounter{section}
+\stepcounter{section}
+\stepcounter{section}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{section}
+{\newpage\clearpage
+\lthtmlfigureA{figure262}%
+\begin{figure}\pspicture(2,0)(15,7)
+\rput(7,7){\rnode{ecolabtcl}{\psframebox[fillstyle=solid,fillcolor=lightgray]{ecolab.tcl}}}
+\rput(3,5){\rnode{modeltcl}{\psframebox[fillstyle=solid,fillcolor=lightgray]{model.tcl}}}
+\rput(5,5){\rnode{Xecolab}{\psframebox{Xecolab}}}
+\rput(11,7){\rnode{ecolabcc}{\psframebox[fillstyle=solid,fillcolor=lightgray]{ecolab.cc}}}
+\rput(8,5){\rnode{TCL_obj}{\psframebox{TCL\_obj}}}
+\rput(5,3){\rnode{analysis}{\psframebox{analysis.cc}}}
+\rput(3,3){\rnode{BLT}{\psframebox{BLT}}}
+\rput(13,3){\rnode{pack}{\psframebox{pack}}}
+\rput(13,4){\rnode{classdescMP}{\psframebox{ClassdescMP}}}
+\rput(13,5){\rnode{graphcode}{\psframebox{Graphcode}}}
+\rput(15,4){\rnode{MPI}{\psframebox{MPI}}}
+\rput(10,3){\rnode{tclarrays}{\psframebox{tcl\_arrays.cc}}}
+\rput(6,1){\rnode{ecostrstream}{\psframebox{eco\_strstream.cc}}}
+\rput(8,0){\rnode{ecostring}{\psframebox{eco\_string.cc}}}
+\rput(3,1){\rnode{tclpp}{\psframebox{tcl++.h}}}
+\rput(12,1){\rnode{arrays}{\psframebox{arrays.h}}}
+\rput(12,0){\rnode{carrays}{\psframebox{c\_arrays.c}}}
+\rput(3,0){\rnode{tcltk}{\psframebox{TCL/TK}}}
+\ncline{ecolabtcl}{modeltcl}
+\ncline{ecolabtcl}{Xecolab}
+\ncline{ecolabtcl}{TCL_obj}
+\ncline{TCL_obj}{ecolabcc}
+\ncline{Xecolab}{analysis}
+\ncline{TCL_obj}{pack}
+\ncdiagg[angleA=280,arm=2]{ecolabcc}{arrays}
+\ncline{analysis}{tclpp}
+\ncline{arrays}{carrays}
+\ncdiagg[arm=2,angleA=90]{tclarrays}{ecolabtcl}
+\ncline{tclarrays}{tclpp}
+\ncline{tclarrays}{arrays}
+\ncdiagg[arm=1.5,angleA=250]{TCL_obj}{tclpp}
+\ncline{TCL_obj}{ecostring}
+\ncline{tclpp}{ecostrstream}
+\ncline{pack}{ecostring}
+\ncline{ecostrstream}{ecostring}
+\ncline{classdescMP}{pack}
+\ncline{graphcode}{classdescMP}
+\ncline{classdescMP}{MPI}
+\ncline{ecolabcc}{graphcode}
+\ncline{BLT}{analysis}
+\ncline{BLT}{Xecolab}
+\ncline{tcltk}{tclpp}
+\endpspicture
+ 
+\end{figure}%
+\lthtmlfigureZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlfigureA{figure351}%
+\begin{figure}\pspicture(2,0)(15,7)
+\rput(7,7){\rnode{jellyfishtcl}{\psframebox[fillstyle=solid,fillcolor=lightgray]{jellyfish.tcl}}}
+\rput(3,5){\rnode{lakes}{\psframebox[fillstyle=solid,fillcolor=lightgray]{lakes/}}}
+\rput(5,5){\rnode{Xecolab}{\psframebox{Xecolab}}}
+\rput(11,7){\rnode{jellyfishcc}{\psframebox[fillstyle=solid,fillcolor=lightgray]{jellyfish.cc}}}
+\rput(8,5){\rnode{TCL_obj}{\psframebox{TCL\_obj}}}
+\rput(5,3){\rnode{analysis}{\psframebox{analysis.cc}}}
+\rput(3,3){\rnode{BLT}{\psframebox{BLT}}}
+\rput(10,2){\rnode{pack}{\psframebox{pack}}}
+\rput(10,3){\rnode{classdescMP}{\psframebox{ClassdescMP}}}
+\rput(10,4){\rnode{graphcode}{\psframebox{Graphcode}}}
+\rput(12,3){\rnode{MPI}{\psframebox{MPI}}}
+\rput(6,1){\rnode{ecostrstream}{\psframebox{eco\_strstream.cc}}}
+\rput(8,0){\rnode{ecostring}{\psframebox{eco\_string.cc}}}
+\rput(3,1){\rnode{tclpp}{\psframebox{tcl++.h}}}
+\rput(3,0){\rnode{tcltk}{\psframebox{TCL/TK}}}
+\rput(11,6){\rnode{arrays}{\psframebox{arrays.h}}}
+\rput(11,5){\rnode{carrays}{\psframebox{c\_arrays.c}}}
+\rput(13,7){\rnode{tk}{\psframebox{TK}}}
+\rput(13,6){\rnode{random}{\psframebox{random}}}
+\rput(13,5){\rnode{UNURAN}{\psframebox{UNURAN}}}
+\ncline{jellyfishtcl}{lakes}
+\ncline{jellyfishtcl}{Xecolab}
+\ncline{jellyfishtcl}{TCL_obj}
+\ncline{TCL_obj}{jellyfishcc}
+\ncline{Xecolab}{analysis}
+\ncdiagg[arm=2,angle=285]{TCL_obj}{pack}
+\ncline{jellyfishcc}{arrays}
+\ncline{analysis}{tclpp}
+\ncline{tcltk}{tclpp}
+\ncline{arrays}{carrays}
+\ncline{jellyfishcc}{random}
+\ncline{jellyfishcc}{tk}
+\ncline{random}{UNURAN}
+\ncdiagg[arm=1.5,angleA=250]{TCL_obj}{tclpp}
+\ncline{TCL_obj}{ecostring}
+\ncline{tclpp}{ecostrstream}
+\ncline{pack}{ecostring}
+\ncline{ecostrstream}{ecostring}
+\ncline{classdescMP}{pack}
+\ncline{graphcode}{classdescMP}
+\ncline{classdescMP}{MPI}
+\ncdiagg[arm=.85,angle=220]{jellyfishcc}{graphcode}
+\ncline{BLT}{analysis}
+\ncline{BLT}{Xecolab}
+\endpspicture
+ 
+\end{figure}%
+\lthtmlfigureZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{section}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline1234}%
+$n$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{section}
+\stepcounter{section}
+\stepcounter{section}
+\stepcounter{section}
+\stepcounter{section}
+{\newpage\clearpage
+\lthtmldisplayA{displaymath2041}%
+\begin{displaymath}
+\dot{\mbox{\boldmath {$n$}}} = \mbox{${\bf r}$}*\mbox{\boldmath {$n$}}+ \mbox{\boldmath {$n$}}*\mbox{\boldmath {$\beta$}}\mbox{\boldmath {$n$}}.
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2541}%
+$n_i$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2543}%
+$i$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2545}%
+${\bf r}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2547}%
+$\beta$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2549}%
+$\beta_{ij}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2553}%
+$j$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsection}
+{\newpage\clearpage
+\lthtmldisplayA{displaymath2049}%
+\begin{displaymath}
+\hat{\mbox{\boldmath {$n$}}} = -\mbox{\boldmath {$\beta$}}^{-1}\mbox{${\bf r}$},
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2563}%
+$\dot{\mbox{\boldmath {$n$}}}=0$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2567}%
+$\hat{\mbox{\boldmath {$n$}}}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmldisplayA{displaymath2056}%
+\begin{displaymath}
+\hat n_i = \left(\mbox{\boldmath {$\beta$}}^{-1}\mbox{${\bf r}$}\right)_i>0, \forall i
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2575}%
+$\dot{\mbox{\boldmath {$n$}}}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmldisplayA{displaymath2062}%
+\begin{displaymath}
+\frac{\partial\dot{n}_i}{\partial n_j} =
+\delta_{ij}\left(r_i+\sum_k\beta_{ik}n_k\right) + \beta_{ij}n_i
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmldisplayA{displaymath2071}%
+\begin{displaymath}
+\left.\frac{\partial\dot{n}_i}{\partial n_j}\right|_{\hat{\mbox{\boldmath {$n$}}}}=
+-\beta_{ij}\left(\mbox{\boldmath {$\beta$}}^{-1}\mbox{${\bf r}$}\right)_i
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2591}%
+$\left(\mbox{\boldmath {$\beta$}}^{-1}\mbox{${\bf r}$}\right)_i$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmldisplayA{displaymath2080}%
+\begin{displaymath}
+\sum_i\dot{n_i}=\mbox{${\bf r}$}\cdot\mbox{\boldmath {$n$}}+ \mbox{\boldmath {$n$}}\cdot\mbox{\boldmath {$\beta$}}\mbox{\boldmath {$n$}}< 0, \;\forall \mbox{\boldmath {$n$}}:
+\sum_in_i>N \;\exists N
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2619}%
+$\mbox{\boldmath {$n$}}\cdot\mbox{\boldmath {$\beta$}}\mbox{\boldmath {$n$}}\leq0
+\; \forall\mbox{\boldmath {$n$}}: n_i>0$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2084}%
+$\mbox{\boldmath {$\beta$}}=\left(\begin{array}{cc}
+-1 & 2\\
+-2 & 0\\
+\end{array}\right)$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2627}%
+$3/2, -5/2$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2631}%
+$\mbox{\boldmath {$n$}}=(x,y), x,y\geq0$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2639}%
+$\mbox{\boldmath {$n$}}\cdot\mbox{\boldmath {$\beta$}}\mbox{\boldmath {$n$}}=-2x^2$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2641}%
+$x$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmldisplayA{displaymath2090}%
+\begin{displaymath}
+\left(
+  \mbox{
+     \begin{tabular}{c|c}
+       $\begin{array}{ccc}\ddots\\&{\bf A}\\&&\ddots\end{array}$\  & 
+       $\begin{array}{c}\vdots\\{\bf B}\\\vdots\end{array}$\  \\
+       \hline
+       $\begin{array}{ccc}\cdots&{\bf C}&\cdots\end{array}$\  & D
+     \end{tabular}
+   }
+\right)
+\left(
+  \mbox{
+     \begin{tabular}{c}
+     $\begin{array}{c}\vdots\\{\bf n_1}\\\vdots\end{array}$\\
+     \hline
+     $n_2$
+     \end{tabular}
+    }
+\right)
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmldisplayA{displaymath2115}%
+\begin{displaymath}
+{\bf n_1}\cdot{\bf A}{\bf n_1} + {\bf n_1}\cdot({\bf B}+{\bf C})n_2 +
+Dn_2^2 \leq 0
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmldisplayA{displaymath2124}%
+\begin{displaymath}
+a=\max_{n=1} \mbox{\boldmath {$n$}}\cdot A\mbox{\boldmath {$n$}},\mbox{ and } b=\max_{i}B_i+C_i.
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmldisplayA{displaymath2130}%
+\begin{displaymath}
+an_1^2+bn_1n_2+Dn_2^2\leq0
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2661}%
+$n_2$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2663}%
+$an_1^2-(bn_1)^2/4D$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmldisplayA{displaymath2132}%
+\begin{displaymath}
+b \geq 2\sqrt{aD}
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsection}
+{\newpage\clearpage
+\lthtmldisplayA{displaymath2139}%
+\begin{displaymath}
+\dot{\mbox{\boldmath {$n$}}} = \mbox{${\bf r}$}*\mbox{\boldmath {$n$}}+ \mbox{\boldmath {$n$}}*\mbox{\boldmath {$\beta$}}\mbox{\boldmath {$n$}}+ {\tt mutate}(\mbox{\boldmath {$\mu$}},\mbox{${\bf r}$},\mbox{\boldmath {$n$}}).
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2685}%
+$\mbox{${\bf r}$}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2689}%
+$\mbox{\boldmath {$\beta$}}{}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2691}%
+$P(x)$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2697}%
+$\mbox{\boldmath {$\mu$}}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2699}%
+$\rho$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2707}%
+$\mu_i\alpha_in_i/\rho$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2709}%
+$e^{-x/\mu+\rho}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2711}%
+$\sigma$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2717}%
+$\sigma\alpha_0$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2719}%
+$\alpha_0$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2727}%
+$-$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2731}%
+$\mbox{\boldmath {$\beta$}}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2739}%
+$\beta'=-\exp(\log_e(\beta)+\sigma)$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2741}%
+$-r/(.1*{\tt INT\_MAX})$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2751}%
+$\lfloor 1/r\rfloor$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2753}%
+$r\in(-2,2)$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmldisplayA{displaymath2153}%
+\begin{displaymath}
+P(x)=\left\{
+\begin{array}{ll}
+0.25(1-g) & \mathrm{if}\; x\leq0\\
+0.25(1+g) & \mathrm{if}\; x>0\\
+\end{array}
+\right.
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2755}%
+$g\in[-1,1]$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2757}%
+$a$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2759}%
+$\beta_{ij}+\beta_{ji}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2183}%
+$\dot{\mbox{\boldmath {$n$}}} = \mbox{${\bf r}$}*\mbox{\boldmath {$n$}}+ \mbox{\boldmath {$n$}}*\mbox{\boldmath {$\beta$}}\mbox{\boldmath {$n$}}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsubsection}
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2799}%
+$n_i=0$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2815}%
+$\mbox{\boldmath {$n$}}+=\mbox{\boldmath {$\gamma$}}*(0.25(\mbox{\boldmath {$n$}}_n+\mbox{\boldmath {$n$}}_e+\mbox{\boldmath {$n$}}_s+\mbox{\boldmath {$n$}}_w)-\mbox{\boldmath {$n$}})$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2817}%
+$n,e,s,w$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2821}%
+$x\times y$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsubsection}
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline2825}%
+$y$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+\stepcounter{section}
+\stepcounter{section}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+{\newpage\clearpage
+\lthtmlfigureA{figure3547}%
+\begin{figure}
+\epsfclipon 
+\epsfxsize =\textwidth
+\epsfbox{polymorph-example.eps}
+
+\end{figure}%
+\lthtmlfigureZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+{\newpage\clearpage
+\lthtmlfigureA{figure10870}%
+\begin{figure}\vbox{\include{parallel}
+}\end{figure}%
+\lthtmlfigureZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{section}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{section}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{section}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+{\newpage\clearpage
+\lthtmldisplayA{displaymath5264}%
+\begin{displaymath}
+a_i=\mathrm{sgn}(a_i) \exp(\log|a_i| + s_i\xi_i)
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline5364}%
+$\xi_i$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmldisplayA{displaymath5273}%
+\begin{displaymath}
+a_i = a_i + s_i\xi_i
+\end{displaymath}%
+\lthtmldisplayZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline5368}%
+$[0,1]$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline5370}%
+$e^{-x}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline5372}%
+$e^{-x^2/4}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsubsection}
+\stepcounter{subsection}
+\stepcounter{section}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{section}
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline5825}%
+${\cal R}/\sqrt{2n}\sigma$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline5827}%
+${\cal R}=\ln \prod_i p_1(x_i)/p_2(x_i)$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline5829}%
+$p_1$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline5831}%
+$p_2$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline5837}%
+$p=|\mathrm{erfc}({\cal R})|$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{section}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+\stepcounter{subsubsection}
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline6084}%
+$x_t$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline6086}%
+$x_{t-1}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{section}
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline6375}%
+$N=\{0\ldots n-1\}$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline6377}%
+$E\subset N\times N$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{subsection}
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline6379}%
+$\ln\Omega$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline6383}%
+$2\lceil\log_2(n+1)\rceil+\lceil\log_2(n(n-1))\rceil+1+
+\log_2\left(\begin{array}{c}n(n-1)\\l\end{array}\right) - \log_2\Omega$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{section}
+\stepcounter{subsection}
+\stepcounter{subsection}
+\stepcounter{section}
+\stepcounter{subsection}
+\stepcounter{subsection}
+{\newpage\clearpage
+\lthtmlinlinemathA{tex2html_wrap_inline6541}%
+$|$%
+\lthtmlinlinemathZ
+\lthtmlcheckvsize\clearpage}
+
+\stepcounter{subsection}
+
+\end{document}

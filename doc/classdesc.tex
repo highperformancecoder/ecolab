@@ -1,0 +1,1664 @@
+\section{Classdesc}
+
+\psection{Object Reflection}\label{classdesc}
+
+The basic concept behind this technology is the ability to know rather
+arbitrary aspects of an object's type at runtime, long after the
+compiler has thrown that information away. Other object oriented
+systems (for example Objective C) use dynamic type binding in the form
+of an {\tt isa} pointer that points to a compiler generated object
+representing the class of that object. This technology can also
+referred to as {\em class description}, as one only needs to generate
+a description of the object's class, then ensure the object is bound
+to that description, hence the name {\em classdesc}\cite{Madina-Standish01}.
+
+In C++, it is not necessary to incur the overhead of an {\tt isa}
+pointer, as one can bind an object's type to an overloaded instance of
+a function call at compile time.
+
+A {\em descriptor} is a template function \verb+D+\\
+\begin{verbatim}
+template <class T>
+void D(D_t&  t, const classdesc::string& d, T& a);
+\end{verbatim}
+
+The {\em D t} argument allows for state to be maintained while the
+descriptor is recursively applied to the data structure. If state is
+not needed for the descriptor, a ``null'' object should be
+provided for passing through.
+
+Users can specialise the descriptor to handle different types. The
+classdesc descriptor, however does not specialise the descriptor
+directly, but rather specialises a functor template:\\
+\begin{verbatim}
+template <class T> struct access_D
+{
+   void operator()(D_t&, const string&, T&);
+};
+\end{verbatim}
+There are two advantages of using functional classes:
+\begin{enumerate}
+\item Partial specialisation is available for template classes, but
+  not template functions
+\item It is simpler to specify friend access to a functional class for
+  those descriptors needing to access 
+   \hyperref{private or protected members}{(see \S}{)}{CLASSDESC ACCESS}
+\end{enumerate}
+The generic descriptor then calls \verb+operator()+ of the appropriate
+access class, eg:
+\begin{verbatim}
+template <class T>
+void pack(classdesc::pack_t& t, const classdesc::string& d, T& a)
+{classdesc::access_pack<T>()(t,d,a);}
+\end{verbatim}
+but may optionally perform some additional pre/post-processing if
+sensible for the particular descriptor.
+
+The {\tt classdesc} package comes with several descriptors already
+implemented:
+\begin{description}
+\item[pack/unpack]\index{pack}, which implements {\em
+serialisation}\index{serialisation}
+\item[xml\_pack/xml\_unpack]\index{xml\_pack}, which serialises to/from an
+  XML description of the object.
+\item[json\_pack/json\_unpack]\index{xml\_pack}, which serialises to/from a
+  JSON description of the object.
+\item[dump]\index{dump}, which writes an ascii representation of the
+  object to a {\tt std::ostream} object
+\item[javaClass]\index{javaClass}, which generates a Java interface to
+  C++ objects using JNI.
+\end{description}
+{\tt pack} will be documented in
+more detail later, but a simple overview is that the {\tt pack\_t}
+object is a simple reference to some binary data:
+\begin{verbatim}
+struct pack_t
+{
+  char *data();
+  const char *data() const;
+  size_t size();
+} buf;
+\end{verbatim}
+A call to \verb+pack(buf,""",foo)+ pushes a binary representation of
+the object {\tt foo} (regardless of its type) into buf. The inverse
+operation is called {\tt unpack}. Syntactically, we may also use the
+\verb+<<+ operator for the same purpose:
+\begin{verbatim}
+buf << foo << bar;
+fwrite(buf.data(),buf.size(),1,f);
+pack_t b1(buf.size());
+fread(b1.data(),b1.size(),1,f);
+b1 >> foo1 >> bar1;
+\end{verbatim}
+This code has made a copy of {\tt foo} and {\tt bar}, but with the
+data going via a disk file.
+
+\psubsection{Using Classdesc: Method 1, inlining}
+
+The inlining method is conceptually the simplest, and practically the
+easiest method to use. Start with the following rules in your {\em GNU
+  Make} {\tt Makefile}:
+\begin{verbatim}
+.SUFFIXES: .c .cc .o .d .h .cd
+ACTIONS=pack unpack
+OBJS= ...
+
+include $(OBJS:.o=.d)
+
+.c.d: 
+        gcc $(CFLAGS) -w -MM $< >$@
+
+.cc.d: 
+        gcc $(CFLAGS) -w -MM -MG $< >$@
+
+.h.cd:
+        classdesc $(ACTIONS) <$< >$@
+
+\end{verbatim} 
+
+The rules ending in .d automatically generate Makefile dependency
+rules for all the header files used in the project, and the {\tt
+  include} introduces these rules into the Makefile. This feature is
+not available with all {\tt make}s, but is with {\em GNU make}. Since
+it is a relatively trivial exercise to install GNU make if its not
+already available, it makes sense to use the features of this tool.
+
+The {\tt -MM} option to gcc instructs the preprocessor to generate
+Makefile dependency lines of the form:
+\begin{verbatim}
+xxx.o: yyy.h zzz.h
+\end{verbatim}
+for all header files {\tt yyy.h, zzz.h} included with the
+\verb+#include "..."+ form, not the \verb+#include <...>+ form. This
+is usually what one wants, rather than generating large numbers of
+dependency lines for system headers that don't change. The {\tt -MG}
+option tells the compiler to assume that files it can't find will be
+generated in the current directory. This is important, because we're
+going to include .cd files, which are automatically generated by {\tt
+  classdesc} by the .h.cd rule.
+Some native compilers support similar automatic dependency generation,
+however the behaviour differs in subtle ways from gcc. It is usually
+simpler to rely on gcc being available, as with GNU make. Note that
+gcc is not necessarily being used for code generation --- one can
+still use the native compilers for that.
+
+With these rules defined in the Makefile, all you need to do use a
+statement of the form \verb+buf << foo;+ is to place the statement 
+\begin{verbatim}
+#include "foo.cd"
+#include <classdesc_epilogue.h>
+\end{verbatim}
+somewhere after the \verb+#include "foo.h"+ line, including the
+{\tt foo} class definition. Any changes to the foo definition will
+update everything automatically.
+
+{\bf It is mandatory that \verb+classdesc_epilogue.h+ is included, it is not
+  an optional feature}. You will now get a link failure if you do not
+included this file when needed:
+\begin{verbatim}
+undefined reference to `(anonymous namespace)::classdesc_epilogue_not_included()'
+\end{verbatim}
+\index{classdesc\_epilogue\_not\_included}
+\EcoLab{} users should use the file
+  \verb+ecolab_epilogue.h+ instead.
+
+\psubsection{Using Classdesc: Method 2, building a
+  library}\label{library-method} 
+
+For most purposes, generating inline {\em action} definitions suffices
+for most purposes. However, if you have a lot of different classes for
+which you need {\em descriptors} defined, then compile times may become
+excessive. An alternative is to generate descriptor definition files for each
+class, and compile these into a library. This is
+achieved by the following rules:
+
+\begin{verbatim}
+.SUFFIXES: $(SUFFIXES) .h .cd .cdir .a
+.h.cd:
+        rm -rf $*.cdir 
+        mkdir -p $*.cdir      
+        classdesc -workdir $*.cdir -include ../$< $(ACTIONS) <$< >$@
+
+.cd.a:
+        $(MAKE) $(patsubst %.cc,%.o,$(wildcard $*.cdir/*.cc))
+        ar r $@ $*.cdir/*.o
+\end{verbatim}
+
+The {\tt -workdir}\index{-workdir} option requests {\tt
+classdesc}\index{classdesc} to write out the definition files into a
+new directory (\verb+$*.cdir+ %$
+ expands to {\tt foo.cdir} in the foo
+example). Function declarations are written out on standard output,
+which in this case is redirected to {\tt foo.cd}.
+
+The {\tt -include}\index{-include} directive tells classdesc to insert
+the line \verb+#include "../foo.h"+ into the definition files, so that
+the definitions can be compiled.
+
+The next (rather complicated) line compiles each of the definition
+files. The reason for recursively calling make, rather than the compiler
+directly, is that GNU Make is able to compile the directory in
+parallel, reducing compilation times. 
+
+See the polymorph example, which uses this technique.
+
+\psubsection{Synopsis of classdesc}
+
+\begin{description}
+\item[Syntax:]\mbox{}\\
+\begin{quote}
+{\tt classdesc [-workdir }{\em directory}{\tt ] [-include }{\em
+  include-file}{\tt ] [-I} {\em directory}{\tt]} [-nodef]
+  [-respect\_private] [-typeName] [-onbase] {\em descriptors\ldots}
+\end{quote}
+\end{description}
+
+{\tt classdesc} takes as its input the preprocessed model definition
+file, that contains all class definitions available to the model. It
+outputs a functor definition that recursively calls
+itself for each of the members of that class. If {\tt
+  -workdir}\index{-workdir} is specified, the functor definitions are
+written to the specified directory for later compilation into a
+library. The (pre-expanded) source header file should also be included
+via the {\tt -include}\index{-include} switch so that all necessary
+types are defined. If {\tt -workdir} is not specified, the functor
+definitions are output as inline declarations on standard output.
+
+Normally, classdesc reads its input from standard input, but some
+operating systems have trouble with this (eg Windows, but not
+Cygwin). An alternative is to specify the input file using the {\tt
+  -i}\index{-i} flag.
+
+If {\tt -I}\index{-I} switches are specified, the specified directory will be
+added to the search path for the action base include files.
+
+If a type has been forward declared (eg \verb+class foo;+), but not
+defined in classdesc's input source, a dummy definition is emitted of
+the form \verb+class foo {};+. The purpose of this is to ensure that
+the action routines for types containing pointers to such declared
+types will compile. This behaviour can be turned off by specifying the
+\verb+-nodef+\index{-nodef} option to classdesc.
+
+By default, classdesc will generate descriptors that access private
+and protected members. If a class has private or protected members, a
+\hyperref{{\tt CLASSDESC\_ACCESS}}{ (see
+  \S}{)}{CLASSDESC ACCESS}\index{CLASSDESC\_ACCESS} declaration needs
+to be given to allow access to the private members. Alternatively, it
+may be undesirable to expose the internals of an object, for example
+if the object is being exposed to a different programming
+environment. In such a case, the
+\verb+-respect_private+\index{-respect\_private} can be used to
+suppress the accessing of private or protected members.
+
+By default, enums are treated as integers. Sometimes it is desirable
+to treat them \hyperref{symbolically}{ (see \S}{)}{symbolic enums}, and
+this is managed by the \verb+-typeName+\index{-typeName} option.
+
+\verb+-onbase+ turns on the ability to distinguish between an action
+called on a base class and one called on a member. If your descriptor
+does not require this distinction, simply provide a method that calls
+to the original descriptor:
+\begin{verbatim}
+template <class T>
+void pack_onbase(pack_t& x,const string& d,T& a)
+{::pack(x,d,a);}
+\end{verbatim} 
+
+\psubsection{Limitations to classdesc}
+
+{\tt Classdesc} will work with any syntactically correct C++ code, and
+attempt to do the best it can. It ignores anything that is not a
+struct/class definition, or an enum definition\index{enum}. Classdesc
+does not preprocess the code presented to it --- if you depend on the
+preprocessor in your class definitions, you must filter your code
+through the preprocessor\index{C Preprocessor} first,\footnote{Use of
+the preprocessor is not to be recommended, however, as the contents of
+included files are also passed to classdesc, leading to a large number
+of inlined functions being emitted, and correspondingly long
+compilation times.} defining the macro
+\verb+_CLASSDESC+\index{\_CLASSDESC} to ensure pragmas are seen by the
+Classdesc processor.
+
+Unfortunately, overloaded member functions cannot be
+resolved to a distinct member pointer, so are quietly ignored by
+classdesc. This is not an issue with serialisation, of course, as all
+member functions are ignored, but has implications for descriptors such as
+\verb+TCL_obj+\index{TCL\_obj} that export object functionality.
+
+Raw pointers also cause problems in that there is no information at
+runtime about how many objects a pointer points to, or whether it is reasonable
+to extend the array with memory taken from the heap. Support for the
+various uses of pointers is discussed in \S\ref{pointers}.
+
+Another issue that occurs in reference to types defined in the current
+namespace with template parameters occuring as part of a
+specialisation. For example:
+\begin{verbatim}
+namespace frozz
+{
+  class Bar {};
+  template <> class Foo<Bar> {};
+}
+\end{verbatim}
+In this case, the classdesc processor does not know which namespace
+Bar is defined in, (as its more forgetful than your average C++
+compiler), so you will get a compile error that Bar is unknown. The
+workaround in this case is to full qualify type where necessary, ie
+replace the above code with
+\begin{verbatim}
+namespace frozz
+{
+  class Bar {};
+  template <> class Foo<frozz::Bar> {};
+}
+\end{verbatim}
+
+
+\psubsection{supported \#pragmas}
+
+\begin{description}
+\item[\#pragma omit {\em action typename}] Do not emit a definition of
+{\em action} for this type. It is up to the programmer to supply a
+definition for this type. The typename needs to be fully qualified
+with its namespaces.\index{\#pragma omit}
+\item[\#pragma treenode {\em typename}] Asserts that pointers to this
+type refer to a single object or are {\tt NULL}, and that following
+the links from this object will not return to the same object (no
+cycles). True of trees, and of limited validity with {\em directed
+acyclic graphs}.\index{\#pragma treenode}
+\item[\#pragma graphnode {\em typename}] As above, except that the
+graph is allowed to contain cycles. It generally requires more
+expensive algorithms to traverse a general graph than to traverse a tree.
+\index{\#pragma graphnode}
+\end{description}
+
+\psubsection{CLASSDESC\_ACCESS}\index{CLASSDESC\_ACCESS}
+\label{CLASSDESC ACCESS}
+
+Because serialisation requires access to the private parts of a class
+definition, by default {\tt classdesc} will emit actions for all members of
+class, whether private or public. Either all members of the class need
+to be declared {\tt public}, or a {\tt friend} declaration needs to be
+inserted so as to allow the action function to have access to the
+private members. The best way to do this is to put a {\tt
+CLASSDESC\_ACCESS} declaration in the class's definition, as in the
+following example:
+\begin{verbatim}
+class foo
+{
+   int x, y
+   CLASSDESC_ACCESS(foo);
+ public:
+   int z;
+}
+
+template <class T>
+class bar
+{
+   T x, y
+   CLASSDESC_ACCESS(bar);
+ public:
+   T z;
+}
+\end{verbatim}
+
+The macro takes a single argument --- the typename of class in
+question. The program {\tt insert-friend}\index{insert-friend} parses
+it input, and outputs a copy with these declarations appropriately
+inserted. This may be used to automate the process, but is not 100\% reliable.
+
+The CLASSDESC\_ACCESS\_TEMPLATE is now deprecated, and is synonymous
+with CLASSDESC\_ACCESS.
+
+The header file \verb+classdesc_access.h+\index{classdesc\_access.h}
+defines versions of these macros for the {\tt pack/unpack} actions ---
+use this file as a guide for writing your own macros if you implement
+other actions.
+
+On the other hand, for descriptors like \verb+isa+, and for exposure
+descriptors like \verb+TCL_obj+ in \EcoLab{}, it is not desirable to
+process private members. For these purposes, use
+\verb+-respect_private+ command line flag of \verb+classdesc+.
+
+\psubsection{Excluding particular members from the descriptor}
+
+Finer grained crontrol over whether members are included or not in the
+descriptor definition is given by means of the {\tt
+  Exclude}\index{Exclude} template class. For all intents, an
+\verb+Exclude<T>+ variable is drop-in replacable for a variable of
+type {\tt T}. However, provided your descriptor base definition
+supports it, such variables are simply ignored by the
+descriptor. Classdesc provided descriptor base files ignore variables
+of this type.
+
+\psection{pack/unpack}
+
+The pack/unpack\index{pack}\index{unpack} function implements
+``serialisation''\index{serialisation}, or the conversion of an object
+into a binary form that can be saved to a file or transmitted over the
+network to a process running in a different memory address space. The
+obvious strategy of simply sending {\tt sizeof(}{\em object}{\tt )}
+bytes starting at address \&{\em object} doesn't work, as the object
+may contain members that are implemented using pointers --- eg dynamic
+strings or arrays. The obvious strategy will simply copy the contents
+of the pointer, which will not be valid in the destination's address
+space.
+
+Using the recursive approach, simple data types can be serialised in
+the obvious way, or even transformed using into a machine independent
+form such as XDR\index{XDR}. Data types such as arrays or strings can
+be handled in a type dependent fashion by supplying appropriate specialised
+definitions.
+
+In this case, the {\tt pack\_t} type implements a buffer into/from
+which the data is packed/unpacked. It has public members {\tt char
+*data; int size} which point to the buffer and its size, that can then
+be used for further functionality such as the
+checkpoint/restart\index{checkpoint/restart} functionality of
+\EcoLab\index{Ecolab@\EcoLab}.
+
+There are 4 methods of using the pack function on an object ---
+\begin{enumerate}
+\item \verb+template <class T> pack_t& pack_t::operator<<(T&)+
+\item \verb+template <class T> ::pack(pack_t&, string, T&)+ 
+\item \verb+template <class T> ::pack(pack_t&, string, is_array,  T*, int)+
+\item \verb+void pack_t::packraw(char *,int)+
+\end{enumerate}
+The \verb+classdesc::string+ argument is not used, just pass \verb+""+ to
+it. The third method above is a utility routine for packing arrays of
+objects, \verb+is_array+ is a dummy type, so just pass the object
+returned by the default constructor \verb+is_array()+, then the final
+two arguments are the array pointer and size respectively. One could
+easily explicitly loop over the array elements using the first two
+methods.  The last method is used to pack arbitrary byte data into the
+buffer. \index{packraw} It differs from
+\verb+::pack(pack_t&, string, is_array, char*, int)+ in that the
+latter packs a series of characters, which are usually 32 bit
+quantities. It is thus both more efficient than the latter, as well as
+providing a means to unpack data stored in packed char format.
+
+\verb+xdr_pack+\index{xdr\_pack} is derived from \verb+pack_t+.
+Instead of packing to native data representation, it uses XDR data
+representation, which is machine independent. The
+\verb+XDR_PACK+\index{XDR\_PACK}\label{XDR} macro symbol must be defined to
+enable this functionality, otherwise \verb+xdr_pack+ is synonymous
+with \verb+pack_t+, allowing the code to be employed on machines that
+do not provide XDR functionality.
+
+{\tt unpack\_t} is typedef'd to {\tt pack\_t}, and {\tt
+  unpack\_base.h} is a link to {\tt pack\_base.h}.
+
+In order to use the streaming operators \verb+<<+ and \verb+>>+ you
+need to include the file \verb+pack_stream.h+, after all the
+corresponding \verb+pack()+ definitions. This is automatically done by
+including \verb+classdesc_epilogue.h+
+
+\psubsection{Pointers}\label{pointers}
+
+\verb+<rant>+
+
+\begin{quote}{\em
+{\em Pointers are evil!}. Pointers\index{pointers} are a dangerous
+programming construction, and widely abused in the C++ programming
+world. They often lead to obscure programming errors, and in
+particular to {\em memory leaks}, which are notoriously hard to
+debug. If there is an alternative method that encapsulates pointers,
+or avoids their use altogether, then that should be
+used. Unfortunately, pointers are vital to programming in C, and many
+of the practices are imported into C++.
+}\end{quote}
+
+\noindent\verb+</rant>+
+
+Whilst the above might be considered a little extreme, it is
+worthwhile listing what pointers are used for, and considering what
+alternatives there might be. In Classdesc, objects are usually assumed
+to have the following properties: default constructable, copyable,
+assignable and serialisable. All the simple traditional C data
+types except for pointers satisfy these properties. Compound types
+(structs and classes) whose members satisy these properties also
+satisfy them, with classdesc automagically extending the
+serialisability property.
+
+\begin{description}
+\item[Pass by reference] In C++, the reference operator \verb+&+ makes
+  obsolete the use of pointers for returning values from function
+  subroutines, and improves type safety. Of course this use of
+  pointers is of no concern for serialisation.
+\item[Dynamic Memory] In C++, we have the {\tt new} operator to return
+  an array of objects from the heap. However, one must be careful to
+  {\tt delete} the array of objects once finished with, otherwise a
+  memory leak may result. In this case, encapsulation can help. If the
+  pointer is encapsulated with a class definition, then the {\tt
+    delete} can be called automatically when the object's destructor
+  is called, which happens automatically when an object goes out of
+  scope. The simple case of allocating some dynamic memory from the
+  heap can be most readily performed using the standard library
+  container \verb+vector<T>+.
+\item[Strings] {\tt char *} variables can be replaced by the standard
+  library {\tt string} type.
+\item[Dynamic references] Dynamic references are used a lot to
+  represent graph structures, or to provide access to objects declared
+  outside the current scope. For some purposes, C++'s static reference
+  type (\verb+T&+) is suitable, but is limited to being initialised
+  only at object construction time. Also, any reference loops will
+  cause serialisation to enter an infinite loop and crash. C++ offers
+  more possibilities in the form of ``smart pointers'', that guarantee
+  destruction of the referenced object once the reference object goes
+  out of scope. The standard C++ library provides \verb+auto_ptr+, but
+  this is noncopyable, pretty much defeating the purpose of smart
+  pointers. The Boost library (http://www.boost.org) provides several
+  different sharable smart pointers, that can be used. Classdesc
+  provides its own concept, \hyperref{{\tt ref}}{ (see \S}{)}{ref} that
+  is a type of dynamic reference.  It should be noted that linked
+  lists can be handled easily with standard library containers.
+\item[Legacy APIs] Many C-based legacy APIs use pointers for pass by
+  reference functionality, strings, or for anonymous references (to
+  avoid publishing the full specification of an object). These APIs
+  can be easily encapsulated to ensure any allocated pointers are
+  appropriately cleaned up.
+\item[Global references] An object that needs to be destroyed before
+  main() exits, yet needs to be referred to globally throughout the
+  program cannot be implemented as a global object (which is destroyed
+  after the program exits). Instead, it has to either be a global
+  pointer, which is initialised when the object is created, or the
+  entire program must be implemented as a method of an object which is
+  created in main().
+\item [Runtime polymorphism] Since the actual datatype might vary,
+  only references to the object can be handled. Traditional
+  pointer-based polymorphic systems are not copyable, assignable nor
+  serialisable, as copying a point to an allocated object invariably
+  leads to double free() errors (in the case of destructors cleaning
+  up pointers) or to memory leaks (in the case destructors don't do
+  anything). Traditionally, copying is performed by means of a
+  \verb+clone()+ virtual method, which is also how this is done in
+  Java. EcoLab provides an  \hyperref{PolyBase}{ (see
+    \S}{)}{polymorphism} base class in \verb+Poly.h+ which
+  provides an interface for cloning, and interfaces for serialisation
+  can be found in the \verb+PolyPack+, \verb+PolyXML+ and
+  \verb+PolyJson+ headers and a simple
+  runtime type identification system. To create a reference, the
+  smart, modern way to do this is via the \verb+shared_ptr+ smart
+  pointer class, which is found in the TR1 library of your compiler,
+  or in Boost if your compiler does not do TR1.
+\end{description}
+
+\subsection{Graph serialisation}
+
+Dynamic references can be serialised, provided a few properties are
+known about the data structure they make up. There is no way of
+knowing whether standard pointer actually points to a real object, nor
+how many. However, since collections of objects are more conveniently
+handled by standard containers, and since no object can pointed to by
+the value 0 (or NULL), we can determine these things if the programmer
+follows a protocol whereby a pointer either references at a single
+object, or is NULL. Using a smart pointer additionally enforces this
+protocol. We call this the treenode or graphnode protocol, depending
+on whether the referenced data structure has cycles or not.
+
+By default, packing a pointer raises an exception. However, this
+behavior is changed either by specifying a given type obeys the
+treenode or graphnode protocol using the {\tt treenode}
+pragma\index{\#pragma treenode} or {\tt
+graphnode} pragma\index{\#pragma graphnode}
+respectively. Alternatively, the \verb+pack_t::ptr_flag+ can be set to
+the values \verb+TREE+ or \verb+GRAPH+ respectively.
+
+What happens in this case, is that special graph serialisation
+algorithms defined in \verb+pack_graph.h+ are called that ensure graph
+objects are serialised or deserialised correctly. For deserialisation,
+new objects must be created to store the node contents. References to
+these objects are placed in the \verb+alloced+\index{alloced} member
+of the \verb+pack_t+ buffer object. These newly created objects are
+destroyed when the buffer object is destroyed, unless a copy of the
+\verb+alloced+ vector is made first. Conversely, the objects can be
+destroyed without destroying the buffer by clearing the alloced
+vector. Individual objects can be destroyed by simply erasing them
+(assuming you know which ones!).
+
+The \verb+pack_graph+ algorithm can also be applied to smart pointers
+or other reference types. An example is the \verb+ref+ smart pointer
+provided with Classdesc. For your smart pointer class T, you will need to provide an \verb+Alloc<T>+
+class with an \verb+operator()(pack_t* buf, T& x)+ that returns a
+newly allocated object referenced by x. The \verb+buf+ object is there
+if you wish to use the alloced mechanism.
+
+\psubsection{Ref}\label{ref}
+
+Ref is a reference counted shared smart pointer implementation. When
+all references to an object are destroyed, the object it references is
+also destroyed. It is somewhat equivalent in functionality to Boosts
+\verb+shared_ptr+ or \verb+intrusive_ptr+. Boost, however, is a big
+library, so the decision was made to avoid any dependencies of
+Classdesc or \EcoLab{} on Boost.
+
+Ref performs entire object life cycle management. Initialising it with
+an object makes a copy, it does not pass control of the object to the
+ref. As such, it requires that its target type has a default
+constructor. Assigning, or copying a ref object duplicates the
+reference to a single object. Dereferencing works as with traditional
+pointers.
+
+Synopsis:
+\begin{verbatim}
+template <class T>
+class ref
+{
+public:
+  ref(); // unitialised refs are NULL
+  ref(const ref& x);
+  ref(const T& x);  //copies x
+  ref& operator=(const ref& x);
+  ref& operator=(const T& x);  //copies x
+  T* operator->();  //dereference operators
+  T& operator*(); 
+  void nullify();  //set reference to NULL
+  bool nullref();  //returns true if invalid
+  operator bool (); //returns true if valid
+  bool operator==(const ref& x);
+  bool operator==(const T* x); //true if x points to this's target
+  bool operator==(const T& x); //true if x==this's target
+};
+\end{verbatim}
+
+Packing a ref object automatically invokes the \verb+pack_graph+ algorithm.
+
+\psubsection{Converting code using traditional pointers to using ref}
+
+Let {\tt p} be a pointer and {\tt r} be the ref it is being changed
+to.
+
+This table details common idioms that need changing to convert the
+pointer to a ref:
+
+\vspace{1ex}
+{\tt
+\begin{tabular}{ll}
+\hline
+p=NULL; & r.nullify();\\
+p=new T; & r=T();\\
+p=new T(x,y,z); & r=T(x,y,z);\\
+p==NULL, p!=NULL etc & r, !r etc\\
+delete p; & Remove this statement, it is superfluous\\ 
+p->*m(); & (*r).*m() No Member pointer dereference\\
+p++, p+1, etc. & Illegal. Consider using a container type.\\
+\hline
+\end{tabular}
+}
+\vspace{1ex}
+
+Assignment and copying refs are more expensive than the equivalent
+pointer operations due to the reference counting mechanism. Therefore,
+consider using C++ references whereever possible:
+
+\begin{verbatim}
+void foo(const ref<int>& x); instead of void foo(ref<int> x);
+{                                        {
+  const ref<int>& y=...;     instead of    ref<int> y=...;
+\end{verbatim}
+
+A certain amount of care must be taken if you need to declare the
+ref as non-const. If it is just the target that needs updating,
+it is fine to use a \verb+ref<T>&+ variable. However, if the ref
+itself needs updating, then use \verb+ref<T>+ instead.
+
+\psubsection{STL containers}
+
+If you choose one of the standard library container types, include the
+file \verb+"pack_stl.h"+\index{pack\_stl.h}, which provides
+serialisation\index{serialisation} support for the standard C++
+library.
+
+\psubsection{Roll your own}
+
+Sometimes, you need to develop you own dynamic data types, whether a
+smart pointer, or a STL container like type, that requires a pointer
+as part of its implementation. You will need to provide your own hand
+crafted serialisation routines for these, and use the {\tt omit}
+pragma\index{\#pragma omit} to prevent classdesc from emitting an
+automatic definition (or simply arrange things so that classdesc is
+not run on the definition file). You are advised to keep the pointer
+encapsulation suitably minimalist, so as to minimise the amount of
+manual code of serialisation routines.
+
+\psubsection{Synopsis of {\tt pack\_t}}
+
+\index{pack\_t}
+\begin{verbatim}
+struct pack_t
+{
+  char *data;
+  size_t size;
+  size_t pos;
+  Ptr_flag ptr_flag;
+  std::vector<PtrStoreRef> alloced; //allocated data used for cleaning up 
+  pack_t(size_t sz=0);
+  pack_t(const char* filename, const char* mode); //pack to file
+  pack_t& reseti();
+  pack_t& reseto();
+  pack_t& seeki(int offs);
+  pack_t& seeko(int offs);
+  void packraw(char *x, int sz); 
+  void unpackraw(char *x, int sz);
+};
+\end{verbatim}
+
+\verb+data+ points to the beginning of the buffer maintained by
+\verb+pack_t+. \verb+size+ refers to the current position of the input
+stream (ie the size of current valid data). \verb+pos+ refers to the
+current position of the output stream. It is an error to assign values
+directly to {\tt pos}. It is OK to assign a value to size when setting
+up a \verb+pack_t+ variable for unpacking. Do not update {\tt size}
+whilst packing. It is OK to assign a pointer value to {\tt data} for
+unpacking only, however one should note that {\tt delete} is called on
+the pointer during destruction, so in general you should reset {\tt
+data} to NULL before the \verb+pack_t+ variable goes out of scope, if
+you don't want the object deleted (for instance if you've set it to
+the address of a static array).
+
+{\tt size} and {\tt pos} can be reset to 0 using the {\tt reseti()} and
+{\tt reseto()} routines respectively. {\tt seeki()} and {\tt seeko()}
+allows arbitrary positioning of the streams --- the seek offset in
+this case is relative to the current position.
+
+The constructor takes an integer argument which specifies the size of
+an initial buffer. For example:
+\begin{verbatim}
+pack_t b(N); b.size=N;
+fread(b,N,1,f);
+b>>foo;
+\end{verbatim}
+is a common idiom for reading some data in from a file.
+
+\verb+packraw+ and \verb+unpackraw+ allow arbitrary byte data to be
+pushed onto the buffer and taken off. This involves an extra copy
+operation, but is the safest way of manipulating the buffer directly.
+
+\psubsection{Polymorphism}\label{polymorphism}\index{polymorphism}
+
+C++ has two notions of polymorphism, compile-time and runtime.
+Compile-time polymorphism (aka generic programming) is implemented in
+terms of templates, and allows the provision of code that can work on
+many different types of objects. On the other hand, runtime
+polymorphism involves the use of virtual member functions. Whereever generic programming can
+solve a task, it is preferred over runtime polymorphism, as virtual
+member functions introduce procedure call overhead, and inhibit
+optimisation. Furthermore, the use of a copyable, assignable and
+serialisable class like \verb+shared_ptr+\index{shared\_ptr} introduces additional overheads.
+
+Nevertheless, there are situations that cannot be solve with
+compile-time polymorphism, for example a container containing objects
+of varying types. The smart, modern way to do runtime polymorphism is
+via a smart pointer, such as \verb+shared_ptr+, found in TR1. To use
+\verb+shared_ptr+ in a DCAS fashion, your object heirarchy must
+implement the following interface (provided as an abstract base class
+\verb+PolyBase+\index{Poly}), and the \verb+PolyPackBase+ .
+
+\begin{verbatim}
+  template <class T>
+  struct PolyBase: public PolyBaseMarker
+  {
+    typedef T Type;
+    virtual Type type() const=0;
+    virtual PolyBase* clone() const=0;
+    /// cloneT is more user friendly way of getting clone to return the
+    /// correct type. Returns NULL if \a U is invalid
+    template <class U> U* cloneT() const;
+    virtual ~PolyBase() {}
+  };
+
+  template <class T>
+  struct PolyPackBase: virtual public PolyBase<T>
+  {
+    virtual void pack(pack_t&, const string&) const=0;
+    virtual void unpack(unpack_t&, const string&)=0;
+  };
+\end{verbatim}
+
+Any type may be acceptable for the type identifier system, but needs
+to be orderable if using the \verb+Factory+
+class\index{Factory}. Typically, ints, enums or strings are used for
+the type class. A nice implementation is to use the typeName function
+to return a string representation of the type:
+\begin{verbatim}
+  string type() const {return typeName<T>();}
+\end{verbatim}
+
+The \verb+create()+\index{create} method is a static factory method that allows you to
+create an object of the type  specified. This is not part of the
+\verb+PolyBase+ interface, but needs to be provided by the base class
+of the object heirarchy. Its signature is
+\begin{verbatim}
+  static object* create(const Type&);
+\end{verbatim}
+
+The \verb+Factory+ class may used for this purpose: If the base class
+of your class heirarchy is \verb+object+, and you are using strings
+for your runtime type identifier, then declare a factory object as
+\begin{verbatim}
+Factory<object,string> factory;
+static object* object::create(const string& n)
+{return factory.create(n);}
+\end{verbatim}
+
+The only other thing required is to register the type heirarchy. This
+is most conveniently and safely done at factory construction time, and indeed the
+\verb+Factory+ class requires you provide a custom default
+constructor, but type registration can happen at any time via the
+\verb+Factory::registerType<T>()+ method, which registers type
+\verb+T+. The factory method requires that all objects in teh class
+heirarchy are default constructible, but other than that makes no
+assumptions other than it must have a \verb+type()+ method.
+
+To assist in deriving classes from \verb+PolyBase+, the \verb+Poly+ template
+is provided.\index{Poly}
+\begin{verbatim}
+template <class This, class Base=object> struct Poly;
+\end{verbatim}
+The first template argument \verb+This+ is the class you're currently defining,
+and \verb+Base+ is the base class you are deriving from, which may be
+\verb+object+, or may be another class higher in the
+hierarchy. This provides an implementation of the clone method. For
+each of the serialisation descriptors, there is a similar template, so
+\verb+PolyPack+\index{PolyPack}, \verb+PolyXML+\index{PolyXML} and
+\verb+PolyJson+\index{PolyJson}. 
+\begin{verbatim}
+template <class T, class Type>
+struct PolyPack: virtual public PolyPackBase<Type>
+{
+  void pack(pack_t& x, const string& d) const;
+  void unpack(unpack_t& x, const string& d);
+};
+\end{verbatim}
+These can be used in a ``mixin'' fashion by means of multiple
+inheritance, eg.
+
+\begin{verbatim}
+template <class T>
+struct Object: 
+  public Poly<T,object>, 
+  public PolyPack<T,string>, 
+  public PolyXML<T,string> 
+{
+  string type() const {return typeName<T>();}
+};
+\end{verbatim}
+
+One thing to be very careful of is your inheritance
+heirarchy. Multiple inheritance can easily cause a "no unique final
+overrider", because the implementations of the various virtual
+function come in from different classes that are mixed in. In the
+examples directory, are two different solutions to this problem - the
+first is providing a custom implementation template class, by manually
+copying the mixin definitions, and the second actually uses the mixin
+definitions through inheritance, but annotates each class with the
+base template after the class is defined. The two solutions are shown
+in UML in figure \ref{polymorph-example}.
+
+\begin{figure}
+\epsfclipon\epsfxsize=\textwidth
+\epsfbox{polymorph-example.eps}
+\caption{Diagram of the two different example polymorph
+  implementations for a non-flat class heirarchy.}
+\label{polymorph-example}
+\end{figure}
+
+\psubsection{Packing to a file}
+
+Instead of packing to a buffer, and subsequently storing data to a
+file, you can directly pack to a file by passing the filename and
+openmode arguments to pack or \verb+xdr_pack+'s\index{pack}\index{xdr\_pack} constructor. The arguments
+are identical to that of fopen:
+\begin{verbatim}
+ {
+  pack_t checkpoint("foo.ckpt","w");
+  checkpoint << bar;
+ } 
+\end{verbatim}
+The advantage here is large checkpoints can be written to disk without
+intermediate buffering in memory. The file is closed when the \verb+pack_t+
+object is destroyed.
+
+\psubsection{BinStream --- binary streaming to a pack\_t}
+
+BinStream is an adaptor class that allows streaming of POD (plain
+ordinary data) types to/from a pack\_t type for efficiency reasons. POD
+types can be basic data types like ints/floats, structs of such,
+arrays of such and standard containers of such.
+
+You can either use a BinStream class, which takes a pack\_t reference
+(can be an xdr\_pack object as well) in its constructor. Alternatively,
+you can construct the pack\_t object directly with the BinStream using
+the template BinStreamT. The template argument refers to the pack\_t type.
+
+Examples:
+\begin{verbatim}
+struct foo {a,b};
+vector x(10,2);
+pack_t p;
+foo a; 
+int i;
+BinStream bs(p);
+bs << 1 << a << x;
+bs >> i >> a >> x;
+BinStreamT<xdr_pack> bst("foo.dat","w");
+bst << 1 << a << x;
+\end{verbatim}
+\psection{isa}
+
+\verb+isa+ is an action to determine whether a particular class is
+derived from another type. To use this, create an \verb+isa+ action in
+the usual way using classdesc:
+\begin{verbatim}
+classdesc isa <header.h >header.cd
+\end{verbatim}
+Then \verb+isa(e,Y())+ will return whether \verb+e+ is of a type
+derived from type \verb+Y+.
+
+The functionality of \verb+isa+ is better achieved using the TR1 type
+traits feature: \verb+is_base_of+.
+
+\psection{dump}
+
+\verb+dump+ is a descriptor that produces a human readable description of
+an object on a stream.
+\begin{verbatim}
+template <class T>
+void dump(std::ostream* out, const string& desc, T& arg); 
+\end{verbatim}
+
+\psection{Symbolic enums}\index{enum}\index{Enum\_handle}\label{symbolic enums}
+
+By default, enums are treated as though they are integers. This works
+well for serialisation, but if the data is meant to be read by a
+human, it is desirable to display the enums in symbolic form.
+
+In order to do this, classdesc will emit descriptors using
+\verb+Enum_handle<E>+, where \verb+E+ is an enum, which wraps an enum
+variable. In particular, the \verb+Enum_handle+ will return a string
+symbolic representation of the enum, or assign the appropriate value
+to the enum variable when assigned a string constant representing the
+symbolic value of the enum:
+\begin{verbatim}
+  template <class T> //T is an enum
+  class Enum_handle
+  {
+  public:
+    Enum_handle(T& arg); // wrap enum arg
+    operator std::string() const; //symbolic form of enum
+    operator int() const; //integral value of the enum
+    const Enum_handle& operator=(T x);
+    const Enum_handle& operator=(int x);
+    const Enum_handle& operator=(const std::string& x); //symbolic assignment  
+  };
+\end{verbatim}
+Classdesc handles writing the dictionaries needed to perform this
+conversion to and from symbolic constants. See the \verb+xml_pack+
+descriptor for an example of its use.
+
+Access to the enum reflection data is via the EnumKeys class
+\begin{verbatim}
+  template <class T>
+  class EnumKeys
+  {
+  public:
+    int operator()(std::string key);
+    std::string operator()(int val);
+    size_t size() const;
+    iterator begin() const;
+    iterator end() const;
+    Siterator sbegin() const {return begin();}
+    Siterator send() const {return end();}
+    Viterator vbegin() const {return begin();}
+    Viterator vend() const {return end();}
+  };
+
+template <class T> const EnumKeys<T>& enum_keys();
+\end{verbatim}
+So \verb+enum_keys<enum Foo>()("bar")+ returns the numerical value of
+the enum constant \verb+bar+ and \verb+enum_keys<enum Foo>()(bar)+
+returns the string value \verb+"bar"+.
+
+The various iterators allow iteration, or population of containers:
+\begin{verbatim}
+const EnumKeys<Foo> e(enum_keys<Foo>());
+map<Foo,string> m(e.begin(), e.end());
+vector<string> s(e.sbegin(), e.send());
+vector<Foo> v(e.vbegin(), e.vend());
+\end{verbatim}
+
+
+\psection{typeName}\index{typeName}
+
+The \verb+template <class T> std::string typeName<T>()+ function
+\index{typeName} returns the symbolic name of the type T. Typename data for
+user-defined classes and structs is emitted when the -typeName flag is
+given to classdesc.
+
+\psection{Functional reflection}
+
+Classdesc provides metaprogramming reflection support for functional
+objects with the \verb+function.h+ header. Provided in the
+\verb+classdesc::functional+ namespace are the following
+metaprogramming templates:
+
+\noindent
+\begin{tabular}{lp{5cm}}
+  \verb+Arity+& \verb+F+ has\index{Arity}
+  \verb+Arity<F>::V+ arguments\\
+  \verb+Return+& \verb+Return<F>::T+ \index{Return} is the
+  return type of \verb+F+\\
+  \verb+Arg+& \verb+Arg<F,i>::T+ \index{Arg} is the
+  type of the $i$th  argument of \verb+F+\\
+  \verb+is_member_function_ptr+&\index{is\_member\_function\_ptr}
+  \verb+is_member_function_ptr<F>::value+ is true if F is a member function
+  pointer\\
+  \verb+is_nonmember_function_ptr+&\index{is\_nonmember\_function\_ptr}
+  \verb+is_nonmember_function_ptr<F>::value+ is true if F is a ordinary function
+  pointer\\
+  \verb+is_function_ptr+& \index{is\_function\_ptr}\verb+is_function_ptr<F>::value=true+ if F is
+  either a member function pointer or an ordinary function pointer\\
+\verb+void apply(R* r, F f, Args args);+ & apply function f to an
+array of arguments
+\end{tabular}
+
+Metaprogramming datatypes will have either a static data member
+\verb+V+ or a typename \verb+T+. In sympathy with classdesc's fairly
+compact style, we use these compact names rather than Boost's
+conventions of \verb+value+ and \verb+type+. The \verb+is_+ structure
+use \verb+value+ so as to be compatible with the use of
+\verb+enable_if+ (supplied in the \verb+classdesc.h+ header).
+
+The apply function takes and array of arguments of type Args. Args can
+be a user defined type, but must be convertible to all the types used
+by F. An example type is defined in \verb+javaClass_base.h+.
+The return object is passed as parameter \verb+r+. This allows for the
+possibility of void returns, in which case apply ignores what is
+passed here (can pass NULL if F is known to have a void return type).
+
+\psection{classdescMP}\index{classdescMP}
+
+{\tt classdescMP} is a class library supporting the use of the MPI
+library. It consists of three main concepts, {\tt MPIbuf},
+{\tt MPIslave} and {\tt MPISPMD}.
+
+{\bf Warning:} Do not use {\tt MPISPMD} as a global
+variable. Both of these types call \verb+MPI_Finalize()+ in their
+destructors. Some MPI implementations require \verb+MPI_Finalize()+ to
+be called before \verb+main()+ exits (although MPICH is quite happy to
+call \verb+MPI_Finalize()+ after \verb+main()+ exits). For maximum
+portability, declare the {\tt MPIslave} or {\tt MPISPMD} object as a
+local variable in \verb+main()+, and initialise a global pointer to
+refer to this object elsewhere in the code.
+
+\psubsection{MPIbuf}\index{MPIbuf}
+
+{\tt MPIbuf}\index{MPIbuf} is derived from {\tt pack\_t}, and so
+arbitrary objects can be placed into an {\tt MPIbuf} in just the same
+way as a {\tt pack\_t}. If the \verb+HETERO+\index{HETERO}
+preprocessor symbol is defined, then MPIbuf is derived from {\tt
+xdr\_pack}\index{xdr\_pack} instead, so MPIbufs can be safely used on
+a heterogenous cluster --- thus obviating the need to use the MPI
+compound type mechanism ({\tt MPI\_Type*} series of functions).
+
+Specification:
+\begin{verbatim}
+ class MPIbuf: public pack_t
+{
+public:
+  MPI_Comm Communicator;
+  int myid();   /* utility functions returning rank and number in */
+  int nprocs(); /* current communicator */
+  bool const_buffer;  /* in send_recv, all messages of same length */
+  int proc, tag; /* store status of receives */
+
+  MPIbuf(): pack_t() {Communicator=MPI_COMM_WORLD; const_buffer=false;}
+
+  bool sent(); //has asynchronous message been sent?
+  void wait(); //wait for asynchronous message to be sent
+
+  void send(int proc, int tag);
+  void isend(int proc, int tag); //asynchronous send
+
+  MPIbuf& get(int p=MPI_ANY_SOURCE, int t=MPI_ANY_TAG);
+  void send_recv(int dest, int sendtag, 
+                 int source=MPI_ANY_SOURCE, int recvtag=MPI_ANY_TAG);
+  void bcast(int root);
+
+  MPIbuf& gather(int root);
+  MPIbuf& scatter(int root); 
+
+  MPIbuf& reset();
+  bool msg_waiting(int source=MPI_ANY_SOURCE, int tag=MPI_ANY_TAG);
+};
+\end{verbatim}
+
+
+The simplest additional operations are {\tt send} and {\tt get}. {\tt
+  send} sends the buffer contents to the nominated processor, with the
+  nominated message tag, and clears the buffer. {\tt get} receives the
+  next message into the buffer --- if processor or tag are specified,
+  the message is restricted to those that match.\index{MPIbuf::send}\index{MPIbuf::get}
+{\tt get} returns the value of \verb+*this+, so the message can be
+  unpacked on one line, eg:
+\begin{verbatim}
+buffer.get() >> x >> y;
+\end{verbatim}
+  {\tt get} places the source and message tag for the received message
+  in {\tt proc} and {\tt tag}.\index{MPIbuf::proc}\index{MPIbuf::tag}
+
+{\tt send\_recv}\index{send\_recv} does a simultaneous send and
+receive, sending the buffer to the nominated destination, with
+nominated tag. If the flag {\tt const\_buffer}\index{const\_buffer} is
+set, then all messages must be of equal length. The prevents the need
+to send the message sizes first.
+
+{\tt bcast}\index{bcast} performs a broadcast.
+
+{\tt gather}\index{gather} concatenates the MPIbufs from all nodes
+onto the MPIbuf on the root node. If {\tt
+const\_buffer}\index{const\_buffer} is set, then the more efficient
+{\tt MPI\_Gather} is used, otherwise the buffer sizes are gathered
+first, and {\tt MPI\_Gatherv} used.
+
+{\tt scatter}\index{scatter} scatters an MPIbuf from the root node to
+all the nodes. The data destined for each node must be separated by
+{\tt mark}\index{mark} objects, as in:
+\begin{verbatim}
+cmd << A << mark() << B << mark(); cmd.scatter(0);
+\end{verbatim}
+Again, if the data to be scattered is of identical size for each node,
+set the  {\tt const\_buffer}\index{const\_buffer}, and the more
+efficient {\tt MPI\_Scatter} will be employed instead of {\tt MPI\_Scatterv}.
+
+By default, all operations take place in the \verb+MPI_COMM_WORLD+
+communicator. This behaviour can be changed by assigning a different
+communicator to \verb+MPIbuf::Communicator+\index{Communicator}
+
+Messages can be sent asynchronously using
+\verb+isend()+. \verb+sent()+ can be used to test whether the message
+has been passed, and \verb+wait()+ can be used to stall until the
+message has been sent. \verb+wait()+ is always called prior to the MPIbuf
+object being destroyed.
+
+\subsubsection{Manipulators}\index{manipulators}
+
+In a way analogous to iostreams, manipulators are actions that can be
+pushed onto the buffer. In the case of MPIbuf, four manipulators are
+defined, {\tt send}\index{send}, {\tt isend}\index{isend} and {\tt
+  bcast}\index{bcast}, and {\tt mark}\index{mark} that allows a
+message to be composed and sent on one line, eg:
+\begin{verbatim}
+MPIbuf() << i << j << send(p,tag);
+MPIbuf() << i << j << isend(p,tag);
+MPIbuf() << i << j << bcast(0);
+\end{verbatim}
+
+{\tt mark} is used for separating the data items to be {\tt scatter}ed.
+
+\psubsection{MPIbuf\_array}
+
+\verb+MPIbuf_array+ is a convenience type for managing a group of
+messages:
+\begin{verbatim}
+  class MPIbuf_array
+  {
+  public:
+    
+    MPIbuf_array(unsigned n);
+    MPIbuf& operator[](unsigned i);
+
+    bool testall();
+    int testany();
+    vector<int> testsome();
+    void waitall();
+    int waitany();
+    vector<int> waitsome();
+  };
+\end{verbatim}
+
+The \verb+testall()+, \verb+testany+ etc methods perform the MPI
+equivalent call on the group of messages.
+
+\verb+MPIbuf_array+ is useful for managing an all-to-all calculation,
+as per the following typical example:
+
+\begin{verbatim}
+    {
+        tag++;
+        MPIbuf_array sendbuf(nprocs());
+        for (unsigned proc=0; proc<nprocs(); proc++)
+          {
+            if (proc==myid()) continue;
+            sendbuf[proc] << requests[proc] << isend(proc,tag);
+          }
+        for (int i=0; i<nprocs()-1; i++)
+          {
+            MPIbuf b; 
+            b.get(MPI_ANY_SOURCE,tag);
+            b >> rec_req[b.proc];
+          }
+     }
+\end{verbatim}
+
+Note that the outer pair of braces that all messages have been sent
+and received in the group. Using an explicit tag is useful to prevent
+message groups from interfering with each other.
+
+\psubsection{MPIslave}\index{MPIslave}
+
+\begin{verbatim}
+template<class S>
+class MPIslave
+{
+public:
+  int nprocs, myid;
+  vector<int> idle; /* list of waiting slaves, valid on master */
+  MPIslave();
+  ~MPIslave() {finalize();}
+  void init();
+  void finalize();
+  MPIbuf& operator<<(void (S::*m)(MPIbuf&))
+  template <class T> MPIbuf& operator<<(const T& x);
+  void exec(MPIbuf& x);
+  MPIbuf& get_returnv();
+  void wait_all_idle();
+  void bcast(MPIbuf& c=cmd);
+};
+\end{verbatim}
+
+MPIslave is an implementation of a master-slave application. An
+MPIslave object must be created within an MPI parallel region (eg
+created by MPISPMD). The slave
+code is implemented as a class (S say), with each method
+implementing a \hyperref{remote procedure}{(see \S}{)}{slave-method}
+being of type \verb+void (MPIbuf&)+. Declaring a variable of type
+\verb+MPIslave<S>+ will set up an interpreter on the slave processor. The remote processes
+are closed down once the variable is finalised, or goes out of scope. 
+
+See the file {\tt mandelbrot.cc} in the {\tt mpi-examples} for an
+example of how this works.
+
+\verb+operator<<+ is provided as a convenience --- one can compose a
+message of the form:
+\begin{verbatim}
+MPIslave<S> slave;
+slave << &S::foo << x << send(1);
+\end{verbatim}
+without needing to declare additional {\tt MPIbufs}.
+
+For managing a list of idle slaves, the {\tt idle}\index{idle} vector
+is employed, and is manipulated through the {\tt exec}\index{exec}
+method, which dispatches a command to be executed on a slave, and the
+{\tt get\_returnv()}\index{get\_returnv()} which returns the returned
+result as an MPIbuf, and places the processor from which it received a
+value back on the idle list. This technique is only valid for slave
+methods returning a message (even if its a null message). The {\tt
+wait\_all\_idle}\index{wait\_all\_idle} method waits for all slaves to
+return.
+
+The {\tt bcast()} method is a convenience method for sending the
+contents of MPISlave::cmd, or the optional MPIbuf argument to all
+slaves. 
+
+\subsubsection{Remote Procedures}\label{slave-method}\index{remote procedures}
+
+Ideally, remote procedures should be callable by a syntax similar to:
+\begin{verbatim}
+val=proxy->rp(arg1,arg2);
+\end{verbatim}
+where proxy is an object on the calling thread that can forward the
+call to a remote object, call method {\tt rp} on that remote object
+with arguments {\tt arg1} and {\tt arg2}, return a value {\tt val} if
+necessary. 
+
+Unfortunately, C++ syntax requires that the \verb+->+ operator
+return an object that has a member {\tt rp}, which is of little use if
+the desired object exists in a different address space. This could be
+addressed using the \verb+->*+ operator, which is a true binary
+operator. 
+
+However, a more significant problem comes when trying to transport the
+arguments, and return a value. It is possible to write template
+functions that know the types of arguments and return values, and can
+pack these into the message buffer. Clearly, one needs to write a
+separate template for each argument count, but this is not too
+difficult a task in practice, and can be made extensible. The problem
+comes with transmitting the type information to the remote address
+space. The obvious solution of sending a function pointer to a
+template handler function simply does not work, as these have
+different values in different address spaces. The next obvious
+solution of sending a pointer to a template member of MPIslave also
+does not work, although the reason seems obscure. Possibly, it is
+impossible to obtain a pointer to a template member function.
+The final remaining solution is to create another classdesc action,
+however it is known that one cannot overload on the number of
+arguments to a member pointer argument. Classdesc, at present, is not
+very good at parsing function arguments.
+
+So a more primitive remote procedure calling interface is required,
+and the one based on the streams model of {\tt MPIbuf} works well and
+is reasonably intuitive:
+\begin{verbatim}
+MPIslace << &S::method << arg1 << arg2 << send(p);
+\end{verbatim}
+This will run {\tt S::method} on the slave processor, where method
+must be defined as:
+\begin{verbatim}
+void method(MPIbuf& args)
+{
+  X arg1; Y arg2; args>>arg1>>arg2;
+  ...
+  args.reset() << result;
+}
+\end{verbatim}
+
+The last statement is only needed if the method returns a value. This
+is sent as a message to the master.
+
+\psubsection{MPISPMD}\index{MPISPMD}
+
+\begin{verbatim}
+class MPISPMD
+{
+public:
+  int nprocs, myid;
+  MPISPMD() {nprocs=1, myid=0;}
+  MPISPMD(int& argc, char**& argv) {init(argc,argv);};
+  ~MPISPMD() {finalize();}
+  void init(int& argc, char**& argv);
+  void finalize() {MPI_Finalize();}
+};
+\end{verbatim}
+
+{\tt MPISPMD} is a simple class that arranges for \verb+MPI_Init+ to
+be called when initialised, and \verb+MPI_Finalise+ when destroyed. It
+use is primarily to construct SPMD style programs. See the {\tt
+heat.cc} example program to see how it might be used.
+
+\psection{Workarounds}
+
+There are times when classdesc simply cannot correctly parse
+syntactically correct C++, or won't be able to be adapted to do
+so. One of these situations occurs when a class definition refers to
+an object in the containing namespace, but the descriptor definition
+requires the fully qualified version of the name. An example is as
+follows:
+
+\begin{verbatim}
+namespace foo
+{
+  struct bar
+  {
+    enum Foo {x, y, z};
+  };
+
+
+  template <bar::Foo t>
+  class Foobar {};
+}
+\end{verbatim}
+which is syntactically correct C++, but the generated descriptor looks
+like
+\begin{verbatim}
+template < bar :: Foo t >  struct access_pack<class ::foo::Foobar<t> > {
+void operator()(classdesc::pack_t& targ, const classdesc::string& desc,class ::foo::Foobar<t>& arg)
+{
+using namespace foo;
+}
+};
+\end{verbatim}
+The problem is that \verb+bar::Foo+ is not visible in the
+\verb+classdesc_access+ namespace where the \verb+struct access_pack+
+type must be declared.
+
+As a workaround, whenever this situation is encountered, use the fully
+qalified version of the type, ie as follows:
+\begin{verbatim}
+  template <foo::bar::Foo t>
+  class Foobar {};
+\end{verbatim}
+
+\subsection{TCL\_obj}\label{TCL_obj}
+
+The {\tt TCL\_obj}\index{TCL\_obj} function creates a set of TCL commands that
+implement get/set functionality for the class members. For example,
+with a class definition:
+\begin{verbatim}
+class foo: public TCL_obj_t {int a, b; void foobar(int,char**)} bar;
+\end{verbatim}
+\verb+TCL_obj(&bar,"bar",bar);+ creates the TCL commands {\tt bar.a}
+and {\tt bar.b}. To set the value of {\tt bar.a}, use the command {\tt
+  bar.a} {\em val} from TCL. To get the value, use {\tt [bar.a]}.
+
+Also created is the TCL command {\tt bar.foobar}, which will run
+respective member function of {\tt foo} when called from TCL.
+
+Any nonoverloaded member function canm be accessed from TCL, provided
+the arguments and return types can be converted from/to TCL
+objects. In particular, it is not possible at present to call methods
+that take nonconstant references.
+
+Overloaded method types in general cannot be called, but it is
+possible to create variable length argument lists by declaring a
+method with an \verb+(int,char**)+, or a \verb+(TCL_args)+
+signature. Such methods are not easily called from C++, and generally,
+one needs to define a set of overloaded functions of a different name
+(eg capitalised) suitable for calling
+from C++, as well as the variable length argument list for use from
+TCL. However, as a special case of an accessor (emulating the
+setting/getting of an member attribute), one may make use of the
+Accessor\index{Accessor} class, which is equally callable from C++ as
+TCL.
+
+Accessor is not easily usable from within the C++98 language standard
+(see acessor.h in the test directory), but makes much more sense in
+the C++11 standard. For example, assume that \verb+Name()+ and
+\verb+Name(const string&)+ have been defined as a getter and setter
+method of the attribute \verb+name+, then one may define a member
+\begin{verbatim}
+Accessor<string> name {
+    [this](){return this->Name();}, 
+    [this](const std::string& x){return this->Name(x);}
+};
+\end{verbatim}
+where the use of lambdas and brace initialisers makes it easy to
+assign code for the getter and setter components of the accessor. This
+member will be accessible as an attribute from TCL (just as if name
+had been defined as a string member), and also callable from C++ as
+\verb+name()+ or \verb+name("someName")+ as appropriate.
+
+One downside of the Accessor class is that it is not copy
+constructible, as copying the accessor will copy a reference to the
+wrong accessed object. Consequently, if copy construction is required
+for the object being accessed (eg for DCAS), then a custom copy
+constructor needs to be provided.
+
+As an alternative to \verb+(int,char**)+ arguments for implementing
+TCL commands, one can also declare the arguments
+\verb+(TCL_args)+\index{TCL\_args}. \verb+TCL_args+ variables can be
+assigned to numerical variables or strings variables, and the
+appropriate argument is popped off the argument stack:
+\begin{verbatim}
+int x=args;
+double y=args;
+\end{verbatim}
+assigns the first argument to x and the second to y. This method use
+the \verb+Tcl_Obj+ structure, so the values needn't be converted to
+strings at all.
+
+The arguments may also be assigned using the \verb+>>+ operator:
+\begin{verbatim}
+int x; double y;
+args >> x >> y;
+\end{verbatim}
+
+A third style uses the \verb+[]+ operator:
+\begin{verbatim}
+int x=args[0]; double y=args[1];
+\end{verbatim}
+The number of remaining arguments is available as
+\verb+TCL_args::count+.
+
+If \verb+operator>>(istream,T)+ is defined, then you may also use the
+\verb+>>+ operator to set a variable of type \verb+T+, eg:
+\begin{verbatim}
+void foo::bar(TCL_args args)
+{
+  iarray x;
+  args>>x;
+}
+\end{verbatim}
+the assignment operator cannot be used for this purpose, unlike simple
+types, because nonmember assignment operators are disallowed in the
+standard. Type conversion operators do not appear to work.
+
+For technical reasons, the name of the TCL command is available as
+\verb+args[-1]+. 
+
+The {\tt TCL\_obj\_t} data type also implements \hyperref{checkpoint
+  and restart functions}{checkpoint and restart
+  functions (\S}{)}{checkpoint/restart},\index{checkpoint}\index{restart}
+so that any class inheriting from {\tt TCL\_obj\_t}\index{TCL\_obj\_t}
+also gains this functionality, as well as \hyperref{client-server
+  functionality}{\S(}{)}{get_vars/data_server}.
+\index{data\_server}\index{get\_vars}
+
+A helper macro that performs the above is {\tt
+  make\_model}\index{make\_model}, which is used in a declarative
+sense, which also initialises the checkpoint functor.
+
+
+Associated with each of these TCL commands, is an object of type
+\verb+member_entry<T>+\index{member\_entry}. Pointers to these objects
+are stored in a hash table called
+\verb+TCL_obj_properties+\index{TCL\_obj\_properties}. The STL hash
+table behaved rather stangely when used for this purpose, so a class
+wrapper around TCL hash tables was employed instead:
+\begin{verbatim}
+template<class T>
+struct TCL_obj_hash
+{
+  struct entry 
+  {
+    entry& operator=(const T& x);
+    operator T();
+  };
+  entry operator[](const char*x);
+};
+\end{verbatim}
+So objects of \verb+member_entry<T>*+ can be inserted into the hash
+table as follows:
+\begin{verbatim}
+member_entry<T>* m; eco_string d;
+TCL_obj_properties[d]=m;
+\end{verbatim}
+but to extract the data, use \verb+memberPtrCasted+
+\begin{verbatim}
+if (T* m=TCL_obj_properties[d]->memberPtrCasted<T>())
+   ... *m 
+\end{verbatim}
+will allow you to access the TCL object \verb+d+, if it is castable to
+an object of type \verb+T+ (is a \verb+T+, or is derived from a \verb+T+). 
+
+A utility macro\index{declare} allows these objects to be accessed simply:
+\begin{verse}
+{\tt declare}({\em name},{\em typename}, {\em tcl\_name})
+\end{verse}
+where {\em name} is the name of a variable (in reality a reference),
+of type {\em typename} that will refer to the variable having the TCL
+handle {\em tcl\_name}. The macro performs error checking to ensure
+such a variable actually exists, and that it is of the same type as
+{\em typename}.
+
+Objects can be placed into {\tt TCL\_obj\_properties} by a several
+different means:
+\begin{enumerate}
+\item {\tt make\_model}\index{make\_model}{\em (x)}, which places all
+  of the leaf objects of {\em x} (which must be derived from
+  \verb+TCL_obj_t+) into {\tt TCL\_obj\_properties}, and also
+  completes the construction of the \verb+TCL_obj_t+ object;
+\item {\tt register}{\em (x)}\index{register}, which places {\em x} into {\tt
+    TCL\_obj\_properties}, as well as the leaf objects --- can also be
+    called as \verb+TCL_obj_register(+{\em object},{\em object name});
+\item {\tt TCLTYPE}{\em (typename)}\index{TCLTYPE}\label{TCLTYPE},
+TCLPOLYTYPE(typename, interface), where {\em
+    typename} is defined C++ type, and interface is a base class of typename. This creates the TCL command {\em
+    typename}, which takes one argument, a variable name for it to be
+  referred to from TCL, and creates an object of that type which it
+  registers in {\tt TCL\_obj\_properties}. If {\tt TCLPOLYTYPE} is
+  used, the base class type is used for registration - so this object
+  can be used wherever a polymorphic type with the specified interface
+  is expected. For example, consider the
+  following code which creates and initialises an object of type
+  distrand and gives it the TCL name PDF (from
+  testdistrand.tcl\index{testdistrand.tcl}):\index{distrand}
+\begin{verbatim}
+distrand PDF
+PDF.min -10
+PDF.max 10
+PDF.nsamp 100
+PDF.width 3
+PDF.Init dist
+.....
+PDF.delete
+\end{verbatim}
+  This macro also defines an x.delete\index{delete} procedure for
+  deleting that object, once no longer desired.
+\end{enumerate}
+
+A TCL registered object, particularly dynamically created
+\verb+TCLTYPE+ objects can be assigned to a member of type
+\verb+TCL_obj_ref+\index{TCL\_obj\_ref}. This is particularly useful
+for random number generators:
+
+\begin{verbatim}
+class Foo: public TCL_obj_t
+{
+ public:
+   TCL_obj_ref<random_gen> rng;
+
+   ...
+     rng->rand();
+};
+\end{verbatim}
+
+Then the member \verb+Foo::rng+ can be assigned an arbitrary random number
+generator within the TCL script, such as the PDF example above.
+
+\begin{verbatim}
+distrand PDF
+PDF.min -10
+...
+foo.rng PDF
+...
+\end{verbatim}
+
+Using \verb+TCL_obj_ref+ also allows that object to be serialised, and
+to be reconnected after a restart, provided the object has been
+created prior to the restart.
+
+\subsection{TCL\_obj\_stl}\label{TCL_obj_stl}
+
+The header file \verb+TCL_obj_stl+ provides \verb+TCL_obj+ support for
+STL containers. If the \verb+value_type+ of an STL container (vector, deque
+or list) or set is streamable to an iostream, then it is possible to
+directly access the elements of the container as a simple list:
+
+\begin{verbatim}
+std::vector<int> vec;
+make_model(vec);
+   ...
+vec {1 2 3}
+set vec_elems [vec]
+\end{verbatim}
+If the \verb+value_type+ is not streamable, an exception will be thrown. This
+feature makes the \verb+#members+ functionality of sets redundant.
+
+The following TCL procedures are defined for the
+following STL containers, which can be used from a TCL script or the
+object browser to manipulate STL container objects. Procedures that do
+not call member names are prefixed by the ``@'' symbol, which is a
+valid identifier character in TCL, but is not a valid C++ identifier
+character. This avoids any possible clash of member names.
+
+\begin{description}
+\item[vector, dequeue, list]\mbox{}
+  \begin{description}
+  \item[@is\_vector] A ``do nothing'' command, the presence of which
+    indicates the object is a vector.
+  \item[@is\_deque] A ``do nothing'' command, the presence of which
+    indicates the object is a deque (double ended queue).
+  \item[@is\_list] A ``do nothing'' command, the presence of which
+    indicates the object is a list.
+  \item[size] returns the size of the vector
+  \item[@elem] takes one argument, the {\em index} of an element. It creates a
+    TCL command {\em name}({\em index}) that can be used in the usual
+    way to access or modify the element's value.
+  \end{description}
+
+\item[set, map]\mbox{}
+  \begin{description}
+  \item[@is\_set] A ``do nothing'' command, the presence of which
+    indicates the object is a set.
+  \item[@is\_map] A ``do nothing'' command, the presence of which
+    indicates the object is a map.
+  \item[size] Return number of entries in the set or map
+  \item[count] Takes a single argument, and returns 1 or 0, according to
+    whether that argument present within the set or map (as a member or
+    key respectively).
+  \item[\#members] Returns list of members of a set
+  \item[\#keys] Returns list of keys of a map
+  \item[@elem] Returns a TCL command name for accessing individual
+    elements of a set or map. In the case of a set, the command accesses
+  the $i$th element of the set. In the case of a map, the argument can
+  be an arbitrary string (so long as it converts to the key type of
+  the map), that can be used to address the map element. For example,
+  if the map is \verb+map+<string,string>+, one can create an element
+  \verb+m["hello"]="foo"+ by means of the following TCL commands:
+\begin{verbatim}
+m.@elem hello
+m(hello) foo
+\end{verbatim}
+\end{description}
+\end{description}

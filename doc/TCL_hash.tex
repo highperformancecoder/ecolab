@@ -1,0 +1,60 @@
+\section{TCL_hash class}
+
+TCL_hash\index{TCL\_hash}\index{hash\_map}\index{eco\_hashmap.h} is an
+STL hash_map replacement, based around TCL hash tables. It is not the
+full implementation, but enought to be useful. To access it, either
+include \verb+<TCL_hash.h>+ directly, or include
+\verb+<eco_hashmap.h>+ with the preprocessor symbol
+\verb+HASH_TCL_hash+ defined. If \verb+HASH_hash_map+ is defined then,
+tradtional STL hash maps are used (if available), otherwise standard
+C++ maps are employed.
+
+The TCL hash\_map implementation is:
+\begin{verbatim}
+template <class key, class T>
+struct hash_map
+{
+  class entry 
+  {
+    entry& operator=(const T& x);
+    operator T();
+  };
+
+  struct iterator
+  {
+    entry operator*();
+    iterator operator++();
+    iterator operator++(int); 
+    int operator==(iterator x);
+    int operator!=(iterator x);
+  };
+
+  entry operator[](const key x);
+  int count(const key x);
+  void erase(const key x);
+  void erase(iterator x);
+  iterator begin(); 
+  iterator end();
+};
+\end{verbatim}
+
+A helper class is defined to address the different types of keys:
+\index{hashtype}
+\begin{verbatim}
+template <class T>
+struct hashtype
+{ 
+  int keytype;
+  /* we assume TCL_ONE_WORD_KEYS=1 here */
+  hashtype() {keytype = sizeof(T)/sizeof(int);}
+  char * operator()(const T& x) {return (keytype>1)? (char*)&x: (char*)x;}
+};
+\end{verbatim}
+
+In most instances, this is exactly what you want. \verb+keytype+ is one of
+\verb+TCL_STRING_KEYS+ (if T=\verb+char *+), \verb+TCL_ONE_WORD_KEYS+
+or a number giving the number of words occupied by the key.
+
+If you have a class that needs to do something different, the
+\verb+operator()+ member returns what needs to passed as the key to the
+\verb+Tcl_FindHashEntry+ routine. 

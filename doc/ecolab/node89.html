@@ -1,0 +1,232 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Graph</TITLE>
+<META NAME="description" CONTENT="Graph">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node91.html">
+<LINK REL="previous" HREF="node88.html">
+<LINK REL="up" HREF="node88.html">
+<LINK REL="next" HREF="node90.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html1605"
+  HREF="node90.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html1599"
+  HREF="node88.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html1593"
+  HREF="node88.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html1601"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html1603"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1606"
+  HREF="node90.html">Basic usage of Graph</A>
+<B> Up:</B> <A NAME="tex2html1600"
+  HREF="node88.html">Graphcode</A>
+<B> Previous:</B> <A NAME="tex2html1594"
+  HREF="node88.html">Graphcode</A>
+ &nbsp; <B>  <A NAME="tex2html1602"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1604"
+  HREF="node144.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION000151000000000000000">
+Graph</A>
+</H2>
+
+<P>
+A <EM>Graph</EM><A NAME="4713"></A> is a container of references to
+<A HREF="node91.html#object"
+ NAME="4718"><EM>objects</EM></A>
+(called <A HREF="node98.html#objref"><EM>objrefs</EM></A>)<A NAME="4723"></A> that may be linked to an arbitrary
+  number of other objects. The objects themselves may be located on
+  other processors, ie the Graph may be distributed. Objects are
+  polymorphic -- the only properties Graph needs to know is how
+  create, copy, and serialise them, as well as what other objects they
+  are linked to.
+
+<P>
+Because the objects are polymorphic, it is possible to create
+hypergraphs. Simply have two types of object in the graph -- <EM>  pins</EM> and <EM>wires</EM>, say. A pin may be connected to multiple wire
+objects, just as wires may be connected to multiple pins.
+
+<P>
+The objrefs themselves are stored in a maplike object called an
+<A HREF="node100.html#omap"><EM>omap</EM></A>, which is replicated
+across all processors. 
+
+<P>
+A short synopsis of Graph is as follows:
+<PRE>
+class Graph: public Ptrlist
+{
+public:
+  omap objects;
+
+  Graph&amp; operator=(const Graph&amp;);
+  Graph(Graph&amp;);
+  Graph();
+
+  /* object management */
+  objref&amp; AddObject(object* o, GraphID_t id, bool managed=false); 
+  template &lt;class T&gt;
+  objref&amp; AddObject(GraphID_t id); 
+  template &lt;class T&gt;
+  objref&amp; AddObject(const T&amp; master_copy, GraphID_t id); 
+
+  /* these methods must be called on all processors simultaneously */
+  void Prepare_Neighbours(bool cache_requests=false);
+  void Partition_Objects();
+  void Distribute_Objects();
+  void gather();
+
+  void rebuild_local_list();   
+  void clear_non_local()
+  void print(int proc) 
+};
+</PRE>
+
+<P>
+<DL>
+<DT><STRONG>Ptrlist</STRONG></DT>
+<DD>(see &#167;<A HREF="node99.html#Ptrlist">14.4</A>)<A NAME="4734"></A> is a list of
+  references to <A HREF="node98.html#objref"><EM>objrefs</EM></A>)<A NAME="4739"></A>, pointing to objects stored locally
+  on the current processor.
+</DD>
+<DT><STRONG>AddObject</STRONG></DT>
+<DD><A NAME="4740"></A> In the first form, add an already
+  created object to the Graph. In the second form create a new object
+  of type <EM>T</EM>, and add it to the Graph. <EM>T</EM> must be derived
+  from the abstract base class <code>object</code><A NAME="4743"></A>. You must
+  explicitly supply the type of the object to be created as a template
+  argument:
+  <PRE>
+    g.AddObject&lt;foo&gt;(id);
+</PRE>
+  In the third form, create a new object, and initialise its data with
+  the contents of argument <code>master_copy</code>.
+</DD>
+<DT><STRONG>Prepare_Neighbours()</STRONG></DT>
+<DD><A NAME="4746"></A> For each
+  object on the local processor, ensure that all objects connected to
+  it are brought up to date, by obtaining data from remote processors
+  if necessary. If the network structure has not changed since the
+  last call to this method, set the flag
+  <code>cache_requests</code><A NAME="4747"></A> to <code>true</code>, which
+  substantially reduces the amount of interprocessor communication
+  required.
+</DD>
+<DT><STRONG>Partition_Objects()</STRONG></DT>
+<DD><A NAME="4748"></A>Call the ParMETIS
+  partitioner to redistribute the graph in an optimal way over the
+  processors. ParMETIS executes in parallel, and requires that the
+  objects be distributed before this call. One way of achieving this is
+  to make a simple assignment of objects to processors (by setting the
+  <code>proc</code> member of each objref), then call <code>Distribute_Objects()</code>.
+</DD>
+<DT><STRONG>Distribute_Objects()</STRONG></DT>
+<DD><A NAME="4749"></A> Broadcast graph data
+  from processor 0, and call 
+<BR><code>rebuild_local_list()</code> on each
+  processor.
+</DD>
+<DT><STRONG>gather()</STRONG></DT>
+<DD><A NAME="4750"></A> Bring the entire graph on processor 0 up
+  to date, copying information from remote processors as necessary. A
+  <code>gather()</code>, followed by <code>Distribute_Pins()</code> brings all
+  processors' graphs up-to-date. This is, naturally, an expensive
+  operation, and should be done for startup or checkpointing purposes.
+</DD>
+<DT><STRONG>rebuild_local_list()</STRONG></DT>
+<DD><A NAME="4751"></A> Reconstruct
+  the list of objrefs local to the current processor, according to the
+  <code>proc</code><A NAME="4752"></A> member of the objrefs.
+</DD>
+<DT><STRONG>clear_non_local()</STRONG></DT>
+<DD><A NAME="4753"></A> Nullify all
+  objrefs that don't belong to the current processor. This can be used
+  to save memory usage.
+</DD>
+</DL>
+
+<P>
+<BR><HR>
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></A>
+
+<UL>
+<LI><A NAME="tex2html1607"
+  HREF="node90.html">Basic usage of Graph</A>
+</UL>
+<!--End of Table of Child-Links-->
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html1605"
+  HREF="node90.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html1599"
+  HREF="node88.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html1593"
+  HREF="node88.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html1601"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html1603"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1606"
+  HREF="node90.html">Basic usage of Graph</A>
+<B> Up:</B> <A NAME="tex2html1600"
+  HREF="node88.html">Graphcode</A>
+<B> Previous:</B> <A NAME="tex2html1594"
+  HREF="node88.html">Graphcode</A>
+ &nbsp; <B>  <A NAME="tex2html1602"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1604"
+  HREF="node144.html">Index</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Russell Standish
+2014-09-10
+</ADDRESS>
+</BODY>
+</HTML>

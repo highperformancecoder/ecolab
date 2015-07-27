@@ -1,0 +1,9 @@
+#!/bin/bash
+app=$1
+if [ "${app##*.}"=tcl ]; then
+  app=`head -1 $1`
+  app=${app##\#!}
+else
+  shift
+fi
+$app.app/Contents/MacOS/$app $*

@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Input Parameters</TITLE>
+<META NAME="description" CONTENT="Input Parameters">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node39.html">
+<LINK REL="previous" HREF="node37.html">
+<LINK REL="up" HREF="node35.html">
+<LINK REL="next" HREF="node39.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html824"
+  HREF="node39.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html818"
+  HREF="node35.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html812"
+  HREF="node37.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html820"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html822"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html825"
+  HREF="node39.html">Eco Lab Model commands</A>
+<B> Up:</B> <A NAME="tex2html819"
+  HREF="node35.html">The Eco Lab Model</A>
+<B> Previous:</B> <A NAME="tex2html813"
+  HREF="node37.html">Mutation</A>
+ &nbsp; <B>  <A NAME="tex2html821"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html823"
+  HREF="node144.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION000123000000000000000"></A><A NAME="input_parameters"></A>
+<BR>
+Input Parameters
+</H2>
+
+<P>
+The model's parameters are set by TCL variables in <TT>model.tcl</TT>.
+The actual data structures of the model are initialised the first time
+the model's generate step is called. An example input set is:
+<PRE>
+# initial condition
+ecolab.species {1 2}
+ecolab.density {100 100} 
+ecolab.create {0 0}
+ecolab.repro_rate {.1 -.1}
+ecolab.interaction.diag {-.0001 -1e-5}
+ecolab.interaction.val {-0.001 0.001}
+ecolab.interaction.row {0 1}
+ecolab.interaction.col {1 0}
+ecolab.migration {.1 .1}
+
+
+# mutation parameters
+ecolab.mutation {.01 .01}
+ecolab.sp_sep .1
+ecolab.repro_min -.1
+ecolab.repro_max .1
+ecolab.odiag_min -1e-3
+ecolab.odiag_max 1e-3
+ecolab.mut_max .01
+</PRE>
+
+<P>
+Model variables define a TCL command of the same name as they appear
+in the C++ source. So in the <I><I>    Eco Lab</I></I> model, the C++ object <TT>  ecolab</TT> defines a set of TCL commands such as <TT>ecolab.density</TT>
+that can be used for setting or querying the values of <TT>ecolab</TT>'s
+members.  If an argument is specified, then that argument is used to
+set the variable's value, otherwise, the variable's value is returned.
+Array members in the model are initialised by specifying an TCL list
+argument to the variables name, and return TCL lists when no argument
+is specified. The above example starts the ecology off with a single
+predator and prey (based on <TT>pred-prey.tcl</TT><A NAME="2179"></A>).
+
+<P>
+<BR><HR>
+<ADDRESS>
+Russell Standish
+2014-09-10
+</ADDRESS>
+</BODY>
+</HTML>

@@ -1,0 +1,57 @@
+\documentstyle[pstricks,pst-node,html,epsf,makeidx]{article}
+\title{\EcoLab{} Documentation}
+\author{Russell K. Standish}
+\newcommand{\br}{\mbox{${\bf r}$}} %reproductive rate
+\newcommand{\bbeta}{\mbox{\boldmath{$\beta$}}}   %interaction matrix
+\newcommand{\bgamma}{\mbox{\boldmath{$\gamma$}}} %dispersal
+\newcommand{\bmu}{\mbox{\boldmath{$\mu$}}}       %mutation rate
+\newcommand{\bn}{\mbox{\boldmath{$n$}}}          %species density
+\newcommand{\nsp}{\mbox{$n_{\rm sp}$}}           %no. of species           
+
+\newcommand{\EcoLab}{{\sffamily\slshape
+    \mbox{\raisebox{.5ex}{Eco}\hspace{-.4em}{\makebox[.5em]{L}ab}}}}
+
+\newcommand{\psection}[1]{\subsection{#1}}
+\newcommand{\psubsection}[1]{\subsubsection{#1}}
+
+%begin{latexonly}
+\renewcommand{\htmladdnormallinkfoot}[2]{#1\footnote{#2}}
+%end{latexonly}
+
+\makeindex
+
+\begin{document}
+\maketitle
+\begin{abstract}
+  \EcoLab{} is an object oriented simulation environment that
+  implements an experiment oriented metaphor. It provides a series of
+  instruments that can be coupled together with the user's model
+  (written in C++) at runtime in order to visualise the model, as well
+  as support for for distributing agents over an arbitrary topology
+  graph, partitioned over multiple processors and checkpoint/restart
+  support. \EcoLab{} was originally developed to simulate a particular
+  model (the \EcoLab{} model) of an abstract
+  ecology\cite{Standish94}. However, several other quite different
+  models have been implemented using the software, demonstrating its
+  general purpose nature.
+\end{abstract}
+
+\tableofcontents
+
+\include{using}
+\include{model}
+\include{classdesc}
+\include{parallel}
+\include{graphcode}
+\include{tcl++}
+\include{arrays}
+\include{tcl_arrays}
+\include{analysis}
+\include{random}
+\include{graph}
+\include{eco_strstream}
+\include{cachedDBM}
+\bibliographystyle{plain}
+\bibliography{rus}
+\printindex
+\end{document}

@@ -1,0 +1,14 @@
+/* 
+   is this hashing function good enough? Dunno, 'cos it depends on
+   your application.  Users can subsitute different hashes into hashmap
+*/
+
+const unsigned int nbins=1<<16;
+struct simple_hash
+{
+  unsigned operator()(GraphID_t i) {return (i>>6)&&(nbins-1);}
+};
+
+#include "hashmap.h"
+
+class hmap: public hashmap<simple_hash> {};

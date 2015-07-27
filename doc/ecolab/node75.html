@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Symbolic enums</TITLE>
+<META NAME="description" CONTENT="Symbolic enums">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node76.html">
+<LINK REL="previous" HREF="node74.html">
+<LINK REL="up" HREF="node53.html">
+<LINK REL="next" HREF="node76.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html1391"
+  HREF="node76.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html1385"
+  HREF="node53.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html1379"
+  HREF="node74.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html1387"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html1389"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1392"
+  HREF="node76.html">typeName</A>
+<B> Up:</B> <A NAME="tex2html1386"
+  HREF="node53.html">Classdesc</A>
+<B> Previous:</B> <A NAME="tex2html1380"
+  HREF="node74.html">dump</A>
+ &nbsp; <B>  <A NAME="tex2html1388"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1390"
+  HREF="node144.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION000146000000000000000"></A><A NAME="3567"></A><A NAME="3568"></A><A NAME="symbolic_enums"></A>
+<BR>
+Symbolic enums
+</H2>
+
+<P>
+By default, enums are treated as though they are integers. This works
+well for serialisation, but if the data is meant to be read by a
+human, it is desirable to display the enums in symbolic form.
+
+<P>
+In order to do this, classdesc will emit descriptors using
+<code>Enum_handle&lt;E&gt;</code>, where <code>E</code> is an enum, which wraps an enum
+variable. In particular, the <code>Enum_handle</code> will return a string
+symbolic representation of the enum, or assign the appropriate value
+to the enum variable when assigned a string constant representing the
+symbolic value of the enum:
+<PRE>
+  template &lt;class T&gt; //T is an enum
+  class Enum_handle
+  {
+  public:
+    Enum_handle(T&amp; arg); // wrap enum arg
+    operator std::string() const; //symbolic form of enum
+    operator int() const; //integral value of the enum
+    const Enum_handle&amp; operator=(T x);
+    const Enum_handle&amp; operator=(int x);
+    const Enum_handle&amp; operator=(const std::string&amp; x); //symbolic assignment  
+  };
+</PRE>
+Classdesc handles writing the dictionaries needed to perform this
+conversion to and from symbolic constants. See the <code>xml_pack</code>
+descriptor for an example of its use.
+
+<P>
+Access to the enum reflection data is via the EnumKeys class
+<PRE>
+  template &lt;class T&gt;
+  class EnumKeys
+  {
+  public:
+    int operator()(std::string key);
+    std::string operator()(int val);
+    size_t size() const;
+    iterator begin() const;
+    iterator end() const;
+    Siterator sbegin() const {return begin();}
+    Siterator send() const {return end();}
+    Viterator vbegin() const {return begin();}
+    Viterator vend() const {return end();}
+  };
+
+template &lt;class T&gt; const EnumKeys&lt;T&gt;&amp; enum_keys();
+</PRE>
+So <code>enum_keys&lt;enum Foo&gt;()("bar")</code> returns the numerical value of
+the enum constant <code>bar</code> and <code>enum_keys&lt;enum Foo&gt;()(bar)</code>
+returns the string value <code>"bar"</code>.
+
+<P>
+The various iterators allow iteration, or population of containers:
+<PRE>
+const EnumKeys&lt;Foo&gt; e(enum_keys&lt;Foo&gt;());
+map&lt;Foo,string&gt; m(e.begin(), e.end());
+vector&lt;string&gt; s(e.sbegin(), e.send());
+vector&lt;Foo&gt; v(e.vbegin(), e.vend());
+</PRE>
+
+<P>
+<BR><HR>
+<ADDRESS>
+Russell Standish
+2014-09-10
+</ADDRESS>
+</BODY>
+</HTML>

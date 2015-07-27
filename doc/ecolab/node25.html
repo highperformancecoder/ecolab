@@ -1,0 +1,166 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Making movies</TITLE>
+<META NAME="description" CONTENT="Making movies">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node26.html">
+<LINK REL="previous" HREF="node24.html">
+<LINK REL="up" HREF="node13.html">
+<LINK REL="next" HREF="node26.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html627"
+  HREF="node26.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html621"
+  HREF="node13.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html615"
+  HREF="node24.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html623"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html625"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html628"
+  HREF="node26.html">Auxilliary Commands</A>
+<B> Up:</B> <A NAME="tex2html622"
+  HREF="node13.html">Constructing an experiment</A>
+<B> Previous:</B> <A NAME="tex2html616"
+  HREF="node24.html">Palette Variable</A>
+ &nbsp; <B>  <A NAME="tex2html624"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html626"
+  HREF="node144.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION00078000000000000000">
+Making movies</A>
+</H2>
+
+<P>
+Its actually quite easy to make a movie of an Ecolab run. Each of the
+base widgets of the instruments has a method called <code>print</code>
+defined in the <A HREF="node19.html#widgets_namespace">widgets namespace</A>,
+which will output a postscript representation of the widget to a
+file. See <TT>gen-move.tcl</TT><A NAME="606"></A> for an example,
+which produced these <A NAME="tex2html15"
+  HREF="http://parallel.hpc.unsw.edu.au/rks/ecolab-snaps/example-anim-gifs.html">animated GIFs</A>.
+
+<P>
+Once a series of postscript files are created, you can convert them
+into GIFs using the <TT>pstoimg</TT><A NAME="610"></A><A NAME="tex2html12"
+  HREF="footnode.html#foot611"><SUP>1</SUP></A> utility that comes
+with <A NAME="tex2html16"
+  HREF="http://parallel.hpc.unsw.edu.au/htmldocs/latex2html">L<SUP><SMALL>A</SMALL></SUP>T<SMALL>E</SMALL>X2HTML</A>, using something
+like the following<A NAME="tex2html13"
+
+HREF="footnode.html#foot804"><SUP>2</SUP></A>:
+<PRE>
+cp *.ps /tmp
+for i in *.ps; do pstoimg -gif  $i; done
+cp /tmp/*.gif .
+</PRE>
+
+<P>
+Finally, use <TT>gifmerge</TT><A NAME="619"></A><A NAME="tex2html14"
+  HREF="footnode.html#foot620"><SUP>3</SUP></A> to produce an
+animated GIF.
+<PRE>
+gifmerge *.gif &gt;movie.gif
+</PRE>
+
+<P>
+An alternative is to produce an AVI file using the <code>mencoder</code>
+software that comes as part of the
+<A NAME="tex2html17"
+  HREF="http://www.mplayerhq.hu">mplayer</A>
+package. First you need to prepare a collection of jpeg files:
+<PRE>
+for i in *.ps; do 
+  f=${i%%.ps}
+  gs -sDEVICE=ppm -sOutputFile=$f.ppm -dNOPAUSE -dBATCH -g700x400 -r50  $i
+  cjpeg $f.ppm &gt;$f.jpg
+  done
+</PRE>
+You can control the final size of the bitmap using the <code>-g</code>
+option to gs, and control the scale with the <code>-r</code> option
+(``pixels per inch''). Mplayer has problems if the bitmap is too
+large, and if the dimensions are odd.
+
+<P>
+Finally, you can create an mpeg1 encoding using mencoder:
+<PRE>
+mencoder -mf on:type=jpeg -ovc lavc -lavcopts vcodec=mpeg1video \
+              \*.jpg -o movie.avi
+</PRE>
+Consult the mencoder man page for more details on codec options.
+
+<P>
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html627"
+  HREF="node26.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html621"
+  HREF="node13.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html615"
+  HREF="node24.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html623"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/share/latex2html/icons/contents.png"></A> 
+<A NAME="tex2html625"
+  HREF="node144.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index"
+ SRC="file:/usr/share/latex2html/icons/index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html628"
+  HREF="node26.html">Auxilliary Commands</A>
+<B> Up:</B> <A NAME="tex2html622"
+  HREF="node13.html">Constructing an experiment</A>
+<B> Previous:</B> <A NAME="tex2html616"
+  HREF="node24.html">Palette Variable</A>
+ &nbsp; <B>  <A NAME="tex2html624"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html626"
+  HREF="node144.html">Index</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Russell Standish
+2014-09-10
+</ADDRESS>
+</BODY>
+</HTML>

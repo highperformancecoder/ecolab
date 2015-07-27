@@ -1,0 +1,252 @@
+\section{arrays}
+
+This section documents the array and related data types. Arrays are
+dynamically sized (like std::vector), but are numerical, so can be
+used in numerical array expressions like \verb"a+b=0;". Array
+expressions use the expression template technique\cite{Veldhuizen95}
+to maximise the performance of array expressions.
+
+The code has been optimised for use with Intel's vectorising compiler,
+and code will be generated using SSE instructions if compiled with icc.
+
+Arrays and associated functions are defined in the
+\verb+array_ns+\index{array\_ns} namespace. 
+
+
+\subsection{array}\label{array}\index{array}\index{iarray}
+
+\begin{verbatim}
+
+//E is an array expression - eg array<double> or array<double>+array<int>
+//S is a scalar data type - eg int
+//T must be a C plain old data type, usually numerical
+
+template <class T>
+class array
+{
+ public:
+  typedef T value_type;
+
+  size_t size();   //return size of array
+  T* data();       //return pointer to array's contents
+
+  explicit array(size_t s=0); //construct array of size s
+  array(size_t s, T val);     //construct and initialise array of size s
+  void resize(size_t s);      //resize array, data undefined
+
+  array& array(const E& x);   //copy constructor
+  array& operator=(const E& x); //assignment or broadcast
+  T& operator[](size_t i);    //reference an element
+  T& operator[](const E& i);    //vector indexing
+
+  operator+() etc.    //see below
+};
+\end{verbatim}
+
+\subsubsection{Array operators}
+
+Arithmetical operators \verb"+,-,*,/,%" are defined elementwise
+between array expressions, as well as broadcastwise if one argument is
+a scalar. For example if x and y and z are arrays, and a is a scalar,
+\begin{verbatim}
+  z=x+a*y    =>  for (i=0; i<idx.size(); i++) z[i]=x[i]+a*y[i];
+\end{verbatim}
+
+Indexing operators [] can either take a single integer argument, which
+refers to a single array or expression element, or it can take an
+integer array expression, which performs vector indexing. So 
+\begin{verbatim}
+y=x[idx];    =>  for (i=0; i<idx.size(); i++) y[i] = x[idx[i]];
+y[idx]=x;    =>  for (i=0; i<idx.size(); i++) y[idx[i] = x[i];
+\end{verbatim}
+
+Comparison operators \verb+<+, \verb+>+ etc, and logical operators
+\verb+&&+, \verb+||+ are also defined in elementwise and broadcast versions.
+
+\verb+operator<<(expression1,expression2)+ is a concatenation
+operator, appending the elements of expression2 to the end of the
+elements of expression1. 
+
+Compound assignment variants also exist:
+\begin{verbatim}
+x+=y;    =>   x=x+y;
+x*=y;    =>   x=x*y;
+   ...
+x<<=y;   =>   x=x<<y;
+\end{verbatim}
+
+\subsection{{\tt sparse\_mat}}\label{sparse_mat}\index{sparse\_mat}
+
+The {\tt sparse\_mat} data type is designed to hold the
+interaction matrix \bbeta, which is generally a sparse matrix. It is
+built up of array<double> and iarray<int> components:
+
+\begin{verbatim}
+class sparse_mat
+{
+ public:
+  array diag, val;
+  iarray row, col;
+  sparse_mat(int s=0, int o=0)
+    {diag=array(s); val=array(o); row=iarray(o); col=iarray(o);}
+  array operator*(iarray& x);  /* matrix multiplication */
+  sparse_mat operator=(sparse_mat x);
+  void init_rand(int conn, double sigma);
+};
+\end{verbatim}
+
+{\tt diag} stores the diagonal components of the array, {\tt val} is
+the packed list of offdiagonal values, with {\tt row} and {\tt col}
+being the index lists. The only important operator defined for this
+class is the matrix operation, which is defined as
+\begin{verbatim}
+beta*x == beta.diag*x + (beta.val*x[beta.col])[beta.row]
+\end{verbatim}
+but is implemented separately for efficiency reasons.
+
+{\tt init\_rand}\index{init\_rand} is a utility routine for randomly
+initialising the nonzero pattern of the offdiagonal elements. The
+average number of nonzeros per row is {\tt conn}, and the standard
+deviation of the number of nonzeros is {\tt sigma}.
+
+It is possible to represent the offdiagonal array differently  for
+efficiency reasons. For example, if it is desired to represent the
+offdiagonal elements as a dense 2D array, one can create an extra
+pointer in the underlying implementation of array. Most of the time,
+this pointer is NULL, but when the \verb|cs_arrays| routine
+\verb|offmul| is called, it will check this pointer for the {\tt val}
+array. If it is NULL, it will create the efficient
+representation, otherwise it will reuse the existing one. Because the
+only way the array's actual value will get out of synch with the
+efficient representation is by index assignment, \verb|put_double()|
+and \verb|put_double_array| (as well as obviously
+\verb|delete_array()|) will need to be modified to deallocate the
+efficient representation.
+
+\subsection{Global functions}
+
+\begin{itemize}
+\item array {\tt merge}\index{merge}( iarray {\em mask}, array {\em
+    a}, array {\em b} )
+  
+  return an array (or iarray) {\em r} such that where {\em
+    mask[i]==1}, {\em r[i]=a[i]}, otherwise {\em r[i]=b[i]}.
+
+\item array {\tt pack}\index{pack}( array {\em x}, iarray {\em mask}, [int {\em
+ntrue}])
+
+Construct a new array from elements of  {\em x} that correspond to
+where the mask is true. {\em ntrue} is an optional parameter equal to
+the number of true elements of {\em mask}. If not given, then {\tt
+pack} will count the true elements of {\em mask}. Give this parameter
+if you are using the same {\em mask} in multiple {\tt pack} statements.
+
+\item iarray {\tt enumerate}\index{enumerate}(iarray {\em mask})
+
+Return the running sum of mask.
+
+\item iarray {\tt pcoord}\index{pcoord}( int {\em size})
+
+return [0..size-1]
+
+\item iarray {\tt gen\_index}\index{gen\_index}(iarray {\em x}) 
+
+generate a list of index values, with each number appearing in the
+list according to the value passed in its position. For example, if
+{\em x}=\{0,0,1,2,0,1\} then the output from this function will be
+\{3,4,4,6\}
+
+\item void {\tt lgspread}\index{lgspread}( array\& {\em a}, array {\em s} )
+
+Perform lognormal variation of the components of {\em a}, with
+standard error given by {\em s}, ie
+\begin{displaymath}
+a_i=\mathrm{sgn}(a_i) \exp(\log|a_i| + s_i\xi_i)
+\end{displaymath}
+where $\xi_i$ is normal random variate.
+
+\item void {\tt gspread}\index{lgspread}( array\& {\em a}, array {\em s} )
+
+Perform normal variation of the components of {\em a}, with
+standard error given by {\em s}, ie
+\begin{displaymath}
+a_i = a_i + s_i\xi_i
+\end{displaymath}
+where $\xi_i$ is normal random variate.
+
+
+
+\end{itemize}
+
+\subsubsection{Reduction functions}
+
+\begin{itemize}
+\item double {\tt max}\index{max}( array {\em x}) 
+\item double {\tt min}\index{min}( array {\em x}) 
+\item double {\tt sum}\index{sum}( array {\em x}) 
+\item bool {\tt all}\index{all}( array {\em x}) 
+  return true is all of x[i] are nonzero
+\item bool {\tt any}\index{any}( array {\em x})
+  return true if any x[i] are nonzero
+\end{itemize}
+
+\subsubsection{Array functions}
+\begin{itemize}
+\item array {\tt abs}\index{abs}(array {\em x})
+\item iarray {\tt sign}\index{sign}(array {\em x})
+\item array {\tt exp}\index{exp}(array {\em x})
+\item array {\tt log}\index{log}(array {\em x})
+\item array{\tt <int>} ProbRound\index{ProbRound}(array{\tt <double>} {\em x})
+    Round up or down with probability given by the difference between
+    real value and the integers either side. For instance, if the
+    argument's value is 0.2, then it has an 80\% chance of being
+    rounded down to 0, and a 20\% chance of being rounded up to 1.
+    Uses \hyperref{{\tt array\_urand}}{{\tt
+    array\_urand}\S}{)}{random fun}.
+\end{itemize}
+
+\subsubsection{Random number functions}\label{random fun}
+
+array's random number functions allow arrays to be filled with random
+numbers efficiently in a single call. Most of these functions use the
+\verb+array_urand+\index{array\_urand} uniform random object (of type \hyperref{urand}{urand\S}{)}{random}\index{urand}), which is
+accessible from TCL. The \verb+fillgrand()+ function makes use of the
+TCL accessible \verb+array_grand+\index{array\_grand} object, which is
+of type \hyperref{gaussrand}{gaussrand\S}{)}{random}\index{gaussrand}.
+
+
+\begin{itemize}
+\item void {\tt fillrand}\index{fillrand}(array {\em x}) 
+
+Fill {\em x} with random numbers from the uniform distribution over $[0,1]$
+
+\item void {\tt fillprand}\index{fillprand}(array {\em x})
+
+Fill {\em x} with random numbers from the Poisson distribution $e^{-x}$
+
+\item void {\tt fillgrand}\index{fillgrand}(array {\em x})
+
+Fill {\em x} with random numbers from the Gaussian distribution $e^{-x^2/4}$
+
+\item void {\tt fill\_unique\_rand}\index{fill\_unique\_rand}(array {\em
+    x}, int {\em max})
+
+Fill {\em x} with random integers from the range [0..{\em max}] such
+that no two integers are the same.
+
+\end{itemize}
+
+\subsubsection{Stream Functions}
+\begin{itemize}
+\item \verb|ostream& operator<<(ostream& s, expr x)|
+\item \verb|istream& operator>>(istream& s, array& x)|
+\end{itemize}
+
+\subsection{Old arrays}
+
+The original array library had a somewhat different API. The new array
+library can be accessed through the old interface by including
+\verb+#include "oldarrays.h"+ The only slight difference that may be
+noticed is that oldarray::size is not an integer, but an object that
+converts to an integer. The problem is that overloaded functions may
+ge confused.

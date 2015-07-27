@@ -1,0 +1,24 @@
+# run insert friends on all files in the c++ standard include
+#  directory (given by $1)
+
+PATH=$PATH:`pwd`
+INC=`pwd`/$1
+
+proc_dir()
+{
+  if [ ! -d $2 ]; then mkdir $2; fi
+  cd $1
+  for i in *; do 
+    if [ -d $i ]; then proc_dir $i $2/$i; continue; fi
+    j=$2/$i
+#    echo "Processing $1/$i -> $j"
+    insert-friend <$i >$j
+    if diff $i $j >/dev/null; then rm $j; fi
+  done
+  cd ..
+}
+
+# generate list of include directories to search
+while read dir; do
+   proc_dir $dir $INC
+done <include-paths

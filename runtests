@@ -1,0 +1,27 @@
+#!/bin/sh
+if [ $# -lt 2 ]; then
+  echo "Usage: $0 compiler test1 test2 ..."
+  echo "called from make sure"
+  echo "SGI compiler \"CC -LANG:std -w -I/usr/local/mpi/include -L/usr/local/mpi/lib32\""
+  echo "Intel compiler \"icc -w\""
+  echo "IBM compiler xlC or mpCC as appropriate"
+  echo "Tru64 compiler cxx -D__USE_STD_IOSTREAM"
+fi
+
+CC=$1
+export CC
+shift
+
+passed=0
+failed=0
+for i in $*; do 
+  echo $i
+  bash $i
+  if test $? -eq 0 ; then 
+    passed=`expr $passed + 1`
+  else
+    failed=`expr $failed + 1`
+  fi
+done
+
+echo "$passed tests passed, $failed tests failed"

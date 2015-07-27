@@ -1,0 +1,43 @@
+EcoLab's makefile autoconfigures according to presence of absence of
+dependent items on the system. Just type "make" to build it.
+
+If you don't need to build the example models, but want to use it for
+your own models, do
+
+make install
+
+which installs it in ~/usr/ecolab, or to put it in a system-wide
+location (/usr/local/ecolab recommended for this), do
+
+sudo make install PREFIX=/usr/local/ecolab
+
+
+The only software really necessary to build EcoLab is
+
+1) GNU Make
+2) ISO standard C++ compiler, eg gcc
+3) TCL 8.5 (TCL 8.4 should still work, but untested)
+
+EcoLab is tested on OpenSUSE (Linux), MacOSX, Cywin and Mingw (the
+latter two being Posix emulation environment on Windows).
+
+However, the minimum requirements only gives a batch processing
+environment. For GUI interactive use, the following is required:
+
+4) Tk
+
+The following is recommended, but not essential (functionality will
+degrade without them)
+
+5) Cairo 1.10.x 
+6) UNURAN
+7) Berkely DB 4.x
+8) IGraph
+9) Readline
+10) XDR
+11) zlib
+
+and for distributed parallel work
+
+12) MPI 1.x
+13) ParMetis

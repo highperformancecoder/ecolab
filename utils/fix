@@ -1,0 +1,4 @@
+# script for fixing unuran to run on OSX boxes
+# use as find . -name *.c -exec fix {} \;
+sed -e 's/, *\/\*void\*\//,;\/\*void\*\//g' $1|cat >/tmp/$$.fix
+mv /tmp/$$.fix $1
