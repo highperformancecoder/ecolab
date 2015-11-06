@@ -45,6 +45,17 @@ class tokeninput
         else {ungetc(c,inputstream); c='\\';}
         break;
 
+      case '[':
+        c=fgetc(inputstream); 
+        if (c=='[') // attribute leadin - discard attribute
+          {
+            char lc=c;
+            while ((c=fgetc(inputstream)) != ']' && lc!=']') lc=c;
+            getnextc();
+          }
+        else
+          {ungetc(c,inputstream); c='[';}
+        break;
       case EOF:
         throw eof();
         break;
@@ -158,7 +169,7 @@ public:
                   token+=c;
                   getnextc();
                 }
-              break;
+             break;
 
             case '(':
               if (c==')')

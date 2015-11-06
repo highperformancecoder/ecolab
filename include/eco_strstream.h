@@ -87,7 +87,7 @@ namespace ecolab
     }
 
     template <class T>
-    typename classdesc::enable_if<Not<is_enum<T> >, eco_strstream&>::T
+    typename classdesc::enable_if<And<Not<is_enum<T> >,Not<is_container<T> > >, eco_strstream&>::T
     operator|(const T& x) 
     {(*static_cast<std::ostringstream*>(this))<<x; return *this;}
 

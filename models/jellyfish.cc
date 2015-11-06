@@ -19,6 +19,7 @@
 #include "graphcode.h"
 #include "TCL_obj_graphcode.h"
 #include "graphcode.cd"
+#include "TCL_obj_stl.h"
 
 using namespace ecolab;
 using namespace std;

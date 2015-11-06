@@ -145,6 +145,12 @@ void finish_race(int pipes[2], int w)
   exit(0);
 }
 
+#ifdef IGRAPH
+igraph_bool_t compat
+(const igraph_t *,const igraph_t *,const igraph_integer_t,
+ const igraph_integer_t,void *arg) {return true;}
+#endif
+
 int netc_t::automorphism_race(TCL_args args)
 {
 #if !defined(__MINGW32__) && !defined(__MINGW32_VERSION)
@@ -223,7 +229,11 @@ int netc_t::automorphism_race(TCL_args args)
     {
       IGraph ig(g);
       igraph_integer_t count;
+#ifdef IGRAPH_VERSION
+      igraph_count_isomorphisms_vf2(&ig,&ig,NULL,NULL,NULL,NULL,&count,compat,compat,NULL);
+#else
       igraph_count_isomorphisms_vf2(&ig,&ig,&count);
+#endif
       finish_race(pipes, method);
     }
     else if (children.back() == -1)

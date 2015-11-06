@@ -223,11 +223,13 @@ namespace ecolab
     /// just to stop some compiler warning
     virtual void proc(int argc, Tcl_Obj *const argv[]) {
       cmd_data::proc(argc,argv);
+      if (thook) thook(argc,argv);
     }
     /// a hook that is called whenever proc is called, to determine
     /// further processing
     void (*hook)(int argc, CONST84 char **argv);
-    member_entry_base(): hook(NULL) {}
+    void (*thook)(int argc, Tcl_Obj *const argv[]);
+    member_entry_base(): hook(NULL), thook(NULL) {}
 
     // std::type_info does not provide an overload for std::Less, so provide one here
     struct TypeInfoLess
@@ -292,6 +294,8 @@ namespace classdesc
     /// hook function to use whenever a setter/getter is called from TCL
     typedef void (*Member_entry_hook)(int argc, CONST84 char **argv);
     Exclude<Member_entry_hook> member_entry_hook;
+    typedef void (*Member_entry_thook)(int argc, Tcl_Obj *const argv[]);
+    Exclude<Member_entry_thook> member_entry_thook;
 
     /// checkpoint object to filename
     void checkpoint(int argc, char *argv[]);
@@ -301,7 +305,8 @@ namespace classdesc
     void get_vars(int argc, char *argv[]);
     /// attach to \a port so as to service \c get_vars requests from remote client
     void data_server(int argc, char *argv[]);
-    TCL_obj_t(): xdr_check(false), member_entry_hook((Member_entry_hook)NULL) {}
+    TCL_obj_t(): xdr_check(false), member_entry_hook((Member_entry_hook)NULL),  
+                 member_entry_thook((Member_entry_thook)NULL){}
   };
 }
 
@@ -309,18 +314,6 @@ namespace classdesc
 #pragma omit pack classdesc::TCL_obj_t
 #pragma omit unpack classdesc::TCL_obj_t
 #endif
-//inline void pack(classdesc::pack_t& targ, const classdesc::string& desc, 
-//                 classdesc::TCL_obj_t& arg)
-//{
-//  /* nothing to be done at present */
-//}
-//
-//inline void unpack(classdesc::unpack_t& targ, const classdesc::string& desc, 
-//                   classdesc::TCL_obj_t& arg)
-//{
-//  /* nothing to be done at present */
-//}
-
 
 namespace classdesc_access
 {
@@ -362,9 +355,6 @@ namespace ecolab
 
   template <class T> void TCL_obj(TCL_obj_t&, const string&, T&);
   template <class T> void TCL_obj_onbase(TCL_obj_t&, const string&, T&);
-
-  template <> inline 
-  void TCL_obj(TCL_obj_t& targ, const string& desc, void*& arg) {}
 
 #include "ref.h"
   ///  An EcoLab ref is a classdesc::ref, but also tracks change of pointee
@@ -454,7 +444,21 @@ namespace ecolab
 
     //  template<class T> inline eco_strstream& operator|(eco_strstream& x,const T& y);
   template<class T, class CharT, class Traits> 
-  typename enable_if<Not<is_enum<T> >, std::basic_istream<CharT,Traits>&>::T
+  typename enable_if<
+    And<Not<is_enum<T> >, Not<is_container<T> > >,
+    std::basic_istream<CharT,Traits>&>::T
+  operator>>(std::basic_istream<CharT,Traits>& x,T& y); 
+
+  template<class T, class CharT, class Traits> 
+  typename enable_if<is_sequence<T>, std::basic_istream<CharT,Traits>&>::T
+  operator>>(std::basic_istream<CharT,Traits>& x,T& y); 
+
+  template<class T, class CharT, class Traits> 
+  typename enable_if<is_associative_container<T>, std::basic_istream<CharT,Traits>&>::T
+  operator>>(std::basic_istream<CharT,Traits>& x,T& y); 
+
+  template<class T, class CharT, class Traits> 
+  typename enable_if<is_enum<T>, std::basic_istream<CharT,Traits>&>::T
   operator>>(std::basic_istream<CharT,Traits>& x,T& y); 
 
   template<class T, class CharT, class Traits> 
@@ -462,16 +466,18 @@ namespace ecolab
   operator>>(std::basic_istream<CharT,Traits>& x,T& y); 
 
 
-    template<class T> inline std::istream& operator>>(std::istream&, ref<T>& y);
+  template<class T, class CharT, class Traits> 
+  inline std::basic_istream<CharT,Traits>& 
+  operator>>(std::basic_istream<CharT,Traits>&, ref<T>& y);
 
-    template <class T> struct member_entry: public member_entry_base
-    {
-      T *memberptr;
-      member_entry(): memberptr(0) {}
-      member_entry(T& x) {memberptr=&x;}
-      void get();
-      void put(const char *s); 
-    };
+  template <class T> struct member_entry: public member_entry_base
+  {
+    T *memberptr;
+    member_entry(): memberptr(0) {}
+    member_entry(T& x) {memberptr=&x;}
+    void get();
+    void put(const char *s); 
+  };
   
   template <class T> T* member_entry_base::memberPtrCasted() const
   {
@@ -595,14 +601,15 @@ namespace ecolab
   }
 
   template <class T>
-  void TCL_obj_register(const string& desc, T& arg, 
-                        void (*member_entry_hook)(int argc, CONST84 char **argv), bool base=false)
+  void TCL_obj_register(const TCL_obj_t& targ, const string& desc, T& arg, 
+                        bool base=false)
   {
     TCL_obj_hash::iterator it=TCL_obj_properties().find(desc);
     if (!base || it==TCL_obj_properties().end())
       {
         member_entry<T> *m=new member_entry<T>(arg);
-        m->hook=member_entry_hook;
+        m->hook=targ.member_entry_hook;
+        m->thook=targ.member_entry_thook;
         m->name=desc;
         TCL_OBJ_DBG(printf("registering %s, with entry %x\n",desc.c_str(),m));
         //  assert(TCL_newcommand(desc)); /* we just want the latest resgistration */
@@ -665,7 +672,10 @@ namespace ecolab
       T (*fptr)(...);
       T (*ofptr)(const TCL_args&);  
     };
-    TCL_obj_functor() {c=invalid;}
+    void (*hook)(int argc, CONST84 char **argv);
+    void (*thook)(int argc, Tcl_Obj *const argv[]);
+
+    TCL_obj_functor(): hook(NULL), thook(NULL) {c=invalid;}
     void init(C& oo, T (C::*m) ()) {o=&oo; mbrvoid=m; c=memvoid;}
     void init(C& oo, T (C::*m) (int,char**)) {o=&oo; mbr=m; c=mem;}
     void init(C& oo, T (C::*m) (TCL_args)) {o=&oo; mbrobj=m; c=mem;}
@@ -682,6 +692,7 @@ namespace ecolab
         case nonconst: throw error("non const method called on const object");
         default: break;
         }
+      if (hook) hook(argc, argv);
     }
     void proc(int argc, Tcl_Obj *const argv[])
     {
@@ -693,6 +704,7 @@ namespace ecolab
         case nonconst: throw error("non const method called on const object");
         default: break;
         }
+      if (thook) thook(argc, argv);
     }
   };
 
@@ -708,6 +720,9 @@ namespace ecolab
       T (*fptr)(...);
       T (*ofptr)(const TCL_args&);  
     };
+    void (*hook)(int argc, CONST84 char **argv);
+    void (*thook)(int argc, Tcl_Obj *const argv[]);
+
     TCL_obj_functor() {c=invalid;}
     void init(const C& oo, T (C::*m) () const) {o=&oo; mbrvoid=m; c=memvoid;}
     void init(const C& oo, T (C::*m) (int,char**) const) {o=&oo; mbr=m; c=mem;}
@@ -726,6 +741,7 @@ namespace ecolab
         case mem: r<<(o->*mbr)(argc,const_cast<char**>(argv)); break;
         case func: r<<fptr(argc,const_cast<char**>(argv)); break;
         }
+      if (hook) hook(argc, argv);
     }
     void proc(int argc, Tcl_Obj *const argv[])
     {
@@ -735,6 +751,7 @@ namespace ecolab
         case mem: r<<(o->*mbrobj)(TCL_args(argc,argv)); break;
         case func: r<<ofptr(TCL_args(argc,argv)); break;
         }
+      if (thook) thook(argc, argv);
     }
   };
 
@@ -752,6 +769,9 @@ namespace ecolab
       void (*fptr)(...);
       void (*ofptr)(const TCL_args&);
     };
+    void (*hook)(int argc, CONST84 char **argv);
+    void (*thook)(int argc, Tcl_Obj *const argv[]);
+
     TCL_obj_functor() {c=invalid;}
     void init(C& oo, void (C::*m) ()) {o=&oo; mbrvoid=m; c=memvoid;}
     void init(C& oo, void (C::*m) (int,char**)) {o=&oo; mbr=m; c=mem;}
@@ -767,6 +787,7 @@ namespace ecolab
         case func: fptr(argc,const_cast<char**>(argv)); break;
         default: break;
         }
+      if (hook) hook(argc, argv);
     }
     void proc(int argc, Tcl_Obj *const argv[])
     {
@@ -776,36 +797,9 @@ namespace ecolab
         case func: ofptr(TCL_args(argc,argv)); break;
         default: break;
         }
+      if (thook) thook(argc, argv);
     }
   };
-
-#if 0
-  template<class C>
-  struct TCL_obj_functor<C,TCL_obj_t>: public cmd_data
-  {
-    C* o;
-    functor_class c;
-    union {
-      TCL_obj_t (C::*mbrvoid) ();
-      TCL_obj_t (C::*mbr)(int,char**);
-      TCL_obj_t (*fptr)(int argc, char **argv);
-    };
-    TCL_obj_functor() {c=invalid;}
-    void init(C& oo, TCL_obj_t (C::*m) ()) {o=&oo; mbrvoid=m; c=memvoid;}
-    void init(C& oo, TCL_obj_t (C::*m) (int,char**)) {o=&oo; mbr=m; c=mem;}
-    void init(C& oo, void (C::*m) (TCL_args)) {o=&oo; mbrobj=m; c=mem;}
-    void init(C& oo, TCL_obj_t (*f) (...)) {o=&oo; fptr=f; c=func;}
-    void proc(int argc, CONST84 char **argv)
-    {
-      switch (c)
-        {
-        case memvoid: (o->*mbrvoid)(); break;
-        case mem: (o->*mbr)(argc,const_cast<char**>(argv)); break;
-        case func: fptr(argc,const_cast<char**>(argv)); break;
-        }
-    }
-  };
-#endif
 
   /// whether B's method is callable due to the rules of const-correctness, or due to having lvalue arguments
   template <class B> struct BoundMethodCallable: public false_type {};
@@ -853,11 +847,13 @@ namespace ecolab
   class NewTCL_obj_functor: public cmd_data
   {
     bound_method<C,M> bm;
-
+    TCL_obj_t::Member_entry_thook thook;
   public:
-    NewTCL_obj_functor(C& obj, M member): bm(obj, member) {}
+    NewTCL_obj_functor(const TCL_obj_t& targ,C& obj, M member): 
+      bm(obj, member), thook(targ.member_entry_thook) {}
     void proc(int argc, Tcl_Obj *const argv[]) {
       newTCL_obj_functor_proc(bm, TCL_args(argc, argv));
+      if (thook) thook(argc, argv);
     }
     void proc(int, const char **) {}  
   };
@@ -866,7 +862,7 @@ namespace ecolab
   typename enable_if<is_member_function_pointer<M>, void>::T
   TCL_obj(TCL_obj_t& targ, const string& desc, C& c, M m) 
   {
-    NewTCL_obj_functor<C,M> *t=new NewTCL_obj_functor<C,M>(c,m);
+    NewTCL_obj_functor<C,M> *t=new NewTCL_obj_functor<C,M>(targ,c,m);
     TCL_OBJ_DBG(printf("registering %s\n",desc.c_str()));
     Tcl_CreateObjCommand(interp(),desc.c_str(),TCL_oproc,(ClientData)t,TCL_cmd_data_delete);
   } 
@@ -876,11 +872,13 @@ namespace ecolab
   class NewTCL_static_functor: public cmd_data
   {
     F f;
-
+    TCL_obj_t::Member_entry_thook thook;
   public:
-    NewTCL_static_functor(F f): f(f) {}
+    NewTCL_static_functor(const TCL_obj_t& targ,F f): 
+      f(f), thook(targ.member_entry_thook) {}
     void proc(int argc, Tcl_Obj *const argv[]) {
       newTCL_obj_functor_proc(f, TCL_args(argc, argv));
+      if (thook) thook(argc, argv);
     }
     void proc(int, const char **) {}  
   };
@@ -889,7 +887,7 @@ namespace ecolab
   typename enable_if<functional::is_nonmember_function_ptr<M>, void>::T
   TCL_obj(TCL_obj_t& targ, const string& desc, C& c, M m) 
   {
-    NewTCL_static_functor<M> *t=new NewTCL_static_functor<M>(m);
+    NewTCL_static_functor<M> *t=new NewTCL_static_functor<M>(targ,m);
     TCL_OBJ_DBG(printf("registering %s\n",desc.c_str()));
     Tcl_CreateObjCommand(interp(),desc.c_str(),TCL_oproc,(ClientData)t,TCL_cmd_data_delete);
   } 
@@ -905,6 +903,7 @@ namespace ecolab
   {
     TCL_obj_functor<C,T> *t=new TCL_obj_functor<C,T>;
     t->init(obj,arg); t->name=desc;
+    t->hook=targ.member_entry_hook; t->thook=targ.member_entry_thook;
     TCL_OBJ_DBG(printf("registering %s\n",desc.c_str()););
     Tcl_CreateCommand(interp(),desc.c_str(),(Tcl_CmdProc*)TCL_proc,(ClientData)t,TCL_cmd_data_delete);
   } 
@@ -923,6 +922,7 @@ namespace ecolab
   {
     TCL_obj_functor<C,T> *t=new TCL_obj_functor<C,T>;
     t->init(obj,arg); t->name=desc;
+    t->hook=targ.member_entry_hook; t->thook=targ.member_entry_thook;
     TCL_OBJ_DBG(printf("registering %s\n",desc.c_str()););
     Tcl_CreateCommand(interp(),desc.c_str(),(Tcl_CmdProc*)TCL_proc,(ClientData)t,TCL_cmd_data_delete);
   } 
@@ -940,6 +940,7 @@ namespace ecolab
   {
     TCL_obj_functor<C,T> *t=new TCL_obj_functor<C,T>;
     t->init(obj,arg); t->name=desc;
+    t->hook=targ.member_entry_hook; t->thook=targ.member_entry_thook;
     TCL_OBJ_DBG(printf("registering %s\n",desc.c_str()););
     Tcl_CreateObjCommand(interp(),desc.c_str(),TCL_oproc,(ClientData)t,TCL_cmd_data_delete);
   }
@@ -949,6 +950,7 @@ namespace ecolab
   {
     TCL_obj_functor<C,T> *t=new TCL_obj_functor<C,T>;
     t->init(obj,arg); t->name=desc;
+    t->hook=targ.member_entry_hook; t->thook=targ.member_entry_thook;
     TCL_OBJ_DBG(printf("registering %s\n",desc.c_str()););
     Tcl_CreateObjCommand(interp(),desc.c_str(),TCL_oproc,(ClientData)t,TCL_cmd_data_delete);
   }
@@ -959,6 +961,7 @@ namespace ecolab
   {
     TCL_obj_functor<C,T> *t=new TCL_obj_functor<C,T>;
     t->init(obj,arg); t->name=desc;
+    t->hook=targ.member_entry_hook; t->thook=targ.member_entry_thook;
     TCL_OBJ_DBG(printf("registering %s\n",desc.c_str()););
     Tcl_CreateObjCommand(interp(),desc.c_str(),TCL_oproc,(ClientData)t,TCL_cmd_data_delete);
   }
@@ -976,6 +979,7 @@ namespace ecolab
   {
     TCL_obj_functor<C,T> *t=new TCL_obj_functor<C,T>;
     t->init(obj,arg); t->name=desc;
+    t->hook=targ.member_entry_hook; t->thook=targ.member_entry_thook;
     TCL_OBJ_DBG(printf("registering %s\n",desc.c_str()););
     Tcl_CreateObjCommand(interp(),desc.c_str(),TCL_oproc,(ClientData)t,TCL_cmd_data_delete);
   }
@@ -985,6 +989,7 @@ namespace ecolab
   {
     TCL_obj_functor<C,T> *t=new TCL_obj_functor<C,T>;
     t->init(obj,arg); t->name=desc;
+    t->hook=targ.member_entry_hook; t->thook=targ.member_entry_thook;
     TCL_OBJ_DBG(printf("registering %s\n",desc.c_str()););
     Tcl_CreateObjCommand(interp(),desc.c_str(),TCL_oproc,(ClientData)t,TCL_cmd_data_delete);
   }
@@ -1006,7 +1011,7 @@ namespace ecolab
 
   template <class T>
   void TCL_obj(TCL_obj_t& t, const string& d, const Enum_handle<T>& a)
-  {TCL_obj_register(d, a, t.member_entry_hook);}
+  {TCL_obj_register(t,d, a);}
 }
 
 using ecolab::TCL_obj;
@@ -1043,7 +1048,7 @@ namespace classdesc_access
   {
     template <class U>
     void operator()(cd::TCL_obj_t& t, const cd::string& d, U& a)
-    {TCL_obj_register(d, a, t.member_entry_hook);}
+    {TCL_obj_register(d, a, t.member_entry_hook, t.member_entry_thook);}
   };
 }
 
@@ -1078,6 +1083,8 @@ namespace ecolab
     void proc(int, const char **) {}  
   };
 
+  /// distinguish between maps and sets based on value_type of container
+  template <class T> struct is_map;
 }
 
 namespace classdesc_access

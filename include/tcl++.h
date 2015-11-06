@@ -364,19 +364,19 @@ namespace ecolab
     ///tclvars may be freely mixed with arithmetic  expressions 
     double operator=(double x) {return dput(x);}
     const char* operator=(const char* x) 
-    {return Tcl_SetVar(interp(),name.c_str(),x,TCL_GLOBAL_ONLY);}
+    {return interpExiting? "": Tcl_SetVar(interp(),name.c_str(),x,TCL_GLOBAL_ONLY);}
 
     const char* operator+(const char* x) 
     {
-      string t(operator char*());
+      string t(operator const char*());
       t+=x; *this=t.c_str();
       return t.c_str();
     } 
     ///
     operator double () {return dget();}
     ///
-    operator char* () 
-    {return const_cast<char*>(Tcl_GetVar(interp(),name.c_str(),TCL_GLOBAL_ONLY));}
+    operator const char* () 
+    {return interpExiting? "": Tcl_GetVar(interp(),name.c_str(),TCL_GLOBAL_ONLY);}
     ///
     operator int() {return (int)dget();}
     operator unsigned () {return (unsigned)dget();}
@@ -406,7 +406,7 @@ namespace ecolab
     ///size  of arrays 
     int size();  
 
-    friend int exists(const tclvar& x);
+    friend bool exists(const tclvar& x);
     friend class tclindex;
   };
 
@@ -416,6 +416,7 @@ namespace ecolab
   inline
   double tclvar::dget(void)  
   {
+    if (interpExiting) return 0;
     double val;
     int ival;
     char* tclval;
@@ -438,6 +439,7 @@ namespace ecolab
   inline
   double tclvar::dput(double x)
   { 
+    if (interpExiting) return x;
     eco_strstream value;
     value << x;
     std::string v(value.str());
@@ -447,8 +449,8 @@ namespace ecolab
 
   ///Check if a TCL variable exists
   inline
-  int exists(const tclvar& x)
-  {return Tcl_GetVar(interp(),x.name.c_str(),TCL_GLOBAL_ONLY)!=NULL;}
+  bool exists(const tclvar& x)
+  {return interpExiting? false: Tcl_GetVar(interp(),x.name.c_str(),TCL_GLOBAL_ONLY)!=NULL;}
 
   inline
   tclvar::tclvar(const string& nm, const char* val): name(nm) 
@@ -480,7 +482,7 @@ namespace ecolab
   // enable printing of tclvars through the stream process 
   inline
   std::ostream& operator<<(std::ostream& stream, tclvar x)
-  { return stream << (char*) x;}
+  { return stream << (const char*) x;}
 
 #define DBLSIZ 16 /* enough characters to hold a string rep of a double */
 #define INTSIZ 12 /* enough characters to hold a string rep of an int */
@@ -500,8 +502,9 @@ namespace ecolab
     string result;   /* The result of the previous command is placed here */
     void exec()
     {
+      if (interpExiting) return;
       std::string s=chomp(str());
-      if (!interpExiting && Tcl_Eval(interp(),s.c_str())!=TCL_OK) 
+      if (Tcl_Eval(interp(),s.c_str())!=TCL_OK) 
         {
           error e("%s->%s\n",s.c_str(),Tcl_GetStringResult(interp()));
           clear();
@@ -548,6 +551,7 @@ namespace ecolab
   {
   public:
     ~tclreturn() {
+      if (interpExiting) return;
       std::string tmps=str();
       Tcl_SetResult(interp(),const_cast<char*>(tmps.c_str()),TCL_VOLATILE);}
   };

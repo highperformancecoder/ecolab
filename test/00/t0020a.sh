@@ -39,11 +39,14 @@ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 # use \$ in place of $ to refer to variable contents
 # exit 0 to indicate pass, and exit 1 to indicate failure
 cat >input.tcl <<EOF
+source $here/test/assert.tcl
+
 HistoStats h
 
 
 unuran rand
 rand.set_gen {distr=pareto(.5,1.7);}
+rand.uni.seed 10
 
 for {set i 0} {\$i<10000} {incr i} {
     h.add_data [rand.rand]
@@ -51,14 +54,6 @@ for {set i 0} {\$i<10000} {incr i} {
 
 proc min {x y} {
     if {\$x<\$y} {return \$x} else {return \$y}
-}
-
-proc assert {x} {
-    global slope xmin mu sigma expparms
-    if {![expr \$x]} {
-        puts stdout "assert failure: $x"
-        exit 1
-    }
 }
 
 set plparms [h.fitPowerLaw]

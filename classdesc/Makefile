@@ -9,7 +9,7 @@ FLAGS+=-fprofile-arcs -ftest-coverage
 endif
 
 ifdef AEGIS
-FLAGS+=-Werror -Wall -Wno-unused-variable
+FLAGS+=-Werror -Wall -Wno-unused-variable -std=c++98
 endif
 
 XDR=1
@@ -84,7 +84,7 @@ else
 XDRPACK=
 endif
 
-build: $(EXES) $(XDRPACK) functiondb.h unpack_base.h json_unpack_base.h
+build: $(EXES)  $(XDRPACK) functiondb.h unpack_base.h json_unpack_base.h
 
 unpack_base.h:
 	-ln -s pack_base.h unpack_base.h
@@ -98,7 +98,8 @@ aegis-all: build latex-docs
 	-ln -s pack_base.h unpack_base.h
 	if which mpicxx; then	cd mpi-examples && $(MAKE) CPLUSPLUS=mpicxx CC=mpicc; fi
 	cd examples && $(MAKE) NOGUI=1
-#	if which javac; then cd java && $(MAKE) && cd ../javaExamples && $(MAKE); fi
+#NB if these builds fail, check for jni.h and jni_md.h in the standard include path
+	if which javac; then cd java && $(MAKE) && cd ../javaExamples && $(MAKE); fi
 	cd test && $(MAKE)
 	cd test/c++11 && $(MAKE)
 #	-cd objc-examples && $(MAKE)
@@ -122,6 +123,7 @@ clean:
 	cd java && $(MAKE) clean
 	cd javaExamples && $(MAKE) clean
 	cd test && $(MAKE) clean
+	cd test/c++11 && $(MAKE) clean
 	cd doc && rm -f *~ *.aux *.dvi *.log *.blg *.toc *.lof
 	rm -rf ii_files */ii_files
 

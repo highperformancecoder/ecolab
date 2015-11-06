@@ -6,7 +6,7 @@
   Open source licensed under the MIT license. See LICENSE for details.
 */
 
-#if defined(CAIRO) && defined(TK)
+#if defined(CAIRO)
 #include "plot.h"
 #include "cairo_base.h"
 #include "ecolab_epilogue.h"
@@ -168,12 +168,13 @@ namespace ecolab
 
   string Plot::Image(const string& im, bool transparency)
   {
-#if defined(CAIRO) && defined(TK)
+#if defined(TK)
     Tk_PhotoHandle photo = Tk_FindPhoto(interp(), im.c_str());
     if (photo)
-      surface.reset(new cairo::TkPhotoSurface(photo,transparency));
-//    else
-//      throw error("image %s not found",im.c_str());
+      {
+        surface.reset(new cairo::TkPhotoSurface(photo,transparency));
+        cairo_surface_set_device_offset(surface->surface(),0.5*surface->width(),0.5*surface->height());
+      }
     redraw();
 #endif
     return m_image=im;
@@ -353,10 +354,15 @@ namespace ecolab
   void Plot::drawLegend(cairo_t* cairo, double w, double h) const
   {
     double dx=maxx-minx, dy=maxy-miny;
-    double xoffs, yoffs=miny+0.95*dy;
+    double xoffs, yoffs=0.95*h;
     // compute width of labels
     double width=0, height=0;
     double fy=0.03*h;
+
+    cairo_save(cairo);
+    cairo_identity_matrix(cairo);
+    cairo_translate(cairo,-0.5*w, 0.5*h);
+    cairo_scale(cairo,1,-1);
 
     for (size_t i=0; i<x.size(); ++i)
       if (i<penLabel.size() && penLabel[i])
@@ -372,20 +378,12 @@ namespace ecolab
           height += 1.3*(p2.height());
           width = max(width, p2.width());
         }
-    double textVertScale=dy*min(1.0,h/height)/h; //0.25*dy/height;
-    double textScale=min(1.0, 0.5*w/width); // extra scaling for text labels
-    fy*=textScale;
-    textVertScale*=textScale;
-
-    double textHorizScale=textVertScale*dx/dy;
-
     if (legendSide==left)
-      xoffs=minx+0.05*dx;
+      xoffs=0.2*w;
     else
-      xoffs=minx + 0.9*dx - width*textHorizScale;
-    double labeloffs=xoffs+0.06*dx;
+      xoffs=0.7*w;
+    double labeloffs=xoffs+0.06*w;
 
-    cairo_save(cairo);
     for (size_t i=0; i<x.size(); ++i)
       if (i<penLabel.size() && penLabel[i])
         {
@@ -402,21 +400,20 @@ namespace ecolab
           cairo_matrix_t matrix;
           cairo_pattern_get_matrix(pat,&matrix);
           cairo_matrix_translate(&matrix, -surf.left(), surf.top());
-          cairo_matrix_scale(&matrix, 1/textHorizScale, -1/textVertScale);
-          cairo_matrix_translate(&matrix, -labeloffs, -yoffs-0.5*surf.height()*textVertScale);
+          cairo_matrix_translate(&matrix, -labeloffs, -yoffs-0.5*surf.height());
           cairo_pattern_set_matrix(pat,&matrix);
           cairo_set_source(cairo, pat);
 
           // clip and copy pattern into the label location
           cairo_rectangle(cairo, labeloffs, 
-                          yoffs-0.5*surf.height()*textVertScale, 
-                          surf.width()*textHorizScale, 
-                          surf.height()*textVertScale);
+                          yoffs-0.5*surf.height(), 
+                          surf.width(), 
+                          surf.height());
           cairo_fill(cairo);
           cairo_pattern_destroy(pat);
 
           // advance to next label
-          yoffs-=1.5*surf.height()*textVertScale;
+          yoffs-=1.5*surf.height();
 
         }
       else if (i<penTextLabel.size() && !penTextLabel[i].empty())
@@ -426,16 +423,16 @@ namespace ecolab
           cairo_set_source_rgba(cairo, colour.r, colour.g, colour.b, colour.a);
 
           cairo_move_to(cairo, xoffs, yoffs);
-          cairo_rel_line_to(cairo, 0.05*dx, 0);
+          cairo_rel_line_to(cairo, 0.05*w, 0);
           stroke(cairo);
 
           Pango p2(cairo);
           p2.setFontSize(fy);
           p2.setMarkup(penTextLabel[i]);
-          cairo_move_to(cairo, labeloffs, yoffs+0.8*fy*textVertScale);
+          cairo_move_to(cairo, labeloffs, yoffs+0.8*fy);
           p2.show();
           // advance to next label
-          yoffs-=1.5*textVertScale*fy;
+          yoffs-=1.5*fy;
         }
     cairo_restore(cairo);
   }
@@ -460,42 +457,40 @@ namespace ecolab
     double fx=0, fy=fontSz*dy;
     cairo_user_to_device_distance(cairo,&fx,&fy);
 
-    // setback of labels from boundary
-    //    double setback=0.05*fontScale*(height-2*offy)/(1+0.03*fontScale);
-    //0.06*fontScale;
-
+    cairo_save(cairo);
+    cairo_identity_matrix(cairo);
     Pango pango(cairo);
-    pango.setFontSize(fabs(fy));
-
     if (!xlabel.empty())
       {
+        pango.setFontSize(0.6*lh);
         pango.setMarkup(xlabel);
-        cairo_move_to(cairo, minx+0.5*(dx-pango.width()/sx), 
-                      miny/*-setback*dy*/);
+        cairo_move_to(cairo,-0.5*pango.width(),0.5*height-pango.height());
         pango.show();
       }
     
     if (!ylabel.empty())
       {
+        pango.setFontSize(0.6*lh);
         pango.setMarkup(ylabel);
-        cairo_move_to(cairo, minx-loffx/sx, 
-                      miny+0.5*(dy-pango.width()/sy));
+        cairo_move_to(cairo,offx-0.5*width,0.5*pango.width());
         pango.angle=-0.5*M_PI;
         pango.show();
       }
     
     if (!y1label.empty())
       {
+        pango.setFontSize(0.6*lh);
         pango.setMarkup(y1label);
-        cairo_move_to(cairo, maxx/*+(displayRHSscale()?2:1)*setback*dx*/, 
-                      miny+0.5*(dy-pango.width()/sy));
+        cairo_move_to(cairo,0.5*width-pango.height(),0.5*pango.width());
         pango.show();
       }
+    cairo_restore(cairo);
   }          
 
   void Plot::draw(cairo::Surface& surface)
   {
     cairo_identity_matrix(surface.cairo());
+    cairo_translate(surface.cairo(),-0.5*surface.height(),-0.5*surface.width());
     if (autoscale) setMinMax();
     // if there is no size, set size to 1, so at least a bounding box is drawn
     if (maxx<=minx) maxx=minx+1;
@@ -514,7 +509,7 @@ namespace ecolab
 
   void Plot::draw(cairo_t* cairo, double width, double height) const
   {  
-#if defined(CAIRO) && defined(TK)
+#if defined(CAIRO)
 
     double dx=maxx-minx, dy=maxy-miny, dy1=maxy1-miny1;
     
@@ -702,7 +697,7 @@ namespace ecolab
   
   void Plot::redraw()
   {
-#if defined(CAIRO) && defined(TK)
+#if defined(CAIRO)
     if (surface)
       {
         surface->clear();

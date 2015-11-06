@@ -31,10 +31,8 @@ namespace ecolab
     Pango(const Pango&);
   public:
     double angle; // angle the text  
-    double xscale, yscale;
     Pango(cairo_t* cairo): 
-      cairo(cairo), layout(pango_cairo_create_layout(cairo)), angle(0), 
-      xscale(1), yscale(1) 
+      cairo(cairo), layout(pango_cairo_create_layout(cairo)), angle(0) 
     {
       fd=pango_font_description_copy(pango_layout_get_font_description(layout));
       if (!fd) // if NULL, we must get it from the context
@@ -58,10 +56,17 @@ namespace ecolab
       return pango_font_description_get_size(fd)/double(PANGO_SCALE);
     }
     void show() {
+//      cairo_save(cairo);
+//      cairo_identity_matrix(cairo);
+//      cairo_rotate(cairo, angle);
+//      cairo_rectangle(cairo,left(),top(),width(),height());
+//      cairo_stroke(cairo);
+//      cairo_restore(cairo);
+
       cairo_save(cairo);
       cairo_identity_matrix(cairo);
-      cairo_scale(cairo, xscale, yscale);
       cairo_rotate(cairo, angle);
+      cairo_rel_move_to(cairo,left(),top());
       pango_cairo_update_layout(cairo, layout);
       pango_cairo_show_layout(cairo, layout);
       cairo_restore(cairo);
@@ -81,25 +86,31 @@ namespace ecolab
     cairo_t* cairo;
     string markup;
     cairo_text_extents_t bbox;
+    double fontSize; // default according to cairo documentation
     // make this non-copiable so that it behaves the same as the real Pango one
     void operator=(const Pango&);
     Pango(const Pango&);
   public:
     double angle; // angle the text  
     Pango(cairo_t* cairo): 
-      cairo(cairo), angle(0) {}
+      cairo(cairo), angle(0), fontSize(10) {}
     void setMarkup(const string& markup) {
       this->markup=markup;
       cairo_text_extents(cairo,markup.c_str(),&bbox);
       
     }
     void setFontSize(unsigned sz) {
+      fontSize=sz;
       cairo_set_font_size(cairo, sz);
+    }
+    double getFontSize() const {
+      return fontSize;
     }
     void show() {
       cairo_save(cairo);
       cairo_identity_matrix(cairo);
       cairo_rotate(cairo, angle);
+      cairo_rel_move_to(cairo,left(),-top());
       cairo_show_text(cairo, markup.c_str());
       cairo_restore(cairo);
     }

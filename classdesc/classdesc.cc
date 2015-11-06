@@ -417,6 +417,10 @@ actionlist_t parse_class(tokeninput& input, bool is_class, string prefix="", str
 	  reg.is_static=false;
 	}
 
+      // alignas declarations need to be discarded
+      if (input.token=="alignas") 
+        {input.nexttok(); gobble_delimited(input,"(",")");}
+
       if (input.token=="virtual") is_virtual=true;
       if (input.token=="static") reg.is_static=true;
       if (input.token=="const") reg.is_const=true;

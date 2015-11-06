@@ -54,6 +54,7 @@ proc doPlot {nPens nx} {
         testPlot.plot [expr $i+90] $d
     }
     testPlot.redraw
+    puts "legendside=[testPlot.legendSide]"
     gets stdin
 }
 

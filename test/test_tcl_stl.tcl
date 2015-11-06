@@ -70,3 +70,10 @@ vstring.@elem 0
 vstring(0) hello
 if {[vstring(0)]!="hello"} {exit 10}
 
+# the following lines should trigger a bug when same chaperone passed
+# to multiple commands
+MII mii
+mii.delete
+
+VI vi
+vi.delete

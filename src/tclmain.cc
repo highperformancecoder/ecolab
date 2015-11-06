@@ -431,7 +431,7 @@ NEWCMD(cli,0)
   cmd << "savebgerror\n";
 #ifdef READLINE
   char *c;
-  eco_string prompt((char*)tclvar("argv(0)")); prompt+='>';
+  eco_string prompt((const char*)tclvar("argv(0)")); prompt+='>';
   while ( (c=readline(const_cast<char*>(prompt.c_str())))!=NULL && strcmp(c,"exit")!=0)
 #else
   char c[512];

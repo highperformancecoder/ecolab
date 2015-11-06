@@ -10,6 +10,12 @@
 #include "TCL_obj_stl.h"
 #include "ecolab_epilogue.h"
 
+#include <vector>
+#include <deque>
+#include <list>
+#include <set>
+#include <map>
+
 using namespace std;
 using namespace ecolab;
 
@@ -68,3 +74,10 @@ make_model(string2);
 
 std::vector<std::string> vstring(2);
 make_model(vstring);
+
+typedef map<int,int> MII;
+TCLTYPE(MII);
+
+typedef vector<int> VI;
+TCLTYPE(VI);
+

@@ -209,7 +209,7 @@ latex-docs:
 # bin/ecolab is a no model ecolab binary that only works from installed location
 bin/ecolab$(ECOLIBS_EXT): src/ecolab.o src/tclmain.o lib/libecolab$(ECOLIBS_EXT).a
 	$(LINK) $(FLAGS) src/ecolab.o src/tclmain.o  $(LIBS) -o $@
-	-ctags -e -R .
+	-find . \( -name "*.cc" -o -name "*.h" \) -print |etags -
 
 .PHONY: install
 install: all-without-models
@@ -232,7 +232,7 @@ ifeq ($(OS),Darwin)
 endif
 	cp -r utils $(PREFIX)
 
-UNURAN_LIB=$(call search,lib/libunuran.a)
+UNURAN_LIB=$(firstword $(call search,lib*/libunuran.a))
 
 $(ECOLAB_HOME)/$(MCFG):
 	@rm -f $(MCFG)
@@ -258,14 +258,13 @@ $(ECOLAB_HOME)/$(MCFG):
 	@if [ -n "$(call search,include/db4/db.h)" ]; then \
 	  echo BDB=1>>$(MCFG); \
         else \
-	  if [ -n "$(call search,lib*/libgdbm.a)" ]; then \
+	  if [ -n "$(call search,lib*/libgdbm.a)" -o -n "$(call search,lib*/*/libgdbm.a)" ]; then \
 	 	echo GDBM=1 >>$(MCFG) ; \
 	  fi \
 	fi
-	echo $(call search,lib*/libgdbm.a)
 	@if $(PKG_CONFIG) --exists pangocairo; then echo PANGO=1>>$(MCFG); fi
 # check whether the new ndbmcompatibility library is present	
-	@if [ -n "$(call search,lib*/libgdbm_compat.a)" ]; then \
+	@if [ -n "$(call search,lib*/libgdbm_compat.a)" -o -n "$(call search,lib*/*/libgdbm.a)" ]; then \
 	 	echo GDBM_COMPAT=1 >>$(MCFG) ; \
 	fi
 # record value of following configuration variables 
@@ -319,5 +318,7 @@ compileTest:
 	$(MAKE) clean; $(MAKE) BDB= GDBM= 
 	$(MAKE) clean; $(MAKE) DYNAMIC=1 GCC=1
 	$(MAKE) clean; $(MAKE) CPLUSPLUS=clang++
+	$(MAKE) clean; $(MAKE) TIMER=1
+	$(MAKE) clean; $(MAKE) CAIRO=1 TK=    #see ticket #139
 # note, this currently fails
 #	$(MAKE) clean; $(MAKE) DYNAMIC=1

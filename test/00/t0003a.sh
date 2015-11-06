@@ -69,17 +69,31 @@ EOF
 $here/models/ecolab input.tcl
 if test $? -ne 0; then fail; fi
 
+# for parallel
+#cat >out1.dat <<EOF
+#102 85
+#99 87
+#105 93
+#97 89
+#98 99
+#102 79
+#97 101
+#110 82
+#98 87
+#103 91
+#EOF
+# for gigaboot
 cat >out1.dat <<EOF
-102 85
-99 87
-105 93
-97 89
-98 99
-102 79
-97 101
-110 82
-98 87
-103 91
+106 79
+90 99
+112 82
+90 96
+103 84
+100 101
+97 82
+98 108
+100 70
+93 106
 EOF
 
 if diff out.dat out1.dat; then 

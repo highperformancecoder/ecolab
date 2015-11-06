@@ -8,13 +8,15 @@
 
 #ifndef CAIRO_BASE_H
 #define CAIRO_BASE_H
-#if defined(CAIRO) && defined(TK)
+#if defined(CAIRO)
 #include "tcl++.h"
 #include "classdesc.h"
 #include "arrays.h"
 
 #include <cairo/cairo.h>
+#ifdef TK
 #include <tk.h>
+#endif
 #include <vector>
 #include <string>
 #include <limits>
@@ -27,25 +29,6 @@ namespace ecolab
   namespace cairo
   {
 
-    struct PhotoImageBlock: public Tk_PhotoImageBlock
-    {
-      PhotoImageBlock(): transparency(true) {}
-      PhotoImageBlock(int x, int y, bool transparency): 
-        transparency(transparency)
-      { 
-        pixelPtr=NULL;
-        width=x;
-        height=y;
-        cairo_format_t format = transparency? 
-          CAIRO_FORMAT_ARGB32: CAIRO_FORMAT_RGB24;
-        pitch = cairo_format_stride_for_width(format, width); 
-        pixelSize=4; 
-        for (int i=0; i<3; ++i) offset[i]=2-i;
-        offset[3]=3;
-      }
-      bool transparency;
-    };
-        
     /// Container object for managing cairo_surface_t lifetimes
     class Surface
     {
@@ -164,6 +147,26 @@ namespace ecolab
     // TODO - convert to std::shared_ptr once EcoLab is 100% c++11 compiled
     typedef std::tr1::shared_ptr<Surface> SurfacePtr;
 
+#ifdef TK
+    struct PhotoImageBlock: public Tk_PhotoImageBlock
+    {
+      PhotoImageBlock(): transparency(true) {}
+      PhotoImageBlock(int x, int y, bool transparency): 
+        transparency(transparency)
+      { 
+        pixelPtr=NULL;
+        width=x;
+        height=y;
+        cairo_format_t format = transparency? 
+          CAIRO_FORMAT_ARGB32: CAIRO_FORMAT_RGB24;
+        pitch = cairo_format_stride_for_width(format, width); 
+        pixelSize=4; 
+        for (int i=0; i<3; ++i) offset[i]=2-i;
+        offset[3]=3;
+      }
+      bool transparency;
+    };
+        
     class TkPhotoSurface: public Surface
     {
       Tk_PhotoHandle photo;
@@ -363,9 +366,9 @@ namespace ecolab
     }
 
     const Tk_ItemType& cairoItemType();
+#endif  // #ifdef TK
 
   }
-
   
 }
 #endif

@@ -10,8 +10,8 @@
   An EcoLab graph adaptor for igraph objects
 */
 
-#ifndef IGRAPH_H
-#define IGRAPH_H
+#ifndef ECOLAB_IGRAPH_H
+#define ECOLAB_IGRAPH_H
 #include "graph.h"
 #include "igraph/igraph.h"
 
@@ -115,12 +115,16 @@ namespace ecolab
     }
 
     bool contains(const Edge& e) const {
-      try {
         igraph_integer_t eid;
+#ifdef IGRAPH_VERSION
+        return igraph_get_eid(this,&eid,e.source(),e.target(),true,true)==0;
+#else
+      try {
         igraph_get_eid(this,&eid,e.source(),e.target(),true);
         return true; // edge exists if eid found
       }
       catch (std::exception) {return false;}
+#endif
     }
 
     bool directed() const {return igraph_is_directed(this);}

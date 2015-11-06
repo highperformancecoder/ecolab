@@ -30,23 +30,32 @@ namespace
 
 namespace ecolab
 {
+  // split between container support, and generic classdesc processed stuff here
+  template <class T>
+  typename enable_if<Not<is_container<T> >, void>::T
+  TCL_objp(TCL_obj_t& t,const classdesc::string& desc, T& arg, dummy<0> d=0)
+  {
+    classdesc_access::access_TCL_obj<T>()(t,desc,arg);
+  }
+
   /*
     This template ensures that an object is registered before processing members
   */
   template <class T>
   void TCL_obj(TCL_obj_t& t,const classdesc::string& desc, T& arg)
   {
-    TCL_obj_register(desc,arg,t.member_entry_hook);
-    classdesc_access::access_TCL_obj<T>()(t,desc,arg);
+    TCL_obj_register(t,desc,arg);
+    TCL_objp(t,desc,arg);
     TCL_obj_custom_register(desc,arg);
   }
+  
 
   // deal with base classes
   template <class T>
   void TCL_obj_onbase(TCL_obj_t& t,const classdesc::string& desc, T& arg)
   {
-    TCL_obj_register(desc,arg,t.member_entry_hook, true);
-    classdesc_access::access_TCL_obj<T>()(t,desc,arg);
+    TCL_obj_register(t,desc,arg,true);
+    TCL_objp(t,desc,arg);
     TCL_obj_custom_register(desc,arg);
   }
 
@@ -81,7 +90,7 @@ namespace ecolab
 
   /// TCL register the object \a x with same name
 #define register(x) static int                                          \
-  TCL_obj_register_##x=(ecolab::TCL_obj_register((string)#x,x,NULL),    \
+  TCL_obj_register_##x=(ecolab::TCL_obj_register(ecolab::null_TCL_obj,(string)#x,x),    \
                         TCL_obj(ecolab::null_TCL_obj,(string)#x,x),1)
 
     /// TCL register the type \a x 
@@ -281,7 +290,9 @@ namespace ecolab
 
 
   template<class T, class CharT, class Traits> 
-  typename classdesc::enable_if<classdesc::Not<classdesc::is_enum<T> >, std::basic_istream<CharT,Traits>&>::T
+  typename classdesc::enable_if<
+    And<classdesc::Not<classdesc::is_enum<T> >, 
+        Not<is_container<T> > >, std::basic_istream<CharT,Traits>&>::T
   operator>>(std::basic_istream<CharT,Traits>& x,T& y) 
   {
     throw error("operator>> not implemented for %s",typeid(T).name()); 

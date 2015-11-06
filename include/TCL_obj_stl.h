@@ -20,15 +20,8 @@
 
 #include "TCL_obj_stl.h"
 
-//namespace eco_strstream_ns
-//{
-//  using ecolab::operator<<;
-//}
-#include <deque>
 #include <vector>
-#include <list>
-#include <set>
-#include <map>
+#include <utility>
 
 namespace ecolab
 {
@@ -91,54 +84,67 @@ namespace ecolab
     return i;
   }
     
-  template <class T, class A>
-  std::ostream& operator<<(std::ostream& i, const std::vector<T,A>& v)
+
+  template <class T, class CharT, class Traits>
+  typename enable_if<is_container<T>, std::ostream&>::T
+  operator<<(std::basic_istream<CharT,Traits>& i, const T& v)
   {return ContainerOut(i,v);}
 
-  template <class T, class A>
-  std::istream& operator>>(std::istream& i, std::vector<T,A>& v)
-  {return ContainerIn(i,v);}
-
-  template <class T, class A>
-  std::ostream& operator<<(std::ostream& i, const std::deque<T,A>& v)
-  {return ContainerOut(i,v);}
-
-  template <class T, class A>
-  std::istream& operator>>(std::istream& i, std::deque<T,A>& v)
-  {return ContainerIn(i,v);}
-  template <class T, class A>
-  std::ostream& operator<<(std::ostream& i, const std::list<T,A>& v)
-  {return ContainerOut(i,v);}
-
-  template <class T, class A>
-  std::istream& operator>>(std::istream& i, std::list<T,A>& v)
-  {return ContainerIn(i,v);}
-
-  template <class T, class C, class A>
-  std::ostream& operator<<(std::ostream& i, const std::set<T,C,A>& v)
-  {return ContainerOut(i,v);}
-
-  template <class K, class V, class C, class A>
-  std::ostream& operator<<(std::ostream& i, const std::map<K,V,C,A>& v)
-  {return ContainerOut(i,v);}
-
-  template <class T, class C, class A>
-  std::istream& operator>>(std::istream& i, std::set<T,C,A>& s)
+  template<class T>
+  typename enable_if<is_container<T>, eco_strstream&>::T
+  operator|(eco_strstream& s,const T& x) 
   {
-    s.clear();
-    T v;
-    while (i>>v) 
-      s.insert(v);
-    return i;
+    ContainerOut(s,x);
+    return s;
   }
 
-  template <class K, class V, class C, class A>
-  std::istream& operator>>(std::istream& i, std::map<K,V,C,A>& m)
+
+  template <class T, class CharT, class Traits>
+  typename enable_if<is_sequence<T>, std::basic_istream<CharT,Traits>&>::T
+  operator>>(std::basic_istream<CharT,Traits>& i, T& v)
+  {return ContainerIn(i,v);}
+
+  /// distinguish between maps and sets based on value_type of container
+  template <class T> struct is_map: public false_type
   {
-    m.clear();
-    K k; V v;
-    while (i>>k>>v) 
-      m.insert(typename std::map<K,V,C,A>::value_type(k,v));
+    static string keys() {return ".#members";}
+    static string type() {return ".@is_set";}
+  };
+
+  template <class K, class V> struct is_map<std::pair<K,V> >: 
+    public true_type
+  {
+    static string keys() {return ".#keys";}
+    static string type() {return ".@is_map";}
+  };
+
+
+  template <class T>
+  typename enable_if<Not<is_map<T> >, T>::T
+  readIn(std::istream& i)
+  {T v; i>>v; return v;}
+
+  template <class T>
+  typename enable_if<is_map<T>, T>::T
+  readIn(std::istream& i)
+  {
+    typename remove_const<typename T::first_type>::type k;
+    typename T::second_type v;
+    i>>k>>v;
+    return T(k,v);
+  }
+  
+  template <class T, class CharT, class Traits>
+  typename enable_if<is_associative_container<T>, std::basic_istream<CharT,Traits>&>::T
+  operator>>(std::basic_istream<CharT,Traits>& i, T& s)
+  {
+    s.clear();
+    while (i)
+      {
+        typename T::value_type v=readIn<typename T::value_type>(i);
+        if (i)
+          s.insert(v);
+      }
     return i;
   }
 
@@ -180,26 +186,30 @@ namespace ecolab
   template <> struct idx<std::string>
   {std::string operator()(const char *x){return std::string(x);}};
 
+  template <class T> struct idx<const T>: public idx<T> {};
+
+
   /* support for extracting a list of keys in keyed data types (eg maps) */
 
   template <class T>
-  inline void keys_of(const T& o) {}
-
-  template <class K, class C, class A>
-  inline void keys_of(const std::set<K,C,A>& o)
+  typename enable_if<is_map<typename T::value_type>, void>::T
+  keys_of(const T& o)
   { 
     tclreturn r;
-    for (typename std::set<K,C,A>::const_iterator i=o.begin(); i!=o.end(); i++)
-      r<<*i;
-  }  
-
-  template <class K, class T, class C, class A>
-  inline void keys_of(std::map<K,T,C,A>& o)
-  { 
-    tclreturn r;
-    for (typename std::map<K,T,C,A>::const_iterator i=o.begin(); i!=o.end(); i++)
+    for (typename T::const_iterator i=o.begin(); i!=o.end(); i++)
       r<<i->first;
   }
+  
+  template <class T>
+  typename enable_if<Not<is_map<typename T::value_type> >, void>::T
+  keys_of(const T& o)
+  { 
+    tclreturn r;
+    for (typename T::const_iterator i=o.begin(); i!=o.end(); i++)
+      r<<*i;
+  }
+  
+
 
   //handle vector<bool> as a special case
   template <> struct member_entry<std::vector<bool>::reference>: public member_entry_base
@@ -265,7 +275,7 @@ namespace ecolab
     public TCL_obj_of_vector_bool<const std::vector<bool>,idx_t> 
   {
     TCL_obj_of(const std::vector<bool>& o, const string& d): 
-      TCL_obj_of_vector_bool<std::vector<bool>,idx_t>(o, d) {}
+      TCL_obj_of_vector_bool<const std::vector<bool>,idx_t>(o, d) {}
   };
 
   /* special case when only forward iterators are available */
@@ -289,6 +299,17 @@ namespace ecolab
     }
     void keys_of() {ecolab::keys_of(obj);}
   };
+
+  // for distingushing between sets and maps with @elem functionality
+  template <class T>
+  typename enable_if<is_map<typename T::value_type>, TCL_obj_of<T,typename T::key_type>*>::T
+  makeTCL_obj_of(T& o, const string& d) 
+  {return new TCL_obj_of<T,typename T::key_type>(o,d);}
+
+  template <class T>
+  typename enable_if<Not<is_map<typename T::value_type> >, TCL_obj_of<T,iter>*>::T
+  makeTCL_obj_of(T& o, const string& d) 
+  {return new TCL_obj_of<T,iter>(o,d);}
 
   /* special case to handle count method */
   template <class T, class idx_t>
@@ -321,134 +342,96 @@ namespace ecolab
   };
 
   template <class V>
-  void TCL_obj_vector(TCL_obj_t& targ, const string& desc, V& arg)
+  void TCL_obj_const_sequence(TCL_obj_t& targ, const string& desc, V& arg)
   {
-    TCL_obj_register(desc,arg,targ.member_entry_hook);
+    TCL_obj_register(targ,desc,arg);
+    TCL_obj(targ,desc+".size",arg,&V::size);
+    Tcl_CreateCommand(interp(),(desc+".@is_sequence").c_str(),
+                      (Tcl_CmdProc*)null_proc,NULL,NULL);
+    ClientData c=(ClientData)new TCL_obj_of<V,iter>(arg,desc);
+    Tcl_CreateCommand(interp(),(desc+".@elem").c_str(),(Tcl_CmdProc*)elem,c,
+                      (Tcl_CmdDeleteProc*)del_obj);
+  }
+
+  // specialisation for vectors that exploits operator[]
+  template <class V>
+  void TCL_obj_const_vector(TCL_obj_t& targ, const string& desc, V& arg)
+  {
+    TCL_obj_register(targ,desc,arg);
     TCL_obj(targ,desc+".size",arg,&V::size);
     Tcl_CreateCommand(interp(),(desc+".@is_vector").c_str(),
                       (Tcl_CmdProc*)null_proc,NULL,NULL);
-    ClientData c=(ClientData)new TCL_obj_of<V,int>(arg,desc);
+    ClientData c=(ClientData)new TCL_obj_of<V,typename V::size_type>(arg,desc);
     Tcl_CreateCommand(interp(),(desc+".@elem").c_str(),(Tcl_CmdProc*)elem,c,
                       (Tcl_CmdDeleteProc*)del_obj);
   }
 
-  template <class T>
-  void TCL_obj_deque(TCL_obj_t& targ, const string& desc, T& arg)
+  template <class V>
+  void TCL_obj_sequence(TCL_obj_t& targ, const string& desc, V& arg)
   {
-    TCL_obj_register(desc,arg,targ.member_entry_hook);
+    ecolab::TCL_obj_const_sequence(targ,desc,arg);
+    ecolab::ResizeFunctor<V>::createInTCL(arg,desc);
+    TCL_obj(targ,desc+".clear",arg,&V::clear);
+  }
+
+  template <class T, class A>
+  void TCL_obj_sequence(TCL_obj_t& targ, const string& desc, std::vector<T,A>& arg)
+  {
+    ecolab::TCL_obj_const_vector(targ,desc,arg);
+    ecolab::ResizeFunctor<std::vector<T,A> >::createInTCL(arg,desc);
+    TCL_obj(targ,desc+".clear",arg,&std::vector<T,A>::clear);
+  }
+
+  template <class T, class A>
+  void TCL_obj_sequence(TCL_obj_t& targ, const string& desc, const std::vector<T,A>& arg)
+  {
+    ecolab::TCL_obj_const_vector(targ,desc,arg);
+  }
+
+
+  template <class VT>  struct KeyName: public std::string
+  {KeyName(): std::string(".#members") {}};
+  template <class K,class V>  struct KeyName<std::pair<K,V> >: public std::string
+  {KeyName(): std::string(".#keys") {}};
+
+  template <class T>
+  void TCL_obj_associative_container(TCL_obj_t& targ, const string& desc, T& arg)
+  {
+    TCL_obj_register(targ,desc,arg);
     TCL_obj(targ,desc+".size",arg,&T::size);
-    Tcl_CreateCommand(interp(),(desc+".@is_deque").c_str(),
+    Tcl_CreateCommand(interp(),(desc+is_map<typename T::value_type>::type()).c_str(),
                       (Tcl_CmdProc*)null_proc,NULL,NULL);
-    ClientData c=(ClientData)new TCL_obj_of<T,int>(arg,desc);
+    ClientData c=(ClientData)makeTCL_obj_of(arg,desc);
     Tcl_CreateCommand(interp(),(desc+".@elem").c_str(),(Tcl_CmdProc*)elem,c,
                       (Tcl_CmdDeleteProc*)del_obj);
-  }
-
-  template <class T>
-  void TCL_obj_list(TCL_obj_t& targ, const string& desc, T& arg)
-  {
-    TCL_obj_register(desc,arg,targ.member_entry_hook);
-    TCL_obj(targ,desc+".size",arg,&T::size);
-    Tcl_CreateCommand(interp(),(desc+".@is_list").c_str(),
-                      (Tcl_CmdProc*)null_proc,NULL,NULL);
-    ClientData c=(ClientData)new TCL_obj_of<T,iter>(arg,desc);
-    Tcl_CreateCommand(interp(),(desc+".@elem").c_str(),(Tcl_CmdProc*)elem,c,
-                      (Tcl_CmdDeleteProc*)del_obj);
-  }
-
-  template <class T>
-  void TCL_obj_set(TCL_obj_t& targ, const string& desc, T& arg)
-  {
-    TCL_obj_register(desc,arg,targ.member_entry_hook);
-    TCL_obj(targ,desc+".size",arg,&T::size);
-    Tcl_CreateCommand(interp(),(desc+".@is_set").c_str(),
-                      (Tcl_CmdProc*)null_proc,NULL,NULL);
-    ClientData c=(ClientData)new TCL_obj_of<T,iter>(arg,desc);
-    Tcl_CreateCommand(interp(),(desc+".@elem").c_str(),(Tcl_CmdProc*)elem,c,
-                      (Tcl_CmdDeleteProc*)del_obj);
-    c=(ClientData)new TCL_obj_of_count<T,typename T::value_type>(arg,desc);
-    Tcl_CreateCommand(interp(),(desc+".#members").c_str(),(Tcl_CmdProc*)keys,c,
-                      (Tcl_CmdDeleteProc*)del_obj);
-    Tcl_CreateCommand(interp(),(desc+".count").c_str(),(Tcl_CmdProc*)elem,c,
-                      (Tcl_CmdDeleteProc*)del_obj);
-  }
-
-  template <class T>
-  void TCL_obj_map(TCL_obj_t& targ, const string& desc, T& arg)
-  {
-    TCL_obj(targ,(desc+".size").c_str(),arg,&T::size);
-    Tcl_CreateCommand(interp(),(desc+".@is_map").c_str(),
-                      (Tcl_CmdProc*)null_proc,NULL,NULL);
-    ClientData c=(ClientData)new TCL_obj_of<T,typename T::key_type>(arg,desc);
-    Tcl_CreateCommand(interp(),(desc+".@elem").c_str(),(Tcl_CmdProc*)elem,c,
-                      (Tcl_CmdDeleteProc*)del_obj);
-    Tcl_CreateCommand(interp(),(desc+".#keys").c_str(),(Tcl_CmdProc*)keys,c,
+    c=(ClientData)makeTCL_obj_of(arg,desc);
+    Tcl_CreateCommand(interp(),(desc+is_map<typename T::value_type>::keys()).c_str(),(Tcl_CmdProc*)keys,c,
                       (Tcl_CmdDeleteProc*)del_obj);
     c=(ClientData)new TCL_obj_of_count<T,typename T::key_type>(arg,desc);
     Tcl_CreateCommand(interp(),(desc+".count").c_str(),(Tcl_CmdProc*)elem,c,
                       (Tcl_CmdDeleteProc*)del_obj);
   }
 
+  template <class T>
+  typename enable_if<is_sequence<T>, void>::T
+  TCL_objp(TCL_obj_t& t,const classdesc::string& desc, T& arg, dummy<1> d=0)
+  {
+    TCL_obj_sequence(t,desc,arg);
+  }
+
+  template <class T>
+  typename enable_if<is_associative_container<T>, void>::T
+  TCL_objp(TCL_obj_t& t,const classdesc::string& desc, T& arg, dummy<2> d=0)
+  {
+    TCL_obj_associative_container(t,desc,arg);
+  }
+
 }
 using ecolab::TCL_obj;
 
-namespace classdesc_access
+namespace eco_strstream_ns
 {
-  namespace cd=classdesc;
-  template <class T, class A> struct access_TCL_obj<std::vector<T,A> >
-  {
-    void operator()(cd::TCL_obj_t& targ, const cd::string& desc, std::vector<T,A>& arg)
-    {
-      ecolab::TCL_obj_vector(targ,desc,arg);
-      ecolab::ResizeFunctor<std::vector<T,A> >::createInTCL(arg,desc);
-      TCL_obj(targ,desc+".clear",arg,&std::vector<T,A>::clear);
-    }
-    void operator()(cd::TCL_obj_t& targ, const cd::string& desc, const std::vector<T,A>& arg)
-    {
-      ecolab::TCL_obj_vector(targ,desc,arg);
-    }
-  };
-
-  template <class T, class A> struct access_TCL_obj<std::deque<T,A> >
-  {
-    void operator()(cd::TCL_obj_t& targ, const cd::string& desc, std::deque<T,A>& arg)
-    {
-      ecolab::TCL_obj_deque(targ,desc,arg);
-      ecolab::ResizeFunctor<std::deque<T,A> >::createInTCL(arg,desc);
-      TCL_obj(targ,desc+".clear",arg,&std::deque<T,A>::clear);
-    }
-    void operator()(cd::TCL_obj_t& targ, const cd::string& desc, const std::deque<T,A>& arg)
-    {
-      ecolab::TCL_obj_deque(targ,desc,arg);
-    }
-  };
-
-  template <class T, class A> struct access_TCL_obj<std::list<T,A> >
-  {
-    void operator()(cd::TCL_obj_t& targ, const cd::string& desc, std::list<T,A>& arg)
-    {
-      ecolab::TCL_obj_list(targ,desc,arg);
-      ecolab::ResizeFunctor<std::list<T,A> >::createInTCL(arg,desc);
-      TCL_obj(targ,desc+".clear",arg,&std::list<T,A>::clear);
-    }
-    void operator()(cd::TCL_obj_t& targ, const cd::string& desc, const std::list<T,A>& arg)
-    {ecolab::TCL_obj_list(targ,desc,arg);}
-  };
-
-  template <class T, class C, class A> struct access_TCL_obj<std::set<T,C,A> >
-  {
-    template <class U>
-    void operator()(cd::TCL_obj_t& targ, const cd::string& desc, U& arg)
-    {ecolab::TCL_obj_set(targ,desc,arg);}
-  };
-
-  template <class K, class T, class C, class A> 
-  struct access_TCL_obj<std::map<K,T,C,A> >
-  {
-    template <class U>
-    void operator()(cd::TCL_obj_t& targ, const cd::string& desc, U& arg)
-    {ecolab::TCL_obj_map(targ,desc,arg);}
-  };
+  using ecolab::operator<<;
 }
 
 

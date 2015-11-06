@@ -2505,7 +2505,7 @@ namespace classdesc_access
     void operator()(ecolab::TCL_obj_t& targ, const classdesc::string& desc, 
       U& arg)
     {
-      ecolab::TCL_obj_register(desc,arg,targ.member_entry_hook);
+      ecolab::TCL_obj_register(targ,desc,arg);
       TCL_obj(targ,desc+".size", arg, &ecolab::array_ns::array<T>::size);
     }
   };
