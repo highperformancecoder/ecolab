@@ -35,7 +35,8 @@ pass()
 trap "fail" 1 2 3 15
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
-
+Xvfb :0&
+export DISPLAY=:0
 $here/test/testCairo $here/test/testCairo.tcl
 if test $? -ne 0; then fail; fi
 
