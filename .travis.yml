@@ -5,4 +5,8 @@ dist: trusty
 
 
 before_install: sudo apt-get update; ./build_and_install_deps.sh
-script: make && make install && env DISPLAY=:0 make sure
+script: 
+  - Xvfb :0
+  - export DISPLAY=:0
+  - make
+  - make sure
