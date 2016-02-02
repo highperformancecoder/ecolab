@@ -6,6 +6,7 @@ if [ $# -lt 2 ]; then
   echo "Intel compiler \"icc -w\""
   echo "IBM compiler xlC or mpCC as appropriate"
   echo "Tru64 compiler cxx -D__USE_STD_IOSTREAM"
+  exit
 fi
 
 CC=$1
@@ -25,3 +26,4 @@ for i in $*; do
 done
 
 echo "$passed tests passed, $failed tests failed"
+exit $failed
