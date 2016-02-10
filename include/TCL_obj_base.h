@@ -890,6 +890,7 @@ namespace ecolab
     NewTCL_static_functor<M> *t=new NewTCL_static_functor<M>(targ,m);
     TCL_OBJ_DBG(printf("registering %s\n",desc.c_str()));
     Tcl_CreateObjCommand(interp(),desc.c_str(),TCL_oproc,(ClientData)t,TCL_cmd_data_delete);
+    t->is_const=true;
   } 
 
   /** methods with signature (int,char**) or TCL_args can be used to
@@ -914,6 +915,7 @@ namespace ecolab
   {
     typedef T (C::*mptr)(int,const char**);
     TCL_obj(targ,desc,obj,(mptr)arg);
+    TCL_obj_properties()[desc]->is_const=true;
   }
 
   template<class C, class T>
@@ -933,6 +935,7 @@ namespace ecolab
   {
     typedef T (C::*mptr)(int,char**);
     TCL_obj(targ,desc,obj,(mptr)arg);
+    TCL_obj_properties()[desc]->is_const=true;
   }
 
   template<class C, class T>
@@ -972,6 +975,7 @@ namespace ecolab
   { 
     typedef T (C::*mptr)(TCL_args);
     TCL_obj(targ,desc,obj,(mptr)arg);
+    TCL_obj_properties()[desc]->is_const=true;
   }
 
   template<class C, class T>
