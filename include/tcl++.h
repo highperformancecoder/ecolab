@@ -277,12 +277,15 @@ namespace ecolab
     string name;
     /// true if this command doesn't affect the object's (or global state)
     bool is_const; 
+    /// true if this command is a setter/getter (no argument=getter, 1 or more arguments a setter)
+    bool is_setterGetter;
     virtual void proc(int argc, CONST84 char** argv)=0;
     // TODO possibly delegate to above?
     virtual void proc(int argc, Tcl_Obj *const argv[]) {
       throw error("proc not implemented");};
-    cmd_data(const char* nm, int na=-1):  nargs(na), name(nm), is_const(false)
-                                         /* by default, don't check arg count */
+    cmd_data(const char* nm, int na=-1):  
+      nargs(na), name(nm), is_const(false), is_setterGetter(false)
+      /* by default, don't check arg count */
     {
       assert(TCL_newcommand(nm));
     }

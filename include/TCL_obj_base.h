@@ -229,7 +229,7 @@ namespace ecolab
     /// further processing
     void (*hook)(int argc, CONST84 char **argv);
     void (*thook)(int argc, Tcl_Obj *const argv[]);
-    member_entry_base(): hook(NULL), thook(NULL) {}
+    member_entry_base(): hook(NULL), thook(NULL) {is_setterGetter=true;}
 
     // std::type_info does not provide an overload for std::Less, so provide one here
     struct TypeInfoLess
@@ -850,7 +850,10 @@ namespace ecolab
     TCL_obj_t::Member_entry_thook thook;
   public:
     NewTCL_obj_functor(const TCL_obj_t& targ,C& obj, M member): 
-      bm(obj, member), thook(targ.member_entry_thook) {}
+      bm(obj, member), thook(targ.member_entry_thook) {
+      if (functional::is_const_method<M>::value)
+        is_const=true;
+    }
     void proc(int argc, Tcl_Obj *const argv[]) {
       newTCL_obj_functor_proc(bm, TCL_args(argc, argv));
       if (thook) thook(argc, argv);
@@ -875,7 +878,7 @@ namespace ecolab
     TCL_obj_t::Member_entry_thook thook;
   public:
     NewTCL_static_functor(const TCL_obj_t& targ,F f): 
-      f(f), thook(targ.member_entry_thook) {}
+      f(f), thook(targ.member_entry_thook) {is_const=true;}
     void proc(int argc, Tcl_Obj *const argv[]) {
       newTCL_obj_functor_proc(f, TCL_args(argc, argv));
       if (thook) thook(argc, argv);
@@ -890,7 +893,6 @@ namespace ecolab
     NewTCL_static_functor<M> *t=new NewTCL_static_functor<M>(targ,m);
     TCL_OBJ_DBG(printf("registering %s\n",desc.c_str()));
     Tcl_CreateObjCommand(interp(),desc.c_str(),TCL_oproc,(ClientData)t,TCL_cmd_data_delete);
-    t->is_const=true;
   } 
 
   /** methods with signature (int,char**) or TCL_args can be used to
