@@ -91,7 +91,9 @@ namespace ecolab
     /// axis labels
     string xlabel, ylabel, y1label;
 
-
+    /// height (or width) of an axis label in pixels
+    double labelheight() const {return lh(width(), height());}
+    double lh(double width, double height) const;
 
     cairo_surface_t* cairoSurface() const;
     int width() const;

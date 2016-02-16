@@ -507,6 +507,11 @@ namespace ecolab
     draw(surface.cairo(), surface.width(), surface.height());
   }
 
+  double Plot::lh(double width, double height) const
+  {
+    return 0.05*fontScale*(height-2*offy)/(1+0.03*fontScale);
+  }
+
   void Plot::draw(cairo_t* cairo, double width, double height) const
   {  
 #if defined(CAIRO)
@@ -514,11 +519,10 @@ namespace ecolab
     double dx=maxx-minx, dy=maxy-miny, dy1=maxy1-miny1;
     
     // axis label font size (in pixels)
-    double lh=0.05*fontScale*(height-2*offy)/(1+0.03*fontScale);
     // offsets to allow space for axis labels
-    double loffx=lh*!ylabel.empty(), 
-      loffx1=lh*!y1label.empty(), 
-      loffy=lh*!xlabel.empty();
+    double loffx=lh(width,height)*!ylabel.empty(), 
+      loffx1=lh(width,height)*!y1label.empty(), 
+      loffy=lh(width,height)*!xlabel.empty();
     
 
     double sx=(width-offx-loffx-loffx1)/dx, 
