@@ -111,8 +111,6 @@ PKG_CONFIG=env PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) $(MXE_PREFIX)-pkg-config
 
 # xdr on MXE is positively ancient, so just disable it here
 XDR=
-# for some reason, getting win32 surfaces to work on MXE is proving impossible
-TKPHOTOSURFACE=1
 
 # rule for running the resource compiler
 .rc.o:

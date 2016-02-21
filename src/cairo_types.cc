@@ -824,6 +824,7 @@ namespace ecolab
         catch (const std::exception& e) 
           {cerr<<"illegal exception caught in draw()"<<e.what()<<endl;}
         catch (...) {cerr<<"illegal exception caught in draw()";}
+        cairo_surface_flush(imgPtr->cairoItem->cairoSurface->surface());
 #if defined(CAIRO_HAS_WIN32_SURFACE) && !defined(__CYGWIN__) && !defined(TKPHOTOSURFACE)
         TkWinReleaseDrawableDC(drawable, hdc, state);
 #endif
