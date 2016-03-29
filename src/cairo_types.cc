@@ -800,6 +800,7 @@ namespace ecolab
         // the state parameter - two long longs should be ample here
         long long state[2];
         HDC hdc=TkWinGetDrawableDC(display, drawable, state);
+        SaveDC(hdc);
         imgPtr->cairoItem->cairoSurface.reset
           (new CanvasSurface(cairo_win32_surface_create(hdc),
                              canvas, imgPtr->header));
@@ -824,8 +825,11 @@ namespace ecolab
         catch (const std::exception& e) 
           {cerr<<"illegal exception caught in draw()"<<e.what()<<endl;}
         catch (...) {cerr<<"illegal exception caught in draw()";}
-        cairo_surface_flush(imgPtr->cairoItem->cairoSurface->surface());
+//        cairo_surface_flush(imgPtr->cairoItem->cairoSurface->surface());
+//        cairo_surface_finish(imgPtr->cairoItem->cairoSurface->surface());
+        imgPtr->cairoItem->cairoSurface->surface(NULL);
 #if defined(CAIRO_HAS_WIN32_SURFACE) && !defined(__CYGWIN__) && !defined(TKPHOTOSURFACE)
+        RestoreDC(hdc,-1);
         TkWinReleaseDrawableDC(drawable, hdc, state);
 #endif
       }
