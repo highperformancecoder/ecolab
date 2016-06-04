@@ -93,7 +93,7 @@ namespace ecolab
   public:
     double angle; // angle the text  
     Pango(cairo_t* cairo): 
-      cairo(cairo), angle(0), fontSize(10) {}
+      cairo(cairo), fontSize(10), angle(0) {}
     void setMarkup(const string& markup) {
       this->markup=markup;
       cairo_text_extents(cairo,markup.c_str(),&bbox);

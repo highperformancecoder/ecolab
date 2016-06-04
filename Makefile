@@ -320,5 +320,6 @@ compileTest:
 	$(MAKE) clean; $(MAKE) CPLUSPLUS=clang++
 	$(MAKE) clean; $(MAKE) TIMER=1
 	$(MAKE) clean; $(MAKE) CAIRO=1 TK=    #see ticket #139
+	$(MAKE) clean; $(MAKE) ICC=1
 # note, this currently fails
 #	$(MAKE) clean; $(MAKE) DYNAMIC=1

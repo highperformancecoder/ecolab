@@ -31,6 +31,8 @@ HAVE_LONGLONG=1
 
 # Force use of GCC. 
 GCC=
+# Force use of Intel compiler. 
+ICC=
 
 # On Macintosh, AQUA specifies the OS X Aqua versions of TCL/Tk
 # Default is X11
@@ -164,7 +166,7 @@ endif
 
 ifeq ($(OS),Linux)
 # try to detect Intel C++ compiler if GCC not set
-ifndef GCC
+ifdef ICC
 HAVE_ICC=$(shell if which icc>/dev/null; then echo 1; fi)
 ifeq ($(HAVE_ICC),1)
 ifndef MPI
