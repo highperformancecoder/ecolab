@@ -327,5 +327,5 @@ compileTest:
 ECOLAB_VERSION=$(shell git describe)
 
 dist:
-	git clone . /tmp/-$(ECOLAB_VERSION)
-	cd /tmp; tar zcvf Minsky-$(ECOLAB_VERSION).tar.gz Minsky-$(ECOLAB_VERSION)
+	git clone . /tmp/ecolab-$(ECOLAB_VERSION)
+	cd /tmp; tar zcvf ecolab-$(ECOLAB_VERSION).tar.gz ecolab-$(ECOLAB_VERSION)
