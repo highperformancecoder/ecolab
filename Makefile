@@ -323,3 +323,9 @@ compileTest:
 	$(MAKE) clean; $(MAKE) ICC=1
 # note, this currently fails
 #	$(MAKE) clean; $(MAKE) DYNAMIC=1
+
+ECOLAB_VERSION=$(shell git describe)
+
+dist:
+	git clone . /tmp/-$(ECOLAB_VERSION)
+	cd /tmp; tar zcvf Minsky-$(ECOLAB_VERSION).tar.gz Minsky-$(ECOLAB_VERSION)

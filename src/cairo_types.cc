@@ -368,8 +368,8 @@ namespace ecolab
 
            imgPtr->header.x1 = bbox[0]+imgPtr->x;
            imgPtr->header.y1 = bbox[1]+imgPtr->y;
-           imgPtr->header.x2 = bbox[2]+imgPtr->x;
-           imgPtr->header.y2 = bbox[3]+imgPtr->y;
+           imgPtr->header.x2 = bbox[2]+imgPtr->x+1;
+           imgPtr->header.y2 = bbox[3]+imgPtr->y+1;
          }
       }
 
