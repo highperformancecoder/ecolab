@@ -328,4 +328,5 @@ ECOLAB_VERSION=$(shell git describe)
 
 dist:
 	git clone . /tmp/ecolab-$(ECOLAB_VERSION)
+	rm -rf /tmp/ecolab-$(ECOLAB_VERSION)/.git
 	cd /tmp; tar zcvf ecolab-$(ECOLAB_VERSION).tar.gz ecolab-$(ECOLAB_VERSION)
