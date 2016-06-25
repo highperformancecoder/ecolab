@@ -652,7 +652,7 @@ namespace ecolab
                 case line:
                   cairo_new_path(cairo);
                   cairo_move_to(cairo, iflogx(x[i][0]), xfy(y[i][0]));
-                  for (size_t j=0; j<x[i].size(); ++j)
+                  for (size_t j=1; j<x[i].size(); ++j)
                     if (inBounds(iflogx(x[i][j-1]), xfy(y[i][j-1])) && 
                         inBounds(iflogx(x[i][j]), xfy(y[i][j])))
                       cairo_line_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
