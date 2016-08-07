@@ -97,7 +97,8 @@ if cell not specified, then cell 0 is assumed.
 
 template <class arr_t>
 void display(std::string display, double tstep, 
-	       arr_t& density, const array<int>& species=array<int>())
+             arr_t& density, const ecolab::array<int>& species=
+             ecolab::array<int>())
 {
   for (size_t i=0; i<display.length(); i++) if (!isalnum(display[i])) display[i]='_';
 #if BLT
@@ -106,7 +107,7 @@ void display(std::string display, double tstep,
   palette_class palette;
   //  static Blt_Vector time;
   static hash_map<arr_t*,double> lasttime;
-  array<int> offs;
+  ecolab::array<int> offs;
   eco_strstream title, cmdstr;
   
 
@@ -166,7 +167,7 @@ NEWCMD(eco_display,3)
      argv[2] = "density" array to be plotted, and 
      argv[3] = "species" array used for colouring */
   double tstep=atof(argv[1]);
-  declare( species, array<int> , argv[3] );
+  declare( species, ecolab::array<int> , argv[3] );
 
   
   std::string displayN("display_"); displayN += argv[2];
@@ -175,11 +176,11 @@ NEWCMD(eco_display,3)
   // density is either an array or iarray
   if (TCL_obj_properties().count(argv[2])==0)
     throw error("%s does not exist!",argv[2]);
-  if (array<int>* density = TCL_obj_properties()[argv[2]]->
-      memberPtrCasted<array<int> >())
+  if (ecolab::array<int>* density = TCL_obj_properties()[argv[2]]->
+      memberPtrCasted<ecolab::array<int> >())
     display(displayN,tstep,*density,species);
-  else if (array<double>* density = TCL_obj_properties()[argv[2]]->
-           memberPtrCasted<array<double> >())
+  else if (ecolab::array<double>* density = TCL_obj_properties()[argv[2]]->
+           memberPtrCasted<ecolab::array<double> >())
     display(displayN,tstep,*density,species);
   else 
     throw error("%s is invalid type",argv[2]);
@@ -205,11 +206,11 @@ NEWCMD(eco_connect_plot,4)
      argv[4] = scale
 */
   declare(interaction, sparse_mat, argv[1]);
-  declare(density, array<int>, argv[2]);
+  declare(density, ecolab::array<int>, argv[2]);
   const char *display=argv[3];
   double scale=atof(argv[4]);
   cmd|display|".graph delete all\n";
-  array<int> enum_clusters(interaction.diag.size());
+  ecolab::array<int> enum_clusters(interaction.diag.size());
   enum_clusters=1; 
   enum_clusters=enumerate(enum_clusters);
   for (unsigned i=0; i<interaction.row.size(); i++)
@@ -230,7 +231,7 @@ NEWCMD(eco_connect_plot,4)
       
   /* for grouping species into their ecologies */
   
-  array<int> map(interaction.diag.size()), mask;
+  ecolab::array<int> map(interaction.diag.size()), mask;
   map=-1;
   
   for (int i=0; i<=max(enum_clusters); i++)
@@ -285,34 +286,34 @@ NEWCMD(eco_connect_plot,4)
   }
 
 
-array<double> HistoStats::histogram()
+ecolab::array<double> HistoStats::histogram()
 {
-  array<double> y(nbins,0);
-  array<float>& data=*this;
+  ecolab::array<double> y(nbins,0);
+  ecolab::array<float>& data=*this;
   if (logbins)
     {
-      array<float> pos_data=pack(data,data>0);
+      ecolab::array<float> pos_data=pack(data,data>0);
       if (!pos_data.size()) return y;
       logmin=log(array_ns::min(pos_data));
       float delta=(log(max)-logmin)/(nbins-0.1);
       float invdelta=1/delta;
       float invexpdelm1 = 1/(exp(delta)-1);
-      array<size_t> idx(invdelta*(log(pos_data)-logmin));
+      ecolab::array<size_t> idx(invdelta*(log(pos_data)-logmin));
       y[idx]+=exp(-delta*idx)*invexpdelm1;
     }
   else
     {
       double invdelta=max>min? (nbins-0.1)/(max-min): 0;
-      array<size_t> idx(invdelta*(data-min));
+      ecolab::array<size_t> idx(invdelta*(data-min));
       y[idx]+=1.0;
     }
   return y;
 }
 
-array<double> HistoStats::bins()
+ecolab::array<double> HistoStats::bins()
 {
-  array<double> x(nbins);
-  array<float>& data=*this;
+  ecolab::array<double> x(nbins);
+  ecolab::array<float>& data=*this;
   if (logbins && data.size())
     {
       logmin=log(array_ns::min(pack(data,data>0)));
@@ -332,7 +333,7 @@ double bestslope(double xmin, unsigned n, const float *x)
   return 1+n/(sumlog-n*log(xmin));
 }
 
-unsigned mini(double xmin, const array<float>& x)
+unsigned mini(double xmin, const ecolab::array<float>& x)
 {
   // find location of first data > xmin
   unsigned mini;
@@ -340,7 +341,7 @@ unsigned mini(double xmin, const array<float>& x)
   return mini;
 }
 
-unsigned maxi(double xmax, const array<float>& x)
+unsigned maxi(double xmax, const ecolab::array<float>& x)
 {
   // find location of first data > xmin
   unsigned maxi;
@@ -348,7 +349,7 @@ unsigned maxi(double xmax, const array<float>& x)
   return maxi;
 }
 
-double bestslope(double xmin, const array<float>& x)
+double bestslope(double xmin, const ecolab::array<float>& x)
 {
   unsigned n=mini(xmin,x);
   return bestslope(xmin,x.size()-n,x.begin()+n);

@@ -737,10 +737,10 @@ eco_string lake_t::select(TCL_args args)
 /* return a list of jellyfish depths, for all jellyfish located in
    cell column containing coordinate x,y */
 
-array<double> lake_t::depthlist(TCL_args args)
+ecolab::array<double> lake_t::depthlist(TCL_args args)
 {
   double x=args, y=args;
-  array<double> r;
+  ecolab::array<double> r;
   for (unsigned z=0; z<nmapz*nmapy*nmapx; z+=nmapy*nmapx)
     {
       jlist& c=jelly_map.cell(mapid(x,y)+z);

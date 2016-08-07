@@ -224,8 +224,8 @@ size_t jelly_map_t::max_size() {size_t m=0; for (iterator i=begin(); i!=end(); i
 class lake_t: public TCL_obj_t
 {
   CLASSDESC_ACCESS(lake_t);
-  array<int> bdy;
-  array<int> edge_indices;
+  ecolab::array<int> bdy;
+  ecolab::array<int> edge_indices;
   bool shadow_updated;
 public:
   unsigned width, height, depth, nmapx, nmapy, nmapz;
@@ -276,7 +276,7 @@ public:
   void draw(TCL_args);
   void draw_density(TCL_args);
   eco_string select(TCL_args);
-  array<double> depthlist(TCL_args);
+  ecolab::array<double> depthlist(TCL_args);
   int cell_max(TCL_args);
 };
 

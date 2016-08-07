@@ -18,9 +18,12 @@ int ecolab_tcl_arrays_link;
 
 /* set random number seed */
 
+namespace ecolab
+{
+
 NEWCMD(srand,1)
 {
-  srand(atoi(argv[1]));
+  ::srand(atoi(argv[1]));
 }
 
 /* urand n [max [min]] return a list of uniform random numbers between
@@ -105,7 +108,7 @@ NEWCMD(max,1)
   double m=-DBL_MAX;
   tclreturn result;
   if (Tcl_SplitList(interp(),const_cast<char*>(argv[1]),&n,&v)==TCL_OK)
-    for (i=0; i<n; i++) m=max(m,atof(v[i]));
+    for (i=0; i<n; i++) m=std::max(m,atof(v[i]));
   Tcl_Free((char*)v);
   result << m;
 } 
@@ -118,7 +121,7 @@ NEWCMD(min,1)
   double m=DBL_MAX;
   tclreturn result;
   if (Tcl_SplitList(interp(),const_cast<char*>(argv[1]),&n,&v)==TCL_OK)
-    for (i=0; i<n; i++) m=min(m,atof(v[i]));
+    for (i=0; i<n; i++) m=std::min(m,atof(v[i]));
   Tcl_Free((char*)v);
   result << m;
 } 
@@ -136,4 +139,4 @@ NEWCMD(av,1)
   result << m/n;
 } 
 
-
+}

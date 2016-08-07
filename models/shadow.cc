@@ -40,9 +40,9 @@ inline int ROUND(double x)
 inline int ROUND(float x) {return ROUND(double(x));}
 
 template <class E>
-inline array<int> ROUND(const E& x)
+inline ecolab::array<int> ROUND(const E& x)
 {
-  array<int> r(x.size());
+  ecolab::array<int> r(x.size());
   for (size_t i=0; i<x.size(); i++)
     r[i]=ROUND(x[i]);
   return r;
@@ -50,14 +50,14 @@ inline array<int> ROUND(const E& x)
 
 void shadow_model::generate()
 { 
-  array<double> tmp = repro_rate * density + (interaction * density) * density;
+  ecolab::array<double> tmp = repro_rate * density + (interaction * density) * density;
   density = ROUND(density + tmp);
 
   if (tstep==0) make_consistent();
   tstep++;
 
   /* generate a random permutation */
-  array<int> t(density.size());
+  ecolab::array<int> t(density.size());
   fill_unique_rand(t,t.size());
   sdensity += tmp[t];
   activity += ((density-sdensity)>0) * (density-sdensity);
@@ -65,7 +65,7 @@ void shadow_model::generate()
 
 void shadow_model::condense()   /* remove extinct species */
 {
-  array<int> mask, map, mask_off, extinctions;
+  ecolab::array<int> mask, map, mask_off, extinctions;
   unsigned mask_true;
   mask = density != 0;
   mask_true=sum(mask);
@@ -102,7 +102,7 @@ Vary components according to a Gaussian distribution, with the given
 */
 
 /* do the offdiagonal mutations */
-void do_row_or_col(array<double>& tmp, double range, double minval, double gdist)
+void do_row_or_col(ecolab::array<double>& tmp, double range, double minval, double gdist)
 {
   double r;
   int j, pos;
@@ -133,15 +133,15 @@ void do_row_or_col(array<double>& tmp, double range, double minval, double gdist
       }
 
   /* mutate values */
-  array<double> diff(tmp.size());
+  ecolab::array<double> diff(tmp.size());
   diff=merge(tmp!=0.0,range*gdist,0.0);
   gspread(tmp,diff);
 }  
 
 void shadow_model::mutate()
 {
-  array<int> new_sp;
-  array<double> new_repro_rate, new_mutation, new_idiag, new_mig_ns, new_mig_ew;
+  ecolab::array<int> new_sp;
+  ecolab::array<double> new_repro_rate, new_mutation, new_idiag, new_mig_ns, new_mig_ew;
   int i, cell, j, ntrue;
   static int sp_cntr=1;    /* used to label newly created species */
 
@@ -164,7 +164,7 @@ void shadow_model::mutate()
   sdensity-=new_sp;
 
   /* generate index list of old species that mutate to the new */
-  array<int> t=new_sp;
+  ecolab::array<int> t=new_sp;
   new_sp = gen_index(new_sp); 
 
   if (new_sp.size()==0) return;
@@ -179,7 +179,7 @@ void shadow_model::mutate()
   new_mig_ew = mig_ew[new_sp];
 
   /* calculate the genetic distances for the mutants from the parents*/
-  array<double> gdist(new_sp.size());
+  ecolab::array<double> gdist(new_sp.size());
   fillprand(gdist);
   gdist *= new_mutation;
 
@@ -190,7 +190,7 @@ void shadow_model::mutate()
   double range = repro_max-repro_min;
 
   gspread( new_repro_rate, range*gdist );
-  array<double> a=new_idiag;
+  ecolab::array<double> a=new_idiag;
   lgspread( new_idiag, gdist );
   lgspread( new_mutation, gdist );
   lgspread( new_mig_ns, gdist );
@@ -199,7 +199,7 @@ void shadow_model::mutate()
   /* limit idiag to avoid it vanishing (causes system instability) - a
      reasonable is to chose it so that the equilibrium value of
      density is always less than half of INT_MAX */
-  array<double> max_idiag(-abs(new_repro_rate)/(0.1*INT_MAX));
+  ecolab::array<double> max_idiag(-abs(new_repro_rate)/(0.1*INT_MAX));
   new_idiag = array_ns::merge( new_idiag < max_idiag, new_idiag, max_idiag);
 
   /* limit mutation rate to mutation(random,maxval) */
@@ -217,13 +217,13 @@ void shadow_model::mutate()
   /* collect interaction data */
   for (size_t i=0; i<new_sp.size(); i++)
     {
-      array<double> tmp1(species.size()+i), tmp2(species.size()+i);
+      ecolab::array<double> tmp1(species.size()+i), tmp2(species.size()+i);
       double s;
       tmp1 = 0; tmp2=0;
-      array<int> pcd = pcoord(tmp1.size());
+      ecolab::array<int> pcd = pcoord(tmp1.size());
 	      
       /* project out connections for row[new_sp[i]] */
-      array<int> mask(interaction.row==unsigned(new_sp[i]));
+      ecolab::array<int> mask(interaction.row==unsigned(new_sp[i]));
       int ntrue = sum(mask);
       tmp1[ pack(interaction.col,mask,ntrue) ] = 
 	pack(interaction.val,mask,ntrue);
@@ -247,8 +247,8 @@ void shadow_model::mutate()
       if (s>0)
 	{
 	  int nadj;
-	  array<int> m1 = mask && tmp1!=0.0;
-	  array<int> m2 = mask && tmp2!=0.0;
+	  ecolab::array<int> m1 = mask && tmp1!=0.0;
+	  ecolab::array<int> m2 = mask && tmp2!=0.0;
 	  nadj = sum(m1 || m2);
 	  tmp1=merge(m1,tmp1-s/nadj,tmp1);
 	  tmp2=merge(m2,tmp2-s/nadj,tmp2);
@@ -259,13 +259,13 @@ void shadow_model::mutate()
       ntrue = sum(mask);
       interaction.val <<= pack(tmp1,mask,ntrue);
       interaction.col <<= pack( pcd, mask, ntrue);
-      interaction.row <<= array<int>(ntrue, tmp1.size());
+      interaction.row <<= ecolab::array<int>(ntrue, tmp1.size());
 
       mask=tmp2!=0.0;
       ntrue = sum(mask);
       interaction.val <<= pack( tmp2, mask, ntrue);
       interaction.row <<= pack( pcd, mask, ntrue);
-      interaction.col <<= array<int>(ntrue, tmp2.size());
+      interaction.col <<= ecolab::array<int>(ntrue, tmp2.size());
 
     }
 
@@ -340,7 +340,7 @@ void shadow_model::maxeig()
 int shadow_model::newact()
 {
   tclvar threshold("newact_thresh");
-  array<int> m = density>(int)threshold && create==0;
+  ecolab::array<int> m = density>(int)threshold && create==0;
   create[gen_index(m)]=tstep;
   return sum( m );
 }
