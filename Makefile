@@ -327,6 +327,9 @@ compileTest:
 ECOLAB_VERSION=$(shell git describe)
 
 dist:
-	git clone . /tmp/ecolab-$(ECOLAB_VERSION)
-	rm -rf /tmp/ecolab-$(ECOLAB_VERSION)/.git
-	cd /tmp; tar zcvf ecolab-$(ECOLAB_VERSION).tar.gz ecolab-$(ECOLAB_VERSION)
+	git archive --format=tar --prefix=ecolab-$(ECOLAB_VERSION)/ HEAD -o /tmp/ecolab-$(ECOLAB_VERSION).tar
+	# add in classdesc submodule
+	cd classdesc; git archive --format=tar --prefix=ecolab-$(ECOLAB_VERSION)/classdesc/ HEAD -o /tmp/$$.tar
+	tar Af /tmp/ecolab-$(ECOLAB_VERSION).tar /tmp/$$.tar
+	rm /tmp/$$.tar
+	gzip -f /tmp/ecolab-$(ECOLAB_VERSION).tar
