@@ -1,5 +1,3 @@
-. /usr/local/share/aegis/profile
-aecp ecolab.ps
 rm *~ *.aux *.dvi *.log *.blg *.toc *.lof *.ilg *.idx
 latex ecolab
 makeindex ecolab.idx
@@ -7,18 +5,10 @@ bibtex ecolab
 latex ecolab
 latex ecolab
 dvips ecolab
-TMP=/tmp/eco-doc$$
-mkdir $TMP
-aecp ecolab
-rm -rf ecolab
-latex2html -tmp $TMP ecolab
-rm -rf $TMP
+ps2pdf ecolab.ps
+git rm -rf ecolab
+latex2html -local_icons ecolab
 rm *~ *.aux *.dvi *.log *.blg *.toc *.lof *.ilg *.idx
-# remove extraneous file from repository
-aegis -list -terse project_files|grep doc/ecolab/|while read nm; do 
-  if [ ! -f ../$nm ]; then 
-    aecpu ../$nm
-    aerm -no_whiteout ../$nm
-    fi
-  done
-aenf ecolab
+
+for i in ecolab/*; do git add $i; done 
+git commit -m "Making doc consistent in git"

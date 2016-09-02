@@ -298,7 +298,7 @@ sure: all
 	sh runtests test/00/*.sh
 
 # install documentation on SourceForge
-DOCPREFIX=web.sf.net:/home/groups/e/ec/ecolab/htdocs/doc
+DOCPREFIX=web.sf.net:/home/project-web/ecolab/htdocs/doc
 install-doc:
 	doxygen
 	-cd doc; sh Makedoc
