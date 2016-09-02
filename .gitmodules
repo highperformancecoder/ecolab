@@ -1,3 +1,6 @@
 [submodule "classdesc"]
 	path = classdesc
 	url = https://github.com/highperformancecoder/classdesc.git
+[submodule "graphcode"]
+	path = graphcode
+	url = https://github.com/highperformancecoder/graphcode.git
