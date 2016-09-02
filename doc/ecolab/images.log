@@ -1,0 +1,1187 @@
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/TeX Live for SUSE Linux) (format=latex 2015.12.6)  2 SEP 2016 13:28
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**./images.tex
+(./images.tex
+LaTeX2e <2011/06/27>
+Babel <3.9f> and hyphenation patterns for 78 languages loaded.
+
+(/usr/share/texmf/tex/latex/base/latex209.def
+File: latex209.def 1998/05/13 v0.52 Standard LaTeX file
+
+          Entering LaTeX 2.09 COMPATIBILITY MODE
+ *************************************************************
+    !!WARNING!!    !!WARNING!!    !!WARNING!!    !!WARNING!!   
+ 
+ This mode attempts to provide an emulation of the LaTeX 2.09
+ author environment so that OLD documents can be successfully
+ processed. It should NOT be used for NEW documents!
+ 
+ New documents should use Standard LaTeX conventions and start
+ with the \documentclass command.
+ 
+ Compatibility mode is UNLIKELY TO WORK with LaTeX 2.09 style
+ files that change any internal macros, especially not with
+ those that change the FONT SELECTION or OUTPUT ROUTINES.
+ 
+ Therefore such style files MUST BE UPDATED to use
+          Current Standard LaTeX: LaTeX2e.
+ If you suspect that you may be using such a style file, which
+ is probably very, very old by now, then you should attempt to
+ get it updated by sending a copy of this error message to the
+ author of that file.
+ *************************************************************
+
+\footheight=\dimen102
+\@maxsep=\dimen103
+\@dblmaxsep=\dimen104
+\@cla=\count79
+\@clb=\count80
+\mscount=\count81
+(/usr/share/texmf/tex/latex/base/tracefnt.sty
+Package: tracefnt 1997/05/29 v3.0j Standard LaTeX package (font tracing)
+\tracingfonts=\count82
+LaTeX Info: Redefining \selectfont on input line 101.
+)
+\symbold=\mathgroup4
+\symsans=\mathgroup5
+\symtypewriter=\mathgroup6
+\symitalic=\mathgroup7
+\symsmallcaps=\mathgroup8
+\symslanted=\mathgroup9
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 293.
+LaTeX Font Info:    Redeclaring math alphabet \mathsf on input line 294.
+LaTeX Font Info:    Redeclaring math alphabet \mathtt on input line 295.
+LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 301.
+LaTeX Info: Redefining \em on input line 311.
+(/usr/share/texmf/tex/latex/base/latexsym.sty
+Package: latexsym 1998/08/17 v2.2e Standard LaTeX package (lasy symbols)
+\symlasy=\mathgroup10
+LaTeX Font Info:    Overwriting symbol font `lasy' in version `bold'
+(Font)                  U/lasy/m/n --> U/lasy/b/n on input line 47.
+)
+LaTeX Font Info:    Redeclaring math delimiter \lgroup on input line 375.
+LaTeX Font Info:    Redeclaring math delimiter \rgroup on input line 377.
+LaTeX Font Info:    Redeclaring math delimiter \bracevert on input line 379.
+) (/usr/share/texmf/tex/latex/base/article.cls
+Document Class: article 2007/10/19 v1.4h Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/size10.clo
+File: size10.clo 2007/10/19 v1.4h Standard LaTeX file (size option)
+)
+\c@part=\count83
+\c@section=\count84
+\c@subsection=\count85
+\c@subsubsection=\count86
+\c@paragraph=\count87
+\c@subparagraph=\count88
+\c@figure=\count89
+\c@table=\count90
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+Compatibility mode: definition of \rm ignored.
+Compatibility mode: definition of \sf ignored.
+Compatibility mode: definition of \tt ignored.
+Compatibility mode: definition of \bf ignored.
+Compatibility mode: definition of \it ignored.
+Compatibility mode: definition of \sl ignored.
+Compatibility mode: definition of \sc ignored.
+LaTeX Info: Redefining \cal on input line 506.
+LaTeX Info: Redefining \mit on input line 507.
+\bibindent=\dimen105
+) (/usr/share/texmf/tex/latex/pstricks/pstricks.sty
+Package: pstricks 2013/05/21 v0.56 LaTeX wrapper for `PSTricks' (RN,HV)
+(/usr/share/texmf/tex/generic/pstricks/pstricks.tex (/usr/share/texmf/tex/gener
+ic/xkeyval/pst-xkey.tex
+File: pst-xkey.tex 2005/11/25 v1.6 PSTricks specialization of xkeyval (HA)
+(/usr/share/texmf/tex/latex/xkeyval/xkeyval.sty
+Package: xkeyval 2012/10/14 v2.6b package option processing (HA)
+(/usr/share/texmf/tex/generic/xkeyval/xkeyval.tex
+\XKV@toks=\toks14
+\XKV@tempa@toks=\toks15
+\XKV@depth=\count91
+File: xkeyval.tex 2012/10/14 v2.6b key=value parser (HA)
+(/usr/share/texmf/tex/generic/xkeyval/keyval.tex)))) (/usr/share/texmf/tex/gene
+ric/pstricks/pst-fp.tex `pst-fp' v0.05, 2010/01/17 (hv)
+\pstFP@xs=\count92
+\pstFP@xia=\count93
+\pstFP@xib=\count94
+\pstFP@xfa=\count95
+\pstFP@xfb=\count96
+\pstFP@rega=\count97
+\pstFP@regb=\count98
+\pstFP@regs=\count99
+\pstFP@times=\count100
+) (/usr/share/texmf/tex/generic/pgf/utilities/pgfutil-common.tex
+\pgfutil@everybye=\toks16
+) (/usr/share/texmf/tex/generic/pgf/utilities/pgfkeys.code.tex
+\pgfkeys@pathtoks=\toks17
+\pgfkeys@temptoks=\toks18
+(/usr/share/texmf/tex/generic/pgf/utilities/pgfkeysfiltered.code.tex
+\pgfkeys@tmptoks=\toks19
+)) (/usr/share/texmf/tex/generic/pgf/utilities/pgffor.code.tex
+\pgffor@iter=\dimen106
+\pgffor@skip=\dimen107
+\pgffor@stack=\toks20
+\pgffor@toks=\toks21
+)
+\psLoopIndex=\count101
+`PSTricks' v2.43  <2013/05/12> (tvz)
+\pst@dima=\dimen108
+\pst@dimb=\dimen109
+\pst@dimc=\dimen110
+\pst@dimd=\dimen111
+\pst@dimg=\dimen112
+\pst@dimh=\dimen113
+\pst@dimm=\dimen114
+\pst@dimn=\dimen115
+\pst@dimo=\dimen116
+\pst@dimp=\dimen117
+\pst@hbox=\box26
+\pst@ibox=\box27
+\pst@boxg=\box28
+\pst@cnta=\count102
+\pst@cntb=\count103
+\pst@cntc=\count104
+\pst@cntd=\count105
+\pst@cntg=\count106
+\pst@cnth=\count107
+\pst@cntm=\count108
+\pst@cntn=\count109
+\pst@cnto=\count110
+\pst@cntp=\count111
+\@zero=\count112
+\pst@toks=\toks22
+(/usr/share/texmf/tex/generic/pstricks/pstricks.con)
+\psunit=\dimen118
+\psxunit=\dimen119
+\psyunit=\dimen120
+\pst@C@@rType=\count113
+\pslinewidth=\dimen121
+\psk@startLW=\dimen122
+\psk@endLW=\dimen123
+\pst@customdefs=\toks23
+\pslinearc=\dimen124
+\pst@symbolStep=\dimen125
+\pst@symbolWidth=\dimen126
+\pst@symbolLinewidth=\dimen127
+\everypsbox=\toks24
+\psframesep=\dimen128
+\pslabelsep=\dimen129
+\sh@wgridXunit=\dimen130
+\sh@wgridYunit=\dimen131
+\pst@shift=\dimen132
+\theoverlaybox=\box29
+)
+File: pstricks.tex 2013/05/12 v2.43 `PSTricks' (tvz,hv)
+(/usr/share/texmf/tex/generic/pstricks/pst-fp.tex)
+File: pst-fp.tex 2013/05/12 v2.43 `PST-fp' (hv)
+(/usr/share/texmf/tex/latex/xcolor/xcolor.sty
+Package: xcolor 2007/01/21 v2.11 LaTeX color extensions (UK)
+(/usr/share/texmf/tex/latex/latexconfig/color.cfg
+File: color.cfg 2007/01/18 v1.5 color configuration of teTeX/TeXLive
+)
+Package xcolor Info: Driver file: dvips.def on input line 225.
+(/usr/share/texmf/tex/latex/graphics/dvips.def
+File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+)
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1337.
+Package xcolor Info: Model `RGB' extended on input line 1353.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1355.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1356.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1357.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1358.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1359.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1360.
+)) (/usr/share/texmf/tex/latex/pst-node/pst-node.sty
+Package: pst-node 2012/09/18 v1.01 LaTeX wrapper for `pst-node' (HV)
+Package: pst-node 2010/04/22 package wrapper for pst-node.tex
+(/usr/share/texmf/tex/generic/pst-node/pst-node.tex  v1.27, 2013/04/12
+\psrow=\count114
+\pscol=\count115
+\psmatrixcnt=\count116
+\psrowsep=\skip43
+\pscolsep=\skip44
+\pst@args=\count117
+\num@pts=\count118
+\pst@argcnt=\count119
+)
+File: pst-node.tex 2013/04/12 1.27 `pst-node' (tvz,hv)
+) (/usr/share/texmf/tex/latex/html/html.sty (/usr/share/texmf/tex/latex/hyperre
+f/hyperref.sty
+Package: hyperref 2012/11/06 v6.83m Hypertext links for LaTeX
+(/usr/share/texmf/tex/generic/oberdiek/hobsub-hyperref.sty
+Package: hobsub-hyperref 2012/05/28 v1.13 Bundle oberdiek, subset hyperref (HO)
+
+(/usr/share/texmf/tex/generic/oberdiek/hobsub-generic.sty
+Package: hobsub-generic 2012/05/28 v1.13 Bundle oberdiek, subset generic (HO)
+Package: hobsub 2012/05/28 v1.13 Construct package bundles (HO)
+Package: infwarerr 2010/04/08 v1.3 Providing info/warning/error messages (HO)
+Package: ltxcmds 2011/11/09 v1.22 LaTeX kernel commands for general use (HO)
+Package: ifluatex 2010/03/01 v1.3 Provides the ifluatex switch (HO)
+Package ifluatex Info: LuaTeX not detected.
+Package: ifvtex 2010/03/01 v1.5 Detect VTeX and its facilities (HO)
+Package ifvtex Info: VTeX not detected.
+Package: intcalc 2007/09/27 v1.1 Expandable calculations with integers (HO)
+Package: ifpdf 2011/01/30 v2.3 Provides the ifpdf switch (HO)
+Package ifpdf Info: pdfTeX in PDF mode is not detected.
+Package: etexcmds 2011/02/16 v1.5 Avoid name clashes with e-TeX commands (HO)
+Package etexcmds Info: Could not find \expanded.
+(etexcmds)             That can mean that you are not using pdfTeX 1.50 or
+(etexcmds)             that some package has redefined \expanded.
+(etexcmds)             In the latter case, load this package earlier.
+Package: kvsetkeys 2012/04/25 v1.16 Key value parser (HO)
+Package: kvdefinekeys 2011/04/07 v1.3 Define keys (HO)
+Package: pdftexcmds 2011/11/29 v0.20 Utility functions of pdfTeX for LuaTeX (HO
+)
+Package pdftexcmds Info: LuaTeX not detected.
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode is ignored in DVI mode.
+Package: pdfescape 2011/11/25 v1.13 Implements pdfTeX's escape features (HO)
+Package: bigintcalc 2012/04/08 v1.3 Expandable calculations on big integers (HO
+)
+Package: bitset 2011/01/30 v1.1 Handle bit-vector datatype (HO)
+Package: uniquecounter 2011/01/30 v1.2 Provide unlimited unique counter (HO)
+)
+Package hobsub Info: Skipping package `hobsub' (already loaded).
+Package: letltxmacro 2010/09/02 v1.4 Let assignment for LaTeX macros (HO)
+Package: hopatch 2012/05/28 v1.2 Wrapper for package hooks (HO)
+Package: xcolor-patch 2011/01/30 xcolor patch
+Package: atveryend 2011/06/30 v1.8 Hooks at the very end of document (HO)
+Package atveryend Info: \enddocument detected (standard20110627).
+Package: atbegshi 2011/10/05 v1.16 At begin shipout hook (HO)
+Package: refcount 2011/10/16 v3.4 Data extraction from label references (HO)
+Package: hycolor 2011/01/30 v1.7 Color options for hyperref/bookmark (HO)
+) (/usr/share/texmf/tex/generic/ifxetex/ifxetex.sty
+Package: ifxetex 2010/09/12 v0.6 Provides ifxetex conditional
+) (/usr/share/texmf/tex/latex/oberdiek/auxhook.sty
+Package: auxhook 2011/03/04 v1.3 Hooks for auxiliary files (HO)
+) (/usr/share/texmf/tex/latex/oberdiek/kvoptions.sty
+Package: kvoptions 2011/06/30 v3.11 Key value format for package options (HO)
+)
+\@linkdim=\dimen133
+\Hy@linkcounter=\count120
+\Hy@pagecounter=\count121
+(/usr/share/texmf/tex/latex/hyperref/pd1enc.def
+File: pd1enc.def 2012/11/06 v6.83m Hyperref: PDFDocEncoding definition (HO)
+)
+\Hy@SavedSpaceFactor=\count122
+(/usr/share/texmf/tex/latex/latexconfig/hyperref.cfg
+File: hyperref.cfg 2002/06/06 v1.2 hyperref configuration of TeXLive
+)
+Package hyperref Info: Hyper figures OFF on input line 4443.
+Package hyperref Info: Link nesting OFF on input line 4448.
+Package hyperref Info: Hyper index ON on input line 4451.
+Package hyperref Info: Plain pages OFF on input line 4458.
+Package hyperref Info: Backreferencing OFF on input line 4463.
+Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
+Package hyperref Info: Bookmarks ON on input line 4688.
+\c@Hy@tempcnt=\count123
+(/usr/share/texmf/tex/latex/url/url.sty
+\Urlmuskip=\muskip10
+Package: url 2006/04/12  ver 3.3  Verb mode for urls, etc.
+)
+LaTeX Info: Redefining \url on input line 5041.
+\XeTeXLinkMargin=\dimen134
+\Fld@menulength=\count124
+\Field@Width=\dimen135
+\Fld@charsize=\dimen136
+Package hyperref Info: Hyper figures OFF on input line 6295.
+Package hyperref Info: Link nesting OFF on input line 6300.
+Package hyperref Info: Hyper index ON on input line 6303.
+Package hyperref Info: backreferencing OFF on input line 6310.
+Package hyperref Info: Link coloring OFF on input line 6315.
+Package hyperref Info: Link coloring with OCG OFF on input line 6320.
+Package hyperref Info: PDF/A mode OFF on input line 6325.
+LaTeX Info: Redefining \ref on input line 6365.
+LaTeX Info: Redefining \pageref on input line 6369.
+\Hy@abspage=\count125
+\c@Item=\count126
+\c@Hfootnote=\count127
+)
+
+Package hyperref Message: Driver (default): hdvips.
+
+(/usr/share/texmf/tex/latex/hyperref/hdvips.def
+File: hdvips.def 2012/11/06 v6.83m Hyperref driver for dvips
+(/usr/share/texmf/tex/latex/hyperref/pdfmark.def
+File: pdfmark.def 2012/11/06 v6.83m Hyperref definitions for pdfmark specials
+\pdf@docset=\toks25
+\pdf@box=\box30
+\pdf@toks=\toks26
+\pdf@defaulttoks=\toks27
+\HyField@AnnotCount=\count128
+\Fld@listcount=\count129
+\c@bookmark@seq@number=\count130
+(/usr/share/texmf/tex/latex/oberdiek/rerunfilecheck.sty
+Package: rerunfilecheck 2011/04/15 v1.7 Rerun checks for auxiliary files (HO)
+Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
+82.
+)
+\Hy@SectionHShift=\skip45
+))) (/usr/share/texmf/tex/generic/epsf/epsf.sty
+This is `epsf.tex' v2.7.4 <14 February 2011>
+\epsffilein=\read1
+\epsfframemargin=\dimen137
+\epsfframethickness=\dimen138
+\epsfrsize=\dimen139
+\epsftmp=\dimen140
+\epsftsize=\dimen141
+\epsfxsize=\dimen142
+\epsfysize=\dimen143
+\pspoints=\dimen144
+) (/usr/share/texmf/tex/latex/base/makeidx.sty
+Package: makeidx 2000/03/29 v1.0m Standard LaTeX package
+) (/usr/share/texmf/tex/latex/base/ifthen.sty
+Package: ifthen 2001/05/26 v1.1c Standard LaTeX ifthen package (DPC)
+)
+\@indexfile=\write3
+\openout3 = `images.idx'.
+
+Writing index file images.idx
+
+! LaTeX Error: LaTeX2e command \usepackage in LaTeX 2.09 document.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.36 \usepackage
+                [latin1]{inputenc}
+This is a LaTeX 2.09 document, but it contains \usepackage.
+If you want to use the new features of LaTeX2e, your document
+should begin with \documentclass rather than \documentstyle
+
+
+! LaTeX Error: \usepackage before \documentclass.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.36 \usepackage[latin1]{
+                         inputenc}
+\usepackage may only appear in the document preamble, i.e.,
+between \documentclass and \begin{document}.
+
+\sizebox=\box31
+\lthtmlwrite=\write4
+
+! LaTeX Error: Command \selectlanguage already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.132 \providecommand{\selectlanguage}[1]{}
+                                           %
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+(./images.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Command \HyPL@Entry already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.17 \providecommand*\HyPL@Entry[1]{}
+                                     
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+(/home/rks/github/ecolab/doc/using.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+) (/home/rks/github/ecolab/doc/model.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+) (/home/rks/github/ecolab/doc/classdesc.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+) (/home/rks/github/ecolab/doc/parallel.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+) (/home/rks/github/ecolab/doc/graphcode.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+) (/home/rks/github/ecolab/doc/tcl++.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+) (/home/rks/github/ecolab/doc/arrays.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+) (/home/rks/github/ecolab/doc/tcl_arrays.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+) (/home/rks/github/ecolab/doc/analysis.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+) (/home/rks/github/ecolab/doc/random.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+) (/home/rks/github/ecolab/doc/graph.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+) (/home/rks/github/ecolab/doc/eco_strstream.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+) (/home/rks/github/ecolab/doc/cachedDBM.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+))
+\openout1 = `images.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 136.
+LaTeX Font Info:    ... okay on input line 136.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 136.
+LaTeX Font Info:    ... okay on input line 136.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 136.
+LaTeX Font Info:    ... okay on input line 136.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 136.
+LaTeX Font Info:    ... okay on input line 136.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 136.
+LaTeX Font Info:    ... okay on input line 136.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 136.
+LaTeX Font Info:    ... okay on input line 136.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 136.
+LaTeX Font Info:    ... okay on input line 136.
+\AtBeginShipoutBox=\box32
+
+Package hyperref Warning: Height of page (\paperheight) is invalid (0.0pt),
+(hyperref)                using 11in.
+
+Package hyperref Info: Link coloring OFF on input line 136.
+(/usr/share/texmf/tex/latex/hyperref/nameref.sty
+Package: nameref 2012/10/27 v2.43 Cross-referencing by name of section
+(/usr/share/texmf/tex/generic/oberdiek/gettitlestring.sty
+Package: gettitlestring 2010/12/03 v1.4 Cleanup title references (HO)
+)
+\c@section@level=\count131
+
+! LaTeX Error: Command \@currentHref already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.305 \providecommand*{\@currentHref}{}
+                                       
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+)
+LaTeX Info: Redefining \ref on input line 136.
+LaTeX Info: Redefining \pageref on input line 136.
+LaTeX Info: Redefining \nameref on input line 136.
+\@outlinefile=\write5
+\openout5 = `images.out'.
+
+
+latex2htmlLength hsize=349.0pt
+
+latex2htmlLength vsize=620.0pt
+
+latex2htmlLength hoffset=0.0pt
+
+latex2htmlLength voffset=0.0pt
+
+latex2htmlLength topmargin=0.0pt
+
+latex2htmlLength topskip=0.00003pt
+
+latex2htmlLength headheight=0.0pt
+
+latex2htmlLength headsep=0.0pt
+
+latex2htmlLength parskip=0.0pt plus 1.0pt
+
+latex2htmlLength oddsidemargin=63.0pt
+
+latex2htmlLength evensidemargin=63.0pt
+
+
+Overfull \hbox (20.88567pt too wide) in paragraph at lines 211--212
+[][] 
+ []
+
+l2hSize :figure264:199.1692pt::0.0pt::349.0pt.
+[1
+
+
+
+]
+Overfull \hbox (20.88567pt too wide) in paragraph at lines 264--265
+[][] 
+ []
+
+l2hSize :figure353:199.1692pt::0.0pt::349.0pt.
+[2
+
+
+]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 287.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 287.
+LaTeX Font Info:    Try loading font information for U+lasy on input line 287.
+(/usr/share/texmf/tex/latex/base/ulasy.fd
+File: ulasy.fd 1998/08/17 v2.2e LaTeX symbol font definitions
+)
+l2hSize :tex2html_wrap_inline1278:6.45831pt::0.0pt::6.50238pt.
+[3
+
+
+]
+LaTeX Font Info:    Font shape `U/lasy/b/n' in size <7> not available
+(Font)              Font shape `U/lasy/m/n' tried instead on input line 302.
+LaTeX Font Info:    Font shape `U/lasy/b/n' in size <5> not available
+(Font)              Font shape `U/lasy/m/n' tried instead on input line 302.
+l2hSize :displaymath2085:13.94444pt::0.0pt::349.0pt.
+[4
+
+
+]
+l2hSize :tex2html_wrap_inline2585:6.95831pt::6.95831pt::9.83167pt.
+[5
+
+
+]
+l2hSize :tex2html_wrap_inline2587:6.59525pt::0.0pt::3.94516pt.
+[6
+
+
+]
+l2hSize :tex2html_wrap_inline2589:6.45831pt::0.0pt::5.23613pt.
+[7
+
+
+]
+l2hSize :tex2html_wrap_inline2591:7.44444pt::7.44444pt::6.68405pt.
+[8
+
+
+]
+l2hSize :tex2html_wrap_inline2593:7.44444pt::7.44444pt::13.19913pt.
+[9
+
+
+]
+l2hSize :tex2html_wrap_inline2597:7.09525pt::7.09525pt::5.19052pt.
+[10
+
+
+]
+l2hSize :displaymath2093:13.94444pt::0.0pt::349.0pt.
+[11
+
+
+]
+l2hSize :tex2html_wrap_inline2607:6.81749pt::0.0pt::25.96288pt.
+[12
+
+
+]
+l2hSize :tex2html_wrap_inline2611:7.08334pt::0.0pt::7.62964pt.
+[13
+
+
+]
+l2hSize :displaymath2100:16.00005pt::0.0pt::349.0pt.
+[14
+
+
+]
+l2hSize :tex2html_wrap_inline2619:6.81749pt::0.0pt::7.62964pt.
+[15
+
+
+]
+l2hSize :displaymath2106:31.52795pt::0.0pt::349.0pt.
+[16
+
+
+]
+l2hSize :displaymath2115:25.7207pt::0.0pt::349.0pt.
+[17
+
+
+]
+l2hSize :tex2html_wrap_inline2635:9.48335pt::9.48335pt::35.40575pt.
+[18
+
+
+]
+l2hSize :displaymath2124:24.79865pt::0.0pt::349.0pt.
+[19
+
+
+]
+l2hSize :tex2html_wrap_inline2663:7.44444pt::7.44444pt::98.71304pt.
+[20
+
+
+]
+l2hSize :tex2html_wrap_inline2128:15.0001pt::15.0001pt::73.27084pt.
+[21
+
+
+]
+l2hSize :tex2html_wrap_inline2671:8.0pt::8.0pt::42.72234pt.
+[22
+
+
+]
+l2hSize :tex2html_wrap_inline2675:8.0pt::8.0pt::82.36087pt.
+[23
+
+
+]
+l2hSize :tex2html_wrap_inline2683:8.64003pt::8.64003pt::65.23128pt.
+[24
+
+
+]
+l2hSize :tex2html_wrap_inline2685:6.45831pt::0.0pt::6.2153pt.
+[25
+
+
+]
+l2hSize :displaymath2134:62.81119pt::0.0pt::349.0pt.
+[26
+
+
+]
+l2hSize :displaymath2159:14.5pt::0.0pt::349.0pt.
+[27
+
+
+]
+l2hSize :displaymath2168:19.29858pt::0.0pt::349.0pt.
+[28
+
+
+]
+l2hSize :displaymath2174:14.47217pt::0.0pt::349.0pt.
+[29
+
+
+]
+l2hSize :tex2html_wrap_inline2705:6.95831pt::6.95831pt::10.98851pt.
+[30
+
+
+]
+l2hSize :tex2html_wrap_inline2707:8.64003pt::8.64003pt::74.09758pt.
+[31
+
+
+]
+l2hSize :displaymath2176:13.35971pt::0.0pt::349.0pt.
+[32
+
+
+]
+l2hSize :displaymath2183:14.5pt::0.0pt::349.0pt.
+[33
+
+
+]
+l2hSize :tex2html_wrap_inline2729:6.45831pt::0.0pt::5.23613pt.
+[34
+
+
+]
+l2hSize :tex2html_wrap_inline2733:7.44444pt::7.44444pt::7.4375pt.
+[35
+
+
+]
+l2hSize :tex2html_wrap_inline2735:8.0pt::8.0pt::21.80214pt.
+[36
+
+
+]
+l2hSize :tex2html_wrap_inline2741:6.95831pt::6.95831pt::7.5787pt.
+[37
+
+
+]
+l2hSize :tex2html_wrap_inline2743:6.95831pt::6.95831pt::5.67018pt.
+[38
+
+
+]
+l2hSize :tex2html_wrap_inline2751:8.0pt::8.0pt::39.0829pt.
+[39
+
+
+]
+l2hSize :tex2html_wrap_inline2753:8.87892pt::0.0pt::35.68849pt.
+[40
+
+
+]
+l2hSize :tex2html_wrap_inline2755:6.45831pt::0.0pt::6.57294pt.
+[41
+
+
+]
+l2hSize :tex2html_wrap_inline2761:6.95831pt::6.95831pt::17.45609pt.
+[42
+
+
+]
+l2hSize :tex2html_wrap_inline2763:6.95831pt::6.95831pt::11.38318pt.
+[43
+
+
+]
+l2hSize :tex2html_wrap_inline2771:6.95831pt::6.95831pt::8.27783pt.
+[44
+
+
+]
+l2hSize :tex2html_wrap_inline2775:7.44444pt::7.44444pt::7.4375pt.
+[45
+
+
+]
+l2hSize :tex2html_wrap_inline2783:8.01782pt::8.01782pt::104.79054pt.
+[46
+
+
+]
+l2hSize :tex2html_wrap_inline2785:8.0pt::8.0pt::78.34685pt.
+[47
+
+
+]
+l2hSize :tex2html_wrap_inline2795:8.0pt::8.0pt::24.17831pt.
+[48
+
+
+]
+l2hSize :tex2html_wrap_inline2797:8.0pt::8.0pt::47.51155pt.
+[49
+
+
+]
+l2hSize :displaymath2197:25.00023pt::0.0pt::349.0pt.
+[50
+
+
+]
+l2hSize :tex2html_wrap_inline2799:8.0pt::8.0pt::45.62842pt.
+[51
+
+
+]
+l2hSize :tex2html_wrap_inline2801:6.45831pt::0.0pt::5.78592pt.
+[52
+
+
+]
+l2hSize :tex2html_wrap_inline2803:7.44444pt::7.44444pt::38.12036pt.
+[53
+
+
+]
+l2hSize :tex2html_wrap_inline2227:7.44444pt::7.44444pt::85.1361pt.
+[54
+
+
+]
+l2hSize :tex2html_wrap_inline2843:6.95831pt::6.95831pt::28.1649pt.
+[55
+
+
+]
+l2hSize :tex2html_wrap_inline2859:8.0pt::8.0pt::183.07938pt.
+[56
+
+
+]
+l2hSize :tex2html_wrap_inline2861:6.95831pt::6.95831pt::36.60764pt.
+[57
+
+
+]
+l2hSize :tex2html_wrap_inline2865:6.95831pt::6.95831pt::23.69904pt.
+[58
+
+
+]
+l2hSize :tex2html_wrap_inline2869:6.95831pt::6.95831pt::5.76163pt.
+[59
+
+
+]
+(polymorph-example.eps
+)
+l2hSize :figure3602:243.50159pt::0.0pt::349.0pt.
+[60
+
+
+]
+\openout2 = `parallel.aux'.
+
+No file parallel.tex.
+l2hSize :figure10695:12.0pt::0.0pt::0.0pt.
+[61
+
+
+
+
+]
+l2hSize :displaymath5358:14.5pt::0.0pt::349.0pt.
+[62
+
+
+]
+l2hSize :tex2html_wrap_inline5458:7.44444pt::7.44444pt::8.20433pt.
+[63
+
+
+]
+l2hSize :displaymath5367:13.94444pt::0.0pt::349.0pt.
+[64
+
+
+]
+l2hSize :tex2html_wrap_inline5462:8.0pt::8.0pt::20.50005pt.
+[65
+
+
+]
+l2hSize :tex2html_wrap_inline5464:7.96227pt::0.0pt::16.44104pt.
+[66
+
+
+]
+l2hSize :tex2html_wrap_inline5466:9.86893pt::0.0pt::28.42723pt.
+[67
+
+
+]
+l2hSize :tex2html_wrap_inline5919:9.57217pt::9.57217pt::39.38371pt.
+[68
+
+
+]
+l2hSize :tex2html_wrap_inline5921:8.00006pt::8.00006pt::104.42815pt.
+[69
+
+
+]
+l2hSize :tex2html_wrap_inline5923:6.95831pt::6.95831pt::10.01741pt.
+[70
+
+
+]
+l2hSize :tex2html_wrap_inline5925:6.95831pt::6.95831pt::10.01741pt.
+[71
+
+
+]
+l2hSize :tex2html_wrap_inline5931:8.0pt::8.0pt::56.53404pt.
+[72
+
+
+]
+l2hSize :tex2html_wrap_inline6178:6.95831pt::6.95831pt::9.73615pt.
+[73
+
+
+]
+l2hSize :tex2html_wrap_inline6180:6.95831pt::6.95831pt::19.97229pt.
+[74
+
+
+]
+l2hSize :tex2html_wrap_inline6469:8.0pt::8.0pt::76.18263pt.
+[75
+
+
+]
+l2hSize :tex2html_wrap_inline6471:7.33331pt::7.33331pt::52.26364pt.
+[76
+
+
+]
+l2hSize :tex2html_wrap_inline6473:6.94444pt::0.0pt::17.72224pt.
+[77
+
+
+]
+l2hSize :tex2html_wrap_inline6477:15.0001pt::15.0001pt::294.84483pt.
+[78
+
+
+]
+l2hSize :tex2html_wrap_inline6635:8.0pt::8.0pt::3.27782pt.
+[79
+
+
+]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 933.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 933.
+(./images.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Command \HyperFirstAtBeginDocument already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3 ...HyperFirstAtBeginDocument{\AtBeginDocument}
+                                                  
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Command \HyPL@Entry already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.17 \providecommand*\HyPL@Entry[1]{}
+                                     
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+(./parallel.aux
+
+! LaTeX Error: Command \hyper@newdestlabel already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \providecommand\hyper@newdestlabel[2]{}
+                                           
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+))
+Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 933.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 933.
+
+Package rerunfilecheck Warning: File `images.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `images.out':
+(rerunfilecheck)             Before: <no file>
+(rerunfilecheck)             After:  D41D8CD98F00B204E9800998ECF8427E;0.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 933.
+ ) 
+Here is how much of TeX's memory you used:
+ 8035 strings out of 493316
+ 118904 string characters out of 6145919
+ 249523 words of memory out of 5000000
+ 11372 multiletter control sequences out of 15000+600000
+ 11234 words of font info for 42 fonts, out of 8000000 for 9000
+ 957 hyphenation exceptions out of 8191
+ 40i,18n,51p,543b,363s stack positions out of 5000i,500n,10000p,200000b,80000s
+
+Output written on images.dvi (79 pages, 91764 bytes).

@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2012 (1.2)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>CLASSDESC_ACCESS</TITLE>
+<META NAME="description" CONTENT="CLASSDESC_ACCESS">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2012">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node58.html">
+<LINK REL="previous" HREF="node56.html">
+<LINK REL="up" HREF="node51.html">
+<LINK REL="next" HREF="node58.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html1138"
+  HREF="node58.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html1132"
+  HREF="node51.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html1126"
+  HREF="node56.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html1134"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html1136"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1139"
+  HREF="node58.html">Excluding particular members from</A>
+<B> Up:</B> <A NAME="tex2html1133"
+  HREF="node51.html">Object Reflection</A>
+<B> Previous:</B> <A NAME="tex2html1127"
+  HREF="node56.html">supported #pragmas</A>
+ &nbsp; <B>  <A NAME="tex2html1135"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1137"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H3><A NAME="SECTION000141600000000000000"></A><A NAME="3461"></A>
+<A NAME="CLASSDESC_ACCESS"></A>
+<BR>
+CLASSDESC_ACCESS
+</H3>
+
+<P>
+Because serialisation requires access to the private parts of a class
+definition, by default <TT>classdesc</TT> will emit actions for all members of
+class, whether private or public. Either all members of the class need
+to be declared <TT>public</TT>, or a <TT>friend</TT> declaration needs to be
+inserted so as to allow the action function to have access to the
+private members. The best way to do this is to put a <TT>CLASSDESC_ACCESS</TT> declaration in the class's definition, as in the
+following example:
+<PRE>
+class foo
+{
+   int x, y
+   CLASSDESC_ACCESS(foo);
+ public:
+   int z;
+}
+
+template &lt;class T&gt;
+class bar
+{
+   T x, y
+   CLASSDESC_ACCESS(bar);
+ public:
+   T z;
+}
+</PRE>
+
+<P>
+The macro takes a single argument -- the typename of class in
+question. The program <TT>insert-friend</TT><A NAME="3470"></A> parses
+it input, and outputs a copy with these declarations appropriately
+inserted. This may be used to automate the process, but is not 100% reliable.
+
+<P>
+The CLASSDESC_ACCESS_TEMPLATE is now deprecated, and is synonymous
+with CLASSDESC_ACCESS.
+
+<P>
+The header file <code>classdesc_access.h</code><A NAME="3471"></A>
+defines versions of these macros for the <TT>pack/unpack</TT> actions --
+use this file as a guide for writing your own macros if you implement
+other actions.
+
+<P>
+On the other hand, for descriptors like <code>isa</code>, and for exposure
+descriptors like <code>TCL_obj</code> in <I><I>    Eco Lab</I></I>, it is not desirable to
+process private members. For these purposes, use
+<code>-respect_private</code> command line flag of <code>classdesc</code>.
+
+<P>
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html1138"
+  HREF="node58.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html1132"
+  HREF="node51.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html1126"
+  HREF="node56.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html1134"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html1136"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1139"
+  HREF="node58.html">Excluding particular members from</A>
+<B> Up:</B> <A NAME="tex2html1133"
+  HREF="node51.html">Object Reflection</A>
+<B> Previous:</B> <A NAME="tex2html1127"
+  HREF="node56.html">supported #pragmas</A>
+ &nbsp; <B>  <A NAME="tex2html1135"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1137"
+  HREF="node143.html">Index</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Russell Standish
+2016-09-02
+</ADDRESS>
+</BODY>
+</HTML>

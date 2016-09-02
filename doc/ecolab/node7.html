@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2012 (1.2)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Using Ecolab under Mac OSX</TITLE>
+<META NAME="description" CONTENT="Using Ecolab under Mac OSX">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2012">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node9.html">
+<LINK REL="previous" HREF="node4.html">
+<LINK REL="up" HREF="ecolab.html">
+<LINK REL="next" HREF="node8.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html356"
+  HREF="node8.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html350"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html344"
+  HREF="node6.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html352"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html354"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html357"
+  HREF="node8.html">Compiling and running Eco</A>
+<B> Up:</B> <A NAME="tex2html351"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html345"
+  HREF="node6.html">MXE</A>
+ &nbsp; <B>  <A NAME="tex2html353"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html355"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00050000000000000000">
+Using Ecolab under Mac OSX</A>
+</H1>
+
+<P>
+<I><I>    Eco Lab</I></I> compiles out of the box on OSX<A NAME="230"></A> using the Mac OSX
+Dev Tools package, which is available for free download from
+<A NAME="tex2html10"
+  HREF=".">http://connect.apple.com</A>
+You will also need a
+copy of TCL/Tk - the
+<A NAME="tex2html11"
+  HREF="http://www.activestate.com/activetcl">ActiveTCL</A>
+works well, although building TCL/Tk from source is also possible. If
+you do the latter, choose the unix build directory, not the macosx
+one. 
+
+<P>
+You need to make a choice whether you want to run <I><I>    Eco Lab</I></I> as a
+native Aqua application, or as an X-windows application under the
+XFree86 server software. Specify
+<code>--enable-aqua</code> on the Tk configure line to build for Aqua,
+rather than X11. On the <I><I>    Eco Lab</I></I>build line, specify <code>AQUA=1</code> on
+the make command line.
+
+<P>
+You may also use
+<A NAME="tex2html12"
+  HREF="https://www.macports.org/">MacPorts</A>
+to easily
+build the prerequisite packages. <I><I>    Eco Lab</I></I>'s Makefiles will search for
+Macports software located in <code>/opt/local</code> prior to searching
+system locations. Note that if you install the MacPorts version of Tk,
+it uses X11 only, Aqua mode is unavailable.
+
+<P>
+<BR><HR>
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></A>
+
+<UL>
+<LI><A NAME="tex2html358"
+  HREF="node8.html">Compiling and running <I><I>    Eco Lab</I></I> for Aqua</A>
+</UL>
+<!--End of Table of Child-Links-->
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html356"
+  HREF="node8.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html350"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html344"
+  HREF="node6.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html352"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html354"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html357"
+  HREF="node8.html">Compiling and running Eco</A>
+<B> Up:</B> <A NAME="tex2html351"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html345"
+  HREF="node6.html">MXE</A>
+ &nbsp; <B>  <A NAME="tex2html353"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html355"
+  HREF="node143.html">Index</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Russell Standish
+2016-09-02
+</ADDRESS>
+</BODY>
+</HTML>

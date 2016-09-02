@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2012 (1.2)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Constructing an experiment</TITLE>
+<META NAME="description" CONTENT="Constructing an experiment">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2012">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node28.html">
+<LINK REL="previous" HREF="node9.html">
+<LINK REL="up" HREF="ecolab.html">
+<LINK REL="next" HREF="node11.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html397"
+  HREF="node11.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html391"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html385"
+  HREF="node9.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html393"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html395"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html398"
+  HREF="node11.html">Input parameters</A>
+<B> Up:</B> <A NAME="tex2html392"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html386"
+  HREF="node9.html">Structure of the Eco</A>
+ &nbsp; <B>  <A NAME="tex2html394"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html396"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00070000000000000000">
+Constructing an experiment</A>
+</H1>
+
+<P>
+An experiment consists of a TCL[<A
+ HREF="node142.html#Ousterhout94">5</A>] script, which binds
+the various elements used (the model system, input parameters,
+instruments) into an experimental run. An example experiment is <TT>  ecolab.tcl</TT><A NAME="447"></A>. This is an executable script -- once
+you have made <I><I>    Eco Lab</I></I>, you can run this script.
+
+<P>
+The script consists of several parts -- the first being a simulation
+loop which steps the model through the generate and mutate operators,
+then updates the various instruments (<TT>display, plot,
+  connect_plot</TT> etc.) 
+There is a <TT>running</TT><A NAME="450"></A> flag which controls whether
+the simulation is running or not. This is used by the <B>  run</B><A NAME="452"></A> and <B>stop</B><A NAME="454"></A> buttons to control the
+execution of the simulation.
+
+<P>
+The other parts of the experimental script have been broken into
+separate TCL files -- model.tcl<A NAME="455"></A> contains the input
+parameters to the model, and Xecolab.tcl<A NAME="456"></A> has the
+TCL code relating to the X-windows interface.
+
+<P>
+<BR><HR>
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></A>
+
+<UL>
+<LI><A NAME="tex2html399"
+  HREF="node11.html">Input parameters</A>
+<LI><A NAME="tex2html400"
+  HREF="node12.html">The main button bar</A>
+<LI><A NAME="tex2html401"
+  HREF="node13.html">use_namespace</A>
+<LI><A NAME="tex2html402"
+  HREF="node14.html">Command Line Interpreter</A>
+<LI><A NAME="tex2html403"
+  HREF="node15.html">Object Browser</A>
+<LI><A NAME="tex2html404"
+  HREF="node16.html">Instrumentation</A>
+<UL>
+<LI><A NAME="tex2html405"
+  HREF="node17.html">Plot</A>
+<LI><A NAME="tex2html406"
+  HREF="node18.html">Histogram</A>
+<LI><A NAME="tex2html407"
+  HREF="node19.html">Display</A>
+<LI><A NAME="tex2html408"
+  HREF="node20.html">Connect_plot</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html409"
+  HREF="node21.html">Palette Variable</A>
+<LI><A NAME="tex2html410"
+  HREF="node22.html">Making movies</A>
+<LI><A NAME="tex2html411"
+  HREF="node23.html">Auxilliary Commands</A>
+<UL>
+<LI><A NAME="tex2html412"
+  HREF="node24.html">get_vars/data_server</A>
+<LI><A NAME="tex2html413"
+  HREF="node25.html">checkpoint/restart</A>
+<LI><A NAME="tex2html414"
+  HREF="node26.html">Trapping signals</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html415"
+  HREF="node27.html">ecolab_version</A>
+</UL>
+<!--End of Table of Child-Links-->
+<BR><HR>
+<ADDRESS>
+Russell Standish
+2016-09-02
+</ADDRESS>
+</BODY>
+</HTML>

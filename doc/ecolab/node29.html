@@ -1,0 +1,225 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2012 (1.2)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Creating a New Model</TITLE>
+<META NAME="description" CONTENT="Creating a New Model">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2012">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node30.html">
+<LINK REL="previous" HREF="node28.html">
+<LINK REL="up" HREF="ecolab.html">
+<LINK REL="next" HREF="node30.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html681"
+  HREF="node30.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html675"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html669"
+  HREF="node28.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html677"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html679"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html682"
+  HREF="node30.html">Error reporting</A>
+<B> Up:</B> <A NAME="tex2html676"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html670"
+  HREF="node28.html">Creating New Instruments</A>
+ &nbsp; <B>  <A NAME="tex2html678"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html680"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00090000000000000000"></A><A NAME="new_model"></A>
+<BR>
+Creating a New Model
+</H1>
+
+<P>
+The code that explicitly defines the <I><I>    Eco Lab</I></I> model is contained in
+<TT>ecolab.cc</TT>. Several examples of a completely different models is
+provided with the <I><I>    Eco Lab</I></I> distribution. Most of these are described
+in different papers:
+<DL>
+<DT><STRONG>shadow</STRONG></DT>
+<DD>Ecolab model with a neutral shadow model, as described in
+  [<A
+ HREF="node142.html#Standish00c">8</A>] and [<A
+ HREF="node142.html#Standish02b">9</A>].
+</DD>
+<DT><STRONG>newman</STRONG></DT>
+<DD>A variation of Mark Newman's evolutionary model,
+  described in [<A
+ HREF="node142.html#Standish98a">6</A>]
+</DD>
+<DT><STRONG>webworld</STRONG></DT>
+<DD>An implementation of Drossel <EM>et al.</EM>'s Webworld
+  model, described in [<A
+ HREF="node142.html#Drossel-etal01">2</A>] and [<A
+ HREF="node142.html#Standish04a">10</A>].
+</DD>
+<DT><STRONG>jellyfish</STRONG></DT>
+<DD>A model of Jellyfish migration in Palauan lakes, in
+  collaboration with Mike Dawson. This model will be described in more
+  detail in &#167;<A HREF="node49.html#jellyfish">12</A>.
+</DD>
+<DT><STRONG>netcomplexity</STRONG></DT>
+<DD>A class providing TCL methods for computing
+  network complexities. Used in the study reported in [<A
+ HREF="node142.html#Standish05a">11</A>]
+</DD>
+</DL>
+
+<P>
+A model typically consists of an interface file (.h), which is
+processed by Classdesc, an implementation file (.cc) and one or more
+experiment scripts (.tcl).
+
+<P>
+The model should, as far as possible, be implemented as a single
+object (which may be a container). Let's call the model JoesFolly. The
+model class (eg <code>JoesFolly_t</code>) is defined in the interface file in a
+regular C++ fashion. It is simplest if all members of the model class
+are public, however read the <A HREF="node51.html#classdesc"
+ NAME="722">Classdesc chapter</A> for how to handle
+private members.
+
+<P>
+Consider whether your model maps naturally to the notion of objects
+related by a network. In that case, you may find that
+<A HREF="node87.html#graphcode"
+ NAME="727">Graphcode</A>
+will effectively distribute your model across multiple processors of
+an MPI parallel job. Both the spatial EcoLab model, and the Jellyfish
+model are examples of Graphcode deployment.
+
+<P>
+Your model class needs to be derived from <code>TCL_obj_t</code>. This adds
+a few extra methods to your class, such as checkpoint/restart, and
+client/server functionality.
+
+<P>
+<PRE>
+class JoesFolly_t: public TCL_obj_t
+{
+  public:
+   int an_instance_var;
+   double a_method(TCL_args);
+};
+</PRE>
+
+<P>
+You then define your model object in the implementation file, and pass
+this object to the macro <code>make_model</code><A NAME="730"></A>.
+
+<P>
+<PRE>
+#include &lt;ecolab.h&gt;
+#include "JoesFolly.h"
+#include "JoesFolly.cd"
+#include &lt;ecolab_epilogue.h&gt;
+
+JoesFolly_t JoesFolly;
+make_model(JoesFolly);
+
+double JoesFolly(TCL_args args)
+{
+  double x=args, y=args;
+  ...
+}
+</PRE>
+
+<P>
+The supplied Makefile in the models directory can be used as a
+template for your own project. It contains rules that generate
+Makefile dependencies for all include files included with
+<code>""</code>. It will launch classdesc to generate descriptors for all
+class definitions in <code>JoesFolly.h</code>. All public instance variables
+are visible to TCL, as are methods that take no arguments, or a single
+<A HREF="node83.html#TCL_obj"
+ NAME="737">TCL_args</A> argument.
+
+<P>
+Of course these instance variables or members are only actual accessible from
+TCL if their type <code>T</code> has a <code>operator&lt;&lt;(ostream&amp;,T)</code>
+defined. Accessing other types of object will result in a runtime error.
+
+<P>
+Note that Standard C++ requires functions used by templates be
+declared prior to templates being defined. Since the .cd files are
+declaring functions like pack, TCL_obj etc., templates that call
+these functions must be declared after all .cd files are included,
+otherwise the templates will not pick up the definitions in the .cd
+files. This is achieved by including
+<code>ecolab_epilogue.h</code><A NAME="738"></A> after the all the
+.cd files have been included in the .cc file. In fact, now <I><I>    Eco Lab</I></I>
+insists on the presence of this file if classdesc is used, and will
+generate a link time failure if not provided:
+<PRE>
+undefined reference to `(anonymous namespace)::classdesc_epilogue_not_included()'
+undefined reference to `(anonymous namespace)::TCL_obj_template_not_included()'
+</PRE>
+<A NAME="742"></A><A NAME="743"></A>
+
+<P>
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html681"
+  HREF="node30.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html675"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html669"
+  HREF="node28.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html677"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html679"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html682"
+  HREF="node30.html">Error reporting</A>
+<B> Up:</B> <A NAME="tex2html676"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html670"
+  HREF="node28.html">Creating New Instruments</A>
+ &nbsp; <B>  <A NAME="tex2html678"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html680"
+  HREF="node143.html">Index</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Russell Standish
+2016-09-02
+</ADDRESS>
+</BODY>
+</HTML>

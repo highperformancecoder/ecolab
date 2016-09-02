@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2012 (1.2)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Remote Procedures</TITLE>
+<META NAME="description" CONTENT="Remote Procedures">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2012">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node81.html">
+<LINK REL="previous" HREF="node79.html">
+<LINK REL="up" HREF="node75.html">
+<LINK REL="next" HREF="node81.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html1468"
+  HREF="node81.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html1462"
+  HREF="node75.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html1456"
+  HREF="node79.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html1464"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html1466"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1469"
+  HREF="node81.html">MPISPMD</A>
+<B> Up:</B> <A NAME="tex2html1463"
+  HREF="node75.html">classdescMP</A>
+<B> Previous:</B> <A NAME="tex2html1457"
+  HREF="node79.html">MPIslave</A>
+ &nbsp; <B>  <A NAME="tex2html1465"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1467"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H3><A NAME="SECTION000149500000000000000"></A><A NAME="slave-method"></A><A NAME="3747"></A>
+<BR>
+Remote Procedures
+</H3>
+
+<P>
+Ideally, remote procedures should be callable by a syntax similar to:
+<PRE>
+val=proxy-&gt;rp(arg1,arg2);
+</PRE>
+where proxy is an object on the calling thread that can forward the
+call to a remote object, call method <TT>rp</TT> on that remote object
+with arguments <TT>arg1</TT> and <TT>arg2</TT>, return a value <TT>val</TT> if
+necessary. 
+
+<P>
+Unfortunately, C++ syntax requires that the <code>-&gt;</code> operator
+return an object that has a member <TT>rp</TT>, which is of little use if
+the desired object exists in a different address space. This could be
+addressed using the <code>-&gt;*</code> operator, which is a true binary
+operator. 
+
+<P>
+However, a more significant problem comes when trying to transport the
+arguments, and return a value. It is possible to write template
+functions that know the types of arguments and return values, and can
+pack these into the message buffer. Clearly, one needs to write a
+separate template for each argument count, but this is not too
+difficult a task in practice, and can be made extensible. The problem
+comes with transmitting the type information to the remote address
+space. The obvious solution of sending a function pointer to a
+template handler function simply does not work, as these have
+different values in different address spaces. The next obvious
+solution of sending a pointer to a template member of MPIslave also
+does not work, although the reason seems obscure. Possibly, it is
+impossible to obtain a pointer to a template member function.
+The final remaining solution is to create another classdesc action,
+however it is known that one cannot overload on the number of
+arguments to a member pointer argument. Classdesc, at present, is not
+very good at parsing function arguments.
+
+<P>
+So a more primitive remote procedure calling interface is required,
+and the one based on the streams model of <TT>MPIbuf</TT> works well and
+is reasonably intuitive:
+<PRE>
+MPIslace &lt;&lt; &amp;S::method &lt;&lt; arg1 &lt;&lt; arg2 &lt;&lt; send(p);
+</PRE>
+This will run <TT>S::method</TT> on the slave processor, where method
+must be defined as:
+<PRE>
+void method(MPIbuf&amp; args)
+{
+  X arg1; Y arg2; args&gt;&gt;arg1&gt;&gt;arg2;
+  ...
+  args.reset() &lt;&lt; result;
+}
+</PRE>
+
+<P>
+The last statement is only needed if the method returns a value. This
+is sent as a message to the master.
+
+<P>
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html1468"
+  HREF="node81.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html1462"
+  HREF="node75.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html1456"
+  HREF="node79.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html1464"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html1466"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1469"
+  HREF="node81.html">MPISPMD</A>
+<B> Up:</B> <A NAME="tex2html1463"
+  HREF="node75.html">classdescMP</A>
+<B> Previous:</B> <A NAME="tex2html1457"
+  HREF="node79.html">MPIslave</A>
+ &nbsp; <B>  <A NAME="tex2html1465"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1467"
+  HREF="node143.html">Index</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Russell Standish
+2016-09-02
+</ADDRESS>
+</BODY>
+</HTML>

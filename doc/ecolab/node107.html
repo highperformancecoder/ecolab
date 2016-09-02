@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2012 (1.2)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>tclvar</TITLE>
+<META NAME="description" CONTENT="tclvar">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2012">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node108.html">
+<LINK REL="previous" HREF="node106.html">
+<LINK REL="up" HREF="node104.html">
+<LINK REL="next" HREF="node108.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html1863"
+  HREF="node108.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html1857"
+  HREF="node104.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html1851"
+  HREF="node106.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html1859"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html1861"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1864"
+  HREF="node108.html">tclcmd</A>
+<B> Up:</B> <A NAME="tex2html1858"
+  HREF="node104.html">tcl++</A>
+<B> Previous:</B> <A NAME="tex2html1852"
+  HREF="node106.html">Creating a Tcl command</A>
+ &nbsp; <B>  <A NAME="tex2html1860"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1862"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION000163000000000000000"></A><A NAME="5170"></A><A NAME="tclvar"></A>
+<BR>
+tclvar
+</H2>
+
+<P>
+Tcl variables can be accessed by means of the tclvar class. For
+example, if the programmer declares:
+
+<P>
+<code>tclvar hello("hello"); float floatvar;</code>
+
+<P>
+then the variable hello can be used just like a normal C variable in
+expression such as 
+
+<P>
+<code>floatvar=hello*3.4;</code>.
+
+<P>
+The class allows assignment to and from <code>double</code> and <code>char*</code>
+variables, incrementing and decrementing the variables, compound
+assignment and accessing array Tcl variables by means of the C array
+syntax. The is also a function that tests for the existence of a Tcl
+variable.
+
+<P>
+The complete class definition is given by:
+
+<P>
+<PRE>
+class tclvar
+{ 
+ public:
+
+/* constructors */
+  tclvar();
+  tclvar(char *nm, char* val=NULL);
+  tclvar(tclvar&amp;);
+  ~tclvar();
+
+/* These four statements allow tclvars to be freely mixed with arithmetic 
+ expressions */
+  double operator=(double x);
+  char* operator=(char* x);
+  operator double ();
+  operator char* ();
+
+  double operator++();
+  double operator++(int);
+  double operator--();
+  double operator--(int); 
+  double operator+=(double x);
+  double operator-=(double x);
+  double operator*=(double x);
+  double operator/=(double x);
+
+  tclvar operator=(tclvar x); 
+/* arrays can be indexed either by integers, or by strings */
+  tclvar operator[](int index);
+  tclvar operator[](char* index);
+
+  friend int exists(tclvar x);
+};
+</PRE>
+
+<P>
+<BR><HR>
+<ADDRESS>
+Russell Standish
+2016-09-02
+</ADDRESS>
+</BODY>
+</HTML>

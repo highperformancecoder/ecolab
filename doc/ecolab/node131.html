@@ -1,0 +1,230 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2012 (1.2)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Graph library</TITLE>
+<META NAME="description" CONTENT="Graph library">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2012">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node135.html">
+<LINK REL="previous" HREF="node125.html">
+<LINK REL="up" HREF="ecolab.html">
+<LINK REL="next" HREF="node132.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html2209"
+  HREF="node132.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html2203"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html2197"
+  HREF="node130.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html2205"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html2207"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html2210"
+  HREF="node132.html">Boost</A>
+<B> Up:</B> <A NAME="tex2html2204"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html2198"
+  HREF="node130.html">Basic Gaussrand is correlated</A>
+ &nbsp; <B>  <A NAME="tex2html2206"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html2208"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION000210000000000000000">
+Graph library</A>
+</H1>
+
+<P>
+The <I><I>    Eco Lab</I></I> graph library is a library providing a simple and
+lightweight structure for representing graphs (aka networks). A graph
+consists of a set of nodes labelled <!-- MATH
+ $N=\{0\ldots n-1\}$
+ -->
+<IMG
+ WIDTH="125" HEIGHT="32" ALIGN="MIDDLE" BORDER="0"
+ SRC="img75.png"
+ ALT="$N=\{0\ldots n-1\}$">, and a set of
+edges <!-- MATH
+ $E\subset N\times N$
+ -->
+<IMG
+ WIDTH="87" HEIGHT="30" ALIGN="MIDDLE" BORDER="0"
+ SRC="img76.png"
+ ALT="$E\subset N\times N$">, which have an optional weight factor
+attached.
+
+<P>
+An edge is represented by<A NAME="6404"></A>
+<PRE>
+struct Edge: public std::pair&lt;unsigned,unsigned&gt;
+{
+    unsigned source();
+    unsigned target();
+    float weight;
+};
+</PRE>
+
+<P>
+The abstract Graph<A NAME="6407"></A> interface has the following definition:
+<PRE>
+struct Graph
+{
+  struct const_iterator
+  {
+    Edge operator*() const;
+    const Edge* operator-&gt;() const;
+    const_iterator&amp; operator++();
+    bool operator==(const const_iterator&amp; x) const;
+    bool operator!=(const const_iterator&amp; x) const;
+  };
+ 
+  virtual const_iterator begin() const;
+  virtual const_iterator end() const;
+
+  virtual unsigned nodes() const;
+  virtual unsigned links() const;
+  virtual void push_back(const Edge&amp; e);
+  virtual bool contains(const Edge&amp; e) const;
+  virtual bool directed() const;
+  virtual void clear(unsigned nodes=0);
+  const Graph&amp; operator=(const Graph&amp; x);
+  void input(const std::string&amp; format, const std::string&amp; filename);
+  void output(const std::string&amp; format, const std::string&amp; filename) const;
+  template &lt;class BG&gt; Graph_back_insert_iterator&lt;Graph,BG&gt;
+    back_inserter(const BG&amp; bg);
+}
+</PRE>
+
+<P>
+The <code>begin/end</code> methods allow one to iterate over the edges. Only a <code>const_iterator</code>
+is supplied, as it is an error to change the value of an edge. One can
+only reset a graph to the empty graph via clear, and construct the
+graph incrementally using the <code>push_back()</code> method.
+
+<P>
+The <code>contains</code> method allows one to test whether a given edge is
+in the graph, and <code>directed</code> indicates whether the underlying graph
+structure has directed edges or not. A bidirectional graph otherwise
+appears as a directed graph where each edge appears twice, once for
+each direction.
+
+<P>
+The input/output methods allow for the graph to be read/written
+from/to a file, in a variety of formats, given by the format
+parameter. Currently, the following formats are supported:
+<TABLE CELLPADDING=3 BORDER="1">
+<TR><TD ALIGN="LEFT">name</TD>
+<TD ALIGN="LEFT">description</TD>
+</TR>
+<TR><TD ALIGN="LEFT">pajek<A NAME="6412"></A></TD>
+<TD ALIGN="LEFT">Pajek's .net format</TD>
+</TR>
+<TR><TD ALIGN="LEFT">lgl<A NAME="6413"></A></TD>
+<TD ALIGN="LEFT">LGL's .lgl format</TD>
+</TR>
+<TR><TD ALIGN="LEFT">dot<A NAME="6414"></A></TD>
+<TD ALIGN="LEFT">Graphviz<A NAME="6415"></A> format</TD>
+</TR>
+<TR><TD ALIGN="LEFT">gengraph</TD>
+<TD ALIGN="LEFT">Gengraph<A NAME="6416"></A></TD>
+</TR>
+</TABLE>
+Also graphs can be streamed to/from standard I/O streams, and will appear
+in dot format. In particular, this means that TCL scripts can access
+Graph objects as strings containing the Graphviz representation. See
+some of the examples in the <code>models/netcomplexity_scripts</code> directory.
+
+<P>
+<code>back_inserter</code> creates an output iterator suitable for use with
+Boost Graph algorithms. As a simple example, to construct an <I><I>    Eco Lab</I></I>
+graph from a Boost Graph, do
+<PRE>
+  std::pair&lt;BG::edge_iterator,BG::edge_iterator&gt; r=edges(bg);
+  ConcreteGraph&lt;DiGraph&gt; g1;
+  copy(r.first, r.second, g1.back_inserter(bg));
+</PRE>
+
+<P>
+This interface can be used in both a dynamic polymorphism fashion (ie
+Graph is an abstract base class) and in a static polymorphism fashion.
+
+<P>
+The <code>graph.h</code> header file provides two concrete graph types -
+DiGraph<A NAME="6421"></A> and BiDirectionalGraph<A NAME="6422"></A>, which differ just in whether each edge
+is directed or not.
+
+<P>
+<BR><HR>
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></A>
+
+<UL>
+<LI><A NAME="tex2html2211"
+  HREF="node132.html">Boost</A>
+<LI><A NAME="tex2html2212"
+  HREF="node133.html">Graph Library Functions</A>
+<LI><A NAME="tex2html2213"
+  HREF="node134.html">Network complexity</A>
+</UL>
+<!--End of Table of Child-Links-->
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html2209"
+  HREF="node132.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html2203"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html2197"
+  HREF="node130.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html2205"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html2207"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html2210"
+  HREF="node132.html">Boost</A>
+<B> Up:</B> <A NAME="tex2html2204"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html2198"
+  HREF="node130.html">Basic Gaussrand is correlated</A>
+ &nbsp; <B>  <A NAME="tex2html2206"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html2208"
+  HREF="node143.html">Index</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Russell Standish
+2016-09-02
+</ADDRESS>
+</BODY>
+</HTML>

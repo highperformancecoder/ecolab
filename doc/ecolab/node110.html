@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2012 (1.2)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>tclindex</TITLE>
+<META NAME="description" CONTENT="tclindex">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2012">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="previous" HREF="node109.html">
+<LINK REL="up" HREF="node104.html">
+<LINK REL="next" HREF="node111.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html1903"
+  HREF="node111.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html1897"
+  HREF="node104.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html1893"
+  HREF="node109.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html1899"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html1901"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1904"
+  HREF="node111.html">arrays</A>
+<B> Up:</B> <A NAME="tex2html1898"
+  HREF="node104.html">tcl++</A>
+<B> Previous:</B> <A NAME="tex2html1894"
+  HREF="node109.html">tclreturn</A>
+ &nbsp; <B>  <A NAME="tex2html1900"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1902"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION000166000000000000000"></A><A NAME="5194"></A>
+<BR>
+tclindex
+</H2>
+
+<P>
+This class is used to index through a TCL array. TCL arrays can have
+arbitrary strings for indices, and are not necessarily ordered. The
+class has three main methods: <TT>start</TT>, which takes a <TT>tclvar</TT>
+variable that refers to the array, and returns the first element in
+the array; <TT>incr</TT>, which returns the next element of the array;
+and <TT>last</TT> which returns 1 if the last element has been read. A
+sample usage might be (for computing the product of all elements in
+the array <TT>dims</TT>):
+<PRE>
+tclvar dims="dims";
+tclindex idx;
+for (ncells *= (int)idx.start(dims); !idx.last(); ncells *= (int)idx.incr() );
+</PRE>
+
+<P>
+The class definition is given by:
+<PRE>
+class tclindex  
+{
+public:
+  tclindex();
+  tclindex(tclindex&amp;);
+  ~tclindex() {done();}
+  tclvar start(tclvar&amp;);
+  inline tclvar incr();
+  tclvar incr(tclvar&amp; x) {incr();}  
+  int last();
+};
+</PRE>
+
+<P>
+<BR><HR>
+<ADDRESS>
+Russell Standish
+2016-09-02
+</ADDRESS>
+</BODY>
+</HTML>

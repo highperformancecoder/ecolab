@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2012 (1.2)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>use_namespace</TITLE>
+<META NAME="description" CONTENT="use_namespace">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2012">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node14.html">
+<LINK REL="previous" HREF="node12.html">
+<LINK REL="up" HREF="node10.html">
+<LINK REL="next" HREF="node14.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html456"
+  HREF="node14.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html450"
+  HREF="node10.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html444"
+  HREF="node12.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html452"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html454"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html457"
+  HREF="node14.html">Command Line Interpreter</A>
+<B> Up:</B> <A NAME="tex2html451"
+  HREF="node10.html">Constructing an experiment</A>
+<B> Previous:</B> <A NAME="tex2html445"
+  HREF="node12.html">The main button bar</A>
+ &nbsp; <B>  <A NAME="tex2html453"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html455"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION00073000000000000000"></A><A NAME="use_namespace"></A><A NAME="494"></A>
+<BR>
+use_namespace
+</H2>
+
+<P>
+The <code>use_namespace</code> <EM>name</EM> TCL command searches for all TCL
+commands of the form <EM>name</EM>.<EM>x</EM>, and creates a new TCL command
+<EM>x</EM> that calls <EM>name</EM>.<EM>x</EM>. This allows a simple ``dump''
+of <I><I>    Eco Lab</I></I> model methods and instance variables into TCL's current
+namespace. The term ``namespace'' in <code>use_namespace</code> is unrelated
+to TCL's namespace concept.
+
+<P>
+Note that <code>use_namespace</code> does not override an any existing
+commands in the current namespace. Imagine what havoc an instance
+variable called ``proc'' would make! Thus it may be necessary to refer
+to an instance variable or method by its fully qualified name fro TCL
+scripts to get the desired behaviour.
+
+<P>
+<BR><HR>
+<ADDRESS>
+Russell Standish
+2016-09-02
+</ADDRESS>
+</BODY>
+</HTML>
