@@ -1,0 +1,13 @@
+*.o
+*.d
+*~
+\#*
+*.ind
+*.out
+*.cd
+*.class
+*.jar
+*.a
+*.so
+unpack_base.h
+json_unpack_base.h
