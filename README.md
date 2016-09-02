@@ -1,4 +1,4 @@
-# ecolab
+# EcoLab
 
 EcoLab is both the name of a software package and a research project that is looking at the dynamics of evolution.
 
