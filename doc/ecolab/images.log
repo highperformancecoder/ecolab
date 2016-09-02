@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/TeX Live for SUSE Linux) (format=latex 2015.12.6)  2 SEP 2016 13:28
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/TeX Live for SUSE Linux) (format=latex 2015.12.6)  2 SEP 2016 13:31
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -652,6 +652,7 @@ or  <return>  to continue without it.
 LaTeX Info: Redefining \ref on input line 136.
 LaTeX Info: Redefining \pageref on input line 136.
 LaTeX Info: Redefining \nameref on input line 136.
+(./images.out) (./images.out)
 \@outlinefile=\write5
 \openout5 = `images.out'.
 
@@ -1005,7 +1006,7 @@ l2hSize :figure3602:243.50159pt::0.0pt::349.0pt.
 \openout2 = `parallel.aux'.
 
 No file parallel.tex.
-l2hSize :figure10695:12.0pt::0.0pt::0.0pt.
+l2hSize :figure10916:12.0pt::0.0pt::0.0pt.
 [61
 
 
@@ -1165,20 +1166,14 @@ or  <return>  to continue without it.
 ))
 Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 933.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 933.
-
-Package rerunfilecheck Warning: File `images.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `images.out':
-(rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  D41D8CD98F00B204E9800998ECF8427E;0.
+Package rerunfilecheck Info: File `images.out' has not changed.
+(rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 933.
  ) 
 Here is how much of TeX's memory you used:
- 8035 strings out of 493316
- 118904 string characters out of 6145919
- 249523 words of memory out of 5000000
+ 8039 strings out of 493316
+ 118948 string characters out of 6145919
+ 249559 words of memory out of 5000000
  11372 multiletter control sequences out of 15000+600000
  11234 words of font info for 42 fonts, out of 8000000 for 9000
  957 hyphenation exceptions out of 8191
