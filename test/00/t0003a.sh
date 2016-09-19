@@ -75,6 +75,8 @@ if uname|grep Ubuntu; then
     traceOption=1
 fi
 
+uname
+echo "traceOption=$traceOption"
 
 case $traceOption in
     0)
