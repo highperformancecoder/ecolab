@@ -70,12 +70,12 @@ $here/models/ecolab input.tcl
 if test $? -ne 0; then fail; fi
 
 traceOption=0
-if uname|grep Ubuntu; then
+if uname -a|grep Ubuntu; then
 # for Travis
     traceOption=1
 fi
 
-uname
+uname -a
 echo "traceOption=$traceOption"
 
 case $traceOption in
