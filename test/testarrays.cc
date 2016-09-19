@@ -274,7 +274,7 @@ int main()
   int ltest[]={0,1,0,1,0,1,0,1,0,1};
   int lresult[]={1,0,1,0,1,0,1,0,1,0};
   asg(ia,ltest); asg(ib,lresult);
-  assert(sum(!ia==ib)==10);
+  assert(sum((!ia)==ib)==10);
 
   assert(sum((ia&&ia)==ia)==10 && sum((ia&&ib)==0)==10);
   assert(sum((ia||ia)==ia)==10 && sum((ia||ib)==1)==10);

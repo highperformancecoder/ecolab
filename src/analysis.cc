@@ -480,10 +480,14 @@ array_ns::array<double> HistoStats::fitLogNormal()
 }
 
 #include <memory>
-using std::auto_ptr;
+#if defined(__cplusplus) && __cplusplus>=201103L
+#define AUTOPTR std::unique_ptr
+#else
+#define AUTOPTR std::auto_ptr
+#endif
 
 /* return a logdist object corresponding to the distribution string */ 
-auto_ptr<logdist> distribution(char *distrname, float xmin)
+AUTOPTR<logdist> distribution(char *distrname, float xmin)
 {
   char *numstart=strchr(distrname,'(');
   if (numstart) 
@@ -501,13 +505,13 @@ auto_ptr<logdist> distribution(char *distrname, float xmin)
         nparms=1;
 
       if (strcmp(distrname,"powerlaw")==0 && nparms==2)
-        return auto_ptr<logdist>(new PowerLaw(p1,xmin));
+        return AUTOPTR<logdist>(new PowerLaw(p1,xmin));
       else if (strcmp(distrname,"exponential")==0 && nparms==1)
-        return auto_ptr<logdist>(new Exponential(p1,xmin));
+        return AUTOPTR<logdist>(new Exponential(p1,xmin));
       else if (strcmp(distrname,"normal")==0 && nparms==2)
-        return auto_ptr<logdist>(new Normal(p1,p2,xmin));
+        return AUTOPTR<logdist>(new Normal(p1,p2,xmin));
       else if (strcmp(distrname,"lognormal")==0 && nparms==2)
-        return auto_ptr<logdist>(new LogNormal(p1,p2,xmin));
+        return AUTOPTR<logdist>(new LogNormal(p1,p2,xmin));
     }
   //restore original string if needed
   if (numstart) distrname[strlen(distrname)]='('; 
@@ -519,7 +523,7 @@ auto_ptr<logdist> distribution(char *distrname, float xmin)
 double HistoStats::loglikelihood(TCL_args args)
 {
   float xmin=args[2];
-  auto_ptr<logdist> p1=distribution(args,xmin), p2=distribution(args,xmin);
+  AUTOPTR<logdist> p1=distribution(args,xmin), p2=distribution(args,xmin);
   sort(begin(),end());
   // third arg is minimum cutoff
   unsigned start=0;

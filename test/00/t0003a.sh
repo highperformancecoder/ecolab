@@ -70,31 +70,44 @@ $here/models/ecolab input.tcl
 if test $? -ne 0; then fail; fi
 
 # for parallel
-#cat >out1.dat <<EOF
-#102 85
-#99 87
-#105 93
-#97 89
-#98 99
-#102 79
-#97 101
-#110 82
-#98 87
-#103 91
-#EOF
-# for gigaboot
 cat >out1.dat <<EOF
-106 79
-90 99
-112 82
-90 96
-103 84
-100 101
-97 82
-98 108
-100 70
-93 106
+102 85
+99 87
+105 93
+97 89
+98 99
+102 79
+97 101
+110 82
+98 87
+103 91
 EOF
+# for gigaboot
+#cat >out1.dat <<EOF
+#106 79
+#90 99
+#112 82
+#90 96
+#103 84
+#100 101
+#97 82
+#98 108
+#100 70
+#93 106
+#EOF
+# for rusnuc
+#cat >out1.dat <<EOF
+#105 79
+#96 98
+#100 82
+#102 98
+#100 87
+#96 90
+#106 88
+#99 82
+#103 98
+#99 78
+#EOF
 
 if diff out.dat out1.dat; then 
 pass

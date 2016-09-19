@@ -60,7 +60,7 @@ set plparms [h.fitPowerLaw]
 set slope [lindex \$plparms 0]
 set xmin [expr [min [lindex \$plparms 1] [h.av]]]
 
-assert {abs(\$slope-2.7)<0.1 && abs(\$xmin-0.5)<0.1}
+assert {abs(\$slope-2.7)<0.2 && abs(\$xmin-0.5)<0.15}
 
 set lnparms [h.fitLogNormal]
 set mu [lindex \$lnparms 0]
