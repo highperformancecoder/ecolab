@@ -39,7 +39,7 @@ void ecolab_grid::set_grid(TCL_args args)
       Grid2D::clear();
       objects.clear();
       instantiate(x,y);
-      uni.Seed(myid); /*ensure uni has distinct random seed on each processor*/
+      uni.Seed(myid+1); /*ensure uni has distinct random seed on each processor*/
     }
 }
 
