@@ -69,7 +69,15 @@ EOF
 $here/models/ecolab input.tcl
 if test $? -ne 0; then fail; fi
 
-# for parallel
+traceOption=0
+if uname|grep Ubuntu; then
+# for Travis
+    traceOption=1
+fi
+
+
+case $traceOption in
+    0)
 cat >out1.dat <<EOF
 102 85
 99 87
@@ -82,32 +90,36 @@ cat >out1.dat <<EOF
 98 87
 103 91
 EOF
-# for gigaboot
-#cat >out1.dat <<EOF
-#106 79
-#90 99
-#112 82
-#90 96
-#103 84
-#100 101
-#97 82
-#98 108
-#100 70
-#93 106
-#EOF
-# for rusnuc
-#cat >out1.dat <<EOF
-#105 79
-#96 98
-#100 82
-#102 98
-#100 87
-#96 90
-#106 88
-#99 82
-#103 98
-#99 78
-#EOF
+;;
+    1)
+cat >out1.dat <<EOF
+106 79
+90 99
+112 82
+90 96
+103 84
+100 101
+97 82
+98 108
+100 70
+93 106
+EOF
+;;
+    2)
+cat >out1.dat <<EOF
+105 79
+96 98
+100 82
+102 98
+100 87
+96 90
+106 88
+99 82
+103 98
+99 78
+EOF
+;;
+esac
 
 if diff out.dat out1.dat; then 
 pass
