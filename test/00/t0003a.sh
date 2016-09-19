@@ -75,9 +75,6 @@ if uname -a|grep Ubuntu; then
     traceOption=1
 fi
 
-uname -a
-echo "traceOption=$traceOption"
-
 case $traceOption in
     0)
 cat >out1.dat <<EOF
