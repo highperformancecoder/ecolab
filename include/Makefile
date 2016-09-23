@@ -96,9 +96,21 @@ CPP=g++ -E
 endif
 
 ifdef MXE
+
+MXE_32bit=$(shell if which i686-w64-mingw32.static-g++>&/dev/null; then echo 1; fi)
+MXE_64bit=$(shell if which x86_64-w64-mingw32.static-g++>&/dev/null; then echo 1; fi)
+ifeq ($(MXE_64bit),1)
+MXE_PREFIX=x86_64-w64-mingw32.static
+else
+ifeq ($(MXE_32bit),1)
 MXE_PREFIX=i686-w64-mingw32.static
+else
+$(error "MXE compiler not found")
+endif
+endif
+
 GCC=1
-FLAGS+=-m32 -DSTATIC_BUILD -DNO_FWD_DECLARE_STL -DMXE
+FLAGS+=-DSTATIC_BUILD -DNO_FWD_DECLARE_STL -DMXE
 CC=$(MXE_PREFIX)-gcc
 CPLUSPLUS=$(MXE_PREFIX)-g++
 LINK=$(CPLUSPLUS)
