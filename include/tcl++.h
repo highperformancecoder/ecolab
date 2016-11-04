@@ -289,7 +289,7 @@ namespace ecolab
     {
       assert(TCL_newcommand(nm));
     }
-    cmd_data(): nargs(-1) {}
+    cmd_data(): nargs(-1), is_const(false), is_setterGetter(false) {}
     virtual ~cmd_data() {}
   };
 
