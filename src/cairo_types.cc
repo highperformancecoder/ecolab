@@ -366,10 +366,10 @@ namespace ecolab
             * Store the information in the item header.
             */
 
-           imgPtr->header.x1 = bbox[0]+imgPtr->x;
-           imgPtr->header.y1 = bbox[1]+imgPtr->y;
-           imgPtr->header.x2 = bbox[2]+imgPtr->x+1;
-           imgPtr->header.y2 = bbox[3]+imgPtr->y+1;
+           imgPtr->header.x1 = bbox[0]+imgPtr->x-3;
+           imgPtr->header.y1 = bbox[1]+imgPtr->y-3;
+           imgPtr->header.x2 = bbox[2]+imgPtr->x+3;
+           imgPtr->header.y2 = bbox[3]+imgPtr->y+3;
          }
       }
 
