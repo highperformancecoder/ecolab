@@ -332,4 +332,7 @@ dist:
 	cd classdesc; git archive --format=tar --prefix=ecolab-$(ECOLAB_VERSION)/classdesc/ HEAD -o /tmp/$$.tar
 	tar Af /tmp/ecolab-$(ECOLAB_VERSION).tar /tmp/$$.tar
 	rm /tmp/$$.tar
+	cd graphcode; git archive --format=tar --prefix=ecolab-$(ECOLAB_VERSION)/graphcode/ HEAD -o /tmp/$$.tar
+	tar Af /tmp/ecolab-$(ECOLAB_VERSION).tar /tmp/$$.tar
+	rm /tmp/$$.tar
 	gzip -f /tmp/ecolab-$(ECOLAB_VERSION).tar
