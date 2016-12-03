@@ -1,4 +1,4 @@
-#include <oldarrays.h>
+#include <arrays.h>
 
 extern urand u;  //system random no. generator
 
@@ -38,7 +38,7 @@ extern Space &space;
 class StupidBug;
 class Predator;
 
-class Cell: public object
+class Cell: public Object<Cell,GRAPHCODE_NS::object>
 {
   GraphID_t cellID;
   int _x,_y;
@@ -58,17 +58,9 @@ public:
   Cell() {}
   Cell(int i, int j): _x(i), _y(j), cellID(space.mapid(i,j)) {}
 
-  ref<StupidBug> bug;
-  ref<Predator> predator;
+  classdesc::ref<StupidBug> bug;
+  classdesc::ref<Predator> predator;
   Ptrlist bugNbrhd, predatorNbrhd;
-
-  /* override virtual methods of object */
-  void lpack(pack_t *buf);
-  void lunpack(pack_t *buf);
-  object* lnew() const {return vnew(this);}
-  object* lcopy() const {return vcopy(this);}
-  int type() const {return vtype(*this);}
-
 };
 
 Cell& getCell(GraphID_t ID) {return dynamic_cast<Cell&>(*space.objects[ID]);}
@@ -133,12 +125,12 @@ public:
 
 };
 
-class StupidModel: public Space, TCL_obj_t
+class StupidModel: public Space, public TCL_obj_t
 {
 public:
   int tstep;   //timestep - updated each time moveBugs is called
-  vector<ref<StupidBug> > bugs; 
-  vector<ref<Predator> > predators; 
+  vector<classdesc::ref<StupidBug> > bugs; 
+  vector<classdesc::ref<Predator> > predators; 
   random_gen *initBugDist; //Initial distribution of bug sizes
   vector<vector< pair<GraphID_t,GraphID_t> > > emmigration_list;
 
@@ -156,7 +148,7 @@ public:
   void moveBugs(TCL_args);
   void birthdeath(TCL_args);
   void grow(TCL_args);
-  void killBug(ref<StupidBug>& bug);
+  void killBug(classdesc::ref<StupidBug>& bug);
   void hunt(TCL_args);
 
   /** visualisation routines */
@@ -214,8 +206,8 @@ public:
   /** return a TCL object representing a bug 
       (if one exists at that location, and bug passed as third paramter) */
   eco_string probe(TCL_args); 
-  array bugsizes() {
-    array r;
+  ecolab::array<double> bugsizes() {
+    ecolab::array<double> r;
     for (int i=0; i<bugs.size(); i++)
       r <<= bugs[i]->size;
     return r;
@@ -224,7 +216,7 @@ public:
   double max_bugsize(TCL_args args) {
     parallel(args);
     double r=-1;
-    for (int i=0; i<bugs.size(); i++)
+    for (size_t i=0; i<bugs.size(); i++)
       r = std::max(bugs[i]->size,r);
 #ifdef MPI_SUPPORT
     double r1;

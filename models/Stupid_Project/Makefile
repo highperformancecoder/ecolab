@@ -1,6 +1,6 @@
 # root directory for ecolab include files and libraries
-ifeq ($(shell ls ../include/ecolab.h),../include/ecolab.h)
-ECOLAB_HOME=..
+ifeq ($(shell ls ../../include/ecolab.h),../../include/ecolab.h)
+ECOLAB_HOME=../..
 else
 ifeq ($(shell ls $(HOME)/usr/ecolab/include/ecolab.h),$(HOME)/usr/ecolab/include/ecolab.h)
 ECOLAB_HOME=$(HOME)/usr/ecolab
@@ -30,7 +30,7 @@ $(MODELS:=.o): %.o: %.cc
 	$(CPLUSPLUS) -c $(FLAGS)  $<
 
 # how to build a model executable
-$(MODELS): %: %.o $(MODLINK) 
+$(MODELS): %: %.o $(ECOLIBS)
 	$(LINK) $(FLAGS) $*.o $(MODLINK) $(LIBS) -o $@
 
 #make MacOS application bundles

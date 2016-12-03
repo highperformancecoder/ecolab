@@ -12,7 +12,7 @@ public:
 };
 
 
-class Cell: public GRAPHCODE_NS::object
+class Cell: public Object<Cell,GRAPHCODE_NS::object>
 {
   CLASSDESC_ACCESS(Cell);
 public:
@@ -28,13 +28,6 @@ public:
     bug=from.bug; 
     from.bug.clear(); 
   }
-  
-  /* override virtual methods of object */
-  void lpack(pack_t *buf);
-  void lunpack(pack_t *buf);
-  object* lnew() const {return vnew(this);}
-  object* lcopy() const {return vcopy(this);}
-  int type() const {return vtype(*this);}
 };
 
 /* casting utilities */
@@ -66,7 +59,7 @@ public:
   urand u;     //random generator for positions
   int tstep;   //timestep - updated each time moveBugs is called
   int scale;   //no. pixels used to represent bugs
-  vector<ref<StupidBug> > bugs; 
+  vector<classdesc::ref<StupidBug> > bugs; 
   void setup(TCL_args args) {
     int nx=args, ny=args, moveDistance=args;
     bool toroidal=args;

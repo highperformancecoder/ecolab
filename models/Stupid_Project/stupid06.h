@@ -1,4 +1,4 @@
-#include "oldarrays.h"
+#include "arrays.h"
 
 class StupidBug
 {
@@ -17,13 +17,13 @@ public:
 };
 
 
-class Cell: public GRAPHCODE_NS::object
+class Cell: public Object<Cell,GRAPHCODE_NS::object>
 {
   CLASSDESC_ACCESS(Cell);
 public:
   unsigned x,y;
   double food_avail, max_food_production, max_food;
-  vector<ref<StupidBug> > bug;
+  vector<classdesc::ref<StupidBug> > bug;
   bool occupied() {return bug.size()>0;}
   Cell() {}
   Cell(unsigned x_, unsigned y_, double mfp=0.01):x(x_), y(y_), food_avail(0), 
@@ -39,12 +39,6 @@ public:
   }
   
   void grow_food();
-  /* override virtual methods of object */
-  void lpack(pack_t *buf);
-  void lunpack(pack_t *buf);
-  object* lnew() const {return vnew(this);}
-  object* lcopy() const {return vcopy(this);}
-  int type() const {return vtype(*this);}
 };
 
 /* casting utilities */
@@ -77,7 +71,7 @@ public:
   urand u;     //random generator for positions
   int tstep;   //timestep - updated each time moveBugs is called
   int scale;   //no. pixels used to represent bugs
-  vector<ref<StupidBug> > bugs; 
+  vector<classdesc::ref<StupidBug> > bugs; 
   void setup(TCL_args args) {
     int nx=args, ny=args, moveDistance=args;
     bool toroidal=args;
@@ -92,9 +86,9 @@ public:
   /** return a TCL object representing a bug 
       (if one exists at that location, and bug passed as third paramter) */
   eco_string probe(TCL_args); 
-  array bugsizes() {
-    array r;
-    for (int i=0; i<bugs.size(); i++)
+  ecolab::array<double> bugsizes() {
+    ecolab::array<double> r;
+    for (size_t i=0; i<bugs.size(); i++)
       r <<= bugs[i]->size;
     return r;
   }

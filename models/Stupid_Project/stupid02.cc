@@ -1,4 +1,5 @@
 #include "ecolab.h"
+using namespace ecolab;
 #define MAP vmap
 #include "graphcode.h"
 #include "graphcode.cd"
@@ -10,9 +11,6 @@ using namespace GRAPHCODE_NS;
 
 #include <sstream>
 #include <iomanip>
-
-void Cell::lpack(pack_t *buf) {pack(buf,"",*this);}
-void Cell::lunpack(pack_t *buf) {unpack(buf,"",*this);}
 
 StupidModel stupidModel;
 make_model(stupidModel);

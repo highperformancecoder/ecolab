@@ -1,4 +1,4 @@
-#include <oldarrays.h>
+#include <arrays.h>
 
 class StupidBug
 {
@@ -20,6 +20,8 @@ public:
   void draw(const eco_string& canvas);
 };
 
+class Cell;
+
 class Predator
 {
   GraphID_t cellID;  // Graphcode ID of cell where this bug is located
@@ -34,15 +36,15 @@ public:
 };
 
 
-class Cell: public object
+class Cell: public Object<Cell,GRAPHCODE_NS::object>
 {
   CLASSDESC_ACCESS(Cell);
 public:
   unsigned x,y;
   double food_avail, food_production, max_food;
-  vector<ref<StupidBug> > bug;
+  vector<classdesc::ref<StupidBug> > bug;
   Ptrlist bugNbrhd; 
-  vector<ref<Predator> > predator;
+  vector<classdesc::ref<Predator> > predator;
   Ptrlist predatorNbrhd;
   bool occupied() {return bug.size()>0;}
   Cell() {}
@@ -66,14 +68,7 @@ public:
   }
   
   void grow_food() {food_avail+=food_production;}
-  void Cell::draw(const eco_string& canvas);
-
-  /* override virtual methods of object */
-  void lpack(pack_t *buf);
-  void lunpack(pack_t *buf);
-  object* lnew() const {return vnew(this);}
-  object* lcopy() const {return vcopy(this);}
-  int type() const {return vtype(*this);}
+  void draw(const eco_string& canvas);
 };
 
 /* casting utilities */
@@ -106,9 +101,9 @@ class Space: public Graph
 namespace std
 {
   template <class T>
-  struct less<ref<T> >
+  struct less<classdesc::ref<T> >
   { 
-    bool operator()(const ref<T>& x, const ref<T>& y) const
+    bool operator()(const classdesc::ref<T>& x, const classdesc::ref<T>& y) const
     {
       return &*x<&*y;
     }
@@ -116,10 +111,11 @@ namespace std
 }
 
 template <class T>
-bool unique(const vector<ref<T> > x)
+bool unique(const vector<classdesc::ref<T> > x)
 {
-  set<ref<T> > s;
-  for (typename vector<ref<T> >::const_iterator i=x.begin(); i!=x.end(); i++)
+  set<classdesc::ref<T> > s;
+  for (typename vector<classdesc::ref<T> >::const_iterator i=x.begin();
+       i!=x.end(); i++)
     if (*i && s.count(*i))
       return false;
     else
@@ -134,8 +130,8 @@ public:
   urand u;     //random generator for positions
   int tstep;   //timestep - updated each time moveBugs is called
   int scale;   //no. pixels used to represent bugs
-  vector<ref<StupidBug> > bugs; 
-  vector<ref<Predator> > predators; 
+  vector<classdesc::ref<StupidBug> > bugs; 
+  vector<classdesc::ref<Predator> > predators; 
   random_gen *initBugDist; //Initial distribution of bug sizes
   vector<vector< pair<GraphID_t,GraphID_t> > > emmigration_list;
 
@@ -156,14 +152,14 @@ public:
   void drawPredators(TCL_args args);
   void drawCells(TCL_args args);
   void grow(TCL_args);
-  void killBug(ref<StupidBug>& bug);
+  void killBug(classdesc::ref<StupidBug>& bug);
   void hunt(TCL_args);
 
   /** return a TCL object representing a bug 
       (if one exists at that location, and bug passed as third paramter) */
   eco_string probe(TCL_args); 
-  array bugsizes() {
-    array r;
+  ecolab::array<double> bugsizes() {
+    ecolab::array<double> r;
     for (int i=0; i<bugs.size(); i++)
       r <<= bugs[i]->size;
     return r;
@@ -171,7 +167,7 @@ public:
   double max_bugsize(TCL_args args) {
     parallel(args);
     double r=-1;
-    for (int i=0; i<bugs.size(); i++)
+    for (size_t i=0; i<bugs.size(); i++)
       r = std::max(bugs[i]->size,r);
 #ifdef MPI_SUPPORT
     double r1;

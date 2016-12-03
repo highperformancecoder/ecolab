@@ -1,5 +1,7 @@
 #define USE_COMPOSITELESS_PHOTO_PUT_BLOCK
 #include "ecolab.h"
+using namespace ecolab;
+using namespace std;
 #define MAP vmap
 #include "graphcode.h"
 #include "graphcode.cd"
@@ -10,9 +12,6 @@ using GRAPHCODE_NS::omap;
 using GRAPHCODE_NS::Graph;
 using GRAPHCODE_NS::GraphID_t;
 using GRAPHCODE_NS::bad_ID;
-using GRAPHCODE_NS::vnew;
-using GRAPHCODE_NS::vcopy;
-using GRAPHCODE_NS::vtype;
 
 #include "ref.h"
 #include "stupid-field.h"
@@ -21,9 +20,6 @@ using GRAPHCODE_NS::vtype;
 
 #include <sstream>
 #include <iomanip>
-
-void Cell::lpack(pack_t *buf) {pack(buf,"",*this);}
-void Cell::lunpack(pack_t *buf) {unpack(buf,"",*this);}
 
 StupidModel stupidModel;
 make_model(stupidModel);
@@ -174,24 +170,22 @@ void Space::repartition()
         {
           char* data=reinterpret_cast<char*>(&food_avail[cellOffset(i)]);
           size_t size=sizeof(double)*(nCells(i)+2*apron);
-          swap(buf[i].data,data);
-          buf[i].size=size;
+          buf[i].packraw(data,size);
           buf[i].isend(i);
-          buf[i].data=reinterpret_cast<char*>(&food_production[cellOffset(i)]);
-          buf[i].size=size;
+          data=reinterpret_cast<char*>(&food_production[cellOffset(i)]);
+          buf[i].packraw(data,size);
           buf[i].isend(i);
-          swap(buf[i].data,data); //restore original data pointer 
         }      
     }
   if (myid>0)
     {
       MPIbuf buf;
       char* data=reinterpret_cast<char*>(&food_avail[0]);
-      swap(buf.data,data);
       buf.get();
-      buf.data=reinterpret_cast<char*>(&food_production[0]);
+      buf.unpackraw(data,buf.size());
+      data=reinterpret_cast<char*>(&food_production[0]);
       buf.get();
-      swap(buf.data,data);//restore original data pointer 
+      buf.unpackraw(data,buf.size());
     }      
 #endif
 }
@@ -348,11 +342,9 @@ void StupidModel::addPredators(TCL_args args)
 
 struct BugMore
 {
-  bool operator()(const ref<StupidBug>& x, const ref<StupidBug>& y) 
+  bool operator()(const classdesc::ref<StupidBug>& x, const classdesc::ref<StupidBug>& y) 
   {
-    /* ref does not have const accessor method, hence the fugly casts */ 
-    return const_cast<ref<StupidBug>&>(x)->size >
-     const_cast<ref<StupidBug>&>(y)->size;
+    return x->size > y->size;
   }
 };
 
@@ -510,7 +502,7 @@ void StupidModel::read_food_production(TCL_args args)
           food_production[id-offs]=i->p;
 }
 
-void StupidModel::killBug(ref<StupidBug>& bug)
+void StupidModel::killBug(classdesc::ref<StupidBug>& bug)
 {
   bugs.erase(find(bugs.begin(),bugs.end(),bug));
   bug->die();
@@ -560,14 +552,14 @@ void Space::draw(const eco_string& canvas)
     create a pixmap for displaying food
   */
   eco_string pixmapName=canvas+".food";
-  Tk_PhotoHandle handle=Tk_FindPhoto(interp,pixmapName);
+  Tk_PhotoHandle handle=Tk_FindPhoto(interp(),pixmapName.c_str());
   if (handle==NULL) //attach pixmap to canvas
     {
       tclcmd c;
       c << "image create photo"<<pixmapName<<
 	"-width"<<nx*scale<<"-height"<<ny*scale<<"\n";
       c << canvas << "create image 0 0 -anchor nw -image"<<pixmapName<<"\n";
-      handle=Tk_FindPhoto(interp,pixmapName);
+      handle=Tk_FindPhoto(interp(),pixmapName.c_str());
     }
 
   vector<unsigned char> pp(3*nx*ny);
@@ -650,13 +642,13 @@ eco_string StupidModel::probe(TCL_args args)
   if (bug && cell.bug)
     {
       id | "bug" | cnt++;
-      ref<StupidBug> *bug=new ref<StupidBug>(cell.bug); //make bug last eternally
-      TCL_obj(NULL,id,**bug);
+      classdesc::ref<StupidBug> *bug=new classdesc::ref<StupidBug>(cell.bug); //make bug last eternally
+      TCL_obj(null_TCL_obj,id.str(),**bug);
     }
   else
     {
       id | "cell" | cnt++;
-      TCL_obj(NULL,id,cell);
+      TCL_obj(null_TCL_obj,id.str(),cell);
     }
-  return id;
+  return id.str();
 }

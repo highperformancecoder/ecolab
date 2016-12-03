@@ -1,4 +1,4 @@
-#include <oldarrays.h>
+#include <arrays.h>
 
 class StupidBug
 {
@@ -20,6 +20,8 @@ public:
   void draw(const eco_string& canvas);
 };
 
+class Cell;
+
 class Predator
 {
   GraphID_t cellID;  // Graphcode ID of cell where this bug is located
@@ -34,15 +36,15 @@ public:
 };
 
 
-class Cell: public GRAPHCODE_NS::object
+class Cell: public Object<Cell,GRAPHCODE_NS::object>
 {
   CLASSDESC_ACCESS(Cell);
 public:
   unsigned x,y;
   double food_avail, food_production, max_food;
-  vector<ref<StupidBug> > bug;
+  vector<classdesc::ref<StupidBug> > bug;
   Ptrlist bugNbrhd; 
-  vector<ref<Predator> > predator;
+  vector<classdesc::ref<Predator> > predator;
   Ptrlist predatorNbrhd;
   bool occupied() {return bug.size()>0;}
   Cell() {}
@@ -66,14 +68,7 @@ public:
   }
   
   void grow_food() {food_avail+=food_production;}
-  void Cell::draw(const eco_string& canvas);
-
-  /* override virtual methods of object */
-  void lpack(pack_t *buf);
-  void lunpack(pack_t *buf);
-  object* lnew() const {return vnew(this);}
-  object* lcopy() const {return vcopy(this);}
-  int type() const {return vtype(*this);}
+  void draw(const eco_string& canvas);
 };
 
 /* casting utilities */
@@ -106,8 +101,8 @@ public:
   urand u;     //random generator for positions
   int tstep;   //timestep - updated each time moveBugs is called
   int scale;   //no. pixels used to represent bugs
-  vector<ref<StupidBug> > bugs; 
-  vector<ref<Predator> > predators; 
+  vector<classdesc::ref<StupidBug> > bugs; 
+  vector<classdesc::ref<Predator> > predators; 
   random_gen *initBugDist; //Initial distribution of bug sizes
   StupidModel(): initBugDist(&u) {}
   void setup(TCL_args args) {
@@ -125,20 +120,20 @@ public:
   void drawPredators(TCL_args args);
   void drawCells(TCL_args args);
   void grow();
-  void killBug(ref<StupidBug>& bug);
+  void killBug(classdesc::ref<StupidBug>& bug);
   void hunt();
   /** return a TCL object representing a bug 
       (if one exists at that location, and bug passed as third paramter) */
   eco_string probe(TCL_args); 
-  array bugsizes() {
-    array r;
-    for (int i=0; i<bugs.size(); i++)
+  ecolab::array<double> bugsizes() {
+    ecolab::array<double> r;
+    for (size_t i=0; i<bugs.size(); i++)
       r <<= bugs[i]->size;
     return r;
   }
   double max_bugsize() {
     double r=0;
-    for (int i=0; i<bugs.size(); i++)
+    for (size_t i=0; i<bugs.size(); i++)
       r = std::max(bugs[i]->size,r);
     return r;
   }

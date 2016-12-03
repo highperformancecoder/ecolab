@@ -1,4 +1,6 @@
 #include "ecolab.h"
+using namespace ecolab;
+using namespace std;
 #define MAP vmap
 #include "graphcode.h"
 #include "graphcode.cd"
@@ -21,9 +23,6 @@ using classdesc::bcast;
 
 #include <sstream>
 #include <iomanip>
-
-void Cell::lpack(pack_t *buf) {pack(buf,"",*this);}
-void Cell::lunpack(pack_t *buf) {unpack(buf,"",*this);}
 
 StupidModel stupidModel;
 make_model(stupidModel);
@@ -229,11 +228,9 @@ void StupidModel::addPredators(TCL_args args)
 
 struct BugMore
 {
-  bool operator()(const ref<StupidBug>& x, const ref<StupidBug>& y) 
+  bool operator()(const classdesc::ref<StupidBug>& x, const classdesc::ref<StupidBug>& y) 
   {
-    /* ref does not have const accessor method, hence the fugly casts */ 
-    return const_cast<ref<StupidBug>&>(x)->size >
-     const_cast<ref<StupidBug>&>(y)->size;
+    return x->size > y->size;
   }
 };
 
@@ -508,14 +505,14 @@ eco_string StupidModel::probe(TCL_args args)
   if (bug && cell.occupied())
     {
       id | "bug" | cnt++;
-      TCL_obj(NULL,id,*cell.bug[0]);
+      TCL_obj(null_TCL_obj,id.str(),*cell.bug[0]);
     }
   else
     {
       id | "cell" | cnt++;
-      TCL_obj(NULL,id,cell);
+      TCL_obj(null_TCL_obj,id.str(),cell);
     }
-  return id;
+  return id.str();
 }
 
 struct Prod_store
@@ -558,7 +555,7 @@ void StupidModel::read_food_production(TCL_args args)
   Distribute_Objects();
 }
 
-void StupidModel::killBug(ref<StupidBug>& bug)
+void StupidModel::killBug(classdesc::ref<StupidBug>& bug)
 {
   bugs.erase(find(bugs.begin(),bugs.end(),bug));
   bug->die();
