@@ -212,24 +212,26 @@ namespace
     bool consistent();
   };
 
-//  std::ostream& operator<<(std::ostream& o, const OrderedCanonicalRange& r)
-//  {
-//    for (unsigned i=0; i<r.size(); ++i)
-//      o << r[i].first<<"-"<<r[i].second << " ";
-//    return o;
-//  }
+#ifndef NDEBUG
+  std::ostream& operator<<(std::ostream& o, const OrderedCanonicalRange& r)
+  {
+    for (unsigned i=0; i<r.size(); ++i)
+      o << r[i].first<<"-"<<r[i].second << " ";
+    return o;
+  }
 
-//  bool OrderedCanonicalRange::consistent()   
-//  {
-//    bool r=operator[](0).first==0 && 
-//      operator[](size()-1).second==size();
-//    for (unsigned i=1; i<size(); ++i)
-//      r&=operator[](i-1)==operator[](i) ||
-//        operator[](i-1).second==operator[](i).first;
-//    if (!r) cout << *this << endl;
-//    return r;
-//  }
-
+  bool OrderedCanonicalRange::consistent()   
+  {
+    bool r=operator[](0).first==0 && 
+      operator[](size()-1).second==size();
+    for (unsigned i=1; i<size(); ++i)
+      r&=operator[](i-1)==operator[](i) ||
+        operator[](i-1).second==operator[](i).first;
+    if (!r) cout << *this << endl;
+    return r;
+  }
+#endif
+  
   template <class T>
   bool unique(const vector<T>& x)
   {
