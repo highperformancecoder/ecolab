@@ -27,7 +27,6 @@ endif
 
 # This rule uses a header file of object descriptors
 $(MODELS:=.o): %.o: %.cc 
-#	$(CPLUSPLUS) -c $(FLAGS)  $<
 
 # how to build a model executable
 $(MODELS): %: %.o $(ECOLIBS)

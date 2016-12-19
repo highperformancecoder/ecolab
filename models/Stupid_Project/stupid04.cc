@@ -15,7 +15,7 @@ using namespace GRAPHCODE_NS;
 StupidModel stupidModel;
 make_model(stupidModel);
 
-inline Cell* getCell(GraphID_t id) {return getCell(stupidModel.objects[id]);}
+inline Cell* getCell(GraphID_t id) {return dynamic_cast<Cell*>(&*stupidModel.objects[id]);}
 inline double ran() {return stupidModel.u.rand();}
 
 int StupidBug::x() {return getCell(cellID)->x;}
@@ -26,10 +26,12 @@ inline void StupidBug::move()
   int newX, newY, nbr_idx;
   objref* newCellref;
   Cell* newCell, *myCell=getCell(cellID);
+  assert(!(*myCell)[0].nullref());
   // find an unoccupied cell in the neighbourhood
   do 
 	{
-	  newCellref=&(*myCell)[ran()*myCell->size()];
+          size_t i=ran()*myCell->size();
+	  newCellref=&(*myCell)[i];
 	  newCell=getCell(*newCellref);
 	} while (newCell->occupied());
   // swap myself to new cell
@@ -43,30 +45,59 @@ void Cell::grow_food()
     food_avail+=stupidModel.u.rand()*max_food_production;
 }
 
+void checkObjRef(const objref& o) {
+  assert(!o.nullref());
+  for (size_t j=0; j<o->size(); ++j)
+    assert(!(*o)[j].nullref());
+}
+
 void Space::setup(int nx_, int ny_, int moveDistance, bool toroidal_)
 {
   nx=nx_, ny=ny_;
   assert(moveDistance <= nx/2 && moveDistance <= ny/2 );
   toroidal=toroidal_;
-  
+
+  cells.resize(nx*ny);
   for (int i=0; i<nx; i++)
     for (int j=0; j<ny; j++)
       {
 	objref& o=objects[mapid(i,j)];
-	AddObject(Cell(),o.ID);
-	*getCell(o)=Cell(i,j);
+	AddObject(Cell(i,j),o.ID);
 	o->push_back(o); //self is first reference on neigbourhood list
+        assert(!o->back().nullref());
+#ifndef NDEBUG
+        for (int ii=0; ii<nx; ii++)
+          for (int jj=0; jj<ny; jj++)
+            if (ii==i && jj==j)
+              goto breakOut;
+            else
+              checkObjRef(objects[mapid(ii,jj)]);
+      breakOut:;
+#endif
       }
+  
+#ifndef NDEBUG
+  for (size_t i=0; i<objects.size(); ++i) checkObjRef(objects[i]);
+#endif
+
   for (int i=0; i<nx; i++)
     for (int j=0; j<ny; j++)
       {
 	objref& o=objects[mapid(i,j)];
+        assert(!o.nullref());
 	/* connect up a square neighbourhood of size 2*moveDistance+1 */
 	for (int ii=-moveDistance; ii<=moveDistance; ii++)
 	  for (int jj=-moveDistance; jj<=moveDistance; jj++)
 	    if (ii!=0 || jj!=0)
-	      o->push_back(objects[mapid(i+ii,j+jj)]);
+              {
+                o->push_back(objects[mapid(i+ii,j+jj)]);
+                assert(!o->back().nullref());
+              }
       }
+
+#ifndef NDEBUG
+  for (size_t i=0; i<objects.size(); ++i) checkObjRef(objects[i]);
+#endif
   rebuild_local_list();
 }
 

@@ -50,6 +50,7 @@ class Space: public Graph
 {
   bool toroidal;
   CLASSDESC_ACCESS(Space);
+  std::vector<Cell> cells;
  public:
   int nx, ny;  //dimensions of space
   urand u;

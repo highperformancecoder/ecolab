@@ -5,7 +5,7 @@ proc simulate {} {
     uplevel #0 {
       set running 1
          for {} {$running} { } {
-	    grow
+#	    grow
 	    moveBugs
 	    draw .world.canvas
 	    .statusbar configure -text "t:[tstep]"
