@@ -548,7 +548,7 @@ namespace ecolab
       {
         if (!memberptr)
           throw error("missing reference to assign %s to",s);
-	member_entry<T> *object_entry;
+        //	member_entry<T> *object_entry;
 	/*ensure_exists(TCL_obj_properties());*/
 	if (TCL_obj_properties().count(s)==0)
 	  throw error("%s does not exist!",s);
