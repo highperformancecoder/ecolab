@@ -497,7 +497,7 @@ void StupidModel::read_food_production(TCL_args args)
   Space::setup(nx,ny,moveDistance,false,0);
   GraphID_t id;
   for (vector<Prod_store>::iterator i=prod_store.begin(); i!=prod_store.end(); i++)
-        if ((id=mapid(i->x,i->y))- offs >=0 && 
+        if ((id=mapid(i->x,i->y))>=offs && 
             id-offs < food_production.size()) 
           food_production[id-offs]=i->p;
 }
