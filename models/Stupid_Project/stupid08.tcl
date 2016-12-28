@@ -1,4 +1,4 @@
-#!stupid08
+#!stupid06
 use_namespace stupidModel
 
 set log [open stupid.log w]

@@ -1,4 +1,4 @@
-#!stupid07
+#!stupid06
 use_namespace stupidModel
 
 proc simulate {} { 

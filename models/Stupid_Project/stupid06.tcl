@@ -9,7 +9,7 @@ proc simulate {} {
 	    moveBugs
 	    draw .world.canvas
 	    .statusbar configure -text "t:[tstep]"
-	    bugsizes::clear
+	    bugsizes::hist.clear
 	     histogram bugsizes [bugsizes]	     
 	 }
     }

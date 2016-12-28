@@ -63,28 +63,16 @@ void Space::setup(int nx_, int ny_, int moveDistance, bool toroidal_)
       {
 	objref& o=objects[mapid(i,j)];
 	AddObject(Cell(i,j),o.ID);
-	o->push_back(o); //self is first reference on neigbourhood list
-        assert(!o->back().nullref());
-#ifndef NDEBUG
-        for (int ii=0; ii<nx; ii++)
-          for (int jj=0; jj<ny; jj++)
-            if (ii==i && jj==j)
-              goto breakOut;
-            else
-              checkObjRef(objects[mapid(ii,jj)]);
-      breakOut:;
-#endif
       }
   
-#ifndef NDEBUG
-  for (size_t i=0; i<objects.size(); ++i) checkObjRef(objects[i]);
-#endif
 
   for (int i=0; i<nx; i++)
     for (int j=0; j<ny; j++)
       {
 	objref& o=objects[mapid(i,j)];
         assert(!o.nullref());
+	o->push_back(o); //self is first reference on neigbourhood list
+        assert(!o->back().nullref());
 	/* connect up a square neighbourhood of size 2*moveDistance+1 */
 	for (int ii=-moveDistance; ii<=moveDistance; ii++)
 	  for (int jj=-moveDistance; jj<=moveDistance; jj++)
@@ -95,9 +83,6 @@ void Space::setup(int nx_, int ny_, int moveDistance, bool toroidal_)
               }
       }
 
-#ifndef NDEBUG
-  for (size_t i=0; i<objects.size(); ++i) checkObjRef(objects[i]);
-#endif
   rebuild_local_list();
 }
 

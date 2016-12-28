@@ -62,12 +62,12 @@ void Space::setup(int nx_, int ny_, int moveDistance, bool toroidal_,
 	objref& o=objects[mapid(i,j)];
 	AddObject(Cell(),o.ID);
 	*getCell(o)=Cell(i,j,max_food_production);
-	o->push_back(o); //self is first reference on neigbourhood list
       }
   for (int i=0; i<nx; i++)
     for (int j=0; j<ny; j++)
       {
 	objref& o=objects[mapid(i,j)];
+	o->push_back(o); //self is first reference on neigbourhood list
 	/* connect up a square neighbourhood of size 2*moveDistance+1 */
 	for (int ii=-moveDistance; ii<=moveDistance; ii++)
 	  for (int jj=-moveDistance; jj<=moveDistance; jj++)

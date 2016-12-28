@@ -32,8 +32,8 @@ public:
   void addBug(const StupidBug& b) {bug.resize(1); *bug[0]=b;}
   void moveBug(Cell& from) { 
     assert(from.size()>0);
-    assert(!occupied());
     if (&from==this) return;
+    assert(!occupied());
     bug=from.bug; 
     from.bug.clear(); 
   }
