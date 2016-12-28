@@ -233,7 +233,7 @@ namespace ecolab
               timestamp.erase(ts);
             }
         }
-      db->flush();
+      if (db) db->flush();
       // rebase timestamps to cut_time
       ts-=cut_time;
       for (typename TSMap::iterator t=timestamp.begin(); t!=timestamp.end(); ++t)
@@ -244,14 +244,14 @@ namespace ecolab
     /// delete entry associated with key \a k
     void del(key k)   
     {
-      if (db->opened())
+      if (db && db->opened())
         {
           write_lock w(rwl);
           Datum dk; 
           dk=k; 
-          Base::erase(k); 
           db->del(dk);
         }
+      Base::erase(k); 
     }
     /**
        \brief obtain first key for iteration through database.

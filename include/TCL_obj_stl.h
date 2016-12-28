@@ -111,13 +111,20 @@ namespace ecolab
     static string type() {return ".@is_set";}
   };
 
-  template <class K, class V> struct is_map<std::pair<K,V> >: 
-    public true_type
+  struct is_map_map: public true_type
   {
     static string keys() {return ".#keys";}
     static string type() {return ".@is_map";}
   };
 
+
+  template <class K, class V, class C, class A> struct is_map<std::map<K,V,C,A> >:
+    public is_map_map {};
+
+#if defined(__cplusplus) && __cplusplus>=201103L
+  template <class K, class V, class C, class A> struct is_map<std::unordered_map<K,V,C,A> >:
+    public is_map_map {};
+#endif
 
   template <class T>
   typename enable_if<Not<is_map<T> >, T>::T
@@ -192,7 +199,7 @@ namespace ecolab
   /* support for extracting a list of keys in keyed data types (eg maps) */
 
   template <class T>
-  typename enable_if<is_map<typename T::value_type>, void>::T
+  typename enable_if<is_map<T>, void>::T
   keys_of(const T& o)
   { 
     tclreturn r;
@@ -201,7 +208,7 @@ namespace ecolab
   }
   
   template <class T>
-  typename enable_if<Not<is_map<typename T::value_type> >, void>::T
+  typename enable_if<Not<is_map<T> >, void>::T
   keys_of(const T& o)
   { 
     tclreturn r;
@@ -302,12 +309,12 @@ namespace ecolab
 
   // for distingushing between sets and maps with @elem functionality
   template <class T>
-  typename enable_if<is_map<typename T::value_type>, TCL_obj_of<T,typename T::key_type>*>::T
+  typename enable_if<is_map<T>, TCL_obj_of<T,typename T::key_type>*>::T
   makeTCL_obj_of(T& o, const string& d) 
   {return new TCL_obj_of<T,typename T::key_type>(o,d);}
 
   template <class T>
-  typename enable_if<Not<is_map<typename T::value_type> >, TCL_obj_of<T,iter>*>::T
+  typename enable_if<Not<is_map<T> >, TCL_obj_of<T,iter>*>::T
   makeTCL_obj_of(T& o, const string& d) 
   {return new TCL_obj_of<T,iter>(o,d);}
 
@@ -399,13 +406,13 @@ namespace ecolab
   {
     TCL_obj_register(targ,desc,arg);
     TCL_obj(targ,desc+".size",arg,&T::size);
-    Tcl_CreateCommand(interp(),(desc+is_map<typename T::value_type>::type()).c_str(),
+    Tcl_CreateCommand(interp(),(desc+is_map<T>::type()).c_str(),
                       (Tcl_CmdProc*)null_proc,NULL,NULL);
     ClientData c=(ClientData)makeTCL_obj_of(arg,desc);
     Tcl_CreateCommand(interp(),(desc+".@elem").c_str(),(Tcl_CmdProc*)elem,c,
                       (Tcl_CmdDeleteProc*)del_obj);
     c=(ClientData)makeTCL_obj_of(arg,desc);
-    Tcl_CreateCommand(interp(),(desc+is_map<typename T::value_type>::keys()).c_str(),(Tcl_CmdProc*)keys,c,
+    Tcl_CreateCommand(interp(),(desc+is_map<T>::keys()).c_str(),(Tcl_CmdProc*)keys,c,
                       (Tcl_CmdDeleteProc*)del_obj);
     c=(ClientData)new TCL_obj_of_count<T,typename T::key_type>(arg,desc);
     Tcl_CreateCommand(interp(),(desc+".count").c_str(),(Tcl_CmdProc*)elem,c,

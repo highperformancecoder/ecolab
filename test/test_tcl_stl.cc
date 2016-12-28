@@ -81,3 +81,8 @@ TCLTYPE(MII);
 typedef vector<int> VI;
 TCLTYPE(VI);
 
+typedef multimap<int,int> MMII;
+TCLTYPE(MMII);
+
+typedef multiset<int> MSII;
+TCLTYPE(MSII);
