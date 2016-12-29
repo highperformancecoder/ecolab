@@ -127,18 +127,18 @@ namespace ecolab
 #endif
 
   template <class T>
-  typename enable_if<Not<is_map<T> >, T>::T
+  typename enable_if<Not<is_map<T> >, typename T::value_type>::T
   readIn(std::istream& i)
-  {T v; i>>v; return v;}
+  {typename T::value_type v; i>>v; return v;}
 
   template <class T>
-  typename enable_if<is_map<T>, T>::T
+  typename enable_if<is_map<T>,  typename T::value_type>::T
   readIn(std::istream& i)
   {
-    typename remove_const<typename T::first_type>::type k;
-    typename T::second_type v;
+    typename remove_const<typename T::value_type::first_type>::type k;
+    typename T::value_type::second_type v;
     i>>k>>v;
-    return T(k,v);
+    return typename T::value_type(k,v);
   }
   
   template <class T, class CharT, class Traits>
@@ -148,7 +148,7 @@ namespace ecolab
     s.clear();
     while (i)
       {
-        typename T::value_type v=readIn<typename T::value_type>(i);
+        typename T::value_type v=readIn<T>(i);
         if (i)
           s.insert(v);
       }
