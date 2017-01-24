@@ -241,7 +241,6 @@ namespace ecolab
     {
 
     protected:
-      Tk_PhotoHandle photo;
       void resize(size_t width, size_t height);
 
       /// resize photo and surface
@@ -258,8 +257,6 @@ namespace ecolab
       /// configSpecs for this type (itemconfigure options)
       static Tk_ConfigSpec configSpecs[];
 
-      bool valid() {return photo;}
-      
       /// sets the transformation matrix so that user coordinates are
       /// centered on the bitmap, and scaled according to the current
       /// scale value
@@ -280,6 +277,8 @@ namespace ecolab
         xScale(1), yScale(1), cairoSurface(cairoSurface) {setMatrix(1,0);}
 
       virtual ~CairoImage() {}
+
+      void attachToImage(const std::string& imgName);
 
       /// distance x, y is from CairoItem (in device coordinates)
       double distanceFrom(double x, double y) const;
