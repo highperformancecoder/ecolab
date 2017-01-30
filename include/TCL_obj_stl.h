@@ -38,24 +38,8 @@ namespace ecolab
   static void del_obj(ClientData c)
   { delete (TCL_obj_of_base*)c;}
  
-  // values need quoting if they contain spaces, and special chars need escaping
-  template <class T>
-  std::string quoteTCL(const T& x)
-  {
-    std::ostringstream os;
-    os << x;
-    std::string r;
-    for (size_t i=0; i<os.str().length(); ++i)
-      {
-        if (strchr("{}\\\"", os.str()[i])!=NULL)
-            r+='\\';
-        r+=os.str()[i];
-      }
-    if (r.find(' ')!=std::string::npos)
-      r="{"+r+"}";
-    return r;
-  }
-    
+  template <class T> std::string quoteTCL(const T& x);
+
 
   //  template <class T> void pushout(std::ostream& o, const T& c) {o<<c;}
   template <class F, class S> 
@@ -87,8 +71,8 @@ namespace ecolab
 
   template <class T, class CharT, class Traits>
   typename enable_if<is_container<T>, std::ostream&>::T
-  operator<<(std::basic_istream<CharT,Traits>& i, const T& v)
-  {return ContainerOut(i,v);}
+  operator<<(std::basic_ostream<CharT,Traits>& o, const T& v)
+  {return ContainerOut(o,v);}
 
   template<class T>
   typename enable_if<is_container<T>, eco_strstream&>::T
@@ -104,6 +88,24 @@ namespace ecolab
   operator>>(std::basic_istream<CharT,Traits>& i, T& v)
   {return ContainerIn(i,v);}
 
+  // values need quoting if they contain spaces, and special chars need escaping
+  template <class T>
+  std::string quoteTCL(const T& x)
+  {
+    eco_strstream os;
+    os | x;
+    std::string r;
+    for (size_t i=0; i<os.str().length(); ++i)
+      {
+        if (strchr("{}\\\"", os.str()[i])!=NULL)
+            r+='\\';
+        r+=os.str()[i];
+      }
+    if (r.find(' ')!=std::string::npos)
+      r="{"+r+"}";
+    return r;
+  }
+    
   /// distinguish between maps and sets based on value_type of container
   template <class T> struct is_map: public false_type
   {
