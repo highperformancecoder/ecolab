@@ -75,7 +75,7 @@ make_model(string2);
 std::vector<std::string> vstring(2);
 make_model(vstring);
 
-typedef std::vector<std::vector<std::string>> VVS;
+typedef std::vector<std::vector<std::string> > VVS;
 TCLTYPE(VVS);
 
 VVS vvstring(2);
