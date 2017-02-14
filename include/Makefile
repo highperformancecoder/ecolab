@@ -312,6 +312,18 @@ endif
 ifneq ($(HAVE_CBLAS),0)
 LIBS+=-lgslcblas
 endif
+
+# if libgslcblas not available, try libblas...
+HAVE_CBLAS=$(words $(wildcard $(call search,lib/libblas.*)))
+ifeq ($(HAVE_CBLAS),0)
+# if this is a 64 bit system, we also need to check lib64
+HAVE_CBLAS=$(words $(wildcard $(call search,lib64/libblas.*)))
+endif
+ifneq ($(HAVE_CBLAS),0)
+LIBS+=-lblas
+endif
+
+
 endif
 
 ifdef SAUCY
