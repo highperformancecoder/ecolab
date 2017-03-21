@@ -205,6 +205,7 @@ proc browse_vector {name} {
 proc browse_deque {name} {browse_vector $name}
 proc browse_list {name} {browse_vector $name}
 proc browse_set {name} {browse_vector $name}
+proc browse_sequence {name} {browse_vector $name}
 
 proc getCurrentSelection {name sel_idx} {
     obj_browser [eval $name.@elem [$sel_idx get [lindex [$sel_idx curselection] 0]]].*
