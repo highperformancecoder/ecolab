@@ -63,8 +63,14 @@ namespace ecolab
   { 
     c.clear();
     typename T::value_type v;
-    while (i>>v) 
-      c.push_back(v);
+    while (i>>v)
+      {
+#if defined(__cplusplus) && __cplusplus>=201103L
+        c.push_back(std::move(v));
+#else
+        c.push_back(v);
+#endif
+      }
     return i;
   }
     
