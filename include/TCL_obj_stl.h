@@ -84,7 +84,9 @@ namespace ecolab
   typename enable_if<is_container<T>, eco_strstream&>::T
   operator|(eco_strstream& s,const T& x) 
   {
-    ContainerOut(s,x);
+    std::ostringstream tmp;
+    ContainerOut(tmp,x);
+    s<<tmp.str();
     return s;
   }
 

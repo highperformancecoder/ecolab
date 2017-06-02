@@ -9,6 +9,9 @@
 #ifndef ACCESSOR_H
 #define ACCESSOR_H
 #include "pack_base.h"
+#if defined(__cplusplus) && __cplusplus>=201103L
+#include <functional>
+#endif
 
 namespace ecolab
 {

@@ -61,8 +61,9 @@ namespace ecolab
      This class inserts spaces between successive write, so is more
      useful for TCL use. To concatenate arguments, use operator|
    */
-  class eco_strstream: public std::ostringstream
+  class eco_strstream
   {
+    std::ostringstream impl;
   public:
     eco_strstream() {}
     eco_strstream(const eco_strstream& x)
@@ -70,14 +71,16 @@ namespace ecolab
     eco_strstream(const std::ostringstream& x)
     {(*this) << x.str();} 
 
+    string str() const {return impl.str();}
+    
     /* 
        some implementations of ostringstream do not provide explicit 
        definitions character string constants
     */
     eco_strstream& operator|(const char* const& x) 
-    {(*static_cast<std::ostringstream*>(this))<<const_cast<const char*>(x); return *this;}
+    {impl<<const_cast<const char*>(x); return *this;}
     eco_strstream& operator|(char* const& x) 
-    {(*static_cast<std::ostringstream*>(this))<<const_cast<const char*>(x); return *this;}
+    {impl<<const_cast<const char*>(x); return *this;}
 
     template <class E>
     typename classdesc::enable_if<is_enum<E>, eco_strstream&>::T
@@ -89,7 +92,7 @@ namespace ecolab
     template <class T>
     typename classdesc::enable_if<And<Not<is_enum<T> >,Not<is_container<T> > >, eco_strstream&>::T
     operator|(const T& x) 
-    {(*static_cast<std::ostringstream*>(this))<<x; return *this;}
+    {impl<<x; return *this;}
 
     template<class T>
     eco_strstream& operator<<(const T& x) 
@@ -100,7 +103,7 @@ namespace ecolab
 	return (*this)|' '|x;
     }
 
-    void clear() {std::ostringstream::str(std::string());}
+    void clear() {impl.str(std::string());}
 
   };
 
