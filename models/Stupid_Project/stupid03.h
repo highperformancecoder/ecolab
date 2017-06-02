@@ -24,8 +24,7 @@ public:
   bool occupied() {return bug.size()>0;}
   Cell() {}
   Cell(unsigned x_, unsigned y_):x(x_), y(y_), food_avail(0), 
-				 max_food_production(0.01) {}
-  Cell(const StupidBug& b) {bug.push_back(b);}
+				 max_food_production(0.01), max_food(100) {}
   void addBug(const StupidBug& b) {bug.resize(1); bug[0]=b;}
   void moveBug(Cell& from) { 
     assert(from.size()>0);

@@ -65,6 +65,8 @@ CDINCLUDE=$(ECOLAB_HOME)/include
 ifdef AEGIS
 # unused-variable warnings fail certain RAII usages in C++
 FLAGS+=-Werror -Wall -Wno-unused-variable
+# noexcept-type is a warning about ABI changes coming in C++17
+CXXFLAGS+=-Wno-noexcept-type
 #-Wno-parentheses 
 endif
 
@@ -584,7 +586,7 @@ RPACTIONS=TCL_obj isa
 .SUFFIXES: .cc .c .o .h .d .cd
 
 .cc.o: 
-	$(CPLUSPLUS) -c $(FLAGS) $(OPT) -o $@ $<
+	$(CPLUSPLUS) -c $(FLAGS) $(CXXFLAGS) $(OPT) -o $@ $<
 
 .c.o: 
 	$(CC) -c $(FLAGS) $(OPT) -o $@ $<
@@ -600,7 +602,7 @@ $(UTILS): %: %.cc tokeninput.h
 	$(CC) $(FLAGS) -MM -MG  $< >$@
 
 .cc.d: 
-	$(CPLUSPLUS) $(FLAGS) -MM -MG $< >$@
+	$(CPLUSPLUS) $(FLAGS)  $(CXXFLAGS) -MM -MG $< >$@
 
 .h.cd: $(CLASSDESC)
 	$(CLASSDESC) -nodef -typeName -i $< >$@

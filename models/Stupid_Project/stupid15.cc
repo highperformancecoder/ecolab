@@ -33,7 +33,7 @@ int StupidBug::y() {return getCell(cellID)->y;}
 inline void StupidBug::move()
 {
   int newX, newY, nbr_idx;
-  objref* newCellref;
+  objref* newCellref=NULL;
   Cell* newCell=getCell(cellID), *myCell=newCell;
   double best_food=myCell->food_avail;
 
@@ -62,7 +62,7 @@ inline void StupidBug::move()
 	}
     }
   if (newCell==myCell)  //no better unoccupied neighbours
-    return;  
+    return; 
   // swap myself to new cell
   newCell->moveBug(*myCell);
   cellID=newCellref->ID;
@@ -174,7 +174,7 @@ struct BugMore
 void StupidModel::moveBugs()
 {
   sort(bugs.begin(),bugs.end(),BugMore());
-  for (int i=0; i<bugs.size(); i++)
+  for (size_t i=0; i<bugs.size(); i++)
     bugs[i]->move();
   tstep++;
 }
@@ -182,7 +182,7 @@ void StupidModel::moveBugs()
 void StupidModel::birthdeath()
 {
   vector<int> deathlist;
-  for (int i=0; i<bugs.size(); i++)
+  for (size_t i=0; i<bugs.size(); i++)
     if (bugs[i]->mortality())
       deathlist.push_back(i);
   for (int i=deathlist.size()-1; i>=0; i--)
@@ -239,7 +239,7 @@ void StupidModel::drawBugs(TCL_args args)
   eco_string canvas=args;
   tclcmd c;
   c << canvas << "delete bugs\n";
-  for (int i=0; i<bugs.size(); i++)
+  for (size_t i=0; i<bugs.size(); i++)
     bugs[i]->draw(canvas);
 }
 

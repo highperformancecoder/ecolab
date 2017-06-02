@@ -95,7 +95,7 @@ void StupidModel::addBugs(TCL_args args)
 
 void StupidModel::moveBugs()
 {
-  for (int i=0; i<bugs.size(); i++)
+  for (size_t i=0; i<bugs.size(); i++)
     bugs[i]->move();
   tstep++;
 }
@@ -112,6 +112,6 @@ void StupidModel::draw(TCL_args args)
   eco_string canvas=args;
   tclcmd c;
   c << canvas << "delete bugs\n";
-  for (int i=0; i<bugs.size(); i++)
+  for (size_t i=0; i<bugs.size(); i++)
     bugs[i]->draw(canvas);
 }

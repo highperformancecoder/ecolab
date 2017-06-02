@@ -68,7 +68,7 @@ void Space::setup(int nx_, int ny_, int moveDistance, bool toroidal_, double fp)
   size=nCells(myid);
   food_avail.resize(size+2*apron);
   food_production.resize(size+2*apron);
-  for (int i=0; i<food_production.size(); i++)
+  for (size_t i=0; i<food_production.size(); i++)
     food_production[i]=fp;
 
   for (int i=0; i<nx; i++)
@@ -190,6 +190,11 @@ void Space::repartition()
 #endif
 }
 
+#if defined(__GNUC__) && !defined(__ICC)
+#pragma GCC diagnostic push
+// ignore error that occurs when not building MPI version
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 inline void StupidBug::move()
 {
   int newX, newY, nbr_idx;
@@ -235,6 +240,9 @@ inline void StupidBug::move()
     // swap myself to new cell
     moveTo(*newCell);
 }
+#if defined(__GNUC__) && !defined(__ICC)
+#pragma GCC diagnostic pop
+#endif
 
 void StupidBug::grow()
 {
@@ -355,7 +363,7 @@ void StupidModel::moveBugs(TCL_args args)
   emmigration_list.resize(nprocs);
   sort(bugs.begin(),bugs.end(),BugMore());
 
-  for (int i=0; i<bugs.size(); i++)
+  for (size_t i=0; i<bugs.size(); i++)
       bugs[i]->move();
 
 #ifdef MPI_SUPPORT
@@ -449,7 +457,7 @@ void StupidModel::moveBugs(TCL_args args)
 void StupidModel::birthdeath(TCL_args args)
 {
   vector<int> deathlist;
-  for (int i=0; i<bugs.size(); i++)
+  for (size_t i=0; i<bugs.size(); i++)
     if (bugs[i]->mortality())
       deathlist.push_back(i);
   for (int i=deathlist.size()-1; i>=0; i--)
@@ -463,7 +471,7 @@ void StupidModel::grow(TCL_args args)
 {
   parallel(args);
   grow_food();
-  for (int i=0; i<bugs.size(); i++)
+  for (size_t i=0; i<bugs.size(); i++)
     bugs[i]->grow();
 }
 
@@ -511,7 +519,7 @@ void StupidModel::killBug(classdesc::ref<StupidBug>& bug)
 void StupidModel::hunt(TCL_args args)
 {
   parallel(args);
-  for (int i=0; i<predators.size(); i++)
+  for (size_t i=0; i<predators.size(); i++)
     predators[i]->hunt();
 }
 
@@ -600,7 +608,7 @@ void StupidModel::drawBugs(TCL_args args)
   eco_string canvas=args;
   tclcmd c;
   c << canvas << "delete bugs\n";
-  for (int i=0; i<bugs.size(); i++)
+  for (size_t i=0; i<bugs.size(); i++)
     bugs[i]->draw(canvas);
 }
 
@@ -612,7 +620,7 @@ void StupidModel::drawPredators(TCL_args args)
   eco_string canvas=args;
   tclcmd c;
   c << canvas << "delete predators\n";
-  for (int i=0; i<predators.size(); i++)
+  for (size_t i=0; i<predators.size(); i++)
     predators[i]->draw(canvas);
 }
 

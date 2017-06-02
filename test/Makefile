@@ -42,7 +42,7 @@ endif
 
 # This rule uses a header file of object descriptors
 $(MODELS:=.o): %.o: %.cc 
-	$(CPLUSPLUS) -c -g $(FLAGS)  $<
+	$(CPLUSPLUS) -c -g $(FLAGS) $(CXXFLAGS) $<
 
 # how to build a model executable
 $(MODELS): %: %.o
@@ -67,7 +67,7 @@ test_omp_rw_lock: test_omp_rw_lock.cc
 ifdef MPI
 	icpc -openmp $(FLAGS) -o $@ $<
 else
-	-$(CPLUSPLUS) $(OMPOPT) $(FLAGS) -o $@ $<
+	-$(CPLUSPLUS) $(OMPOPT) $(FLAGS) $(CXXFLAGS) -o $@ $<
 endif
 
 testCheckpointableFile: testCheckpointableFile.o
@@ -83,10 +83,10 @@ posTest: posTest.o
 	$(LINK)  $(FLAGS) -o $@  $< $(LIBS)
 
 testNDBM: cachedDBM.o
-	$(CPLUSPLUS) $(FLAGS) -UBDB -DUSE_DBM $< ../src/cachedDBM.cc $(LIBS) $(GDBM) -o $@
+	$(CPLUSPLUS) $(FLAGS) $(CXXFLAGS) -UBDB -DUSE_DBM $< ../src/cachedDBM.cc $(LIBS) $(GDBM) -o $@
 
 testBDB: cachedDBM.o
-	$(CPLUSPLUS) $(FLAGS) -DBDB $< ../src/cachedDBM.cc $(LIBS) -ldb -o $@
+	$(CPLUSPLUS) $(FLAGS) $(CXXFLAGS) -DBDB $< ../src/cachedDBM.cc $(LIBS) -ldb -o $@
 
 #Test Utilities
 testarrays: testarrays.o 

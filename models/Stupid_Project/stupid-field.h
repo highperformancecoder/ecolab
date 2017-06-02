@@ -5,11 +5,11 @@ extern urand u;  //system random no. generator
 class Space: public Graph
 {
   /* first cell of processor i */   
-  int cellOffset(int i)
+  int cellOffset(unsigned i)
   {return (i*(nx/nprocs) + (i<nx%nprocs? i: nx%nprocs))*ny;}
 
   /* No.  cell of processor i */   
-  int nCells(int i)
+  int nCells(unsigned i)
   {return (nx/nprocs + (i<nx%nprocs))*ny;}
 
   CLASSDESC_ACCESS(Space);
@@ -18,11 +18,11 @@ public:
   bool toroidal;
   int apron;   //size of overlap area between cells
   int scale;   //no. pixels used to represent bugs
-  int offs, size;  //ID of first cell, and no cells on this process
+  unsigned offs, size;  //ID of first cell, and no cells on this process
   GraphID_t mapid(int x, int y);
   vector <double> food_avail, food_production;
   void grow_food() {
-    for (int i=0; i<food_avail.size(); i++)
+    for (size_t i=0; i<food_avail.size(); i++)
       food_avail[i]+=food_production[i];
   }
   void setup(int nx, int ny, int nbrhdSz, bool toroidal, double prod); 
@@ -56,7 +56,7 @@ public:
   int y() {return _y;}
 
   Cell() {}
-  Cell(int i, int j): _x(i), _y(j), cellID(space.mapid(i,j)) {}
+  Cell(int i, int j): cellID(space.mapid(i,j)), _x(i), _y(j) {}
 
   classdesc::ref<StupidBug> bug;
   classdesc::ref<Predator> predator;
@@ -208,7 +208,7 @@ public:
   eco_string probe(TCL_args); 
   ecolab::array<double> bugsizes() {
     ecolab::array<double> r;
-    for (int i=0; i<bugs.size(); i++)
+    for (size_t i=0; i<bugs.size(); i++)
       r <<= bugs[i]->size;
     return r;
   }

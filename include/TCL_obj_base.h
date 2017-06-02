@@ -30,7 +30,7 @@ name of a C++ object.
 #include <sstream>
 
 /* define this macro to x to track TCL_obj registrations */
-#define TCL_OBJ_DBG(x) 
+#define TCL_OBJ_DBG(x)
 
 // ensure TCL_obj_templates is included, or linktime failure
 namespace

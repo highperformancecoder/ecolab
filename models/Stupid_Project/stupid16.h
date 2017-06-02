@@ -49,8 +49,7 @@ public:
   bool occupied() {return bug.size()>0;}
   Cell() {}
   Cell(unsigned x_, unsigned y_, double mfp=0.01):
-    x(x_), y(y_), food_avail(0), food_production(mfp) {}
-  Cell(const StupidBug& b) {bug.push_back(b);}
+    x(x_), y(y_), food_avail(0), food_production(mfp), max_food(100) {}
   void addBug(const StupidBug& b) {
     bug.resize(1); *bug[0]=b;
     bug[0]->cellID=begin()->ID; 

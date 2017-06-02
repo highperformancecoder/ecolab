@@ -123,7 +123,7 @@ include/newarrays.exh: include/newarrays.h utils/wrap
 
 
 models: $(ELIBS) 
-	cd models; $(MAKE) 
+	cd models; $(MAKE)
 
 #how to build a utility executable
 $(UTILS): %: %.cc 

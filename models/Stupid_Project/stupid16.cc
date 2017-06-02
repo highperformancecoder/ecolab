@@ -41,7 +41,7 @@ int Predator::y() {return getCell(cellID)->y;}
 inline void StupidBug::move()
 {
   int newX, newY, nbr_idx;
-  objref* newCellref;
+  objref* newCellref=NULL;
   Cell* newCell=getCell(cellID), *myCell=newCell;
   double best_food=myCell->food_avail;
 
@@ -207,7 +207,7 @@ struct BugMore
 void StupidModel::moveBugs()
 {
   sort(bugs.begin(),bugs.end(),BugMore());
-  for (int i=0; i<bugs.size(); i++)
+  for (size_t i=0; i<bugs.size(); i++)
     bugs[i]->move();
   tstep++;
 }
@@ -215,7 +215,7 @@ void StupidModel::moveBugs()
 void StupidModel::birthdeath()
 {
   vector<int> deathlist;
-  for (int i=0; i<bugs.size(); i++)
+  for (size_t i=0; i<bugs.size(); i++)
     if (bugs[i]->mortality())
       deathlist.push_back(i);
   for (int i=deathlist.size()-1; i>=0; i--)
@@ -317,7 +317,7 @@ void StupidModel::drawBugs(TCL_args args)
   eco_string canvas=args;
   tclcmd c;
   c << canvas << "delete bugs\n";
-  for (int i=0; i<bugs.size(); i++)
+  for (size_t i=0; i<bugs.size(); i++)
     bugs[i]->draw(canvas);
 }
 
@@ -326,7 +326,7 @@ void StupidModel::drawPredators(TCL_args args)
   eco_string canvas=args;
   tclcmd c;
   c << canvas << "delete predators\n";
-  for (int i=0; i<predators.size(); i++)
+  for (size_t i=0; i<predators.size(); i++)
     predators[i]->draw(canvas);
 }
 
@@ -425,6 +425,6 @@ void StupidModel::killBug(classdesc::ref<StupidBug>& bug)
 
 void StupidModel::hunt()
 {
-  for (int i=0; i<predators.size(); i++)
+  for (size_t i=0; i<predators.size(); i++)
     predators[i]->hunt();
 }
