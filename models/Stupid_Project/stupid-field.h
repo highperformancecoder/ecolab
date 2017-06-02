@@ -18,7 +18,8 @@ public:
   bool toroidal;
   int apron;   //size of overlap area between cells
   int scale;   //no. pixels used to represent bugs
-  unsigned offs, size;  //ID of first cell, and no cells on this process
+  int offs;
+  unsigned size;  //ID of first cell, and no cells on this process
   GraphID_t mapid(int x, int y);
   vector <double> food_avail, food_production;
   void grow_food() {
