@@ -160,7 +160,7 @@ public:
   eco_string probe(TCL_args); 
   ecolab::array<double> bugsizes() {
     ecolab::array<double> r;
-    for (int i=0; i<bugs.size(); i++)
+    for (size_t i=0; i<bugs.size(); i++)
       r <<= bugs[i]->size;
     return r;
   }

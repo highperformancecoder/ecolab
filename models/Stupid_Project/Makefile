@@ -11,7 +11,11 @@ endif
 
 include $(ECOLAB_HOME)/include/Makefile
 
-MODELS=stupid01 stupid02 stupid03 stupid04 stupid05 stupid06 stupid09 stupid10 stupid11 stupid12 stupid14 stupid15 stupid16 stupid-field
+MODELS=stupid01 stupid02 stupid03 stupid04 stupid05 stupid06 stupid09 stupid10 stupid11 stupid12 stupid14 stupid15 stupid16
+
+ifdef TK
+MODELS+=stupid-field
+endif
 
 ifdef MPI
 MODELS+=stupid-parallel

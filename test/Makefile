@@ -62,13 +62,8 @@ ifneq ($(MAKECMDGOALS),clean)
 include $(MODELS:=.d) $(EXTRAMODELS:%.exe=%.d) $(EXES:=.d) 
 endif
 
-# ignore errors here as my laptop doesn't build OpenMP ??
 test_omp_rw_lock: test_omp_rw_lock.cc
-ifdef MPI
-	icpc -openmp $(FLAGS) -o $@ $<
-else
 	-$(CPLUSPLUS) $(OMPOPT) $(FLAGS) $(CXXFLAGS) -o $@ $<
-endif
 
 testCheckpointableFile: testCheckpointableFile.o
 	$(LINK)  $(FLAGS) -o $@  $< $(LIBS)

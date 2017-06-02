@@ -117,7 +117,7 @@ void Space::gather()
   Graph::gather();
   /* offsets and sizes for MPI_Gather */
   int offsets[nprocs], sizes[nprocs];
-  for (int i=0; i<nprocs; i++)
+  for (size_t i=0; i<nprocs; i++)
     {
       offsets[i]=cellOffset(i);
       sizes[i]=nCells(i);
@@ -166,7 +166,7 @@ void Space::repartition()
 
       // send overlapped data to slave processors
       MPIbuf_array buf(nprocs);
-      for (int i=1; i<nprocs; i++)
+      for (size_t i=1; i<nprocs; i++)
         {
           char* data=reinterpret_cast<char*>(&food_avail[cellOffset(i)]);
           size_t size=sizeof(double)*(nCells(i)+2*apron);
@@ -198,7 +198,7 @@ void Space::repartition()
 inline void StupidBug::move()
 {
   int newX, newY, nbr_idx;
-  objref* newCellref;
+  objref* newCellref=NULL;
   Cell &myCell=cell(),  *newCell=&myCell;
   double best_food=myCell.food_avail();
 
@@ -370,10 +370,10 @@ void StupidModel::moveBugs(TCL_args args)
   // now process the emmigration list
   // firstly send a list of requested destinations to host processor
   MPIbuf_array migrants(nprocs), approved(nprocs);
-  for (int i=0; i<nprocs; i++)
+  for (size_t i=0; i<nprocs; i++)
     if (i!=myid)
       {
-        for (int j=0; j<emmigration_list[i].size(); j++)
+        for (size_t j=0; j<emmigration_list[i].size(); j++)
           migrants[i]<<emmigration_list[i][j].second;
         migrants[i]<<isend(i,1);
       }
@@ -381,7 +381,7 @@ void StupidModel::moveBugs(TCL_args args)
   // recieve requested destinations, and approve or deny immigration
   MPIbuf b;
   set<GraphID_t> takenCells; 
-  for (int i=0; i<nprocs-1; i++)
+  for (size_t i=0; i<nprocs-1; i++)
     {
       GraphID_t dest;
       b.get(MPI_ANY_SOURCE,1);
@@ -399,13 +399,13 @@ void StupidModel::moveBugs(TCL_args args)
     }
 
   // return approval list to originator
-  for (int i=0; i<nprocs; i++)
+  for (size_t i=0; i<nprocs; i++)
     if (i!=myid)
       approved[i]<<isend(i,2);
 
   // read in approval list
   vector<vector<bool> > immigration_approved(nprocs);
-  for (int i=0; i<nprocs-1; i++)
+  for (size_t i=0; i<nprocs-1; i++)
     {
       bool approved;
       b.get(MPI_ANY_SOURCE,2);
@@ -419,10 +419,10 @@ void StupidModel::moveBugs(TCL_args args)
   migrants.waitall();
 
   GraphID_t dest;
-  for (int proc=0; proc<nprocs; proc++)
+  for (size_t proc=0; proc<nprocs; proc++)
     {
       assert(emmigration_list[proc].size()==immigration_approved[proc].size());
-      for (int i=0; i<emmigration_list[proc].size(); i++)
+      for (size_t i=0; i<emmigration_list[proc].size(); i++)
         {
           dest=emmigration_list[proc][i].second;
           if (immigration_approved[proc][i])
@@ -435,11 +435,11 @@ void StupidModel::moveBugs(TCL_args args)
     }
 
   // send emmigrants
-  for (int i=0; i<nprocs; i++)
+  for (size_t i=0; i<nprocs; i++)
     if (i!=myid) migrants[i].isend(i,3);
   //receive immigrants
 
-  for (int i=0; i<nprocs-1; i++)
+  for (size_t i=0; i<nprocs-1; i++)
   {
     b.get(MPI_ANY_SOURCE,3);
     StupidBug immigrant;
