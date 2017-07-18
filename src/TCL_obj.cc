@@ -168,6 +168,7 @@ namespace ecolab
     for (i=0; i<elemc; i++) Tcl_DeleteCommand(interp(),elem[i]);  
     Tcl_DeleteCommand(interp(),desc.c_str());
     Tcl_Free((char*)elem);
+    Tcl_SetResult(interp(),NULL,NULL);
   }
 
   const char* TCL_args::str() 
