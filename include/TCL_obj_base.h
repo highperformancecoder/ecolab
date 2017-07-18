@@ -119,20 +119,23 @@ namespace ecolab
   */
   class TCL_args
   {
+    int nextArg;
     int m_count;
-    Tcl_Obj * const *argv;
-    Tcl_Obj *  pop_arg()
+    vector<const Tcl_Obj*> argv;
+    const Tcl_Obj *  pop_arg()
     {
-      if (m_count>0) 
-        {m_count--; return *argv++;} 
+      if (nextArg<argv.size()) 
+        return argv[nextArg++];} 
       else 
         throw error("too few arguments");
     }
     CLASSDESC_ACCESS(TCL_args);
+    
+    void pushObj(
   public:
     const int& count;
-    TCL_args(): m_count(0), argv(NULL), count(m_count) {}
-    TCL_args(int a, Tcl_Obj *const *v): m_count(a), argv(v) , count(m_count)
+    TCL_args(): nextArg(0), argv(NULL), count(m_count) {}
+    TCL_args(int a, Tcl_Obj *const *v): nextArg(0)m_count(a), argv(v) , count(m_count)
     {if (count) pop_arg();}
     TCL_args(const TCL_args& x): m_count(x.m_count), argv(x.argv), 
                                  count(m_count) {}
@@ -145,6 +148,8 @@ namespace ecolab
     }
 
     const char* str(); 
+
+    TCL_args& operator<<
 
     TCL_args& operator>>(std::string& x) {x=str(); return *this;}
     TCL_args& operator>>(const char*& x) {x=str(); return *this;}
