@@ -105,6 +105,7 @@ namespace ecolab
 		       ".delete")==0);                                  \
         std::string s(argv[0]);                                         \
         ecolab::TCL_obj_deregister(s.substr(0,s.length()-strlen(".delete"))); \
+        delete (x*)cd;                                                  \
         return TCL_OK;                                                  \
       }                                                                 \
                                                                         \
