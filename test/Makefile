@@ -21,7 +21,7 @@ GDBM+=-lgdbm
 
 MODELS=testrefassign test_tclobjref TCL_obj_vector_bool testref testgraph test_boostgraph testCacheDBM testCairo testTCL_objConstT testTCL_objString test_tcl_stl tcl-arrays complex_tcl_args accessor
 #EXTRAMODELS=test_tcl_stl.exe tcl-arrays.exe complex_tcl_args.exe
-EXES=test_omp_rw_lock testCheckpointableFile test_netcomplexity test_boostgraph test_ecostrstream posTest testarrays 
+EXES=test_omp_rw_lock testCheckpointableFile test_netcomplexity test_boostgraph test_ecostrstream posTest testarrays  callTclArgsMethod
 SPECIALS=testNDBM testBDB
 
 ifeq ($(CC),gcc)
@@ -72,6 +72,9 @@ test_netcomplexity: test_netcomplexity.o
 	$(LINK)  $(FLAGS) -o $@  $< $(LIBS)
 
 test_ecostrstream: test_ecostrstream.o
+	$(LINK)  $(FLAGS) -o $@  $< $(LIBS)
+
+callTclArgsMethod: callTclArgsMethod.o
 	$(LINK)  $(FLAGS) -o $@  $< $(LIBS)
 
 posTest: posTest.o

@@ -89,6 +89,24 @@ namespace ecolab
 #pragma omit TCL_obj ecolab::TCL_args
 #endif
 
+  /// RAII TCL_Obj ref
+  class TCLObjRef
+  {
+    Tcl_Obj* ref;
+  public:
+    TCLObjRef(): ref(Tcl_NewStringObj("",0)) {Tcl_IncrRefCount(ref);}
+    TCLObjRef(Tcl_Obj* x): ref(x) {Tcl_IncrRefCount(x);}
+    ~TCLObjRef() {Tcl_DecrRefCount(ref);}
+    TCLObjRef(const TCLObjRef& x): ref(x.ref) {Tcl_IncrRefCount(ref);}
+    TCLObjRef& operator=(const TCLObjRef& x) {
+      ref=x.ref;
+      Tcl_IncrRefCount(ref);
+      return *this;
+    }
+    Tcl_Obj* get() const {return ref;}
+  };
+
+
   /**
      \brief Represent arguments to TCL commands
 
@@ -119,32 +137,52 @@ namespace ecolab
   */
   class TCL_args
   {
+    int nextArg;
     int m_count;
-    Tcl_Obj * const *argv;
+    std::vector<TCLObjRef> argv;
     Tcl_Obj *  pop_arg()
     {
       if (m_count>0) 
-        {m_count--; return *argv++;} 
+        {m_count--; return argv[nextArg++].get();} 
       else 
         throw error("too few arguments");
     }
     CLASSDESC_ACCESS(TCL_args);
+    
+    void pushObj(Tcl_Obj* obj) {argv.push_back(obj); m_count++;}
   public:
     const int& count;
-    TCL_args(): m_count(0), argv(NULL), count(m_count) {}
-    TCL_args(int a, Tcl_Obj *const *v): m_count(a), argv(v) , count(m_count)
-    {if (count) pop_arg();}
-    TCL_args(const TCL_args& x): m_count(x.m_count), argv(x.argv), 
-                                 count(m_count) {}
+    TCL_args(): nextArg(1), m_count(0), argv(1), count(m_count) {}
+    TCL_args(int a, Tcl_Obj *const *v): nextArg(1), m_count(a), count(m_count)
+    {
+      m_count--;
+      for (int i=0; i<a; ++i)
+        argv.push_back(v[i]);
+    }
     TCL_args operator[](int i) const
     {
       if (count<=i) 
         throw error("too few arguments");
       else
-        return TCL_args(2,argv+i-1);
+        {
+          TCL_args r;
+          r.pushObj(argv[i+nextArg].get());
+          return r;
+        }
     }
 
     const char* str(); 
+
+    TCL_args& operator<<(const std::string& x) 
+    {pushObj(Tcl_NewStringObj(x.c_str(),-1)); return *this;}
+    TCL_args& operator<<(const char* x) 
+    {pushObj(Tcl_NewStringObj(x,-1)); return *this;}
+    TCL_args& operator<<(bool x) {pushObj(Tcl_NewBooleanObj(x)); return *this;}
+    TCL_args& operator<<(int x) {pushObj(Tcl_NewIntObj(x)); return *this;}
+    TCL_args& operator<<(unsigned x) {pushObj(Tcl_NewIntObj(x)); return *this;}
+    TCL_args& operator<<(long x) {pushObj(Tcl_NewLongObj(x)); return *this;}
+    TCL_args& operator<<(double x) {pushObj(Tcl_NewDoubleObj(x)); return *this;}
+
 
     TCL_args& operator>>(std::string& x) {x=str(); return *this;}
     TCL_args& operator>>(const char*& x) {x=str(); return *this;}

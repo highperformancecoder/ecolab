@@ -19,7 +19,10 @@ MODELS=ecolab shadow newman jellyfish webworld netcomplexity
 #chmod command is to counteract AEGIS removing execute privelege from scripts
 all: $(MODELS)
 	-$(CHMOD) a+x *.tcl
+# Stupid_Project takes ages to build, so only do on regression runs.
+ifdef AEGIS
 	$(MAKE) -C Stupid_Project
+endif
 
 ifeq ($(OS),Darwin)
 all: $(MODELS:=.app)
