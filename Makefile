@@ -5,6 +5,18 @@ else
 PREFIX=$(HOME)/usr/ecolab
 endif
 
+# check if a user defined PREFIX is not good
+TPREFIX=$(filter-out /usr /usr/local,$(PREFIX:%/=%))
+ifeq ($(TPREFIX),)
+$(error Cowardly refusing to install to $(PREFIX))
+endif
+
+# issue warning if a nonstandard location is specified
+TPREFIX=$(filter /usr/ecolab /usr/local/ecolab $(HOME)/usr/ecolab $(HOME)/usr/mxe/ecolab,$(PREFIX:%/=%))
+ifeq ($(TPREFIX),)
+$(warning Nonstandard EcoLab install location $(PREFIX) specified)
+endif
+
 ECOLAB_HOME=$(shell pwd)
 PATH:=$(PATH):$(ECOLAB_HOME)/utils
 
@@ -231,6 +243,7 @@ ifeq ($(OS),Darwin)
 	ranlib $(PREFIX)/lib/*.a
 endif
 	cp -r utils $(PREFIX)
+	@if [ -z "$(TPREFIX)" ]; then echo "Warning: nonstandard install location $(PREFIX) specified"; fi
 
 UNURAN_LIB=$(firstword $(call search,lib*/libunuran.a))
 
