@@ -364,18 +364,26 @@ namespace ecolab
     /* constructors */
     tclvar() {}
     /// TCL var name this i sbound to. If val not null, then initialise the var to \a val
-    tclvar(const string& nm, const char* val=NULL);
+    tclvar(const string& nm, const char* val=NULL): name(nm) {init(val);}
+    tclvar(const string& nm, const string& val): name(nm) {init(val.c_str());}
+    void init(const char* val=NULL);
+
 
     ///tclvars may be freely mixed with arithmetic  expressions 
-    double operator=(double x) {return dput(x);}
-    const char* operator=(const char* x) 
-    {return interpExiting? "": Tcl_SetVar(interp(),name.c_str(),x,TCL_GLOBAL_ONLY);}
+    tclvar operator=(double x) {dput(x); return *this;}
+    tclvar operator=(const char* x) {
+      if (!interpExiting) Tcl_SetVar(interp(),name.c_str(),x,TCL_GLOBAL_ONLY); 
+      return *this;
+    }
+    tclvar operator=(const string& x) {return (*this)=x.c_str();}
+    tclvar operator+=(const string& x)
+    {return (*this)=(*this)+x;}
 
-    const char* operator+(const char* x) 
+    string operator+(const string& x) 
     {
       string t(operator const char*());
-      t+=x; *this=t.c_str();
-      return t.c_str();
+      t+=x;
+      return t;
     } 
     ///
     operator double () {return dget();}
@@ -457,8 +465,8 @@ namespace ecolab
   bool exists(const tclvar& x)
   {return interpExiting? false: Tcl_GetVar(interp(),x.name.c_str(),TCL_GLOBAL_ONLY)!=NULL;}
 
-  inline
-  tclvar::tclvar(const string& nm, const char* val): name(nm) 
+  inline void
+  tclvar::init(const char* val)
   { 
     /* TCL 8.3 or earlier does not declare this stuff const */
     if (val!=NULL) Tcl_SetVar(interp(),const_cast<char*>(name.c_str()),
