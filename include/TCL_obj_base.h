@@ -1140,7 +1140,7 @@ namespace classdesc_access
      template <class U>
      void operator()(cd::TCL_obj_t& t, const cd::string& d, U& a)
      {
-       TCL_OBJ_DBG(printf("registering %s\n",desc.c_str()););
+       TCL_OBJ_DBG(printf("registering %s\n",d.c_str()););
        Tcl_CreateObjCommand(ecolab::interp(),d.c_str(),ecolab::TCL_oproc,
                             (ClientData)new ecolab::TCL_accessor<U>(a),
                             ecolab::TCL_cmd_data_delete);
