@@ -44,6 +44,13 @@ foo1 bar1
 bar.bar bar1
 bar.delete 
 bar1.delete
+
+# test argument constructors
+foo2 f2 35
+if {[f2.bar]!=35} {
+  puts stderr "arg constructor failed"
+  exit 1
+}
 EOF
 
 $here/test/test_tclobjref input.tcl

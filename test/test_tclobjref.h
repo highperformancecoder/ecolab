@@ -11,6 +11,12 @@ struct foo1
   int bar;
 };
 
+struct foo2
+{
+  int bar;
+  foo2(TCL_args x) {if (x.count>0) x>>bar;}
+};
+
 struct foo
 {
   ecolab::TCL_obj_ref<foo1> bar;
