@@ -14,7 +14,7 @@ struct foo1
 struct foo2
 {
   int bar;
-  foo2(TCL_args x) {if (x.count>0) x>>bar;}
+  foo2(const ecolab::TCL_args& x) {if (x.count>0) bar=x[0];}
 };
 
 struct foo

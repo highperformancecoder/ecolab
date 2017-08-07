@@ -118,8 +118,7 @@ namespace ecolab
 	if (argc<2) throw ecolab::error("object name not specified");   \
         std::string name=Tcl_GetString(argv[1]);                        \
         /* strip object name from argument list */                      \
-        ecolab::TCL_args largv;                                         \
-        largv.pushObj(argv[0]);                                         \
+        ecolab::TCL_args largv(1,argv);                                 \
         for (int i=2; i<argc; ++i) largv.pushObj(argv[i]);              \
         x *object=new x contructorArgs;                                 \
         ecolab::eraseAllNamesStartingWith(name);                        \
