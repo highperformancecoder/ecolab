@@ -13,3 +13,4 @@
 
 TCLTYPE(foo);
 TCLTYPE(foo1);
+TCLTYPEARGS(foo2);

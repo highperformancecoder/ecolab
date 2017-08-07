@@ -99,6 +99,18 @@ standard. Type conversion operators do not appear to work.
 For technical reasons, the name of the TCL command is available as
 \verb+args[-1]+. 
 
+You can create TCL\_args objects by using the \verb+<<+ operator. This
+enables the calling of methods taking a TCL\_args object from C++,
+viz:
+\begin{verbatim}
+struct Foo
+{
+  void bar(TCL_args args) {...}
+};
+
+Foo().bar(TCL_args()<<1<<3.5);
+\end{verbatim}
+
 The {\tt TCL\_obj\_t} data type also implements \hyperref{checkpoint
   and restart functions}{checkpoint and restart
   functions (\S}{)}{checkpoint/restart},\index{checkpoint}\index{restart}
@@ -176,6 +188,12 @@ TCLPOLYTYPE(typename, interface), where {\em
   following code which creates and initialises an object of type
   distrand and gives it the TCL name PDF (from
   testdistrand.tcl\index{testdistrand.tcl}):\index{distrand}
+\item {\tt TCLTYPEARGS}{\em (typename)}\index{TCLTYPEARGS}\label{TCLTYPEARGS},
+TCLPOLYTYPEARGS(typename, interface), is similar to the above, except
+that the constructor needs to be declared with signature
+\verb+(TCL_args)+. This enables constructor arguments to be
+passed in from TCL.
+
 \begin{verbatim}
 distrand PDF
 PDF.min -10

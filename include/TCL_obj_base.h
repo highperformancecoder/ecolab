@@ -149,7 +149,6 @@ namespace ecolab
     }
     CLASSDESC_ACCESS(TCL_args);
     
-    void pushObj(Tcl_Obj* obj) {argv.push_back(obj); m_count++;}
   public:
     const int& count;
     TCL_args(): nextArg(1), m_count(0), argv(1), count(m_count) {}
@@ -171,6 +170,7 @@ namespace ecolab
         }
     }
 
+    void pushObj(Tcl_Obj* obj) {argv.push_back(obj); m_count++;}
     const char* str(); 
 
     TCL_args& operator<<(const std::string& x) 

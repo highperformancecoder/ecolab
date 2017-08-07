@@ -94,8 +94,12 @@ namespace ecolab
                         TCL_obj(ecolab::null_TCL_obj,(string)#x,x),1)
 
     /// TCL register the type \a x 
-#define TCLTYPE(x) TCLPOLYTYPE(x,x)
-#define TCLPOLYTYPE(x,itf)                                              \
+#define TCLTYPE(x) TCLTYPEBASE(x,x,)
+#define TCLTYPEARGS(x) TCLTYPEBASE(x,x,(largv))
+#define TCLPOLYTYPE(x,itf) TCLTYPEBASE(x,itf,)
+#define TCLPOLYTYPEARGS(x,itf) TCLTYPEBASE(x,itf,(largv))
+
+#define TCLTYPEBASE(x,itf,contructorArgs)                               \
     namespace x_tcltype_##x {                                           \
       DEFINE_ECOLAB_LIBRARY;                                            \
                                                                         \
@@ -109,15 +113,20 @@ namespace ecolab
         return TCL_OK;                                                  \
       }                                                                 \
                                                                         \
-      int createobject(ClientData cd, Tcl_Interp *interp, int argc, const char **argv) \
+      int createobject(ClientData cd, Tcl_Interp *interp, int argc, Tcl_Obj *const*argv) \
       {                                                                 \
 	if (argc<2) throw ecolab::error("object name not specified");   \
-	x *object=new x;                                                \
-        ecolab::eraseAllNamesStartingWith(argv[1]);                    \
-        TCL_obj(ecolab::null_TCL_obj,argv[1],*object);                  \
-        assert(ecolab::TCL_newcommand((std::string(argv[1])+".delete").c_str())); \
+        std::string name=Tcl_GetString(argv[1]);                        \
+        /* strip object name from argument list */                      \
+        ecolab::TCL_args largv;                                         \
+        largv.pushObj(argv[0]);                                         \
+        for (int i=2; i<argc; ++i) largv.pushObj(argv[i]);              \
+        x *object=new x contructorArgs;                                 \
+        ecolab::eraseAllNamesStartingWith(name);                        \
+        TCL_obj(ecolab::null_TCL_obj,name,*object);                     \
+        assert(ecolab::TCL_newcommand((name+".delete").c_str()));       \
 	Tcl_CreateCommand(ecolab::interp(),                             \
-                          (std::string(argv[1])+".delete").c_str(),     \
+                          (name+".delete").c_str(),                     \
                           (Tcl_CmdProc*)deleteobject,                   \
 			  (ClientData)object,NULL);                     \
         return TCL_OK;                                                  \
@@ -125,9 +134,9 @@ namespace ecolab
                                                                         \
       int dummy=(                                                       \
                   /*gcc 3 bug */	/*assert(TCL_newcommand(#x)),*/ \
-                 Tcl_CreateCommand                                      \
+                 Tcl_CreateObjCommand                                      \
                  (ecolab::interp(),#x,                                  \
-                  (Tcl_CmdProc*)createobject,NULL,NULL),1);             \
+                  (Tcl_ObjCmdProc*)createobject,NULL,NULL),1);             \
     }
     
     /* 
