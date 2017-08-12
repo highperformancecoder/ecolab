@@ -27,8 +27,8 @@ namespace ecolab
      normally is not available due to the overload restrictions in
      classdesc
    */
-  template <class T, class Getter=function<T()>, 
-            class Setter=function<T(const T&)> >
+  template <class T, class Getter=std::function<T()>, 
+            class Setter=std::function<T(const T&)> >
   struct Accessor
   {
     Getter g;
@@ -44,6 +44,7 @@ namespace ecolab
     // acessing, which the source object knows nothing about.
     Accessor(const Accessor&);
   };
+
 }
 
 #ifdef _CLASSDESC
