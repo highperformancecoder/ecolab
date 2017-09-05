@@ -48,7 +48,7 @@ namespace ecolab
       pango_layout_get_extents(layout,0,&bbox);
     }
     void setFontSize(double sz) {
-      if (sz<=0) return;
+      if (gint(sz*PANGO_SCALE)<=0) return;
       pango_font_description_set_size(fd, gint(sz*PANGO_SCALE));
       pango_layout_set_font_description(layout, fd); //asume ownership not passed?
     }
