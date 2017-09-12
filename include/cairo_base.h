@@ -298,6 +298,18 @@ namespace ecolab
 
     };
 
+    /// RAII object wrapping a cairo_path_t
+    class Path
+    {
+      cairo_path_t* m_path;
+      Path(const Path&);
+      void operator=(const Path&);
+    public:
+      Path(cairo_t* cairo): m_path(cairo_copy_path(cairo)) {}
+      ~Path() {cairo_path_destroy(m_path);}
+    };
+
+    
     /// internal structure used for Tk Canvas cairo image items
     struct ImageItem  {
       Tk_Item header;		/* Generic stuff that's the same for all
