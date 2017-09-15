@@ -322,7 +322,7 @@ int netc_t::bliss_race(TCL_args args)
 
     int winner;
     if (read(pipes[read_pipe],&winner,sizeof(winner))<0)
-      throw error(strerro(errno));
+      throw error(strerror(errno));
     for (size_t i=0; i<children.size(); ++i)
       {
         //      cout << "killing pid: "<<children[i]<<endl;
