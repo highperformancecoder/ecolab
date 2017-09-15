@@ -9,6 +9,7 @@
 #include "ecolab.h"
 #include "object.h"
 #include "eco_hashmap.h"
+#include "cairoSurfaceImage.h"
 #include "ecolab_epilogue.h"
 //#include <signal.h>
 extern "C" 
@@ -210,6 +211,7 @@ NEWCMD(Tkinit,0)
   if (!Tk_MainWindow(interp()) && Tk_Init(interp())==TCL_ERROR)
     throw error("Error initialising Tk: %s",Tcl_GetStringResult(interp()));
   mainWin = Tk_MainWindow(interp());
+  CairoSurface::registerImage();
   /* delete bgerror command for GUI mode */
   //  tclcmd() << "rename bgerror {}\n";
 #if BLT

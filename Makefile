@@ -47,7 +47,7 @@ VPATH=include src models
 OBJS=src/automorph.o src/auxil.o src/arrays.o src/sparse_mat.o \
 	src/findFirst.o src/graph.o src/netcomplexity.o src/naugraph.o \
 	src/nautil.o src/nauty.o src/nautinv.o src/cachedDBM.o src/TCL_obj.o src/igraph.o \
-	src/cairo_types.o src/cairo_base.o src/plot.o src/tcl_arrays.o \
+	src/cairo_types.o src/cairo_base.o  src/cairoSurfaceImage.o src/plot.o src/tcl_arrays.o \
 	src/tclgraph.o src/analysis.o src/random.o  src/ecolab.o
 
 ifdef XDR
