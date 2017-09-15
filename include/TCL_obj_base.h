@@ -295,7 +295,7 @@ namespace ecolab
 #include <string>
   // fix shared_ptr type to prevent inconsistency in C++11 build environments
   // TODO convert to std::shared_ptr once EcoLab is C++11 only
-  typedef std::map<string,std::tr1::shared_ptr<member_entry_base> > TCL_obj_hash;
+  typedef std::map<string,classdesc::shared_ptr<member_entry_base> > TCL_obj_hash;
 
   TCL_obj_hash& TCL_obj_properties();
 

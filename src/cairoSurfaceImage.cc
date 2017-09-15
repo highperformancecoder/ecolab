@@ -8,7 +8,13 @@
 
 #include "cairoSurfaceImage.h"
 #include "tcl++.h"
+
+#ifdef _WIN32
+#undef Realloc
+#include <windows.h>
+#endif
 #include "tkPlatDecls.h"
+
 #include "ecolab_epilogue.h"
 #define USE_WIN32_SURFACE defined(CAIRO_HAS_WIN32_SURFACE) && !defined(__CYGWIN__)
 
@@ -28,10 +34,6 @@
 #include "getContext.h"
 #endif
 
-#ifdef _WIN32
-#undef Realloc
-#include <windows.h>
-#endif
 using namespace ecolab;
 
 namespace
@@ -43,10 +45,10 @@ namespace
       Tk_ImageMaster imageMaster;
       TkWinSurface(CairoSurface& canvas, Tk_ImageMaster imageMaster, cairo_surface_t* surf):
         cairo::Surface(surf), csurf(csurf),  imageMaster(imageMaster) {}
-      void requestRedraw() override {
+      void requestRedraw() {
         Tk_ImageChanged(imageMaster,-1000000,-1000000,2000000,2000000,2000000,2000000);
       }
-      void blit() override {cairo_surface_flush(surface());}
+      void blit() {cairo_surface_flush(surface());}
     };
 
     struct CD
@@ -54,6 +56,8 @@ namespace
       Tk_Window tkWin;
       Tk_ImageMaster master;
       CairoSurface& csurf;
+      CD(Tk_Window tkWin, Tk_ImageMaster master, CairoSurface& csurf):
+        tkWin(tkWin), master(master), csurf(csurf) {}
     };
     
     // Define a new image type that renders a minsky::Canvas
@@ -64,10 +68,10 @@ namespace
         {
           TCL_args args(objc,objv);
           string canvas=args; // arguments should be something like -surface minsky.canvas
-          if (auto mb=TCL_obj_properties()[canvas])
-            if (auto csurf=mb->memberPtrCasted<CairoSurface>())
+          if (TCL_obj_hash::mapped_type mb=TCL_obj_properties()[canvas])
+            if (CairoSurface* csurf=mb->memberPtrCasted<CairoSurface>())
               {
-                *masterData=new CD{0,master,*csurf};
+                *masterData=new CD(0,master,*csurf);
                 return TCL_OK;
               }
           Tcl_AppendResult(interp,"Not a CairoSurface",NULL);
@@ -82,7 +86,7 @@ namespace
 
     ClientData getCI(Tk_Window win, ClientData masterData)
     {
-      auto r=new CD(*(CD*)masterData);
+      CD* r=new CD(*(CD*)masterData);
       r->tkWin=win;
       return r;
     }
@@ -100,15 +104,15 @@ namespace
       //      HDC hdc=TkWinGetDrawableDC(display, win, state);
       HDC hdc=GetDC(Tk_GetHWND(win));
       SaveDC(hdc);
-      c.canvas.surface.reset
+      c.csurf.surface.reset
         (new TkWinSurface
-         (c.canvas, c.master,
+         (c.csurf, c.master,
           cairo_win32_surface_create(hdc)));
 #elif defined(MAC_OSX_TK)
       NSContext nctx(win);
-      c.canvas.surface.reset
+      c.csurf.surface.reset
         (new TkWinSurface
-         (c.canvas, c.master,
+         (c.csurf, c.master,
           cairo_quartz_surface_create_for_cg_context(nctx.context, Tk_Width(c.tkWin), Tk_Height(c.tkWin))));
       // TODO: offsets here appear to be quite arbitrary!!!
       cairo_surface_set_device_offset(c.canvas.surface->surface(),27,Tk_Height(c.tkWin)+37);
@@ -125,10 +129,10 @@ namespace
       c.csurf.redraw(imageX,imageY,width,height);
       //cairo_surface_flush(c.canvas.surface->surface());
       // release surface prior to any context going out of scope
-      c.csurf.surface->surface(nullptr);
+      c.csurf.surface->surface(NULL);
 #if USE_WIN32_SURFACE
       RestoreDC(hdc,-1);
-      TkWinReleaseDrawableDC(win, hdc, state);
+      //      TkWinReleaseDrawableDC(win, hdc, state);
 #endif
     }
 
