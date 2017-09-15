@@ -65,8 +65,10 @@ CDINCLUDE=$(ECOLAB_HOME)/include
 ifdef AEGIS
 # unused-variable warnings fail certain RAII usages in C++
 FLAGS+=-Werror -Wall -Wno-unused-variable
+# for now, we maintain the code for C++98 standard
 # noexcept-type is a warning about ABI changes coming in C++17
-CXXFLAGS+=-Wno-noexcept-type
+# unused-local-typedefs is a (harmless) issue with classdesc
+CXXFLAGS+=-std=c++98 -Wno-noexcept-type -Wno-unused-local-typedefs
 #-Wno-parentheses 
 endif
 

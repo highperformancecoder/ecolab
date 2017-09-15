@@ -43,7 +43,7 @@ namespace
     {
       CairoSurface& csurf;
       Tk_ImageMaster imageMaster;
-      TkWinSurface(CairoSurface& canvas, Tk_ImageMaster imageMaster, cairo_surface_t* surf):
+      TkWinSurface(CairoSurface& csurf, Tk_ImageMaster imageMaster, cairo_surface_t* surf):
         cairo::Surface(surf), csurf(csurf),  imageMaster(imageMaster) {}
       void requestRedraw() {
         Tk_ImageChanged(imageMaster,-1000000,-1000000,2000000,2000000,2000000,2000000);
