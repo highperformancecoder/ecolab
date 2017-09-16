@@ -31,6 +31,9 @@ ifeq ($(CC),icc)
 OMPOPT=-openmp
 endif
 
+ifdef AEGIS
+CXXFLAGS+=-std=c++98
+endif
 
 #chmod command is to counteract AEGIS removing execute privelege from scripts
 all: $(MODELS) $(EXES) $(SPECIALS)
