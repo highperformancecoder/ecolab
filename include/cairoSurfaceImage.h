@@ -8,6 +8,7 @@
 
 #ifndef CAIROSURFACEIMAGE_H
 #define CAIROSURFACEIMAGE_H
+#if defined(CAIRO) && defined(TK)
 #include "cairo_base.h"
 
 namespace ecolab
@@ -48,4 +49,5 @@ namespace classdesc_access
   struct access_unpack<ecolab::CairoSurface>:
     public classdesc::NullDescriptor<classdesc::unpack_t> {};
 }
+#endif
 #endif

@@ -41,7 +41,7 @@ class Cell: public Object<Cell,GRAPHCODE_NS::object>
   CLASSDESC_ACCESS(Cell);
 public:
   unsigned x,y;
-  double food_avail, food_production, max_food;
+  double food_avail, food_production;
   vector<classdesc::ref<StupidBug> > bug;
   Ptrlist bugNbrhd; 
   vector<classdesc::ref<Predator> > predator;

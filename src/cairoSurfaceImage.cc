@@ -6,6 +6,7 @@
   Open source licensed under the MIT license. See LICENSE for details.
 */
 
+#if defined(CAIRO) && defined(TK)
 #include "cairoSurfaceImage.h"
 #include "tcl++.h"
 
@@ -156,3 +157,4 @@ void CairoSurface::registerImage()
   if (!Tk_MainWindow(interp())) Tk_Init(interp());
   Tk_CreateImageType(&canvasImage);
 }
+#endif
