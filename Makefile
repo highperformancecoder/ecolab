@@ -29,6 +29,11 @@ include include/Makefile
 #binary
 FLAGS+=-UECOLAB_LIB -DINSTALLED_ECOLAB_LIB=\"$(PREFIX)/include\"
 
+ifdef AEGIS
+CXXFLAGS+=-std=c++98
+endif
+
+
 # for mingw, make should still be inoked with PREFIX=/mingw, or to root location 
 # of all development libraries and includes, so that $(PREFIX)/include and
 # $(PREFIX)/lib point to valid locations.

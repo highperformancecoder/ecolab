@@ -14,6 +14,11 @@ FLAGS+=-DTHREE_D
 
 include $(ECOLAB_HOME)/include/Makefile
 
+# This is for EcoLab internal testing purposes
+ifdef AEGIS
+CXXFLAGS+=-std=c++98
+endif
+
 MODELS=ecolab shadow newman jellyfish webworld netcomplexity
 
 #chmod command is to counteract AEGIS removing execute privelege from scripts

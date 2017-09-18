@@ -140,7 +140,8 @@ bool netc_t::testAgainstNauty()
 void finish_race(int pipes[2], int w)
 {
   const int read_pipe=0, write_pipe=1;
-  write(pipes[write_pipe], &w, sizeof(w));
+  if (write(pipes[write_pipe], &w, sizeof(w))<0)
+    puts(strerror(errno));
   close(pipes[0]); close(pipes[1]);
   exit(0);
 }
@@ -258,7 +259,8 @@ int netc_t::automorphism_race(TCL_args args)
 #endif
 
     int winner;
-    read(pipes[read_pipe],&winner,sizeof(winner));
+    if (read(pipes[read_pipe],&winner,sizeof(winner))<0)
+      throw error(strerror(errno));
     for (size_t i=0; i<children.size(); ++i)
       {
         //      cout << "killing pid: "<<children[i]<<endl;
@@ -292,7 +294,8 @@ int netc_t::bliss_race(TCL_args args)
     {
       sleep(timeout);
       int w=-1;
-      write(pipes[write_pipe], &w, sizeof(w));
+      if (write(pipes[write_pipe], &w, sizeof(w))<0)
+        puts(strerror(errno));
       close(pipes[0]); close(pipes[1]);
       exit(0);
     }
@@ -308,7 +311,8 @@ int netc_t::bliss_race(TCL_args args)
           igraph_bliss_sh_t sh(static_cast<igraph_bliss_sh_t>(w));
           igraph_bliss_info_t ret;
           igraph_automorphisms(&ig,sh,&ret);
-          write(pipes[write_pipe], &w, sizeof(w));
+          if (write(pipes[write_pipe], &w, sizeof(w))<0)
+            puts(strerror(errno));
           close(pipes[0]); close(pipes[1]);
           exit(0);
         }
@@ -317,7 +321,8 @@ int netc_t::bliss_race(TCL_args args)
     }
 
     int winner;
-    read(pipes[read_pipe],&winner,sizeof(winner));
+    if (read(pipes[read_pipe],&winner,sizeof(winner))<0)
+      throw error(strerror(errno));
     for (size_t i=0; i<children.size(); ++i)
       {
         //      cout << "killing pid: "<<children[i]<<endl;

@@ -12,7 +12,6 @@
 #ifdef _WIN32
 #undef Realloc
 #include <windows.h>
-#include "tkPlatDecls.h"
 #endif
 
 #include "ecolab_epilogue.h"
@@ -23,9 +22,9 @@
 #endif
 #if USE_WIN32_SURFACE
 #include <cairo/cairo-win32.h>
-//// undocumented internal function for extracting the HDC from a Drawable
-//extern "C" HDC TkWinGetDrawableDC(Display*, Drawable, void*);
-//extern "C" HDC TkWinReleaseDrawableDC(Drawable, HDC, void*);
+// undocumented internal function for extracting the HDC from a Drawable
+extern "C" HDC TkWinGetDrawableDC(Display*, Drawable, void*);
+extern "C" HDC TkWinReleaseDrawableDC(Drawable, HDC, void*);
 #endif
 
 #if defined(MAC_OSX_TK)
@@ -38,7 +37,6 @@ using namespace ecolab;
 
 namespace
 {
-      // TODO refactor Canvas class to directly redraw surface whenever anything changes
     struct TkWinSurface: public ecolab::cairo::Surface
     {
       CairoSurface& csurf;
@@ -101,8 +99,8 @@ namespace
       // for getting the DC. We need to declare something to take
       // the state parameter - two long longs should be ample here
       long long state[2];
-      //      HDC hdc=TkWinGetDrawableDC(display, win, state);
-      HDC hdc=GetDC(Tk_GetHWND(win));
+      HDC hdc=TkWinGetDrawableDC(display, win, state);
+      //HDC hdc=GetDC(Tk_GetHWND(win));
       SaveDC(hdc);
       c.csurf.surface.reset
         (new TkWinSurface
@@ -132,7 +130,7 @@ namespace
       c.csurf.surface->surface(NULL);
 #if USE_WIN32_SURFACE
       RestoreDC(hdc,-1);
-      //      TkWinReleaseDrawableDC(win, hdc, state);
+      TkWinReleaseDrawableDC(win, hdc, state);
 #endif
     }
 

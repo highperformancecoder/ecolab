@@ -67,9 +67,7 @@ ifdef AEGIS
 FLAGS+=-Werror -Wall -Wno-unused-variable
 # for now, we maintain the code for C++98 standard
 # noexcept-type is a warning about ABI changes coming in C++17
-# unused-local-typedefs is a (harmless) issue with classdesc
-CXXFLAGS+=-std=c++98 -Wno-noexcept-type -Wno-unused-local-typedefs
-#-Wno-parentheses 
+CXXFLAGS+=-Wno-noexcept-type
 endif
 
 # needed for generating .so files
