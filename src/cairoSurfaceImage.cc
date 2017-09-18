@@ -12,8 +12,8 @@
 #ifdef _WIN32
 #undef Realloc
 #include <windows.h>
-#endif
 #include "tkPlatDecls.h"
+#endif
 
 #include "ecolab_epilogue.h"
 #define USE_WIN32_SURFACE defined(CAIRO_HAS_WIN32_SURFACE) && !defined(__CYGWIN__)
@@ -114,9 +114,9 @@ namespace
         (new TkWinSurface
          (c.csurf, c.master,
           cairo_quartz_surface_create_for_cg_context(nctx.context, Tk_Width(c.tkWin), Tk_Height(c.tkWin))));
-      // TODO: offsets here appear to be quite arbitrary!!!
-      cairo_surface_set_device_offset(c.canvas.surface->surface(),27,Tk_Height(c.tkWin)+37);
-      cairo_surface_set_device_scale(c.canvas.surface->surface(),1,-1);
+      // x offset required because MacOSX draws a thick white border around this
+      cairo_surface_set_device_offset(c.csurf.surface->surface(),30,Tk_Height(c.tkWin));
+      cairo_surface_set_device_scale(c.csurf.surface->surface(),1,-1);
 #else
       int depth;
       Visual *visual = Tk_GetVisual(interp(), c.tkWin, "default", &depth, NULL);

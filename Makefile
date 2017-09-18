@@ -54,6 +54,12 @@ ifdef XDR
 OBJS+=src/xdr_pack.o
 endif
 
+# build for Mac Aqua interface, requires special static build of Tk.
+ifdef MAC_OSX_TK
+CXXFLAGS+=-DMAC_OSX_TK 
+OBJS+=src/getContext.o
+endif
+
 CDHDRS=ref.cd random.cd random_basic.cd TCL_obj_base.cd netcomplexity.cd graph.cd cachedDBM.cd sparse_mat.cd analysis.cd analysisBLT.cd analysisCairo.cd plot.cd
 ifdef UNURAN
 CDHDRS+=random_unuran.cd
@@ -290,6 +296,9 @@ $(ECOLAB_HOME)/$(MCFG):
 
 generate_nauty_sizes: generate_nauty_sizes.c
 	$(CC) $(FLAGS) $(OPT) $< -o $@
+
+src/getContext.o: src/getContext.cc
+	g++ -ObjC++ -DMAC_OSX_TK -I/opt/local/include -Iinclude -c $< -o $@
 
 include/nauty_sizes.h: generate_nauty_sizes
 ifdef MXE
