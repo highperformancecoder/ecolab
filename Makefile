@@ -344,7 +344,9 @@ compileTest:
 	$(MAKE) clean; $(MAKE) MXE=1 DEBUG=1 
 	$(MAKE) clean; $(MAKE) BDB= GDBM= 
 	$(MAKE) clean; $(MAKE) DYNAMIC=1 GCC=1
-	$(MAKE) clean; $(MAKE) CPLUSPLUS=clang++
+# temporary change, because clang seems to be currently broken
+#	$(MAKE) clean; $(MAKE) CPLUSPLUS=clang++
+	$(MAKE) clean; $(MAKE) CPLUSPLUS="/usr/bin/clang++ -I/usr/lib64/clang/4.0.1/include"
 	$(MAKE) clean; $(MAKE) TIMER=1
 	$(MAKE) clean; $(MAKE) CAIRO=1 TK=    #see ticket #139
 	$(MAKE) clean; $(MAKE) ICC=1
