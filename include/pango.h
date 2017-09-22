@@ -30,7 +30,8 @@ namespace ecolab
     void operator=(const Pango&);
     Pango(const Pango&);
   public:
-    double angle; // angle the text  
+    double angle; // angle the text
+    static const char *defaultFamily;
     Pango(cairo_t* cairo): 
       cairo(cairo), layout(pango_cairo_create_layout(cairo)), angle(0) 
     {
@@ -40,6 +41,8 @@ namespace ecolab
           fd=pango_font_description_copy
             (pango_context_get_font_description(pango_layout_get_context(layout)));
         }
+      if (defaultFamily)
+        pango_font_description_set_family(fd,defaultFamily);
       pango_layout_set_font_description(layout, fd); //asume ownership not passe
     }
     ~Pango() {pango_font_description_free(fd); g_object_unref(layout); }
@@ -52,6 +55,10 @@ namespace ecolab
       pango_font_description_set_size(fd, gint(sz*PANGO_SCALE));
       pango_layout_set_font_description(layout, fd); //asume ownership not passed?
     }
+    void setFontFamily(const char* family) {
+      pango_font_description_set_family(fd,family);
+      pango_layout_set_font_description(layout, fd); //asume ownership not passe 
+  }
     double getFontSize() const {
       return pango_font_description_get_size(fd)/double(PANGO_SCALE);
     }
