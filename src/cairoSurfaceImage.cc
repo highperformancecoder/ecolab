@@ -71,6 +71,7 @@ namespace
             if (CairoSurface* csurf=mb->memberPtrCasted<CairoSurface>())
               {
                 *masterData=new CD(0,master,*csurf);
+                Tk_ImageChanged(master,-1000000,-1000000,2000000,2000000,2000000,2000000);
                 return TCL_OK;
               }
           Tcl_AppendResult(interp,"Not a CairoSurface",NULL);
