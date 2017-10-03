@@ -360,8 +360,7 @@ namespace ecolab
     double fy=0.03*h;
 
     cairo_save(cairo);
-    cairo_identity_matrix(cairo);
-    cairo_translate(cairo,-0.5*w, 0.5*h);
+    cairo_translate(cairo,0, h);
     cairo_scale(cairo,1,-1);
 
     for (size_t i=0; i<x.size(); ++i)
@@ -458,7 +457,7 @@ namespace ecolab
     cairo_user_to_device_distance(cairo,&fx,&fy);
 
     cairo_save(cairo);
-    cairo_identity_matrix(cairo);
+    cairo_translate(cairo,0.5*width,0.5*height);
     Pango pango(cairo);
     if (!xlabel.empty())
       {
@@ -529,6 +528,9 @@ namespace ecolab
       sy=(height-2*offy-loffy)/dy;
     double rhsScale = dy/dy1;
 
+    if (legend) drawLegend(cairo,width,height);
+    labelAxes(cairo,width,height);
+
     //cairo_reset_clip(cairo);
     cairo_translate(cairo, offx+loffx-minx*sx, maxy*sy);
     cairo_scale(cairo, sx, -sy);
@@ -538,9 +540,6 @@ namespace ecolab
     cairo_rectangle(cairo,minx,miny,dx,dy);
     //cairo_clip_preserve(cairo);
     stroke(cairo);
-
-    if (legend) drawLegend(cairo,width,height);
-    labelAxes(cairo,width,height);
 
     // work out the font size we should use
     double fontSz=0.02*fontScale;
