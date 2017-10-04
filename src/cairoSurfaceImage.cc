@@ -35,6 +35,7 @@ extern "C" HDC TkWinReleaseDrawableDC(Drawable, HDC, void*);
 #endif
 
 using namespace ecolab;
+using namespace std;
 
 namespace
 {
@@ -126,8 +127,10 @@ namespace
           cairo_xlib_surface_create(display, win, visual, Tk_Width(c.tkWin), Tk_Height(c.tkWin))));
         
 #endif
+      width=min(width,Tk_Width(c.tkWin));
+      height=min(height,Tk_Height(c.tkWin));
       c.csurf.redraw(imageX,imageY,width,height);
-      //cairo_surface_flush(c.canvas.surface->surface());
+      cairo_surface_flush(c.csurf.surface->surface());
       // release surface prior to any context going out of scope
       c.csurf.surface->surface(NULL);
 #if USE_WIN32_SURFACE
