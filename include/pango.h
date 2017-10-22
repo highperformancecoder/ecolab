@@ -46,7 +46,7 @@ namespace ecolab
       pango_layout_set_font_description(layout, fd); //asume ownership not passe
     }
     ~Pango() {pango_font_description_free(fd); g_object_unref(layout); }
-    void setMarkup(const string& markup) {
+    void setMarkup(const std::string& markup) {
       pango_layout_set_markup(layout, markup.c_str(), -1);
       pango_layout_get_extents(layout,0,&bbox);
     }
@@ -91,7 +91,7 @@ namespace ecolab
   class Pango
   {
     cairo_t* cairo;
-    string markup;
+    std::string markup;
     cairo_text_extents_t bbox;
     double fontSize; // default according to cairo documentation
     // make this non-copiable so that it behaves the same as the real Pango one
@@ -101,7 +101,7 @@ namespace ecolab
     double angle; // angle the text  
     Pango(cairo_t* cairo): 
       cairo(cairo), fontSize(10), angle(0) {}
-    void setMarkup(const string& markup) {
+    void setMarkup(const std::string& markup) {
       this->markup=markup;
       cairo_text_extents(cairo,markup.c_str(),&bbox);
       
