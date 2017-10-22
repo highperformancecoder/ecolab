@@ -311,6 +311,10 @@ ifeq ($(HAVE_CBLAS),0)
 # if this is a 64 bit system, we also need to check lib64
 HAVE_CBLAS=$(words $(wildcard $(call search,lib64/libgslcblas.*)))
 endif
+ifeq ($(HAVE_CBLAS),0)
+# Ubuntu is its own little snowflake
+HAVE_CBLAS=$(words $(wildcard $(call search,lib/x86_64-linux-gnu/libgslcblas.*)))
+endif
 ifneq ($(HAVE_CBLAS),0)
 LIBS+=-lgslcblas
 endif
