@@ -61,13 +61,8 @@ namespace
     };
     
     // Define a new image type that renders a minsky::Canvas
-#ifdef USE_OLD_IMAGE
-    int createCI(Tcl_Interp* interp, char* name, int objc, char * objv[],
-                 Tk_ImageType* typePtr, Tk_ImageMaster master, ClientData *masterData)
-#else  
-    int createCI(Tcl_Interp* interp, const char* name, int objc, Tcl_Obj *const objv[],
-                 const Tk_ImageType* typePtr, Tk_ImageMaster master, ClientData *masterData)
-#endif
+    int createCI(Tcl_Interp* interp, CONST86 char* name, int objc, Tcl_Obj *const objv[],
+                 CONST86 Tk_ImageType* typePtr, Tk_ImageMaster master, ClientData *masterData)
     {
       try
         {
