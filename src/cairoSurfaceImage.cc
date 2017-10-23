@@ -34,6 +34,10 @@ extern "C" HDC TkWinReleaseDrawableDC(Drawable, HDC, void*);
 #include "getContext.h"
 #endif
 
+#if TK_MAJOR_VERSION==8 && TK_MINOR_VERSION < 6
+#define CONST86
+#endif
+
 using namespace ecolab;
 using namespace std;
 
