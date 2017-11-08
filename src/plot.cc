@@ -516,6 +516,7 @@ namespace ecolab
 #if defined(CAIRO)
 
     double dx=maxx-minx, dy=maxy-miny, dy1=maxy1-miny1;
+    if (dx*dy*dy1==0) return; // pathological, do nothing
     
     // axis label font size (in pixels)
     // offsets to allow space for axis labels
