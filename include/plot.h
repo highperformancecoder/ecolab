@@ -39,6 +39,22 @@ namespace ecolab
     std::vector<std::vector<double> > y;
     //classdesc::shared_ptr<cairo::TkPhotoSurface> surface;
     cairo::SurfacePtr surface;
+    
+    // transform y coordinates (handles RHS being a different scale, as
+    // well as manual scaling for minsky ticket #693)
+    struct XFY
+    {
+      bool logy=false;
+      double scale=1, o=0, o1=0;
+      XFY() {}
+      XFY(bool logy, double scale, double o, double o1): 
+        logy(logy), scale(scale), o(logy? log10(o): o), o1(o1) {
+      }
+      double operator()(double y) const {
+        return scale*((logy? log10(y): y)-o)+o1;
+      }
+    };
+
 
     CLASSDESC_ACCESS(Plot);
 
@@ -52,7 +68,7 @@ namespace ecolab
     /// draw grid and subgrid lines from \a tick to \a tick +
     /// increment. \a vertical indicates if the grid lines are
     /// vertical or horizontal
-    void drawGrid(cairo_t* cairo, double tick, double increment, bool vertical) const;
+    void drawGrid(cairo_t* cairo, double tick, double increment, bool vertical, const XFY&) const;
 
     void drawLegend(cairo_t*, double width, double height) const;
 

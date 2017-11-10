@@ -53,17 +53,17 @@ namespace
 //    return b*int(x/b);
 //  }
 
-  // displays a string represent 10^n
+  // displays a string represent ×10^n
   string orderOfMag(int n)
   {
     char label[20];
     if (abs(n)<=3)
-      sprintf(label,"%-6.*f",(n>0? 0: -n),pow(10.0,n));
+      sprintf(label,"×%-6.*f",(n>0? 0: -n),pow(10.0,n));
     else
 #ifdef PANGO
-      sprintf(label,"10<sup>%d</sup>",n); //pango markup used here
+      sprintf(label,"×10<sup>%d</sup>",n); //pango markup used here
 #else
-      sprintf(label,"1E%d",n); //fall back to basic Cairo text
+      sprintf(label,"E%d",n); //fall back to basic Cairo text
 #endif
     return label;
   }    
@@ -73,18 +73,33 @@ namespace
   string axisLabel(double x, double scale, bool log)
   {
     char label[10];
-    // change scale back to units
-    int iscale=int(floor(log10(scale)));
-    scale = pow(10.0, iscale);
-    int num=floor(x/scale+0.5);
-
     if (log)
       {
         if (x<=0) return ""; // -ve values meaningless
-        return orderOfMag(num+iscale);
+        if (x>=0.01 && x<1)
+          {
+            sprintf(label,"%.2f",x);
+          }
+        else if (x>=1 && x<=100)
+          {
+            sprintf(label,"%.0f",x);
+          }
+        else
+          {
+            int omag=int(log10(x));
+            int lead=x*pow(10,-omag);
+            sprintf(label,"%d×10<sup>%d</sup>",lead,omag);
+          }
       }
     else
-      sprintf(label,"%d",num);
+      {
+        // change scale back to units
+        int iscale=int(floor(log10(scale)));
+        scale = pow(10.0, iscale);
+        int num=floor(x/scale+0.5);
+
+        sprintf(label,"%d",num);
+     }
     return label;
   }
 
@@ -110,18 +125,33 @@ namespace
       incr *= 2;
   }
 
-  // transform y coordinates (handles RHS being a different scale)
-  struct XFY
+  class LogScale
   {
-    bool logy;
-    double scale, o, o1;
-    XFY() {}
-    XFY(bool logy, double scale, double o, double o1): 
-      logy(logy), scale(scale), o(o), o1(o1) {}
-    double operator()(double y) {
-      return scale*((logy? log10(y): y)-o)+o1;}
-  };
+    int div; //=2, 5 or 10
+    int scaleIncr=1;
+    double scale;
+  public:
+    double operator()(unsigned i) {
+      return (i%div+1)*pow(10,scaleIncr*(i/div))/div;
+    }
 
+    LogScale(double minv, double maxv, int maxTicks)
+    {
+      scale=pow(10.0, int(log10(minv)));
+      
+      double s=log10(maxv/scale) / maxTicks;
+      if (s>1)
+        {
+          scaleIncr = s+1;
+          div=1;
+        }
+      else if (s>0.5)
+        div=2;
+      else
+        div=5;
+    }
+  };
+      
   // adjust y bounds to handle pathological situations
   void adjustMinyMaxy(double& miny, double& maxy)
   {
@@ -243,46 +273,47 @@ namespace ecolab
           }
 
       }
-    if (logx)
-      {
-        if (minx<=0)
-          throw error("logarithmic xscale needs positive data");
-        minx=log10(minx);
-        maxx=log10(maxx);
-      }
-    else
+//    if (logx)
+//      {
+//        if (minx<=0)
+//          throw error("logarithmic xscale needs positive data");
+//        minx=log10(minx);
+//        maxx=log10(maxx);
+//      }
+//    else
+    if (!logx)
       {
         double dx=maxx-minx;
         minx = dx>0? minx-0.1*dx: -1;
         maxx = dx>0? maxx+0.3*dx: 1;
       }
-    if (logy)
-      {
-        if (miny<0 || (!penSide.empty() && miny1<0))
-          throw error("logarithmic yscale needs non-negative data");
-        if (miny==0)
-          {
-            // find next most minimum y
-            miny=maxy;
-            for (size_t i=0; i<x.size(); ++i)
-              if (penSide.size()<=i || penSide[i]==left)
-                for (size_t j=0; j<x[i].size(); ++j)
-                  if (y[i][j]<miny && y[i][j]>0) miny=y[i][j];
-          }
-        if (!penSide.empty() && miny1==0)
-          {
-            // find next most minimum y
-            miny1=maxy1;
-            for (size_t i=0; i<x.size(); ++i)
-              if (penSide.size()>i && penSide[i]==right)
-                for (size_t j=0; j<x[i].size(); ++j)
-                  if (y[i][j]<miny1 && y[i][j]>0) miny1=y[i][j];
-          }
-        miny=log10(miny);
-        maxy=log10(maxy);
-        miny1=log10(miny1);
-        maxy1=log10(maxy1);
-      }
+//    if (logy)
+//      {
+//        if (miny<0 || (!penSide.empty() && miny1<0))
+//          throw error("logarithmic yscale needs non-negative data");
+//        if (miny==0)
+//          {
+//            // find next most minimum y
+//            miny=maxy;
+//            for (size_t i=0; i<x.size(); ++i)
+//              if (penSide.size()<=i || penSide[i]==left)
+//                for (size_t j=0; j<x[i].size(); ++j)
+//                  if (y[i][j]<miny && y[i][j]>0) miny=y[i][j];
+//          }
+//        if (!penSide.empty() && miny1==0)
+//          {
+//            // find next most minimum y
+//            miny1=maxy1;
+//            for (size_t i=0; i<x.size(); ++i)
+//              if (penSide.size()>i && penSide[i]==right)
+//                for (size_t j=0; j<x[i].size(); ++j)
+//                  if (y[i][j]<miny1 && y[i][j]>0) miny1=y[i][j];
+//          }
+//        miny=log10(miny);
+//        maxy=log10(maxy);
+//        miny1=log10(miny1);
+//        maxy1=log10(maxy1);
+//      }
 
     adjustMinyMaxy(miny,maxy);
     adjustMinyMaxy(miny1,maxy1);
@@ -290,23 +321,23 @@ namespace ecolab
   }
 
   void Plot::drawGrid
-  (cairo_t* cairo, double tick, double increment, bool vertical) const
+  (cairo_t* cairo, double tick, double increment, bool vertical, const XFY& xfy) const
   {
     // draw first subgrid if necessary
     double min=vertical? minx: miny;
     if (tick > min && tick-increment<=min) 
-      drawGrid(cairo, tick-increment, increment, vertical);
+      drawGrid(cairo, tick-increment, increment, vertical, xfy);
 
     cairo_save(cairo);
     if (vertical)
       {
-        cairo_move_to(cairo,tick,miny);
-        cairo_line_to(cairo,tick,maxy);
+        cairo_move_to(cairo,iflogx(tick),xfy(miny));
+        cairo_line_to(cairo,iflogx(tick),xfy(maxy));
       }
     else
       {
-        cairo_move_to(cairo,minx,tick);
-        cairo_line_to(cairo,maxx,tick);
+        cairo_move_to(cairo,iflogx(minx),xfy(tick));
+        cairo_line_to(cairo,iflogx(maxx),xfy(tick));
       }
 
     cairo_save(cairo);
@@ -324,8 +355,8 @@ namespace ecolab
             double dx=0.1*increment;
             for (double x=tick+dx; x<tick+increment; x+=dx)
               {
-                cairo_move_to(cairo,x,miny);
-                cairo_line_to(cairo,x,maxy);
+                cairo_move_to(cairo,iflogx(x),xfy(miny));
+                cairo_line_to(cairo,iflogx(x),xfy(maxy));
               }
           }
         else
@@ -333,8 +364,8 @@ namespace ecolab
             double dy=0.1*increment;
             for (double y=tick+dy; y<tick+increment; y+=dy)
               {
-                cairo_move_to(cairo,minx,y);
-                cairo_line_to(cairo,maxx,y);
+                cairo_move_to(cairo,iflogx(minx),xfy(y));
+                cairo_line_to(cairo,iflogx(maxx),xfy(y));
               }
           }
         
@@ -517,6 +548,17 @@ namespace ecolab
 
     double dx=maxx-minx, dy=maxy-miny, dy1=maxy1-miny1;
     if (dx*dy*dy1==0) return; // pathological, do nothing
+    // check positivity of drawing range
+    if (dx<0 || dy<0 || displayRHSscale() && dy1<0)
+      throw error("plot bounds inverted");
+    if (logx && minx<=0)
+      throw error("logx requires positive range");
+    if (logy && miny<=0)
+      throw error("logy requires positive range");
+
+    dx=iflogx(maxx)-iflogx(minx);
+    dy=iflogy(maxy)-iflogy(miny);
+    dy1=iflogy(maxy1)-iflogy(miny1);
     
     // axis label font size (in pixels)
     // offsets to allow space for axis labels
@@ -525,113 +567,168 @@ namespace ecolab
       loffy=lh(width,height)*!xlabel.empty();
     
 
-    double sx=(width-offx-loffx-loffx1)/dx, 
-      sy=(height-2*offy-loffy)/dy;
-    double rhsScale = dy/dy1;
-
+    
     if (legend) drawLegend(cairo,width,height);
     labelAxes(cairo,width,height);
 
+    width-=offx+loffx+loffx1;
+    height-=2*offy+loffy;
+    double sx=width/dx, sy=height/dy;
+    double rhsScale = dy/dy1;
+    
     //cairo_reset_clip(cairo);
-    cairo_translate(cairo, offx+loffx-minx*sx, maxy*sy);
-    cairo_scale(cairo, sx, -sy);
+    cairo_translate(cairo, offx+loffx-iflogx(minx)*sx, height);
+
+    // NB do not use cairo scaling in y direction, but rather manually scale before passing to cairo.
+    // See ticket #693
+    cairo_scale(cairo, sx, -1);
     cairo_new_path(cairo);
 
     cairo_set_source_rgba(cairo, 0,0,0,1); //black
-    cairo_rectangle(cairo,minx,miny,dx,dy);
-    //cairo_clip_preserve(cairo);
+    cairo_rectangle(cairo,iflogx(minx),0,dx,height);
     stroke(cairo);
 
-    // work out the font size we should use
-    double fontSz=0.02*fontScale;
-    double fx=0, fy=fontSz*dy;
-    cairo_user_to_device_distance(cairo,&fx,&fy);
 
     cairo_set_source_rgba(cairo, 0, 0, 0, 1);
     double xtickIncrement, xtick;
-    computeIncrementAndOffset(minx, maxx, nxTicks, xtickIncrement, xtick);
 
     if (xtickIncrement<0) return; //avoid infinte loop
 
+    // work out the font size we should use
+    double fontSz=0.02*fontScale;
     Pango pango(cairo);
-    pango.setFontSize(fabs(fy));
-    if (!logx) // display scale multiplier
+    pango.setFontSize(fontSz*height);
+    XFY aff(logy, sy, miny, 0); //manual affine transform - see ticket #693
+    if (logx)
       {
-        cairo_move_to(cairo, maxx-0.05*dx*(1+fontScale), miny+0.04*dy*(1+fontScale));
-        pango.setMarkup("x "+orderOfMag(floor(log10(xtickIncrement))));
-        pango.show();
+        LogScale ls(minx, maxx, nxTicks);
+        int i=0;
+        for (xtick=ls(0); xtick<maxx; i++, xtick=ls(i))
+          if (xtick>=minx)
+            {
+              pango.setMarkup(axisLabel(xtick,0,logx));
+              cairo_new_path(cairo);
+              cairo_move_to(cairo,log10(xtick),0);
+              cairo_line_to(cairo,log10(xtick),fontSz*height);
+              stroke(cairo);
+              cairo_move_to(cairo,log10(xtick),fontSz*height*2);
+              pango.show();
+              
+              if (grid)
+                drawGrid(cairo, xtick, ls(i+1)-xtick, true, aff);
+            }
       }
-
-    for (; xtick<maxx; xtick+=xtickIncrement)
-      if (xtick>=minx)
-        {
-          pango.setMarkup(axisLabel(xtick,xtickIncrement,logx));
-          
-          cairo_new_path(cairo);
-          cairo_move_to(cairo,xtick,miny);
-          cairo_line_to(cairo,xtick,miny+fontSz*dy);
-          stroke(cairo);
-          cairo_move_to(cairo,xtick,miny+fontSz*dy*2);
-          pango.show();
-
-          if (grid)
-            drawGrid(cairo, xtick, xtickIncrement, true);
-        }
-
-    double ytickIncrement, ytick;
-    computeIncrementAndOffset(miny, maxy, nyTicks, ytickIncrement, ytick);
-    if (ytickIncrement<0) return; //avoid infinte loop
-
-    if (!logy) // display scale multiplier
+    else
       {
-        cairo_move_to(cairo, minx+0.01*dx, maxy);
-        pango.setMarkup("x "+orderOfMag(floor(log10(ytickIncrement))));
+        computeIncrementAndOffset(minx, maxx, nxTicks, xtickIncrement, xtick);
+        cairo_move_to(cairo, maxx-0.05*dx*(1+fontScale), aff(miny+0.04*dy*(1+fontScale)));
+        pango.setMarkup(orderOfMag(floor(log10(xtickIncrement))));
         pango.show();
+
+        for (; xtick<maxx; xtick+=xtickIncrement)
+          if (xtick>=minx)
+            {
+              pango.setMarkup(axisLabel(xtick,xtickIncrement,logx));
+              
+              cairo_new_path(cairo);
+              cairo_move_to(cairo,xtick,aff(miny));
+              cairo_line_to(cairo,xtick,aff(miny)+fontSz*dy);
+              stroke(cairo);
+              cairo_move_to(cairo,xtick,aff(miny)+fontSz*dy*2);
+              pango.show();
+              
+              if (grid)
+                drawGrid(cairo, xtick, xtickIncrement, true, aff);
+            }
       }
+    
+    double rightMargin=0.02*dx;
 
-    for (; ytick<maxy; ytick+=ytickIncrement)
-      if (ytick>=miny+fontSz*dy)
-        {
-          pango.setMarkup(axisLabel(ytick,ytickIncrement,logy));
-
-          cairo_new_path(cairo);
-          cairo_move_to(cairo,minx,ytick);
-          cairo_line_to(cairo,minx+fontSz*dx,ytick);
-          stroke(cairo);
-          cairo_move_to(cairo,minx,ytick);
-          pango.show();
-          if (grid)
-            drawGrid(cairo, ytick, ytickIncrement, false);
-        }
-
-    if (displayRHSscale())
+    if (logy)
       {
-        // draw scale on right hand side
-        computeIncrementAndOffset(miny1, maxy1, nyTicks, ytickIncrement, ytick);
-        double rightMargin=0.02*dx;
-
-        if (!logy) // display scale multiplier
+        LogScale ls(miny, maxy, nyTicks);
+        int i=0;
+        for (double ytick=ls(0); ytick<maxy; i++, ytick=ls(i))
+          if (aff(ytick)>=fontSz*height)
           {
-            pango.setMarkup("x "+orderOfMag(floor(log10(ytickIncrement))));
-            cairo_move_to(cairo, maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin, maxy);
+            pango.setMarkup(axisLabel(ytick,0,logy));
+            cairo_new_path(cairo);
+            cairo_move_to(cairo,iflogx(minx),aff(ytick));
+            cairo_line_to(cairo,iflogx(minx)+fontSz*dx,aff(ytick));
+            stroke(cairo);
+            cairo_move_to(cairo,iflogx(minx),aff(ytick));
             pango.show();
+            if (grid)
+              drawGrid(cairo, ytick, ls(i+1)-ytick, false, aff);
           }
+        if (displayRHSscale())
+          {
+            LogScale ls(miny1, maxy1, nyTicks);
+            for (double ytick=ls(i=0); ytick<maxy1; i++, ytick=ls(i))
+              if (aff(ytick)>=fontSz*height)
+                {
+                  pango.setMarkup(axisLabel(ytick,0,logy));
+                  
+                  cairo_new_path(cairo);
+                  double yt=aff((ytick-miny1)*rhsScale+miny);
+                  cairo_move_to(cairo,maxx,yt);
+                  cairo_line_to(cairo,minx+0.95*dx,yt);
+                  stroke(cairo);
+                  cairo_move_to(cairo,maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin,yt);
+                  pango.show();
+                }
+          }
+      }
+    else
+      {
+        double ytickIncrement, ytick;
+        computeIncrementAndOffset(miny, maxy, nyTicks, ytickIncrement, ytick);
+        if (ytickIncrement<0) return; //avoid infinte loop
 
-        for (; ytick<maxy1; ytick+=ytickIncrement)
-          if (ytick>=miny1+fontSz*dy1)
+        cairo_move_to(cairo, minx+0.01*dx, aff(maxy));
+        pango.setMarkup(orderOfMag(floor(log10(ytickIncrement))));
+        pango.show();
+
+        for (; ytick<maxy; ytick+=ytickIncrement)
+          if (aff(ytick)>=fontSz*height)
             {
               pango.setMarkup(axisLabel(ytick,ytickIncrement,logy));
 
               cairo_new_path(cairo);
-              double yt=(ytick-miny1)*rhsScale+miny;
-              cairo_move_to(cairo,maxx,yt);
-              cairo_line_to(cairo,minx+0.95*dx,yt);
+              cairo_move_to(cairo,iflogx(minx),aff(ytick));
+              cairo_line_to(cairo,iflogx(minx)+fontSz*dx,aff(ytick));
               stroke(cairo);
-              cairo_move_to(cairo,maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin,yt);
+              cairo_move_to(cairo,iflogx(minx),aff(ytick));
               pango.show();
-        }
-      }
+              if (grid)
+                drawGrid(cairo, ytick, ytickIncrement, false, aff);
+            }
 
+        if (displayRHSscale())
+          {
+            // draw scale on right hand side
+            computeIncrementAndOffset(miny1, maxy1, nyTicks, ytickIncrement, ytick);
+            
+            pango.setMarkup("x "+orderOfMag(floor(log10(ytickIncrement))));
+            cairo_move_to(cairo, maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin, aff(maxy));
+            pango.show();
+            
+            for (; ytick<maxy1; ytick+=ytickIncrement)
+              if (ytick>=miny1+fontSz*dy1)
+                {
+                  pango.setMarkup(axisLabel(ytick,ytickIncrement,logy));
+                  
+                  cairo_new_path(cairo);
+                  double yt=aff((ytick-miny1)*rhsScale+miny);
+                  cairo_move_to(cairo,maxx,yt);
+                  cairo_line_to(cairo,minx+0.95*dx,yt);
+                  stroke(cairo);
+                  cairo_move_to(cairo,maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin,yt);
+                  pango.show();
+                }
+          }
+      }
+    
     if (!x.empty())
       for (size_t i=0; i<x.size(); ++i)
         {
@@ -639,11 +736,13 @@ namespace ecolab
           cairo_set_source_rgba(cairo, colour.r, colour.g, colour.b, colour.a);
           
           // transform y coordinates (handles RHS being a different scale)
-          XFY xfy;
+          XFY xfy=aff;
           if (i<penSide.size() && penSide[i]==right)
-            xfy=XFY(logy, rhsScale, miny1, miny);
-          else
-            xfy=XFY(logy, 1, 0, 0);
+            {
+              xfy.scale*=rhsScale;
+              xfy.o=miny1;
+              xfy.o1=logy? log10(miny)-log10(miny1): miny-miny1;
+            }
 
           if (x[i].size()>1)
             {
@@ -653,8 +752,7 @@ namespace ecolab
                   cairo_new_path(cairo);
                   cairo_move_to(cairo, iflogx(x[i][0]), xfy(y[i][0]));
                   for (size_t j=1; j<x[i].size(); ++j)
-                    if (inBounds(iflogx(x[i][j-1]), xfy(y[i][j-1])) && 
-                        inBounds(iflogx(x[i][j]), xfy(y[i][j])))
+                    if (inBounds(x[i][j-1], y[i][j-1]) && inBounds(x[i][j], y[i][j]))
                       cairo_line_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
                     else
                       cairo_move_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
@@ -662,21 +760,21 @@ namespace ecolab
                   if (leadingMarker)
                     cairo_rectangle
                         (cairo, iflogx(x[i].back()), xfy(y[i].back()), 
-                         0.01*dx,  0.01*dy);
+                         0.01*dx,  0.01*dy*sy);
                   stroke(cairo);
                   break;
                 case bar:
                   {
                     size_t j=0;
                     float w = abs(iflogx(x[i][1]) - iflogx(x[i][0]));
-                    if (inBounds(iflogx(x[i][j]), xfy(y[i][j])))
+                    if (inBounds(iflogx(x[i][j]), y[i][j]))
                       {
                         cairo_rectangle(cairo, iflogx(x[i][0])-0.5*w, 0, w, 
                                         xfy(y[i][0]));
                         cairo_fill(cairo);
                       }
                     for (++j; j<x[i].size()-1; ++j)
-                      if (inBounds(iflogx(x[i][j]), xfy(y[i][j])))
+                      if (inBounds(iflogx(x[i][j]), y[i][j]))
                         {
                           w=min(abs(iflogx(x[i][j]) - iflogx(x[i][j-1])), 
                                 abs(iflogx(x[i][j+1])-iflogx(x[i][j])));
@@ -684,7 +782,7 @@ namespace ecolab
                                           xfy(y[i][j]));
                           cairo_fill(cairo);
                         }
-                    if (inBounds(iflogx(x[i][j]), xfy(y[i][j])))
+                    if (inBounds(iflogx(x[i][j]), y[i][j]))
                       {
                         w=abs(iflogx(x[i][j]) - iflogx(x[i][j-1]));
                         cairo_rectangle(cairo, iflogx(x[i][j])-0.5*w, 0, w, 

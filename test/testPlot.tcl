@@ -46,6 +46,22 @@ for {set i 0} {$i<10} {incr i} {
 }
 gets stdin
 
+testPlot.clear
+for {set i 1} {$i<=10} {incr i} {
+    testPlot.plot $i [expr exp([r.rand])]
+}
+
+testPlot.subgrid 1
+testPlot.logx 1
+testPlot.logy 1
+testPlot.redraw
+update
+gets stdin
+testPlot.logx 0
+testPlot.logy 0
+testPlot.subgrid 0
+testPlot.clear
+
 proc doPlot {nPens nx} {
     testPlot.clear
     for {set i 0} {$i<$nx} {incr i} {
