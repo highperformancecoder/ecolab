@@ -44,9 +44,9 @@ namespace ecolab
     // well as manual scaling for minsky ticket #693)
     struct XFY
     {
-      bool logy=false;
-      double scale=1, o=0, o1=0;
-      XFY() {}
+      bool logy;
+      double scale, o, o1;
+      XFY():logy(false), scale(1), o(0), o1(0)  {}
       XFY(bool logy, double scale, double o, double o1): 
         logy(logy), scale(scale), o(logy? log10(o): o), o1(o1) {
       }

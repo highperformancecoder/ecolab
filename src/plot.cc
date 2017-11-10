@@ -72,7 +72,7 @@ namespace
   // magnitude if log
   string axisLabel(double x, double scale, bool log)
   {
-    char label[10];
+    char label[30];
     if (log)
       {
         if (x<=0) return ""; // -ve values meaningless
@@ -128,14 +128,14 @@ namespace
   class LogScale
   {
     int div; //=2, 5 or 10
-    int scaleIncr=1;
+    int scaleIncr;
     double scale;
   public:
     double operator()(unsigned i) {
       return (i%div+1)*pow(10,scaleIncr*(i/div))/div;
     }
 
-    LogScale(double minv, double maxv, int maxTicks)
+    LogScale(double minv, double maxv, int maxTicks): scaleIncr(1)
     {
       scale=pow(10.0, int(log10(minv)));
       
@@ -549,12 +549,21 @@ namespace ecolab
     double dx=maxx-minx, dy=maxy-miny, dy1=maxy1-miny1;
     if (dx*dy*dy1==0) return; // pathological, do nothing
     // check positivity of drawing range
-    if (dx<0 || dy<0 || displayRHSscale() && dy1<0)
-      throw error("plot bounds inverted");
+    if (dx<0 || dy<0 || (displayRHSscale() && dy1<0))
+      {
+        cerr << "plot bounds inverted" << endl;
+        return;
+      }
     if (logx && minx<=0)
-      throw error("logx requires positive range");
+      {
+        cerr << "logx requires positive range"<<endl;
+        return;
+      }
     if (logy && miny<=0)
-      throw error("logy requires positive range");
+      {
+        cerr<<"logy requires positive range"<<endl;
+        return;
+      }
 
     dx=iflogx(maxx)-iflogx(minx);
     dy=iflogy(maxy)-iflogy(miny);
