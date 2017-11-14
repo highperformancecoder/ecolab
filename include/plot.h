@@ -34,12 +34,7 @@ namespace ecolab
 
   class Plot
   {
-    string m_image;
-    std::vector<std::vector<double> > x;
-    std::vector<std::vector<double> > y;
-    //classdesc::shared_ptr<cairo::TkPhotoSurface> surface;
-    cairo::SurfacePtr surface;
-    
+  public:
     // transform y coordinates (handles RHS being a different scale, as
     // well as manual scaling for minsky ticket #693)
     struct XFY
@@ -54,6 +49,13 @@ namespace ecolab
         return scale*((logy? log10(y): y)-o)+o1;
       }
     };
+  private:    
+    string m_image;
+    std::vector<std::vector<double> > x;
+    std::vector<std::vector<double> > y;
+    //classdesc::shared_ptr<cairo::TkPhotoSurface> surface;
+    cairo::SurfacePtr surface;
+    
 
 
     CLASSDESC_ACCESS(Plot);
