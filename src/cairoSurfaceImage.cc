@@ -114,14 +114,19 @@ namespace
          (c.csurf, c.master,
           cairo_win32_surface_create(hdc)));
 #elif defined(MAC_OSX_TK)
-      NSContext nctx(win);
+      // calculate the offset of the window within it's toplevel
+      int xoffs=0, yoffs=0;
+      for (Tk_Window w=c.tkWin; Tk_Parent(w); w=Tk_Parent(w))
+        {
+          xoffs+=Tk_X(w);
+          yoffs+=Tk_Y(w);
+        }
+      
+      NSContext nctx(win, xoffs, yoffs, Tk_Height(c.tkWin));
       c.csurf.surface.reset
         (new TkWinSurface
          (c.csurf, c.master,
           cairo_quartz_surface_create_for_cg_context(nctx.context, Tk_Width(c.tkWin), Tk_Height(c.tkWin))));
-      // x offset required because MacOSX draws a thick white border around this
-      cairo_surface_set_device_offset(c.csurf.surface->surface(),30,Tk_Height(c.tkWin));
-      cairo_surface_set_device_scale(c.csurf.surface->surface(),1,-1);
 #else
       int depth;
       Visual *visual = Tk_GetVisual(interp(), c.tkWin, "default", &depth, NULL);
