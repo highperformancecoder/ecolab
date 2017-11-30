@@ -273,47 +273,12 @@ namespace ecolab
           }
 
       }
-//    if (logx)
-//      {
-//        if (minx<=0)
-//          throw error("logarithmic xscale needs positive data");
-//        minx=log10(minx);
-//        maxx=log10(maxx);
-//      }
-//    else
     if (!logx)
       {
         double dx=maxx-minx;
         minx = dx>0? minx-0.1*dx: -1;
         maxx = dx>0? maxx+0.3*dx: 1;
       }
-//    if (logy)
-//      {
-//        if (miny<0 || (!penSide.empty() && miny1<0))
-//          throw error("logarithmic yscale needs non-negative data");
-//        if (miny==0)
-//          {
-//            // find next most minimum y
-//            miny=maxy;
-//            for (size_t i=0; i<x.size(); ++i)
-//              if (penSide.size()<=i || penSide[i]==left)
-//                for (size_t j=0; j<x[i].size(); ++j)
-//                  if (y[i][j]<miny && y[i][j]>0) miny=y[i][j];
-//          }
-//        if (!penSide.empty() && miny1==0)
-//          {
-//            // find next most minimum y
-//            miny1=maxy1;
-//            for (size_t i=0; i<x.size(); ++i)
-//              if (penSide.size()>i && penSide[i]==right)
-//                for (size_t j=0; j<x[i].size(); ++j)
-//                  if (y[i][j]<miny1 && y[i][j]>0) miny1=y[i][j];
-//          }
-//        miny=log10(miny);
-//        maxy=log10(maxy);
-//        miny1=log10(miny1);
-//        maxy1=log10(maxy1);
-//      }
 
     adjustMinyMaxy(miny,maxy);
     adjustMinyMaxy(miny1,maxy1);
@@ -641,9 +606,9 @@ namespace ecolab
               
               cairo_new_path(cairo);
               cairo_move_to(cairo,xtick,aff(miny));
-              cairo_line_to(cairo,xtick,aff(miny)+fontSz*dy);
+              cairo_line_to(cairo,xtick,aff(miny)+fontSz*height);
               stroke(cairo);
-              cairo_move_to(cairo,xtick,aff(miny)+fontSz*dy*2);
+              cairo_move_to(cairo,xtick,aff(miny)+fontSz*height*2);
               pango.show();
               
               if (grid)
