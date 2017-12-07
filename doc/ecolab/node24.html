@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>get_vars/data_server</TITLE>
+<META NAME="description" CONTENT="get_vars/data_server">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node25.html">
+<LINK REL="previous" HREF="node23.html">
+<LINK REL="up" HREF="node23.html">
+<LINK REL="next" HREF="node25.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html615"
+  HREF="node25.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html609"
+  HREF="node23.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html603"
+  HREF="node23.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html611"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html613"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html616"
+  HREF="node25.html">checkpoint/restart</A>
+<B> Up:</B> <A NAME="tex2html610"
+  HREF="node23.html">Auxilliary Commands</A>
+<B> Previous:</B> <A NAME="tex2html604"
+  HREF="node23.html">Auxilliary Commands</A>
+ &nbsp; <B>  <A NAME="tex2html612"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html614"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H3><A NAME="SECTION00079100000000000000"></A><A NAME="get_vars_data_server"></A>
+<BR>
+get_vars/data_server
+</H3>
+
+<P>
+Syntax:
+
+<P>
+<EM>model.</EM><TT>get_vars</TT><A NAME="636"></A> <EM>server port</EM>
+
+<P>
+<EM>model.</EM><TT>data_server</TT><A NAME="640"></A> <EM>port</EM>
+
+<P>
+This pair implements a client server connection. <TT>  data_server</TT><A NAME="643"></A>  is
+executed on the compute server, and services any requests coming in on
+the given port. <TT>get_vars</TT><A NAME="645"></A> attaches to the compute
+server, and downloads the compute server's model variable into
+the client's model variable. The client can the follow on with the
+usual instruments for analysing the data. The advantage in this
+approach is that  X-window traffic can be avoided, the total amount of
+traffic between client and server can be controlled by how often these
+routines are called. An example setup is located in <TT>console.tcl</TT>
+and <TT>engine.tcl</TT>. An alternative client/server scenario can be
+contructed using Tcl sockets, and the console2.tcl/engine.tcl give an
+example of just transferring the <SPAN CLASS="MATH"></SPAN> of the predator-prey
+example. This has a great deal of flexibility, allowing, for example,
+messages to be propagated from client back to the server to allow user
+interactivity into the model
+
+<P>
+<BR><HR>
+
+</BODY>
+</HTML>

@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>Basic urand objects are not independent</TITLE>
+<META NAME="description" CONTENT="Basic urand objects are not independent">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node129.html">
+<LINK REL="previous" HREF="node127.html">
+<LINK REL="up" HREF="node127.html">
+<LINK REL="next" HREF="node129.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html2169"
+  HREF="node129.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html2163"
+  HREF="node127.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html2157"
+  HREF="node127.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html2165"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html2167"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html2170"
+  HREF="node129.html">Basic urand algorithm not</A>
+<B> Up:</B> <A NAME="tex2html2164"
+  HREF="node127.html">Problems with the basic</A>
+<B> Previous:</B> <A NAME="tex2html2158"
+  HREF="node127.html">Problems with the basic</A>
+ &nbsp; <B>  <A NAME="tex2html2166"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html2168"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H3><A NAME="SECTION000202100000000000000">
+Basic urand objects are not independent</A>
+</H3>
+
+<P>
+Because the basic urand class uses the underlying Unix <code>rand()</code>
+call, objects of type urand are not independent. Rather, they
+effectively refer to the same object. Setting the seed on one object
+of this class sets the seed for all objects of that class.
+
+<P>
+If for example, one wants to perform simulations in parallel, and
+compare results with different numbers of threads, then the simplest
+way of arranging this is to ensure that each object in the simulation
+requiring random numbers gets its own unique stream of random
+numbers. This can be done by assigning a different urand object to
+each simulation object, and giving them a distinct seed. Then no
+matter what the distribution of objects over threads are, the sequence
+random numbers will be the same from simulation to simulation,
+allowing meaningful comparisons. The UNURAN and GNUSL libraries both
+provide independently streamed random numbers.
+
+<P>
+<BR><HR>
+
+</BODY>
+</HTML>

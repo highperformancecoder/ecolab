@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>The Eco Lab Model</TITLE>
+<META NAME="description" CONTENT="The Eco Lab Model">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node49.html">
+<LINK REL="previous" HREF="node31.html">
+<LINK REL="up" HREF="ecolab.html">
+<LINK REL="next" HREF="node33.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html723"
+  HREF="node33.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html717"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html711"
+  HREF="node31.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html719"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html721"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html724"
+  HREF="node33.html">Lotka-Volterra Dynamics</A>
+<B> Up:</B> <A NAME="tex2html718"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html712"
+  HREF="node31.html">Eco Lab coding style</A>
+ &nbsp; <B>  <A NAME="tex2html720"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html722"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION000120000000000000000"></A><A NAME="model"></A>
+<BR>
+The <I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I> Model
+</H1>
+
+<P>
+The <I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I> model is but one model implemented using the <I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I>
+software. This section documents the model itself, and may be skipped
+if your intention is to use <I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I> for other models.
+
+<P>
+We start with a generalised form of the Lotka-Volterra equation 
+<BR>
+<DIV ALIGN="RIGHT" CLASS="mathdisplay">
+
+<!-- MATH
+ \begin{equation}
+\dot{\mbox{\boldmath {$n$}}} = \mbox{${\bf r}$}*\mbox{\boldmath {$n$}}+ \mbox{\boldmath {$n$}}*\mbox{\boldmath {$\beta$}}\mbox{\boldmath {$n$}}.
+\end{equation}
+ -->
+<A NAME="lotka-volterra"></A>
+<TABLE WIDTH="100%" ALIGN="CENTER">
+<TR VALIGN="MIDDLE"><TD ALIGN="CENTER" NOWRAP><A NAME="lotka-volterra"></A></TD>
+<TD CLASS="eqno" WIDTH=10 ALIGN="RIGHT">
+(<SPAN CLASS="arabic">1</SPAN>)</TD></TR>
+</TABLE>
+<BR CLEAR="ALL"></DIV><P></P>
+Here <SPAN CLASS="MATH"></SPAN> is the population density, the component <SPAN CLASS="MATH"></SPAN> being the
+number of individuals of species <SPAN CLASS="MATH"></SPAN>, <SPAN CLASS="MATH"></SPAN> is the difference
+between reproduction and death, <SPAN CLASS="MATH"></SPAN> is the interaction matrix,
+with <SPAN CLASS="MATH"></SPAN> being the interaction between species <SPAN CLASS="MATH"></SPAN> and <SPAN CLASS="MATH"></SPAN>, *
+referring to elementwise multiplication and <TT>mutate</TT> is the
+mutation operator.
+
+<P>
+<BR><HR>
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></A>
+
+<UL CLASS="ChildLinks">
+<LI><A NAME="tex2html725"
+  HREF="node33.html">Lotka-Volterra Dynamics</A>
+<LI><A NAME="tex2html726"
+  HREF="node34.html">Mutation</A>
+<LI><A NAME="tex2html727"
+  HREF="node35.html">Input Parameters</A>
+<LI><A NAME="tex2html728"
+  HREF="node36.html"><I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I> Model commands</A>
+<UL>
+<LI><A NAME="tex2html729"
+  HREF="node37.html">generate</A>
+<LI><A NAME="tex2html730"
+  HREF="node38.html">condense</A>
+<LI><A NAME="tex2html731"
+  HREF="node39.html">mutate</A>
+<LI><A NAME="tex2html732"
+  HREF="node40.html">migrate</A>
+<LI><A NAME="tex2html733"
+  HREF="node41.html">maxeig</A>
+<LI><A NAME="tex2html734"
+  HREF="node42.html">lifetimes</A>
+<LI><A NAME="tex2html735"
+  HREF="node43.html">random_interaction</A>
+<LI><A NAME="tex2html736"
+  HREF="node44.html">set_grid</A>
+<LI><A NAME="tex2html737"
+  HREF="node45.html">get</A>
+<LI><A NAME="tex2html738"
+  HREF="node46.html">forall</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html739"
+  HREF="node47.html">Spatial Variation</A>
+<UL>
+<LI><A NAME="tex2html740"
+  HREF="node48.html">Parallel Execution</A>
+</UL></UL>
+<!--End of Table of Child-Links-->
+<BR><HR>
+
+</BODY>
+</HTML>

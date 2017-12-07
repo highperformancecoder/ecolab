@@ -1,0 +1,790 @@
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/TeX Live for SUSE Linux) (preloaded format=latex 2017.11.21)  7 DEC 2017 14:54
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**./images.tex
+(./images.tex
+LaTeX2e <2017-04-15>
+Babel <3.10> and hyphenation patterns for 12 language(s) loaded.
+
+(/usr/share/texmf/tex/latex/base/latex209.def
+File: latex209.def 2015/02/22 v0.53 Standard LaTeX file
+
+          Entering LaTeX 2.09 COMPATIBILITY MODE
+ *************************************************************
+    !!WARNING!!    !!WARNING!!    !!WARNING!!    !!WARNING!!   
+ 
+ This mode attempts to provide an emulation of the LaTeX 2.09
+ author environment so that OLD documents can be successfully
+ processed. It should NOT be used for NEW documents!
+ 
+ New documents should use Standard LaTeX conventions and start
+ with the \documentclass command.
+ 
+ Compatibility mode is UNLIKELY TO WORK with LaTeX 2.09 style
+ files that change any internal macros, especially not with
+ those that change the FONT SELECTION or OUTPUT ROUTINES.
+ 
+ Therefore such style files MUST BE UPDATED to use
+          Current Standard LaTeX: LaTeX2e.
+ If you suspect that you may be using such a style file, which
+ is probably very, very old by now, then you should attempt to
+ get it updated by sending a copy of this error message to the
+ author of that file.
+ *************************************************************
+
+\footheight=\dimen102
+\@maxsep=\dimen103
+\@dblmaxsep=\dimen104
+\@cla=\count79
+\@clb=\count80
+\mscount=\count81
+(/usr/share/texmf/tex/latex/base/tracefnt.sty
+Package: tracefnt 2015/02/21 v3.0k Standard LaTeX package (font tracing)
+\tracingfonts=\count82
+LaTeX Info: Redefining \selectfont on input line 106.
+)
+\symbold=\mathgroup4
+\symsans=\mathgroup5
+\symtypewriter=\mathgroup6
+\symitalic=\mathgroup7
+\symsmallcaps=\mathgroup8
+\symslanted=\mathgroup9
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 268.
+LaTeX Font Info:    Redeclaring math alphabet \mathsf on input line 269.
+LaTeX Font Info:    Redeclaring math alphabet \mathtt on input line 270.
+LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 276.
+LaTeX Info: Redefining \em on input line 286.
+(/usr/share/texmf/tex/latex/base/latexsym.sty
+Package: latexsym 1998/08/17 v2.2e Standard LaTeX package (lasy symbols)
+\symlasy=\mathgroup10
+LaTeX Font Info:    Overwriting symbol font `lasy' in version `bold'
+(Font)                  U/lasy/m/n --> U/lasy/b/n on input line 52.
+)
+LaTeX Font Info:    Redeclaring math delimiter \lgroup on input line 332.
+LaTeX Font Info:    Redeclaring math delimiter \rgroup on input line 334.
+LaTeX Font Info:    Redeclaring math delimiter \bracevert on input line 336.
+) (/usr/share/texmf/tex/latex/base/article.cls
+Document Class: article 2014/09/29 v1.4h Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/size10.clo
+File: size10.clo 2014/09/29 v1.4h Standard LaTeX file (size option)
+)
+\c@part=\count83
+\c@section=\count84
+\c@subsection=\count85
+\c@subsubsection=\count86
+\c@paragraph=\count87
+\c@subparagraph=\count88
+\c@figure=\count89
+\c@table=\count90
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+Compatibility mode: definition of \rm ignored.
+Compatibility mode: definition of \sf ignored.
+Compatibility mode: definition of \tt ignored.
+Compatibility mode: definition of \bf ignored.
+Compatibility mode: definition of \it ignored.
+Compatibility mode: definition of \sl ignored.
+Compatibility mode: definition of \sc ignored.
+LaTeX Info: Redefining \cal on input line 496.
+LaTeX Info: Redefining \mit on input line 497.
+\bibindent=\dimen105
+) (/usr/share/texmf/tex/latex/pstricks/pstricks.sty
+Package: pstricks 2017/03/17 v0.63 LaTeX wrapper for `PSTricks' (RN,HV)
+(/usr/share/texmf/tex/latex/xcolor/xcolor.sty
+Package: xcolor 2016/05/11 v2.12 LaTeX color extensions (UK)
+(/usr/share/texmf/tex/latex/graphics-cfg/color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package xcolor Info: Driver file: dvips.def on input line 225.
+(/usr/share/texmf/tex/latex/graphics-def/dvips.def
+File: dvips.def 2016/07/10 v3.1a Driver-dependent file (DPC,SPQR)
+)
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1348.
+Package xcolor Info: Model `RGB' extended on input line 1364.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1366.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1367.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1368.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1369.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1370.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1371.
+) (/usr/share/texmf/tex/generic/pstricks/pstricks.tex (/usr/share/texmf/tex/gen
+eric/xkeyval/pst-xkey.tex
+File: pst-xkey.tex 2005/11/25 v1.6 PSTricks specialization of xkeyval (HA)
+(/usr/share/texmf/tex/latex/xkeyval/xkeyval.sty
+Package: xkeyval 2014/12/03 v2.7a package option processing (HA)
+(/usr/share/texmf/tex/generic/xkeyval/xkeyval.tex (/usr/share/texmf/tex/generic
+/xkeyval/xkvutils.tex
+\XKV@toks=\toks14
+\XKV@tempa@toks=\toks15
+(/usr/share/texmf/tex/generic/xkeyval/keyval.tex))
+\XKV@depth=\count91
+File: xkeyval.tex 2014/12/03 v2.7a key=value parser (HA)
+))) (/usr/share/texmf/tex/generic/pstricks/pst-fp.tex `pst-fp' v0.05, 2010/01/1
+7 (hv)
+\pstFP@xs=\count92
+\pstFP@xia=\count93
+\pstFP@xib=\count94
+\pstFP@xfa=\count95
+\pstFP@xfb=\count96
+\pstFP@rega=\count97
+\pstFP@regb=\count98
+\pstFP@regs=\count99
+\pstFP@times=\count100
+) (/usr/share/texmf/tex/generic/pgf/utilities/pgfutil-common.tex
+\pgfutil@everybye=\toks16
+\pgfutil@tempdima=\dimen106
+\pgfutil@tempdimb=\dimen107
+(/usr/share/texmf/tex/generic/pgf/utilities/pgfutil-common-lists.tex)) (/usr/sh
+are/texmf/tex/generic/pgf/utilities/pgfkeys.code.tex
+\pgfkeys@pathtoks=\toks17
+\pgfkeys@temptoks=\toks18
+(/usr/share/texmf/tex/generic/pgf/utilities/pgfkeysfiltered.code.tex
+\pgfkeys@tmptoks=\toks19
+)) (/usr/share/texmf/tex/generic/pgf/utilities/pgffor.code.tex (/usr/share/texm
+f/tex/generic/pgf/math/pgfmath.code.tex (/usr/share/texmf/tex/generic/pgf/math/
+pgfmathcalc.code.tex (/usr/share/texmf/tex/generic/pgf/math/pgfmathutil.code.te
+x
+\pgf@x=\dimen108
+\pgf@xa=\dimen109
+\pgf@xb=\dimen110
+\pgf@xc=\dimen111
+\pgf@y=\dimen112
+\pgf@ya=\dimen113
+\pgf@yb=\dimen114
+\pgf@yc=\dimen115
+\c@pgf@counta=\count101
+\c@pgf@countb=\count102
+\c@pgf@countc=\count103
+\c@pgf@countd=\count104
+\pgfutil@tempcnta=\count105
+\pgfutil@tempcntb=\count106
+) (/usr/share/texmf/tex/generic/pgf/math/pgfmathparser.code.tex
+\pgfmath@dimen=\dimen116
+\pgfmath@count=\count107
+\pgfmath@box=\box26
+\pgfmath@toks=\toks20
+\pgfmath@stack@operand=\toks21
+\pgfmath@stack@operation=\toks22
+) (/usr/share/texmf/tex/generic/pgf/math/pgfmathfunctions.code.tex (/usr/share/
+texmf/tex/generic/pgf/math/pgfmathfunctions.basic.code.tex) (/usr/share/texmf/t
+ex/generic/pgf/math/pgfmathfunctions.trigonometric.code.tex) (/usr/share/texmf/
+tex/generic/pgf/math/pgfmathfunctions.random.code.tex) (/usr/share/texmf/tex/ge
+neric/pgf/math/pgfmathfunctions.comparison.code.tex) (/usr/share/texmf/tex/gene
+ric/pgf/math/pgfmathfunctions.base.code.tex) (/usr/share/texmf/tex/generic/pgf/
+math/pgfmathfunctions.round.code.tex) (/usr/share/texmf/tex/generic/pgf/math/pg
+fmathfunctions.misc.code.tex)
+(/usr/share/texmf/tex/generic/pgf/math/pgfmathfunctions.integerarithmetics.code
+.tex))) (/usr/share/texmf/tex/generic/pgf/math/pgfmathfloat.code.tex
+\c@pgfmathroundto@lastzeros=\count108
+))
+\pgffor@iter=\dimen117
+\pgffor@skip=\dimen118
+\pgffor@stack=\toks23
+\pgffor@toks=\toks24
+)
+\psLoopIndex=\count109
+`PSTricks' v2.73a  <2017/05/22> (tvz)
+\pst@dima=\dimen119
+\pst@dimb=\dimen120
+\pst@dimc=\dimen121
+\pst@dimd=\dimen122
+\pst@dimg=\dimen123
+\pst@dimh=\dimen124
+\pst@dimm=\dimen125
+\pst@dimn=\dimen126
+\pst@dimo=\dimen127
+\pst@dimp=\dimen128
+\pst@hbox=\box27
+\pst@ibox=\box28
+\pst@boxg=\box29
+\pst@cnta=\count110
+\pst@cntb=\count111
+\pst@cntc=\count112
+\pst@cntd=\count113
+\pst@cntg=\count114
+\pst@cnth=\count115
+\pst@cntm=\count116
+\pst@cntn=\count117
+\pst@cnto=\count118
+\pst@cntp=\count119
+\@zero=\count120
+\pst@toks=\toks25
+(/usr/share/texmf/tex/generic/pstricks/pstricks.con)
+\psunit=\dimen129
+\psxunit=\dimen130
+\psyunit=\dimen131
+\pst@C@@rType=\count121
+\pslinewidth=\dimen132
+\psk@startLW=\dimen133
+\psk@endLW=\dimen134
+\pst@customdefs=\toks26
+\pslinearc=\dimen135
+\pst@symbolStep=\dimen136
+\pst@symbolWidth=\dimen137
+\pst@symbolLinewidth=\dimen138
+\everypsbox=\toks27
+\psframesep=\dimen139
+\pslabelsep=\dimen140
+\sh@wgridXunit=\dimen141
+\sh@wgridYunit=\dimen142
+\pst@shift=\dimen143
+)
+File: pstricks.tex 2017/05/22 v2.73a `PSTricks' (tvz,hv)
+(/usr/share/texmf/tex/generic/pstricks/pst-fp.tex)
+File: pst-fp.tex 2017/05/22 v2.73a `PST-fp' (hv)
+) (/usr/share/texmf/tex/latex/pst-node/pst-node.sty
+Package: pst-node 2012/09/18 v1.01 LaTeX wrapper for `pst-node' (HV)
+Package: pst-node 2010/04/22 package wrapper for pst-node.tex
+(/usr/share/texmf/tex/generic/pst-node/pst-node.tex  v1.39, 2017/01/20
+\psrow=\count122
+\pscol=\count123
+\psmatrixcnt=\count124
+\psrowsep=\skip43
+\pscolsep=\skip44
+\pst@args=\count125
+\num@pts=\count126
+\pst@argcnt=\count127
+)
+File: pst-node.tex 2017/01/20 1.39 `pst-node' (tvz,hv)
+) (/usr/share/texmf/tex/latex/html/html.sty) (/usr/share/texmf/tex/generic/epsf
+/epsf.sty
+This is `epsf.tex' v2.7.4 <14 February 2011>
+\epsffilein=\read1
+\epsfframemargin=\dimen144
+\epsfframethickness=\dimen145
+\epsfrsize=\dimen146
+\epsftmp=\dimen147
+\epsftsize=\dimen148
+\epsfxsize=\dimen149
+\epsfysize=\dimen150
+\pspoints=\dimen151
+) (/usr/share/texmf/tex/latex/base/makeidx.sty
+Package: makeidx 2014/09/29 v1.0m Standard LaTeX package
+) (/usr/share/texmf/tex/latex/base/ifthen.sty
+Package: ifthen 2014/09/29 v1.1c Standard LaTeX ifthen package (DPC)
+)
+\@indexfile=\write3
+\openout3 = `images.idx'.
+
+Writing index file images.idx
+
+! LaTeX Error: LaTeX2e command \usepackage in LaTeX 2.09 document.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.36 \usepackage
+                [latin1]{inputenc}
+This is a LaTeX 2.09 document, but it contains \usepackage.
+If you want to use the new features of LaTeX2e, your document
+should begin with \documentclass rather than \documentstyle
+
+
+! LaTeX Error: \usepackage before \documentclass.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.36 \usepackage[latin1]{
+                         inputenc}
+\usepackage may only appear in the document preamble, i.e.,
+between \documentclass and \begin{document}.
+
+\sizebox=\box30
+\lthtmlwrite=\write4
+
+! LaTeX Error: Command \selectlanguage already defined.
+               Or name \end... illegal, see p.192 of the manual.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.132 \providecommand{\selectlanguage}[1]{}
+                                           %
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+(./images.aux (/home/rks/github/ecolab/doc/using.aux) (/home/rks/github/ecolab/
+doc/model.aux) (/home/rks/github/ecolab/doc/classdesc.aux) (/home/rks/github/ec
+olab/doc/parallel.aux) (/home/rks/github/ecolab/doc/graphcode.aux) (/home/rks/g
+ithub/ecolab/doc/tcl++.aux) (/home/rks/github/ecolab/doc/arrays.aux) (/home/rks
+/github/ecolab/doc/tcl_arrays.aux) (/home/rks/github/ecolab/doc/analysis.aux) (
+/home/rks/github/ecolab/doc/random.aux) (/home/rks/github/ecolab/doc/graph.aux)
+(/home/rks/github/ecolab/doc/eco_strstream.aux) (/home/rks/github/ecolab/doc/ca
+chedDBM.aux))
+\openout1 = `images.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 136.
+LaTeX Font Info:    ... okay on input line 136.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 136.
+LaTeX Font Info:    ... okay on input line 136.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 136.
+LaTeX Font Info:    ... okay on input line 136.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 136.
+LaTeX Font Info:    ... okay on input line 136.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 136.
+LaTeX Font Info:    ... okay on input line 136.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 136.
+LaTeX Font Info:    ... okay on input line 136.
+
+latex2htmlLength hsize=349.0pt
+
+latex2htmlLength vsize=620.0pt
+
+latex2htmlLength hoffset=0.0pt
+
+latex2htmlLength voffset=0.0pt
+
+latex2htmlLength topmargin=0.0pt
+
+latex2htmlLength topskip=0.00003pt
+
+latex2htmlLength headheight=0.0pt
+
+latex2htmlLength headsep=0.0pt
+
+latex2htmlLength parskip=0.0pt plus 1.0pt
+
+latex2htmlLength oddsidemargin=63.0pt
+
+latex2htmlLength evensidemargin=63.0pt
+
+
+Overfull \hbox (20.88567pt too wide) in paragraph at lines 211--212
+[][] 
+ []
+
+l2hSize :figure264:199.1692pt::0.0pt::349.0pt.
+[1
+
+
+
+]
+Overfull \hbox (20.88567pt too wide) in paragraph at lines 264--265
+[][] 
+ []
+
+l2hSize :figure353:199.1692pt::0.0pt::349.0pt.
+[2
+
+
+]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 287.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 287.
+LaTeX Font Info:    Try loading font information for U+lasy on input line 287.
+(/usr/share/texmf/tex/latex/base/ulasy.fd
+File: ulasy.fd 1998/08/17 v2.2e LaTeX symbol font definitions
+)
+l2hSize :tex2html_wrap_inline1279:6.45831pt::0.0pt::6.50238pt.
+[3
+
+
+]
+LaTeX Font Info:    Font shape `U/lasy/b/n' in size <7> not available
+(Font)              Font shape `U/lasy/m/n' tried instead on input line 302.
+LaTeX Font Info:    Font shape `U/lasy/b/n' in size <5> not available
+(Font)              Font shape `U/lasy/m/n' tried instead on input line 302.
+l2hSize :displaymath2086:13.94444pt::0.0pt::349.0pt.
+[4
+
+
+]
+l2hSize :tex2html_wrap_inline2586:6.95831pt::6.95831pt::9.83167pt.
+[5
+
+
+]
+l2hSize :tex2html_wrap_inline2588:6.59525pt::0.0pt::3.94516pt.
+[6
+
+
+]
+l2hSize :tex2html_wrap_inline2590:6.45831pt::0.0pt::5.23613pt.
+[7
+
+
+]
+l2hSize :tex2html_wrap_inline2592:7.44444pt::7.44444pt::6.68405pt.
+[8
+
+
+]
+l2hSize :tex2html_wrap_inline2594:7.44444pt::7.44444pt::13.19913pt.
+[9
+
+
+]
+l2hSize :tex2html_wrap_inline2598:7.09525pt::7.09525pt::5.19052pt.
+[10
+
+
+]
+l2hSize :displaymath2094:13.94444pt::0.0pt::349.0pt.
+[11
+
+
+]
+l2hSize :tex2html_wrap_inline2608:6.81749pt::0.0pt::25.96288pt.
+[12
+
+
+]
+l2hSize :tex2html_wrap_inline2612:7.08334pt::0.0pt::7.62964pt.
+[13
+
+
+]
+l2hSize :displaymath2101:16.00005pt::0.0pt::349.0pt.
+[14
+
+
+]
+l2hSize :tex2html_wrap_inline2620:6.81749pt::0.0pt::7.62964pt.
+[15
+
+
+]
+l2hSize :displaymath2107:31.52795pt::0.0pt::349.0pt.
+[16
+
+
+]
+l2hSize :displaymath2116:25.7207pt::0.0pt::349.0pt.
+[17
+
+
+]
+l2hSize :tex2html_wrap_inline2636:9.48335pt::9.48335pt::35.40575pt.
+[18
+
+
+]
+l2hSize :displaymath2125:24.79865pt::0.0pt::349.0pt.
+[19
+
+
+]
+l2hSize :tex2html_wrap_inline2664:7.44444pt::7.44444pt::98.71304pt.
+[20
+
+
+]
+l2hSize :tex2html_wrap_inline2129:15.0001pt::15.0001pt::73.27084pt.
+[21
+
+
+]
+l2hSize :tex2html_wrap_inline2672:8.0pt::8.0pt::42.72234pt.
+[22
+
+
+]
+l2hSize :tex2html_wrap_inline2676:8.0pt::8.0pt::82.36087pt.
+[23
+
+
+]
+l2hSize :tex2html_wrap_inline2684:8.64003pt::8.64003pt::65.23128pt.
+[24
+
+
+]
+l2hSize :tex2html_wrap_inline2686:6.45831pt::0.0pt::6.2153pt.
+[25
+
+
+]
+l2hSize :displaymath2135:62.81119pt::0.0pt::349.0pt.
+[26
+
+
+]
+l2hSize :displaymath2160:14.5pt::0.0pt::349.0pt.
+[27
+
+
+]
+l2hSize :displaymath2169:19.29858pt::0.0pt::349.0pt.
+[28
+
+
+]
+l2hSize :displaymath2175:14.47217pt::0.0pt::349.0pt.
+[29
+
+
+]
+l2hSize :tex2html_wrap_inline2706:6.95831pt::6.95831pt::10.98851pt.
+[30
+
+
+]
+l2hSize :tex2html_wrap_inline2708:8.64003pt::8.64003pt::74.09758pt.
+[31
+
+
+]
+l2hSize :displaymath2177:13.35971pt::0.0pt::349.0pt.
+[32
+
+
+]
+l2hSize :displaymath2184:14.5pt::0.0pt::349.0pt.
+[33
+
+
+]
+l2hSize :tex2html_wrap_inline2730:6.45831pt::0.0pt::5.23613pt.
+[34
+
+
+]
+l2hSize :tex2html_wrap_inline2734:7.44444pt::7.44444pt::7.4375pt.
+[35
+
+
+]
+l2hSize :tex2html_wrap_inline2736:8.0pt::8.0pt::21.80214pt.
+[36
+
+
+]
+l2hSize :tex2html_wrap_inline2742:6.95831pt::6.95831pt::7.5787pt.
+[37
+
+
+]
+l2hSize :tex2html_wrap_inline2744:6.95831pt::6.95831pt::5.67018pt.
+[38
+
+
+]
+l2hSize :tex2html_wrap_inline2752:8.0pt::8.0pt::39.0829pt.
+[39
+
+
+]
+l2hSize :tex2html_wrap_inline2754:8.87892pt::0.0pt::35.68849pt.
+[40
+
+
+]
+l2hSize :tex2html_wrap_inline2756:6.45831pt::0.0pt::6.57294pt.
+[41
+
+
+]
+l2hSize :tex2html_wrap_inline2762:6.95831pt::6.95831pt::17.45609pt.
+[42
+
+
+]
+l2hSize :tex2html_wrap_inline2764:6.95831pt::6.95831pt::11.38318pt.
+[43
+
+
+]
+l2hSize :tex2html_wrap_inline2772:6.95831pt::6.95831pt::8.27783pt.
+[44
+
+
+]
+l2hSize :tex2html_wrap_inline2776:7.44444pt::7.44444pt::7.4375pt.
+[45
+
+
+]
+l2hSize :tex2html_wrap_inline2784:8.01782pt::8.01782pt::104.79054pt.
+[46
+
+
+]
+l2hSize :tex2html_wrap_inline2786:8.0pt::8.0pt::78.34685pt.
+[47
+
+
+]
+l2hSize :tex2html_wrap_inline2796:8.0pt::8.0pt::24.17831pt.
+[48
+
+
+]
+l2hSize :tex2html_wrap_inline2798:8.0pt::8.0pt::47.51155pt.
+[49
+
+
+]
+l2hSize :displaymath2198:25.00023pt::0.0pt::349.0pt.
+[50
+
+
+]
+l2hSize :tex2html_wrap_inline2800:8.0pt::8.0pt::45.62842pt.
+[51
+
+
+]
+l2hSize :tex2html_wrap_inline2802:6.45831pt::0.0pt::5.78592pt.
+[52
+
+
+]
+l2hSize :tex2html_wrap_inline2804:7.44444pt::7.44444pt::38.12036pt.
+[53
+
+
+]
+l2hSize :tex2html_wrap_inline2228:7.44444pt::7.44444pt::85.1361pt.
+[54
+
+
+]
+l2hSize :tex2html_wrap_inline2844:6.95831pt::6.95831pt::28.1649pt.
+[55
+
+
+]
+l2hSize :tex2html_wrap_inline2860:8.0pt::8.0pt::183.07938pt.
+[56
+
+
+]
+l2hSize :tex2html_wrap_inline2862:6.95831pt::6.95831pt::36.60764pt.
+[57
+
+
+]
+l2hSize :tex2html_wrap_inline2866:6.95831pt::6.95831pt::23.69904pt.
+[58
+
+
+]
+l2hSize :tex2html_wrap_inline2870:6.95831pt::6.95831pt::5.76163pt.
+[59
+
+
+]
+(polymorph-example.eps
+)
+l2hSize :figure3603:243.50159pt::0.0pt::349.0pt.
+[60
+
+
+]
+\openout2 = `parallel.aux'.
+
+No file parallel.tex.
+l2hSize :figure8721:12.0pt::0.0pt::0.0pt.
+[61
+
+
+
+
+]
+l2hSize :displaymath5373:14.5pt::0.0pt::349.0pt.
+[62
+
+
+]
+l2hSize :tex2html_wrap_inline5473:7.44444pt::7.44444pt::8.20433pt.
+[63
+
+
+]
+l2hSize :displaymath5382:13.94444pt::0.0pt::349.0pt.
+[64
+
+
+]
+l2hSize :tex2html_wrap_inline5477:8.0pt::8.0pt::20.50005pt.
+[65
+
+
+]
+l2hSize :tex2html_wrap_inline5479:7.96227pt::0.0pt::16.44104pt.
+[66
+
+
+]
+l2hSize :tex2html_wrap_inline5481:9.86893pt::0.0pt::28.42723pt.
+[67
+
+
+]
+l2hSize :tex2html_wrap_inline5934:9.57217pt::9.57217pt::39.38371pt.
+[68
+
+
+]
+l2hSize :tex2html_wrap_inline5936:8.00006pt::8.00006pt::104.42815pt.
+[69
+
+
+]
+l2hSize :tex2html_wrap_inline5938:6.95831pt::6.95831pt::10.01741pt.
+[70
+
+
+]
+l2hSize :tex2html_wrap_inline5940:6.95831pt::6.95831pt::10.01741pt.
+[71
+
+
+]
+l2hSize :tex2html_wrap_inline5946:8.0pt::8.0pt::56.53404pt.
+[72
+
+
+]
+l2hSize :tex2html_wrap_inline6193:6.95831pt::6.95831pt::9.73615pt.
+[73
+
+
+]
+l2hSize :tex2html_wrap_inline6195:6.95831pt::6.95831pt::19.97229pt.
+[74
+
+
+]
+l2hSize :tex2html_wrap_inline6484:8.0pt::8.0pt::76.18263pt.
+[75
+
+
+]
+l2hSize :tex2html_wrap_inline6486:7.33331pt::7.33331pt::52.26364pt.
+[76
+
+
+]
+l2hSize :tex2html_wrap_inline6488:6.94444pt::0.0pt::17.72224pt.
+[77
+
+
+]
+l2hSize :tex2html_wrap_inline6492:15.0001pt::15.0001pt::294.84483pt.
+[78
+
+
+]
+l2hSize :tex2html_wrap_inline6650:8.0pt::8.0pt::3.27782pt.
+[79
+
+
+] (./images.aux (./parallel.aux)) ) 
+Here is how much of TeX's memory you used:
+ 8495 strings out of 494812
+ 148158 string characters out of 6178245
+ 219630 words of memory out of 5000000
+ 11702 multiletter control sequences out of 15000+600000
+ 11234 words of font info for 42 fonts, out of 8000000 for 9000
+ 59 hyphenation exceptions out of 8191
+ 38i,18n,40p,543b,338s stack positions out of 5000i,500n,10000p,200000b,80000s
+
+Output written on images.dvi (79 pages, 59728 bytes).

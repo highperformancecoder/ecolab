@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>Creating New Instruments</TITLE>
+<META NAME="description" CONTENT="Creating New Instruments">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node29.html">
+<LINK REL="previous" HREF="node10.html">
+<LINK REL="up" HREF="ecolab.html">
+<LINK REL="next" HREF="node29.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html667"
+  HREF="node29.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html661"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html655"
+  HREF="node27.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html663"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html665"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html668"
+  HREF="node29.html">Creating a New Model</A>
+<B> Up:</B> <A NAME="tex2html662"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html656"
+  HREF="node27.html">ecolab_version</A>
+ &nbsp; <B>  <A NAME="tex2html664"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html666"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00080000000000000000">
+Creating New Instruments</A>
+</H1>
+
+<P>
+The best way to proceed is to copy an existing instrument, and modify
+it to your needs. The interface to the TCL language can be done almost
+entirely through the <A HREF="node104.html#tcl++"
+ NAME="688"><TT>tcl++</TT> class library</A>. Use the <TT>  NEWCMD</TT><A NAME="690"></A> macro to instantiate a new TCL
+command. This may be the complete widget, or merely a component of it.
+The instrument may be encoded entirely in TCL code, accessing the
+model's state variables in the usual way.  Alternatively, you may
+write C++ code to access the state variables directly through the
+model's class defintion. 
+
+<P>
+An alternative approach is taken in <TT>  analysis.cc</TT><A NAME="692"></A>. A variable that has been registered
+  in the <TT>TCL_obj</TT> database can have a reference set up to it
+  using the <TT>declare</TT><A NAME="695"></A> macro, defined in <TT>  TCL_obj_base.h</TT><A NAME="697"></A>. For example, in the
+  ecolab model, <TT>ecolab.density</TT> is the TCL name for the <TT>  density</TT> member of the ecolab model. Then
+<PRE>
+declare(density,iarray,"ecolab.density");
+</PRE>
+declares a variable of type <code>iarray&amp;</code> that may be used to refer to
+this member. Argument 3, the string parameter needn't be a constant
+string, but can be any string, eg a string passed through <TT>argv[]</TT>.
+
+<P>
+<BR><HR>
+
+</BODY>
+</HTML>
