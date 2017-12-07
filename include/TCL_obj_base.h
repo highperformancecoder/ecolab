@@ -761,7 +761,7 @@ namespace ecolab
     void (*hook)(int argc, CONST84 char **argv);
     void (*thook)(int argc, Tcl_Obj *const argv[]);
 
-    TCL_obj_functor() {c=invalid;}
+    TCL_obj_functor(): hook(NULL), thook(NULL) {c=invalid;}
     void init(const C& oo, T (C::*m) () const) {o=&oo; mbrvoid=m; c=memvoid;}
     void init(const C& oo, T (C::*m) (int,char**) const) {o=&oo; mbr=m; c=mem;}
     void init(const C& oo, T (C::*m) (TCL_args) const ) {o=&oo; mbrobj=m; c=mem;}
@@ -810,7 +810,7 @@ namespace ecolab
     void (*hook)(int argc, CONST84 char **argv);
     void (*thook)(int argc, Tcl_Obj *const argv[]);
 
-    TCL_obj_functor() {c=invalid;}
+    TCL_obj_functor(): hook(NULL), thook(NULL) {c=invalid;}
     void init(C& oo, void (C::*m) ()) {o=&oo; mbrvoid=m; c=memvoid;}
     void init(C& oo, void (C::*m) (int,char**)) {o=&oo; mbr=m; c=mem;}
     void init(C& oo, void (C::*m) (TCL_args)) {o=&oo; mbrobj=m; c=mem;}
