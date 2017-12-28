@@ -46,13 +46,6 @@ namespace
     cairo_restore(cairo);
   }
 
-//  double round2Dplaces(double x)
-//  {
-//    if (x==0) return 0;
-//    double b = pow(10.0, int(log10(fabs(x))-2));
-//    return b*int(x/b);
-//  }
-
   // displays a string represent ×10^n
   string orderOfMag(int n)
   {
@@ -550,7 +543,6 @@ namespace ecolab
     double sx=width/dx, sy=height/dy;
     double rhsScale = dy/dy1;
     
-    //cairo_reset_clip(cairo);
     cairo_translate(cairo, offx+loffx-iflogx(minx)*sx, height);
 
     // NB do not use cairo scaling in y direction, but rather manually scale before passing to cairo.
@@ -711,11 +703,13 @@ namespace ecolab
           
           // transform y coordinates (handles RHS being a different scale)
           XFY xfy=aff;
+          Side side=left;
           if (i<penSide.size() && penSide[i]==right)
             {
               xfy.scale*=rhsScale;
               xfy.o=miny1;
-              xfy.o1=logy? log10(miny)-log10(miny1): miny-miny1;
+              side=right;
+              //              xfy.o1=logy? log10(miny)-log10(miny1): miny-miny1;
             }
 
           if (x[i].size()>1)
@@ -726,7 +720,7 @@ namespace ecolab
                   cairo_new_path(cairo);
                   cairo_move_to(cairo, iflogx(x[i][0]), xfy(y[i][0]));
                   for (size_t j=1; j<x[i].size(); ++j)
-                    if (inBounds(x[i][j-1], y[i][j-1]) && inBounds(x[i][j], y[i][j]))
+                    if (inBounds(x[i][j-1], y[i][j-1], side) && inBounds(x[i][j], y[i][j], side))
                       cairo_line_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
                     else
                       cairo_move_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
@@ -741,14 +735,14 @@ namespace ecolab
                   {
                     size_t j=0;
                     float w = abs(iflogx(x[i][1]) - iflogx(x[i][0]));
-                    if (inBounds(iflogx(x[i][j]), y[i][j]))
+                    if (inBounds(iflogx(x[i][j]), y[i][j], side))
                       {
                         cairo_rectangle(cairo, iflogx(x[i][0])-0.5*w, 0, w, 
                                         xfy(y[i][0]));
                         cairo_fill(cairo);
                       }
                     for (++j; j<x[i].size()-1; ++j)
-                      if (inBounds(iflogx(x[i][j]), y[i][j]))
+                      if (inBounds(iflogx(x[i][j]), y[i][j], side))
                         {
                           w=min(abs(iflogx(x[i][j]) - iflogx(x[i][j-1])), 
                                 abs(iflogx(x[i][j+1])-iflogx(x[i][j])));
@@ -756,7 +750,7 @@ namespace ecolab
                                           xfy(y[i][j]));
                           cairo_fill(cairo);
                         }
-                    if (inBounds(iflogx(x[i][j]), y[i][j]))
+                    if (inBounds(iflogx(x[i][j]), y[i][j], side))
                       {
                         w=abs(iflogx(x[i][j]) - iflogx(x[i][j-1]));
                         cairo_rectangle(cairo, iflogx(x[i][j])-0.5*w, 0, w, 

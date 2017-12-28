@@ -49,6 +49,9 @@ namespace ecolab
         return scale*((logy? log10(y): y)-o)+o1;
       }
     };
+    enum Side {left, right};
+    enum PlotType {line, bar};
+    
   private:    
     string m_image;
     std::vector<std::vector<double> > x;
@@ -76,17 +79,16 @@ namespace ecolab
 
     void labelAxes(cairo_t*, double width, double height) const;
 
-    bool inBounds(float x, float y) const {
-      return x>=minx && x<=maxx && y>=miny && y<=maxy;
+    bool inBounds(float x, float y, Side side) const {
+      return x>=minx && x<=maxx &&
+        (side==left && y>=miny && y<=maxy
+         || side==right && y>=miny1 && y<=maxy1);
     }
 
     bool displayRHSscale() const {
       return !penSide.empty() && miny1<maxy1;
     }
   public:
-    enum Side {left, right};
-    enum PlotType {line, bar};
-
     Plot(): nxTicks(30), nyTicks(30), fontScale(1),
             offx(0), offy(0), logx(false), logy(false), 
             grid(false), subgrid(false), 
