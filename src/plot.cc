@@ -709,7 +709,6 @@ namespace ecolab
               xfy.scale*=rhsScale;
               xfy.o=miny1;
               side=right;
-              //              xfy.o1=logy? log10(miny)-log10(miny1): miny-miny1;
             }
 
           if (x[i].size()>1)

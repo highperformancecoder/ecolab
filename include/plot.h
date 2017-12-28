@@ -81,8 +81,8 @@ namespace ecolab
 
     bool inBounds(float x, float y, Side side) const {
       return x>=minx && x<=maxx &&
-        (side==left && y>=miny && y<=maxy
-         || side==right && y>=miny1 && y<=maxy1);
+        ((side==left && y>=miny && y<=maxy)
+         || (side==right && y>=miny1 && y<=maxy1));
     }
 
     bool displayRHSscale() const {
