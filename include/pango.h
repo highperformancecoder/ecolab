@@ -16,7 +16,12 @@
 
 #ifdef PANGO
 #include <pango/pangocairo.h>
+#else
+#include <cairo.h>
 #endif
+
+#include <string>
+#include <assert.h>
 
 namespace ecolab
 {
@@ -78,6 +83,23 @@ namespace ecolab
       pango_cairo_show_layout(cairo, layout);
       cairo_restore(cairo);
     }
+    /// return index into the markup string corresponding to \a x from
+    /// the start of the string in screen coordinates
+    std::string::size_type posToIdx(double x) {
+      int r, graphemeOffset;
+      pango_layout_xy_to_index(layout, PANGO_SCALE*x, 0, &r, &graphemeOffset);
+      // nb ignoring offset into multibyte characters
+      return r;
+    }
+    /// return distance along string character \a idx is rendered at
+    double idxToPos(std::string::size_type idx) {
+      int line, pos;
+      pango_layout_index_to_line_x(layout, idx, false, &line, &pos);
+      // nb ignoring multiline possibilities
+      assert(line==0);
+      return double(pos)/PANGO_SCALE;
+    }
+    
     /// width of rendered text
     double width() const {return double(bbox.width)/PANGO_SCALE;}
     /// height of rendered text
@@ -121,7 +143,23 @@ namespace ecolab
       cairo_show_text(cairo, markup.c_str());
       cairo_restore(cairo);
     }
-    /// width of rendered text
+    /// return index into the markup string corresponding to \a x from
+    /// the start of the string in screen coordinates
+    std::string::size_type posToIdx(double x) {
+      cairo_text_extents_t bbox;
+      bbox.width=0;
+      std::string::size_type i=0;
+      for (;i<markup.size() && bbox.width<x; ++i)
+        cairo_text_extents(cairo,markup.substr(0,i).c_str(),&bbox);
+      return (i==0 || markup[i]==' ')?i: i-1; // a bit hacky, but kind of works
+    }
+    /// return distance along string character \a idx is rendered at
+    double idxToPos(std::string::size_type idx) {
+      cairo_text_extents_t bbox;
+      cairo_text_extents(cairo,markup.substr(0,idx).c_str(),&bbox);
+      return bbox.width;
+    }
+      /// width of rendered text
     double width() const {return bbox.width;}
     /// height of rendered text
     double height() const {return bbox.height;}
