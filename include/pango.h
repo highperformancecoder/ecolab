@@ -85,15 +85,16 @@ namespace ecolab
     }
     /// return index into the markup string corresponding to \a x from
     /// the start of the string in screen coordinates
-    std::string::size_type posToIdx(double x) {
-      int r, graphemeOffset;
+    std::string::size_type posToIdx(double x) const {
+      int r=0, graphemeOffset;
       pango_layout_xy_to_index(layout, PANGO_SCALE*x, 0, &r, &graphemeOffset);
       // nb ignoring offset into multibyte characters
       return r;
     }
     /// return distance along string character \a idx is rendered at
-    double idxToPos(std::string::size_type idx) {
-      int line, pos;
+    /// idx <= markup.length()
+    double idxToPos(std::string::size_type idx) const {
+      int line=0, pos=0;
       pango_layout_index_to_line_x(layout, idx, false, &line, &pos);
       // nb ignoring multiline possibilities
       assert(line==0);
@@ -145,7 +146,7 @@ namespace ecolab
     }
     /// return index into the markup string corresponding to \a x from
     /// the start of the string in screen coordinates
-    std::string::size_type posToIdx(double x) {
+    std::string::size_type posToIdx(double x) const {
       cairo_text_extents_t bbox;
       bbox.width=0;
       std::string::size_type i=0;
@@ -154,7 +155,7 @@ namespace ecolab
       return (i==0 || markup[i]==' ')?i: i-1; // a bit hacky, but kind of works
     }
     /// return distance along string character \a idx is rendered at
-    double idxToPos(std::string::size_type idx) {
+    double idxToPos(std::string::size_type idx) const {
       cairo_text_extents_t bbox;
       cairo_text_extents(cairo,markup.substr(0,idx).c_str(),&bbox);
       return bbox.width;
