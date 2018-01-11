@@ -138,7 +138,12 @@ namespace
 #endif
       width=min(width,Tk_Width(c.tkWin));
       height=min(height,Tk_Height(c.tkWin));
-      c.csurf.redraw(imageX,imageY,width,height);
+      try
+        {
+          c.csurf.redraw(imageX,imageY,width,height);
+        }
+      catch (...)
+        {/* not much you can do about exceptions at this point */}
       cairo_surface_flush(c.csurf.surface->surface());
       // release surface prior to any context going out of scope
       c.csurf.surface->surface(NULL);
