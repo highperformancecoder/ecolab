@@ -98,6 +98,11 @@ LINK=g++
 CPP=g++ -E
 endif
 
+ifdef CCACHE
+CC:=ccache $(CC)
+CPLUSPLUS:=ccache $(CPLUSPLUS)
+endif
+
 # choose 32 bits by preference
 ifdef MXE
 MXE_32bit=$(shell if which i686-w64-mingw32.static-g++>&/dev/null; then echo 1; fi)
