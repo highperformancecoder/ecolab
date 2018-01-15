@@ -9,7 +9,7 @@
 #include "ecolab.h"
 #include "ecolab_epilogue.h"
 using namespace ecolab;
-using namespace std;
+using std::vector;
 
 extern "C" void ecolab_random_link() {}
 
