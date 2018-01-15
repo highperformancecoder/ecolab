@@ -145,8 +145,12 @@ namespace ecolab
     };
 
     // fix the surfacePtr type so that objects and headers are consistent
+#if defined(__cplusplus) && __cplusplus>=201103L
     typedef std::shared_ptr<Surface> SurfacePtr;
-
+#else
+    typedef std::tr1::shared_ptr<Surface> SurfacePtr;
+#endif
+    
 #ifdef TK
     struct PhotoImageBlock: public Tk_PhotoImageBlock
     {
