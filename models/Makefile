@@ -16,7 +16,7 @@ include $(ECOLAB_HOME)/include/Makefile
 
 # This is for EcoLab internal testing purposes
 ifdef AEGIS
-CXXFLAGS+=-std=c++98
+CXXFLAGS+=-std=c++11
 endif
 
 MODELS=ecolab shadow newman jellyfish webworld netcomplexity

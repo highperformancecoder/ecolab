@@ -30,7 +30,8 @@ include include/Makefile
 FLAGS+=-UECOLAB_LIB -DINSTALLED_ECOLAB_LIB=\"$(PREFIX)/include\"
 
 ifdef AEGIS
-CXXFLAGS+=-std=c++98
+# must build and test against c++11 now, as TR1 has goone!
+CXXFLAGS+=-std=c++11
 endif
 
 

@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <limits>
+#include <memory>
 #include <math.h>
 #include <memory>
 #include <typeinfo>

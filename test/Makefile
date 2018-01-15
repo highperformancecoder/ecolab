@@ -32,7 +32,7 @@ OMPOPT=-openmp
 endif
 
 ifdef AEGIS
-CXXFLAGS+=-std=c++98
+CXXFLAGS+=-std=c++11
 endif
 
 #chmod command is to counteract AEGIS removing execute privelege from scripts
