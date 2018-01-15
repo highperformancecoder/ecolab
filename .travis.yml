@@ -12,7 +12,7 @@ before_install:
   - sudo apt-get update -qq
   - ./build_and_install_deps.sh
 script: 
-  - make AEGIS=1
+  - make DEBUG=1 AEGIS=1
   - Xvfb :0 &
   - export DISPLAY=:0
-  - make AEGIS=1 sure
+  - make DEBUG=1 AEGIS=1 sure
