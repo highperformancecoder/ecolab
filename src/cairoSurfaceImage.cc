@@ -116,7 +116,7 @@ namespace
 #elif defined(MAC_OSX_TK)
       // calculate the offset of the window within it's toplevel
       int xoffs=0, yoffs=0;
-      for (Tk_Window w=c.tkWin; Tk_Parent(w); w=Tk_Parent(w))
+      for (Tk_Window w=c.tkWin; !Tk_IsTopLevel(w); w=Tk_Parent(w))
         {
           xoffs+=Tk_X(w);
           yoffs+=Tk_Y(w);
