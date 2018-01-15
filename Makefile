@@ -280,7 +280,7 @@ $(ECOLAB_HOME)/$(MCFG):
 	@if $(PKG_CONFIG) --exists cairo; then echo CAIRO=1>>$(MCFG); \
 	elif [ -n "$(call search,include/blt.h)" ]; then echo BLT=1>>$(MCFG); fi
 # select Berkley DB by default, 
-	@if [ -n "$(call search,include/db4/db.h)" ]; then \
+	@if [ -n "$(call search,include/db4/db.h)" -o -n "$(call search,include/db.h)" ]; then \
 	  echo BDB=1>>$(MCFG); \
         else \
 	  if [ -n "$(call search,lib*/libgdbm.a)" -o -n "$(call search,lib*/*/libgdbm.a)" ]; then \
