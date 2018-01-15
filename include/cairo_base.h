@@ -144,8 +144,7 @@ namespace ecolab
     };
 
     // fix the surfacePtr type so that objects and headers are consistent
-    // TODO - convert to std::shared_ptr once EcoLab is 100% c++11 compiled
-    typedef std::tr1::shared_ptr<Surface> SurfacePtr;
+    typedef std::shared_ptr<Surface> SurfacePtr;
 
 #ifdef TK
     struct PhotoImageBlock: public Tk_PhotoImageBlock

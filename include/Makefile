@@ -237,7 +237,7 @@ XDR=
 #/usr/local/include and /opt/local/include is searched before
 #/usr/X11R6/include In the move to Mavericks and beyond, clang is
 #used, which doesn't even support TR1, so we must deploy boost!
-FLAGS+=-isystem /usr/local/include -isystem /opt/local/include -isystem /usr/X11R6/include -DBOOST_TR1 -DNO_FWD_DECLARE_STL
+FLAGS+=-isystem /usr/local/include -isystem /opt/local/include -isystem /usr/X11R6/include -DNO_FWD_DECLARE_STL -std=c++11
 LIBS+=-framework Carbon -liconv -framework IOKit -lpixman-1 -lffi
 ifdef AQUA
 FLAGS+=-I$(HOME)/Library/Frameworks/Tcl.framework/Headers \
