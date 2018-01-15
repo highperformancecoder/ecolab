@@ -93,7 +93,7 @@ CPP=$(CPLUSPLUS) -E
 FLAGS+=-UHAVE_MPI_CPP
 else
 CC=gcc
-CPLUSPLUS=g++
+CPLUSPLUS=g++ -std=c++11
 LINK=g++
 CPP=g++ -E
 endif
