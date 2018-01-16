@@ -236,7 +236,7 @@ XDR=
 # Darwin has some very old software installed. We need to ensure
 #/usr/local/include and /opt/local/include is searched before
 #/usr/X11R6/include In the move to Mavericks and beyond, clang is
-#used, which doesn't even support TR1, so we must deploy boost!
+#used, which doesn't even support TR1, so we must deploy c++-11, not just for Darwin, but all other platforms!
 FLAGS+=-isystem /usr/local/include -isystem /opt/local/include -isystem /usr/X11R6/include -DNO_FWD_DECLARE_STL
 LIBS+=-framework Carbon -liconv -framework IOKit -lpixman-1 -lffi
 ifdef AQUA

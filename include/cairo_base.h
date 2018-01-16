@@ -30,6 +30,15 @@ namespace ecolab
   namespace cairo
   {
 
+    /// RAII class for managing save/restore of cairo contexts
+    class CairoSave
+    {
+      cairo_t* cairo;
+    public:
+      CairoSave(cairo_t* cairo): cairo(cairo) {cairo_save(cairo);}
+      ~CairoSave() {cairo_restore(cairo);}
+    };
+    
     /// Container object for managing cairo_surface_t lifetimes
     class Surface
     {
