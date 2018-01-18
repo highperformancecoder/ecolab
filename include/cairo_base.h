@@ -27,6 +27,10 @@
 
 namespace ecolab
 {
+#ifndef M_PI
+  static const float M_PI = 3.1415926535f;
+#endif
+
   namespace cairo
   {
 
