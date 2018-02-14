@@ -51,8 +51,15 @@ namespace ecolab
       pango_layout_set_font_description(layout, fd); //asume ownership not passe
     }
     ~Pango() {pango_font_description_free(fd); g_object_unref(layout); }
+    /// set text to be displayed in pango markup language
     void setMarkup(const std::string& markup) {
       pango_layout_set_markup(layout, markup.c_str(), -1);
+      pango_layout_get_extents(layout,0,&bbox);
+    }
+    /// set raw text to be displayed (no markup interpretation)
+    void setText(const std::string& markup) {
+      pango_layout_set_attributes(layout,NULL);
+      pango_layout_set_text(layout, markup.c_str(), -1);
       pango_layout_get_extents(layout,0,&bbox);
     }
     void setFontSize(double sz) {

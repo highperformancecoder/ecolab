@@ -589,7 +589,7 @@ double GaussianMarkovModel::causalDensity()
       Vector obs(data.row(n).subvector(lags, pred.rows()));
       logVar[n]=covarianceMatrixFromData(covar, obs, pred);
       //      logDetCovar[n]=logDet(covar);
-      if (n==0 && !finite(logVar[n]))
+      if (n==0 && !isfinite(logVar[n]))
         cout << g << endl;
     }
   
