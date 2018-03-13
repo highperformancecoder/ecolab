@@ -77,6 +77,9 @@ namespace ecolab
   /* TCL_args - support for TCL object types:
      Use >> notation to extract arguments */
 
+#ifndef TCL_MAJOR_VERSION
+#error TCL not found.
+#endif
 #if (TCL_MAJOR_VERSION<8)
 #error TCL 8.x or greater supported. Please upgrade your TCL
 #endif
