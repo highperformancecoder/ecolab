@@ -217,7 +217,7 @@ namespace ecolab
 
   
 
-  void Plot::AssignSide(unsigned pen, Side side)
+  void Plot::assignSide(unsigned pen, Side side)
   {
     if (pen>=penSide.size()) penSide.resize(pen+1,left);
     penSide[pen]=side;
@@ -881,6 +881,22 @@ namespace ecolab
       addNew(surf, doRedraw, pens.begin(), pens.end(), 1);
     }      
 
+  void Plot::setPen(unsigned pen, const array_ns::array<double>& xx,
+                const array_ns::array<double>& yy)
+  {
+    if (pen>=x.size())
+        {
+          x.resize(pen+1);
+          y.resize(pen+1);
+        }
+    // ensure both x & y vectors are of same length
+    size_t minData=min(x.size(), y.size());
+    x[pen].assign(xx.begin(), xx.begin()+minData);
+    y[pen].assign(yy.begin(), yy.begin()+minData);
+  }
+  
+
+  
   void Plot::plot(TCL_args args)
   {
     if (args.count>1) 

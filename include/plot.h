@@ -189,12 +189,9 @@ namespace ecolab
     void LabelPen(unsigned pen, const cairo::SurfacePtr& label);
 
     /// assign a side to display the scale for pen
-    void AssignSide(unsigned pen, Side);
+    void assignSide(unsigned pen, Side);
 
     //    void labelPen(TCL_args args) {LabelPen(int(args[0]), (char*)args[1]);}
-    void assignSide(TCL_args args) {
-      AssignSide(args[0], args[1].get<Side>());
-    }
 
     /// remove all pen labels and side associations
     void clearPenAttributes() {
@@ -212,9 +209,14 @@ namespace ecolab
         Image(m_image);
     }
 
-    // add a point to the graph withour redrwaing anything
+    /// add a point to the graph withour redrwaing anything
     void addPt(unsigned pen, double x, double y);
 
+    /// assign a complete curve for \a pen
+    /// \a x and \a y should have the same size, if not, the larger is truncated
+    void setPen(unsigned pen, const array_ns::array<double>& x,
+                const array_ns::array<double>& y);
+    
   private:
     std::vector<cairo::SurfacePtr> penLabel;
     std::vector<string> penTextLabel;
