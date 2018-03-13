@@ -214,8 +214,19 @@ namespace ecolab
 
     /// assign a complete curve for \a pen
     /// \a x and \a y should have the same size, if not, the larger is truncated
-    void setPen(unsigned pen, const array_ns::array<double>& x,
-                const array_ns::array<double>& y);
+    template <class C>
+    void setPen(unsigned pen, const C& xx, const C& yy)
+    {
+      if (pen>=x.size())
+        {
+          x.resize(pen+1);
+          y.resize(pen+1);
+        }
+      // ensure both x & y vectors are of same length
+      size_t minData=std::min(x.size(), y.size());
+      x[pen].assign(xx.begin(), xx.begin()+minData);
+      y[pen].assign(yy.begin(), yy.begin()+minData);
+    }
     
   private:
     std::vector<cairo::SurfacePtr> penLabel;
