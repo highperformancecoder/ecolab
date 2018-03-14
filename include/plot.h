@@ -191,6 +191,8 @@ namespace ecolab
     /// assign a side to display the scale for pen
     void assignSide(unsigned pen, Side);
 
+    // deprecated
+    void AssignSide(unsigned pen, Side side) {assignSide(pen,side);}
     //    void labelPen(TCL_args args) {LabelPen(int(args[0]), (char*)args[1]);}
 
     /// remove all pen labels and side associations
@@ -214,18 +216,15 @@ namespace ecolab
 
     /// assign a complete curve for \a pen
     /// \a x and \a y should have the same size, if not, the larger is truncated
-    template <class C>
-    void setPen(unsigned pen, const C& xx, const C& yy)
+    void setPen(unsigned pen, const double* xx, const double* yy, size_t sz)
     {
       if (pen>=x.size())
         {
           x.resize(pen+1);
           y.resize(pen+1);
         }
-      // ensure both x & y vectors are of same length
-      size_t minData=std::min(x.size(), y.size());
-      x[pen].assign(xx.begin(), xx.begin()+minData);
-      y[pen].assign(yy.begin(), yy.begin()+minData);
+      x[pen].assign(xx, xx+sz);
+      y[pen].assign(yy, yy+sz);
     }
     
   private:
