@@ -377,7 +377,9 @@ LIBS+=-lz
 endif
 
 ifdef XDR
-FLAGS+=-DXDR_PACK -ltirpc
+# libtirpc is where the XDR routines have been moved to from glibc
+LIBTIRPC=$(shell if $(PKG_CONFIG) libtirpc; then $(PKG_CONFIG) --libs libtirpc; fi)
+FLAGS+=-DXDR_PACK $(LIBTIRPC)
 endif
 
 ifdef READLINE
