@@ -565,7 +565,36 @@ namespace ecolab
     Pango pango(cairo);
     pango.setFontSize(fontSz*height);
     XFY aff(logy, sy, miny, 0); //manual affine transform - see ticket #693
-    if (logx)
+    if (xticks.size())
+      {
+        unsigned tickIncr=xticks.size()/10+1;
+        for (unsigned i=0; i<xticks.size(); i+=tickIncr)
+        {
+          auto& xt=xticks[i];
+          cairo_new_path(cairo);
+          cairo_move_to(cairo,xt.first,0);
+          cairo_line_to(cairo,xt.first,fontSz*height);
+          stroke(cairo);
+          cairo_move_to(cairo,xt.first,fontSz*height*2);
+          {
+            //Pango pango(cairo);
+            pango.setMarkup(xt.second);
+            pango.angle=-M_PI/2;
+            pango.show();
+            pango.angle=0;
+          }
+          if (grid)
+            {
+              double incr;
+              if (i<xticks.size()-1)
+                incr=fabs(xticks[i+1].first-xt.first);
+              else
+                incr=fabs(xt.first-xticks[i-1].first);
+              drawGrid(cairo, xt.first, incr, true, aff);
+            }
+        }
+      }
+    else if (logx)
       {
         LogScale ls(minx, maxx, nxTicks);
         int i=0;
@@ -892,7 +921,6 @@ namespace ecolab
         add(pens,x,y);
       }
   }
-
 
   TCLTYPE(Plot);
 

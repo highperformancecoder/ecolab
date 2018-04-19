@@ -377,7 +377,7 @@ LIBS+=-lz
 endif
 
 ifdef XDR
-FLAGS+=-DXDR_PACK
+FLAGS+=-DXDR_PACK -ltirpc
 endif
 
 ifdef READLINE

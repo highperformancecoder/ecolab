@@ -226,12 +226,28 @@ namespace ecolab
       x[pen].assign(xx, xx+sz);
       y[pen].assign(yy, yy+sz);
     }
+    /// symbolic labelling of the x-axis
+    /**
+       @param numeric - a lambda for computing the numeric position of label:
+       examples: [](const string& i) {return &i-xlabels[0];}
+                 [](const string& i) {return stod(i);}
+    **/
+    template <class F>
+    void setXticks(unsigned pen, F numeric,
+                   const std::vector<std::string>& xlabels)
+    {
+      xticks.clear();
+      for (auto& i: xlabels)
+        xticks.emplace_back(numeric(i),i);
+    }
+      
     
   private:
     std::vector<cairo::SurfacePtr> penLabel;
     std::vector<string> penTextLabel;
     // if this is empty, all pens are on the left, and no RHS scale is drawn
     std::vector<Side> penSide;
+    std::vector<std::pair<double,std::string>> xticks;
   };
 }
 
