@@ -305,7 +305,7 @@ namespace ecolab
     cairo_stroke(cairo);
     cairo_restore(cairo);
 
-    if (subgrid)
+    if (subgrid && increment>0)
       {
         // subgrid lines done in grey
         if (vertical)
@@ -568,16 +568,17 @@ namespace ecolab
     if (xticks.size())
       {
         unsigned tickIncr=xticks.size()/10+1;
+        double xtick=0, incr=0;
         for (unsigned i=0; i<xticks.size(); i+=tickIncr)
         {
           auto& xt=xticks[i];
+          xtick=logx? log10(xt.first): xt.first;
           cairo_new_path(cairo);
-          cairo_move_to(cairo,xt.first,0);
-          cairo_line_to(cairo,xt.first,fontSz*height);
+          cairo_move_to(cairo,xtick,0);
+          cairo_line_to(cairo,xtick,fontSz*height);
           stroke(cairo);
-          cairo_move_to(cairo,xt.first,fontSz*height*2);
+          cairo_move_to(cairo,xtick,fontSz*height*2);
           {
-            //Pango pango(cairo);
             pango.setMarkup(xt.second);
             pango.angle=-M_PI/2;
             pango.show();
@@ -585,14 +586,18 @@ namespace ecolab
           }
           if (grid)
             {
-              double incr;
-              if (i<xticks.size()-1)
-                incr=fabs(xticks[i+1].first-xt.first);
-              else
-                incr=fabs(xt.first-xticks[i-1].first);
-              drawGrid(cairo, xt.first, incr, true, aff);
+              if (i<xticks.size()-tickIncr)
+                {
+                  double nextX=xticks[i+tickIncr].first;
+                  if (logx) nextX=log10(nextX);
+                  incr=fabs(nextX-xtick);
+                }
+              drawGrid(cairo, xtick, incr, true, aff);
             }
         }
+        if (grid && incr) // extend grid all the way
+          while ((xtick+=incr)<maxx)
+            drawGrid(cairo, xtick, incr, true, aff);
       }
     else if (logx)
       {
