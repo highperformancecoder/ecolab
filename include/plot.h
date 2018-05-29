@@ -58,8 +58,10 @@ namespace ecolab
     std::vector<std::vector<double> > y;
     //classdesc::shared_ptr<cairo::TkPhotoSurface> surface;
     cairo::SurfacePtr surface;
-    
 
+    // record error message from setMinMax
+    const char* msg=nullptr;
+    
 
     CLASSDESC_ACCESS(Plot);
 

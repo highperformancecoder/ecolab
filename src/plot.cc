@@ -235,6 +235,7 @@ namespace ecolab
         maxx=1;
         miny=logy? 0.1: -1;
         maxy=1;
+        msg = "no data";
       }
     else
       {
@@ -264,7 +265,8 @@ namespace ecolab
                   }
               }
           }
-
+        if (!(maxx>minx) || !(maxy>miny) || (displayRHSscale() && !(maxy1>miny1)))
+          msg="invalid data";
       }
     if (!logx)
       {
@@ -504,25 +506,25 @@ namespace ecolab
   {  
 #if defined(CAIRO)
 
-    double dx=maxx-minx, dy=maxy-miny, dy1=maxy1-miny1;
-    if (dx*dy*dy1==0) return; // pathological, do nothing
-    // check positivity of drawing range
-    if (dx<0 || dy<0 || (displayRHSscale() && dy1<0))
-      {
-        cerr << "plot bounds inverted" << endl;
-        return;
-      }
+    const char* errMsg=NULL;
     if (logx && minx<=0)
-      {
-        cerr << "logx requires positive range"<<endl;
-        return;
-      }
-    if (logy && miny<=0)
-      {
-        cerr<<"logy requires positive range"<<endl;
-        return;
-      }
+      errMsg = "logx requires positive range";
+    else if (logy && (miny<=0 || (displayRHSscale() && miny1<=0)))
+      errMsg = "logy requires positive range";
+    // ! used here, rather than reverse comparison to allow for NaNs, which always compare false
+    else if (!(maxx>minx) || !(maxy>miny) || (displayRHSscale() && !(maxy1>miny1)))
+      errMsg = "no data";
 
+    if (msg || errMsg)
+      {
+        Pango pango(cairo);
+        pango.setMarkup(errMsg? errMsg: msg);
+        cairo_move_to(cairo,0.5*(width-pango.width()),0.5*(height-pango.height()));
+        pango.show();
+        return;
+      }
+      
+    double dx=maxx-minx, dy=maxy-miny, dy1=maxy1-miny1;
     dx=iflogx(maxx)-iflogx(minx);
     dy=iflogy(maxy)-iflogy(miny);
     dy1=iflogy(maxy1)-iflogy(miny1);
