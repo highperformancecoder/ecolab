@@ -227,6 +227,7 @@ namespace ecolab
   void Plot::setMinMax()
   {
     assert(x.size()==y.size());
+    msg=NULL;
     
     // calculate min/max
     if (x.empty())
