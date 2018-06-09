@@ -236,7 +236,6 @@ namespace ecolab
         maxx=1;
         miny=logy? 0.1: -1;
         maxy=1;
-        msg = "no data";
       }
     else
       {
@@ -266,7 +265,7 @@ namespace ecolab
                   }
               }
           }
-        if (!(maxx>minx) || !(maxy>miny) || (displayRHSscale() && !(maxy1>miny1)))
+        if (!(maxx>=minx) || !(maxy>=miny) || (displayRHSscale() && !(maxy1>=miny1)))
           msg="invalid data";
       }
     if (!logx)

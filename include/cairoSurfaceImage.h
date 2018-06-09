@@ -26,7 +26,7 @@ namespace ecolab
     Exclude<cairo::SurfacePtr> surface;
     virtual void redraw(int x0, int y0, int width, int height)=0;
     virtual ~CairoSurface() {}
-    
+
     /** 
         registers cairoSurface as an image type with the TCL interpreter.
         Normally doesn't need to be called by the user, as the Tkinit
