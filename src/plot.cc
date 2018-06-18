@@ -12,6 +12,7 @@
 #include "ecolab_epilogue.h"
 #include "pango.h"
 #include <limits>
+#include <fstream>
 using namespace std;
 
 extern "C" void ecolab_plot_link() {}
@@ -929,6 +930,36 @@ namespace ecolab
       }
   }
 
+  void Plot::exportAsCSV(const std::string& filename, const string& separator) const
+  {
+    ofstream of(filename);
+    of<<"#"<<ylabel<<" by "<<xlabel<<endl;
+    of<<"#";
+    if (!xticks.empty())
+      of<<"labelx"<<separator<<"label"<<separator;
+    for (size_t i=0; i<x.size(); ++i)
+      of << (i>0? separator:"")<<"x"<<i<<separator<<"y"<<i;
+    of<<endl;
+    size_t maxxsize=xticks.size();
+    for (size_t i=0; i<x.size(); ++i) maxxsize=max(maxxsize, x[i].size());
+
+    for (size_t i=0; i<maxxsize; ++i)
+      {
+        if (!xticks.empty())
+          of<<xticks[i].first<<separator<<xticks[i].second<<separator;
+        for (size_t j=0; j<x.size(); ++j)
+          {
+            if (j>0) of<<separator;
+            if (i<x[j].size() && i<y[j].size() && isfinite(y[j][i]))
+              of << x[j][i]<<separator<<y[j][i];
+            else
+              of << separator;
+          }
+        of<<endl;
+      }
+  }
+
+  
   TCLTYPE(Plot);
 
 }
