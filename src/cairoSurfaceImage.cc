@@ -131,7 +131,7 @@ namespace
       int depth;
       Visual *visual = Tk_GetVisual(interp(), c.tkWin, "default", &depth, NULL);
       c.csurf.surface.reset
-        (new TkWinSurface
+         (new TkWinSurface
          (c.csurf, c.master,
           cairo_xlib_surface_create(display, win, visual, Tk_Width(c.tkWin), Tk_Height(c.tkWin))));
         
