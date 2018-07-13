@@ -100,6 +100,7 @@ namespace
                   int imageX, int imageY, int width, int height,
                   int drawableX, int drawableY)
     {
+      clock_t t0=clock();
       CD& c=*(CD*)cd;
 #if USE_WIN32_SURFACE
       // TkWinGetDrawableDC is an internal (ie undocumented) routine
@@ -151,6 +152,7 @@ namespace
       RestoreDC(hdc,-1);
       TkWinReleaseDrawableDC(win, hdc, state);
 #endif
+      c.csurf.reportDrawTime(double(clock()-t0)/CLOCKS_PER_SEC);
     }
 
 
