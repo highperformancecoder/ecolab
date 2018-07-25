@@ -60,7 +60,7 @@ namespace ecolab
     affinerand(double s=1, double o=0):  
       scale(s), offset(o) {gen=new urand; allocated=true;}
     affinerand(double s, double o, random_gen *g):  
-      scale(s), offset(o) {Set_gen(g);}
+      scale(s), offset(o) {allocated=false; Set_gen(g);}
     ~affinerand() {del_gen();}
     void Set_gen(random_gen *g) {del_gen(); gen=g; allocated=false;}
     template <class T> void new_gen(const T& g) 

@@ -208,6 +208,7 @@ clean:
 	-rm -f $(patsubst classdesc/%,include/%,$(wildcard classdesc/*.h))
 	-cd classdesc; $(MAKE) clean 
 	-cd models; $(MAKE) ECOLAB_HOME=.. clean
+	-cd models/Stupid_Project; $(MAKE) ECOLAB_HOME=../.. clean
 	-cd test; $(MAKE) ECOLAB_HOME=.. clean
 	-cd classdesc; $(MAKE) clean
 	-cd graphcode; $(MAKE) clean
@@ -345,9 +346,7 @@ compileTest:
 	$(MAKE) clean; $(MAKE) MXE=1 DEBUG=1 
 	$(MAKE) clean; $(MAKE) BDB= GDBM= 
 	$(MAKE) clean; $(MAKE) DYNAMIC=1 GCC=1
-# temporary change, because clang seems to be currently broken
-#	$(MAKE) clean; $(MAKE) CPLUSPLUS=clang++
-	$(MAKE) clean; $(MAKE) CPLUSPLUS="/usr/bin/clang++ -I/usr/lib64/clang/4.0.1/include"
+	$(MAKE) clean; $(MAKE) CPLUSPLUS=clang++
 	$(MAKE) clean; $(MAKE) TIMER=1
 	$(MAKE) clean; $(MAKE) CAIRO=1 TK=    #see ticket #139
 	$(MAKE) clean; $(MAKE) ICC=1

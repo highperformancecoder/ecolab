@@ -371,7 +371,7 @@ void GaussianMarkovModel::outputRunData(TCL_args filename)
 GaussianMarkovModel::~GaussianMarkovModel() 
 {
   if (runData)
-    gsl_matrix(free);
+    gsl_matrix_free(runData);
 }
 
 // adaptor to vectors easier to manipulate
