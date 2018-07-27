@@ -14,6 +14,7 @@
 #define TCL_OBJ_STL_H
 #include <string>
 #include <iostream>
+#include <sstream>
 
 #include <set>
 #include "TCL_obj_base.h"
@@ -57,9 +58,9 @@ namespace ecolab
     return o;
   }
 
-  // TODO: handle spaces and active characters?
   template <class T>
-  std::istream& ContainerIn(std::istream& i, T& c)
+  typename enable_if<Not<is_same<typename T::value_type,std::string> >,std::istream&>::T
+  ContainerIn(std::istream& i, T& c)
   { 
     c.clear();
     typename T::value_type v;
@@ -71,6 +72,30 @@ namespace ecolab
         c.push_back(v);
 #endif
       }
+    return i;
+  }
+    
+  template <class T>
+  typename enable_if<is_same<typename T::value_type,std::string>,std::istream&>::T
+  ContainerIn(std::istream& i, T& c)
+  { 
+    c.clear();
+    /* input string may have spaces within elements, so could be quoted. We need to parse using Tcl_SplitList */
+    char c1;
+    std::string arg;
+    while (i.get(c1)) arg+=c1;
+    int  elemc;
+    // exception safe resource handling
+    struct CleanUp
+    {
+      CONST84 char **elem=NULL;
+      ~CleanUp() {Tcl_Free((char*)(elem));}
+    } e;
+    if (Tcl_SplitList(interp(),arg.c_str(),&elemc,&e.elem)!=TCL_OK) 
+      throw error("");
+    typename T::value_type v;
+    for (int j=0; j<elemc; ++j)
+      c.push_back(e.elem[j]);
     return i;
   }
     
