@@ -48,9 +48,17 @@ namespace ecolab
         }
       if (defaultFamily)
         pango_font_description_set_family(fd,defaultFamily);
-      pango_layout_set_font_description(layout, fd); //asume ownership not passe
+      pango_layout_set_font_description(layout, fd); //assume ownership not passed
     }
-    ~Pango() {pango_font_description_free(fd); g_object_unref(layout); }
+    ~Pango() {
+      if (fd) pango_font_description_free(fd);
+      if (layout) g_object_unref(layout);
+    }
+#if defined(__cplusplus) && __cplusplus>=201103L
+    Pango(Pango&& x): cairo(x.cairo), layout(x.layout), fd(x.fd),
+                      bbox(x.bbox), angle(angle)
+    {x.layout=nullptr; x.fd=nullptr;}
+#endif
     /// set text to be displayed in pango markup language
     void setMarkup(const std::string& markup) {
       pango_layout_set_markup(layout, markup.c_str(), -1);
