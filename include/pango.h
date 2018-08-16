@@ -56,7 +56,7 @@ namespace ecolab
     }
 #if defined(__cplusplus) && __cplusplus>=201103L
     Pango(Pango&& x): cairo(x.cairo), layout(x.layout), fd(x.fd),
-                      bbox(x.bbox), angle(angle)
+                      bbox(x.bbox), angle(x.angle)
     {x.layout=nullptr; x.fd=nullptr;}
 #endif
     /// set text to be displayed in pango markup language
