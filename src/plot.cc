@@ -346,10 +346,10 @@ namespace ecolab
   void Plot::drawLegend(cairo_t* cairo, double w, double h) const
   {
     double dx=maxx-minx, dy=maxy-miny;
-    double xoffs, yoffs=0.95*h;
+    double xoffs;
     // compute width of labels
     double width=0, height=0;
-    double fy=0.03*h;
+    double fy=0.03*fontScale*h;
 
     cairo_save(cairo);
     cairo_translate(cairo,0, h);
@@ -366,15 +366,26 @@ namespace ecolab
           Pango p2(cairo);
           p2.setFontSize(fabs(fy));
           p2.setMarkup(penTextLabel[i]);
-          height += 1.3*(p2.height());
+          height += 1.5*fy; //1.3*(p2.height());
           width = max(width, p2.width());
         }
     if (legendSide==left)
-      xoffs=0.2*w;
+      xoffs=0.1*w;
     else
-      xoffs=0.7*w;
+      xoffs=0.9*w-width;
     double labeloffs=xoffs+0.06*w;
-
+    double yoffs=0.95*h-0.8*fy;
+    
+    if (height>0)
+      {
+        cairo::CairoSave cs(cairo);
+        cairo_rectangle(cairo,xoffs,yoffs+0.8*fy,width+0.06*w,-height);
+        cairo_set_source_rgb(cairo,0,0,0);
+        cairo_stroke_preserve(cairo);
+        cairo_set_source_rgba(cairo,1,1,1,0.7);
+        cairo_fill(cairo);
+      }
+    
     for (size_t i=0; i<x.size(); ++i)
       if (i<penLabel.size() && penLabel[i])
         {
@@ -538,266 +549,268 @@ namespace ecolab
     
 
     
-    if (legend) drawLegend(cairo,width,height);
     labelAxes(cairo,width,height);
 
     width-=offx+loffx+loffx1;
     height-=2*offy+loffy;
     double sx=width/dx, sy=height/dy;
     double rhsScale = dy/dy1;
-    
-    cairo_translate(cairo, offx+loffx-iflogx(minx)*sx, height);
 
-    // NB do not use cairo scaling in y direction, but rather manually scale before passing to cairo.
-    // See ticket #693
-    cairo_scale(cairo, sx, -1);
-    cairo_new_path(cairo);
+    {
+      cairo::CairoSave cs(cairo);
+      cairo_translate(cairo, offx+loffx-iflogx(minx)*sx, height);
 
-    cairo_set_source_rgba(cairo, 0,0,0,1); //black
-    cairo_rectangle(cairo,iflogx(minx),0,dx,height);
-    stroke(cairo);
+      // NB do not use cairo scaling in y direction, but rather manually scale before passing to cairo.
+      // See ticket #693
+      cairo_scale(cairo, sx, -1);
+      cairo_new_path(cairo);
+
+      cairo_set_source_rgba(cairo, 0,0,0,1); //black
+      cairo_rectangle(cairo,iflogx(minx),0,dx,height);
+      stroke(cairo);
 
 
-    cairo_set_source_rgba(cairo, 0, 0, 0, 1);
-    double xtickIncrement, xtick;
+      cairo_set_source_rgba(cairo, 0, 0, 0, 1);
+      double xtickIncrement, xtick;
 
-    if (xtickIncrement<0) return; //avoid infinte loop
+      if (xtickIncrement<0) return; //avoid infinte loop
 
-    // work out the font size we should use
-    double fontSz=0.02*fontScale;
-    Pango pango(cairo);
-    pango.setFontSize(fontSz*height);
-    XFY aff(logy, sy, miny, 0); //manual affine transform - see ticket #693
-    if (xticks.size())
-      {
-        unsigned tickIncr=xticks.size()/10+1;
-        double xtick=0, incr=0;
-        for (unsigned i=0; i<xticks.size(); i+=tickIncr)
+      // work out the font size we should use
+      double fontSz=0.02*fontScale;
+      Pango pango(cairo);
+      pango.setFontSize(fontSz*height);
+      XFY aff(logy, sy, miny, 0); //manual affine transform - see ticket #693
+      if (xticks.size())
         {
-          auto& xt=xticks[i];
-          xtick=logx? log10(xt.first): xt.first;
-          cairo_new_path(cairo);
-          cairo_move_to(cairo,xtick,0);
-          cairo_line_to(cairo,xtick,fontSz*height);
-          stroke(cairo);
-          cairo_move_to(cairo,xtick,fontSz*height*2);
-          {
-            pango.setMarkup(xt.second);
-            pango.angle=-M_PI/2;
-            pango.show();
-            pango.angle=0;
-          }
-          if (grid)
+          unsigned tickIncr=xticks.size()/10+1;
+          double xtick=0, incr=0;
+          for (unsigned i=0; i<xticks.size(); i+=tickIncr)
             {
-              if (i<xticks.size()-tickIncr)
+              auto& xt=xticks[i];
+              xtick=logx? log10(xt.first): xt.first;
+              cairo_new_path(cairo);
+              cairo_move_to(cairo,xtick,0);
+              cairo_line_to(cairo,xtick,fontSz*height);
+              stroke(cairo);
+              cairo_move_to(cairo,xtick,fontSz*height*2);
+              {
+                pango.setMarkup(xt.second);
+                pango.angle=-M_PI/2;
+                pango.show();
+                pango.angle=0;
+              }
+              if (grid)
                 {
-                  double nextX=xticks[i+tickIncr].first;
-                  if (logx) nextX=log10(nextX);
-                  incr=fabs(nextX-xtick);
+                  if (i<xticks.size()-tickIncr)
+                    {
+                      double nextX=xticks[i+tickIncr].first;
+                      if (logx) nextX=log10(nextX);
+                      incr=fabs(nextX-xtick);
+                    }
+                  drawGrid(cairo, xtick, incr, true, aff);
                 }
+            }
+          if (grid && incr) // extend grid all the way
+            while ((xtick+=incr)<maxx)
               drawGrid(cairo, xtick, incr, true, aff);
+        }
+      else if (logx)
+        {
+          LogScale ls(minx, maxx, nxTicks);
+          int i=0;
+          for (xtick=ls(0); xtick<maxx; i++, xtick=ls(i))
+            if (xtick>=minx)
+              {
+                pango.setMarkup(axisLabel(xtick,0,logx));
+                cairo_new_path(cairo);
+                cairo_move_to(cairo,log10(xtick),0);
+                cairo_line_to(cairo,log10(xtick),fontSz*height);
+                stroke(cairo);
+                cairo_move_to(cairo,log10(xtick),fontSz*height*2);
+                pango.show();
+              
+                if (grid)
+                  drawGrid(cairo, xtick, ls(i+1)-xtick, true, aff);
+              }
+        }
+      else
+        {
+          computeIncrementAndOffset(minx, maxx, nxTicks, xtickIncrement, xtick);
+          cairo_move_to(cairo, maxx-0.05*dx*(1+fontScale), aff(miny+0.04*dy*(1+fontScale)));
+          pango.setMarkup(orderOfMag(floor(log10(xtickIncrement))));
+          pango.show();
+
+          for (; xtick<maxx; xtick+=xtickIncrement)
+            if (xtick>=minx)
+              {
+                pango.setMarkup(axisLabel(xtick,xtickIncrement,logx));
+              
+                cairo_new_path(cairo);
+                cairo_move_to(cairo,xtick,aff(miny));
+                cairo_line_to(cairo,xtick,aff(miny)+fontSz*height);
+                stroke(cairo);
+                cairo_move_to(cairo,xtick,aff(miny)+fontSz*height*2);
+                pango.show();
+              
+                if (grid)
+                  drawGrid(cairo, xtick, xtickIncrement, true, aff);
+              }
+        }
+    
+      double rightMargin=0.02*dx;
+
+      if (logy)
+        {
+          LogScale ls(miny, maxy, nyTicks);
+          int i=0;
+          for (double ytick=ls(0); ytick<maxy; i++, ytick=ls(i))
+            if (aff(ytick)>=fontSz*height)
+              {
+                pango.setMarkup(axisLabel(ytick,0,logy));
+                cairo_new_path(cairo);
+                cairo_move_to(cairo,iflogx(minx),aff(ytick));
+                cairo_line_to(cairo,iflogx(minx)+fontSz*dx,aff(ytick));
+                stroke(cairo);
+                cairo_move_to(cairo,iflogx(minx),aff(ytick));
+                pango.show();
+                if (grid)
+                  drawGrid(cairo, ytick, ls(i+1)-ytick, false, aff);
+              }
+          if (displayRHSscale())
+            {
+              LogScale ls(miny1, maxy1, nyTicks);
+              for (double ytick=ls(i=0); ytick<maxy1; i++, ytick=ls(i))
+                if (aff(ytick)>=fontSz*height)
+                  {
+                    pango.setMarkup(axisLabel(ytick,0,logy));
+                  
+                    cairo_new_path(cairo);
+                    double yt=aff((ytick-miny1)*rhsScale+miny);
+                    cairo_move_to(cairo,maxx,yt);
+                    cairo_line_to(cairo,minx+0.95*dx,yt);
+                    stroke(cairo);
+                    cairo_move_to(cairo,maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin,yt);
+                    pango.show();
+                  }
             }
         }
-        if (grid && incr) // extend grid all the way
-          while ((xtick+=incr)<maxx)
-            drawGrid(cairo, xtick, incr, true, aff);
-      }
-    else if (logx)
-      {
-        LogScale ls(minx, maxx, nxTicks);
-        int i=0;
-        for (xtick=ls(0); xtick<maxx; i++, xtick=ls(i))
-          if (xtick>=minx)
-            {
-              pango.setMarkup(axisLabel(xtick,0,logx));
-              cairo_new_path(cairo);
-              cairo_move_to(cairo,log10(xtick),0);
-              cairo_line_to(cairo,log10(xtick),fontSz*height);
-              stroke(cairo);
-              cairo_move_to(cairo,log10(xtick),fontSz*height*2);
-              pango.show();
-              
-              if (grid)
-                drawGrid(cairo, xtick, ls(i+1)-xtick, true, aff);
-            }
-      }
-    else
-      {
-        computeIncrementAndOffset(minx, maxx, nxTicks, xtickIncrement, xtick);
-        cairo_move_to(cairo, maxx-0.05*dx*(1+fontScale), aff(miny+0.04*dy*(1+fontScale)));
-        pango.setMarkup(orderOfMag(floor(log10(xtickIncrement))));
-        pango.show();
-
-        for (; xtick<maxx; xtick+=xtickIncrement)
-          if (xtick>=minx)
-            {
-              pango.setMarkup(axisLabel(xtick,xtickIncrement,logx));
-              
-              cairo_new_path(cairo);
-              cairo_move_to(cairo,xtick,aff(miny));
-              cairo_line_to(cairo,xtick,aff(miny)+fontSz*height);
-              stroke(cairo);
-              cairo_move_to(cairo,xtick,aff(miny)+fontSz*height*2);
-              pango.show();
-              
-              if (grid)
-                drawGrid(cairo, xtick, xtickIncrement, true, aff);
-            }
-      }
-    
-    double rightMargin=0.02*dx;
-
-    if (logy)
-      {
-        LogScale ls(miny, maxy, nyTicks);
-        int i=0;
-        for (double ytick=ls(0); ytick<maxy; i++, ytick=ls(i))
-          if (aff(ytick)>=fontSz*height)
-          {
-            pango.setMarkup(axisLabel(ytick,0,logy));
-            cairo_new_path(cairo);
-            cairo_move_to(cairo,iflogx(minx),aff(ytick));
-            cairo_line_to(cairo,iflogx(minx)+fontSz*dx,aff(ytick));
-            stroke(cairo);
-            cairo_move_to(cairo,iflogx(minx),aff(ytick));
-            pango.show();
-            if (grid)
-              drawGrid(cairo, ytick, ls(i+1)-ytick, false, aff);
-          }
-        if (displayRHSscale())
-          {
-            LogScale ls(miny1, maxy1, nyTicks);
-            for (double ytick=ls(i=0); ytick<maxy1; i++, ytick=ls(i))
-              if (aff(ytick)>=fontSz*height)
-                {
-                  pango.setMarkup(axisLabel(ytick,0,logy));
-                  
-                  cairo_new_path(cairo);
-                  double yt=aff((ytick-miny1)*rhsScale+miny);
-                  cairo_move_to(cairo,maxx,yt);
-                  cairo_line_to(cairo,minx+0.95*dx,yt);
-                  stroke(cairo);
-                  cairo_move_to(cairo,maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin,yt);
-                  pango.show();
-                }
-          }
-      }
-    else
-      {
-        double ytickIncrement, ytick;
-        computeIncrementAndOffset(miny, maxy, nyTicks, ytickIncrement, ytick);
-        if (ytickIncrement<0) return; //avoid infinte loop
-
-        cairo_move_to(cairo, minx+0.01*dx, aff(maxy));
-        pango.setMarkup(orderOfMag(floor(log10(ytickIncrement))));
-        pango.show();
-
-        for (; ytick<maxy; ytick+=ytickIncrement)
-          if (aff(ytick)>=fontSz*height)
-            {
-              pango.setMarkup(axisLabel(ytick,ytickIncrement,logy));
-
-              cairo_new_path(cairo);
-              cairo_move_to(cairo,iflogx(minx),aff(ytick));
-              cairo_line_to(cairo,iflogx(minx)+fontSz*dx,aff(ytick));
-              stroke(cairo);
-              cairo_move_to(cairo,iflogx(minx),aff(ytick));
-              pango.show();
-              if (grid)
-                drawGrid(cairo, ytick, ytickIncrement, false, aff);
-            }
-
-        if (displayRHSscale())
-          {
-            // draw scale on right hand side
-            computeIncrementAndOffset(miny1, maxy1, nyTicks, ytickIncrement, ytick);
-            
-            pango.setMarkup("x "+orderOfMag(floor(log10(ytickIncrement))));
-            cairo_move_to(cairo, maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin, aff(maxy));
-            pango.show();
-            
-            for (; ytick<maxy1; ytick+=ytickIncrement)
-              if (ytick>=miny1+fontSz*dy1)
-                {
-                  pango.setMarkup(axisLabel(ytick,ytickIncrement,logy));
-                  
-                  cairo_new_path(cairo);
-                  double yt=aff((ytick-miny1)*rhsScale+miny);
-                  cairo_move_to(cairo,maxx,yt);
-                  cairo_line_to(cairo,minx+0.95*dx,yt);
-                  stroke(cairo);
-                  cairo_move_to(cairo,maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin,yt);
-                  pango.show();
-                }
-          }
-      }
-    
-    if (!x.empty())
-      for (size_t i=0; i<x.size(); ++i)
+      else
         {
-          Colour& colour=palette[i%paletteSz];
-          cairo_set_source_rgba(cairo, colour.r, colour.g, colour.b, colour.a);
-          
-          // transform y coordinates (handles RHS being a different scale)
-          XFY xfy=aff;
-          Side side=left;
-          if (i<penSide.size() && penSide[i]==right)
+          double ytickIncrement, ytick;
+          computeIncrementAndOffset(miny, maxy, nyTicks, ytickIncrement, ytick);
+          if (ytickIncrement<0) return; //avoid infinte loop
+
+          cairo_move_to(cairo, minx+0.01*dx, aff(maxy));
+          pango.setMarkup(orderOfMag(floor(log10(ytickIncrement))));
+          pango.show();
+
+          for (; ytick<maxy; ytick+=ytickIncrement)
+            if (aff(ytick)>=fontSz*height)
+              {
+                pango.setMarkup(axisLabel(ytick,ytickIncrement,logy));
+
+                cairo_new_path(cairo);
+                cairo_move_to(cairo,iflogx(minx),aff(ytick));
+                cairo_line_to(cairo,iflogx(minx)+fontSz*dx,aff(ytick));
+                stroke(cairo);
+                cairo_move_to(cairo,iflogx(minx),aff(ytick));
+                pango.show();
+                if (grid)
+                  drawGrid(cairo, ytick, ytickIncrement, false, aff);
+              }
+
+          if (displayRHSscale())
             {
-              xfy.scale*=rhsScale;
-              xfy.o=miny1;
-              side=right;
+              // draw scale on right hand side
+              computeIncrementAndOffset(miny1, maxy1, nyTicks, ytickIncrement, ytick);
+            
+              pango.setMarkup("x "+orderOfMag(floor(log10(ytickIncrement))));
+              cairo_move_to(cairo, maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin, aff(maxy));
+              pango.show();
+            
+              for (; ytick<maxy1; ytick+=ytickIncrement)
+                if (ytick>=miny1+fontSz*dy1)
+                  {
+                    pango.setMarkup(axisLabel(ytick,ytickIncrement,logy));
+                  
+                    cairo_new_path(cairo);
+                    double yt=aff((ytick-miny1)*rhsScale+miny);
+                    cairo_move_to(cairo,maxx,yt);
+                    cairo_line_to(cairo,minx+0.95*dx,yt);
+                    stroke(cairo);
+                    cairo_move_to(cairo,maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin,yt);
+                    pango.show();
+                  }
             }
+        }
+    
+      if (!x.empty())
+        for (size_t i=0; i<x.size(); ++i)
+          {
+            Colour& colour=palette[i%paletteSz];
+            cairo_set_source_rgba(cairo, colour.r, colour.g, colour.b, colour.a);
+          
+            // transform y coordinates (handles RHS being a different scale)
+            XFY xfy=aff;
+            Side side=left;
+            if (i<penSide.size() && penSide[i]==right)
+              {
+                xfy.scale*=rhsScale;
+                xfy.o=miny1;
+                side=right;
+              }
 
-          if (x[i].size()>1)
-            {
-              switch (plotType)
-                {
-                case line:
-                  cairo_new_path(cairo);
-                  cairo_move_to(cairo, iflogx(x[i][0]), xfy(y[i][0]));
-                  for (size_t j=1; j<x[i].size(); ++j)
-                    if (inBounds(x[i][j-1], y[i][j-1], side) && inBounds(x[i][j], y[i][j], side))
-                      cairo_line_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
-                    else
-                      cairo_move_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
+            if (x[i].size()>1)
+              {
+                switch (plotType)
+                  {
+                  case line:
+                    cairo_new_path(cairo);
+                    cairo_move_to(cairo, iflogx(x[i][0]), xfy(y[i][0]));
+                    for (size_t j=1; j<x[i].size(); ++j)
+                      if (inBounds(x[i][j-1], y[i][j-1], side) && inBounds(x[i][j], y[i][j], side))
+                        cairo_line_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
+                      else
+                        cairo_move_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
 
-                  if (leadingMarker)
-                    cairo_rectangle
+                    if (leadingMarker)
+                      cairo_rectangle
                         (cairo, iflogx(x[i].back()), xfy(y[i].back()), 
                          0.01*dx,  0.01*dy*sy);
-                  stroke(cairo);
-                  break;
-                case bar:
-                  {
-                    size_t j=0;
-                    float w = abs(iflogx(x[i][1]) - iflogx(x[i][0]));
-                    if (inBounds(iflogx(x[i][j]), y[i][j], side))
-                      {
-                        cairo_rectangle(cairo, iflogx(x[i][0])-0.5*w, 0, w, 
-                                        xfy(y[i][0]));
-                        cairo_fill(cairo);
-                      }
-                    for (++j; j<x[i].size()-1; ++j)
+                    stroke(cairo);
+                    break;
+                  case bar:
+                    {
+                      size_t j=0;
+                      float w = abs(iflogx(x[i][1]) - iflogx(x[i][0]));
                       if (inBounds(iflogx(x[i][j]), y[i][j], side))
                         {
-                          w=min(abs(iflogx(x[i][j]) - iflogx(x[i][j-1])), 
-                                abs(iflogx(x[i][j+1])-iflogx(x[i][j])));
+                          cairo_rectangle(cairo, iflogx(x[i][0])-0.5*w, 0, w, 
+                                          xfy(y[i][0]));
+                          cairo_fill(cairo);
+                        }
+                      for (++j; j<x[i].size()-1; ++j)
+                        if (inBounds(iflogx(x[i][j]), y[i][j], side))
+                          {
+                            w=min(abs(iflogx(x[i][j]) - iflogx(x[i][j-1])), 
+                                  abs(iflogx(x[i][j+1])-iflogx(x[i][j])));
+                            cairo_rectangle(cairo, iflogx(x[i][j])-0.5*w, 0, w, 
+                                            xfy(y[i][j]));
+                            cairo_fill(cairo);
+                          }
+                      if (inBounds(iflogx(x[i][j]), y[i][j], side))
+                        {
+                          w=abs(iflogx(x[i][j]) - iflogx(x[i][j-1]));
                           cairo_rectangle(cairo, iflogx(x[i][j])-0.5*w, 0, w, 
                                           xfy(y[i][j]));
                           cairo_fill(cairo);
                         }
-                    if (inBounds(iflogx(x[i][j]), y[i][j], side))
-                      {
-                        w=abs(iflogx(x[i][j]) - iflogx(x[i][j-1]));
-                        cairo_rectangle(cairo, iflogx(x[i][j])-0.5*w, 0, w, 
-                                        xfy(y[i][j]));
-                        cairo_fill(cairo);
-                      }
+                    }
                   }
-                }
-            }
-        }
-
+              }
+          }
+    }
+    if (legend) drawLegend(cairo,width,height);
 #endif    
   }
   
