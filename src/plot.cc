@@ -351,7 +351,7 @@ namespace ecolab
     double width=0, height=0;
     double fy=0.03*fontScale*h;
 
-    cairo_save(cairo);
+    cairo::CairoSave cs(cairo);
     cairo_translate(cairo,0, h);
     cairo_scale(cairo,1,-1);
 
@@ -436,7 +436,6 @@ namespace ecolab
           // advance to next label
           yoffs-=1.5*fy;
         }
-    cairo_restore(cairo);
   }
 
   void Plot::labelAxes(cairo_t* cairo, double width, double height) const
@@ -567,8 +566,9 @@ namespace ecolab
 
       cairo_set_source_rgba(cairo, 0,0,0,1); //black
       cairo_rectangle(cairo,iflogx(minx),0,dx,height);
+      cairo_clip_preserve(cairo);
       stroke(cairo);
-
+      
 
       cairo_set_source_rgba(cairo, 0, 0, 0, 1);
       double xtickIncrement, xtick;
@@ -584,6 +584,7 @@ namespace ecolab
         {
           unsigned tickIncr=xticks.size()/10+1;
           double xtick=0, incr=0;
+          pango.angle=xtickAngle*M_PI/180.0;
           for (unsigned i=0; i<xticks.size(); i+=tickIncr)
             {
               auto& xt=xticks[i];
@@ -593,12 +594,8 @@ namespace ecolab
               cairo_line_to(cairo,xtick,fontSz*height);
               stroke(cairo);
               cairo_move_to(cairo,xtick,fontSz*height*2);
-              {
-                pango.setMarkup(xt.second);
-                pango.angle=-M_PI/2;
-                pango.show();
-                pango.angle=0;
-              }
+              pango.setMarkup(xt.second);
+              pango.show();
               if (grid)
                 {
                   if (i<xticks.size()-tickIncr)
@@ -610,6 +607,7 @@ namespace ecolab
                   drawGrid(cairo, xtick, incr, true, aff);
                 }
             }
+          pango.angle=0;
           if (grid && incr) // extend grid all the way
             while ((xtick+=incr)<maxx)
               drawGrid(cairo, xtick, incr, true, aff);
