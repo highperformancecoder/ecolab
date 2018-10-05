@@ -113,7 +113,9 @@ namespace ecolab
     /// axis labels
     string xlabel, ylabel, y1label;
     double xtickAngle=-45; ///< angle (in degrees) at which xtick labels are drawn
-
+    /// if |log_10 (x)| < exp_threshold, do not rescale tick value
+    unsigned exp_threshold=4;
+    
     /// height (or width) of an axis label in pixels
     double labelheight() const {return lh(width(), height());}
     double lh(double width, double height) const;

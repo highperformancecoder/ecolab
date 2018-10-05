@@ -64,12 +64,10 @@ namespace
 
   // axis labels are either just the leading digit, or an order of
   // magnitude if log
-  string axisLabel(double x, double scale, bool log)
+  string logAxisLabel(double x)
   {
     char label[30];
-    if (log)
-      {
-        if (x<=0) return ""; // -ve values meaningless
+    if (x<=0) return ""; // -ve values meaningless
         if (x>=0.01 && x<1)
           {
             sprintf(label,"%.2f",x);
@@ -84,19 +82,39 @@ namespace
             int lead=x*pow(10,-omag);
             sprintf(label,"%d×10<sup>%d</sup>",lead,omag);
           }
+        return label;
+  }
+
+  string axisLabel(double x, double scale, unsigned threshold)
+  {
+    char label[30];
+    // change scale back to units
+    int iscale=int(floor(log10(scale)));
+    scale = pow(10.0, iscale);        
+    if (abs(iscale)>=threshold-1)
+      {
+        int num=floor(x/scale+0.5);
+        sprintf(label,"%d",num);
       }
     else
       {
-        // change scale back to units
-        int iscale=int(floor(log10(scale)));
-        scale = pow(10.0, iscale);
-        int num=floor(x/scale+0.5);
+        double num=scale*floor(x/scale+0.5);
+        sprintf(label,"%g",num);
+      }
 
-        sprintf(label,"%d",num);
-     }
     return label;
   }
 
+  void showOrderOfMag(ecolab::Pango& pango, double scale, unsigned threshold)
+  {
+    scale=floor(log10(scale));
+    if (abs(scale)>=threshold-1)
+      {
+        pango.setMarkup(orderOfMag(scale));
+        pango.show();
+       }
+  }
+  
   /*
     compute increment and tickoffset, returning the scale
 
@@ -619,7 +637,7 @@ namespace ecolab
           for (xtick=ls(0); xtick<maxx; i++, xtick=ls(i))
             if (xtick>=minx)
               {
-                pango.setMarkup(axisLabel(xtick,0,logx));
+                pango.setMarkup(logAxisLabel(xtick));
                 cairo_new_path(cairo);
                 cairo_move_to(cairo,log10(xtick),0);
                 cairo_line_to(cairo,log10(xtick),fontSz*height);
@@ -635,13 +653,12 @@ namespace ecolab
         {
           computeIncrementAndOffset(minx, maxx, nxTicks, xtickIncrement, xtick);
           cairo_move_to(cairo, maxx-0.05*dx*(1+fontScale), aff(miny+0.04*dy*(1+fontScale)));
-          pango.setMarkup(orderOfMag(floor(log10(xtickIncrement))));
-          pango.show();
+          showOrderOfMag(pango, xtickIncrement, exp_threshold);
 
           for (; xtick<maxx; xtick+=xtickIncrement)
             if (xtick>=minx)
               {
-                pango.setMarkup(axisLabel(xtick,xtickIncrement,logx));
+                pango.setMarkup(axisLabel(xtick,xtickIncrement,exp_threshold));
               
                 cairo_new_path(cairo);
                 cairo_move_to(cairo,xtick,aff(miny));
@@ -664,7 +681,7 @@ namespace ecolab
           for (double ytick=ls(0); ytick<maxy; i++, ytick=ls(i))
             if (aff(ytick)>=fontSz*height)
               {
-                pango.setMarkup(axisLabel(ytick,0,logy));
+                pango.setMarkup(logAxisLabel(ytick));
                 cairo_new_path(cairo);
                 cairo_move_to(cairo,iflogx(minx),aff(ytick));
                 cairo_line_to(cairo,iflogx(minx)+fontSz*dx,aff(ytick));
@@ -680,7 +697,7 @@ namespace ecolab
               for (double ytick=ls(i=0); ytick<maxy1; i++, ytick=ls(i))
                 if (aff(ytick)>=fontSz*height)
                   {
-                    pango.setMarkup(axisLabel(ytick,0,logy));
+                    pango.setMarkup(logAxisLabel(ytick));
                   
                     cairo_new_path(cairo);
                     double yt=aff((ytick-miny1)*rhsScale+miny);
@@ -699,13 +716,12 @@ namespace ecolab
           if (ytickIncrement<0) return; //avoid infinte loop
 
           cairo_move_to(cairo, minx+0.01*dx, aff(maxy));
-          pango.setMarkup(orderOfMag(floor(log10(ytickIncrement))));
-          pango.show();
-
+          showOrderOfMag(pango, ytickIncrement, exp_threshold);
+          
           for (; ytick<maxy; ytick+=ytickIncrement)
             if (aff(ytick)>=fontSz*height)
               {
-                pango.setMarkup(axisLabel(ytick,ytickIncrement,logy));
+                pango.setMarkup(axisLabel(ytick,ytickIncrement,exp_threshold));
 
                 cairo_new_path(cairo);
                 cairo_move_to(cairo,iflogx(minx),aff(ytick));
@@ -721,15 +737,14 @@ namespace ecolab
             {
               // draw scale on right hand side
               computeIncrementAndOffset(miny1, maxy1, nyTicks, ytickIncrement, ytick);
-            
-              pango.setMarkup("x "+orderOfMag(floor(log10(ytickIncrement))));
+
               cairo_move_to(cairo, maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin, aff(maxy));
-              pango.show();
-            
+              showOrderOfMag(pango, ytickIncrement, exp_threshold);
+
               for (; ytick<maxy1; ytick+=ytickIncrement)
                 if (ytick>=miny1+fontSz*dy1)
                   {
-                    pango.setMarkup(axisLabel(ytick,ytickIncrement,logy));
+                    pango.setMarkup(axisLabel(ytick,ytickIncrement,exp_threshold));
                   
                     cairo_new_path(cairo);
                     double yt=aff((ytick-miny1)*rhsScale+miny);
