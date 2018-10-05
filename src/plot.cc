@@ -91,7 +91,7 @@ namespace
     // change scale back to units
     int iscale=int(floor(log10(scale)));
     scale = pow(10.0, iscale);        
-    if (abs(iscale)>=threshold-1)
+    if (unsigned(abs(iscale))+1>=threshold)
       {
         int num=floor(x/scale+0.5);
         sprintf(label,"%d",num);
