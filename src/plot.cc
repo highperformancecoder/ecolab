@@ -761,8 +761,7 @@ namespace ecolab
         for (size_t i=0; i<x.size(); ++i)
           {
             Colour& colour=palette[i%paletteSz];
-            cairo_set_source_rgba(cairo, colour.r, colour.g, colour.b, colour.a);
-          
+
             // transform y coordinates (handles RHS being a different scale)
             XFY xfy=aff;
             Side side=left;
@@ -778,6 +777,8 @@ namespace ecolab
                 switch (plotType)
                   {
                   case line:
+                    cairo_set_source_rgba(cairo, colour.r, colour.g, colour.b, colour.a);
+          
                     cairo_new_path(cairo);
                     cairo_move_to(cairo, iflogx(x[i][0]), xfy(y[i][0]));
                     for (size_t j=1; j<x[i].size(); ++j)
@@ -794,6 +795,8 @@ namespace ecolab
                     break;
                   case bar:
                     {
+                      // make bars translucent - see Minsky ticket #893
+                      cairo_set_source_rgba(cairo, colour.r, colour.g, colour.b, 0.5*colour.a);
                       size_t j=0;
                       float w = abs(iflogx(x[i][1]) - iflogx(x[i][0]));
                       if (inBounds(iflogx(x[i][j]), y[i][j], side))
