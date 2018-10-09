@@ -22,6 +22,7 @@ testPlot.leadingMarker 1
 testPlot.nxTicks 3
 testPlot.nyTicks 3
 testPlot.legend 1
+testPlot.percent 1
 testPlot.legendSide right  
 testPlot.labelPen 0 nought
 testPlot.labelPen 1 one

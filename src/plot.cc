@@ -85,25 +85,6 @@ namespace
         return label;
   }
 
-  string axisLabel(double x, double scale, unsigned threshold)
-  {
-    char label[30];
-    // change scale back to units
-    int iscale=int(floor(log10(scale)));
-    scale = pow(10.0, iscale);        
-    if (unsigned(abs(iscale))+1>=threshold)
-      {
-        int num=floor(x/scale+0.5);
-        sprintf(label,"%d",num);
-      }
-    else
-      {
-        double num=scale*floor(x/scale+0.5);
-        sprintf(label,"%g",num);
-      }
-
-    return label;
-  }
 
   void showOrderOfMag(ecolab::Pango& pango, double scale, unsigned threshold)
   {
@@ -220,6 +201,29 @@ namespace ecolab
     redraw();
 #endif
     return m_image=im;
+  }
+
+  string Plot::axisLabel(double x, double scale, bool percent) const
+  {
+    char label[30];
+    // change scale back to units
+    int iscale=int(floor(log10(scale)));
+    scale = pow(10.0, iscale);        
+    if (unsigned(abs(iscale))+1>=exp_threshold)
+      {
+        int num=floor(x/scale+0.5);
+        sprintf(label,"%d",num);
+      }
+    else
+      {
+        double num=scale*floor(x/scale+0.5);
+        if (percent)
+          sprintf(label,"%g%%",100*num);
+        else
+          sprintf(label,"%g",num);
+      }
+
+    return label;
   }
 
   void Plot::labelPen(unsigned pen, const string& label)
@@ -658,7 +662,7 @@ namespace ecolab
           for (; xtick<maxx; xtick+=xtickIncrement)
             if (xtick>=minx)
               {
-                pango.setMarkup(axisLabel(xtick,xtickIncrement,exp_threshold));
+                pango.setMarkup(axisLabel(xtick,xtickIncrement));
               
                 cairo_new_path(cairo);
                 cairo_move_to(cairo,xtick,aff(miny));
@@ -721,7 +725,7 @@ namespace ecolab
           for (; ytick<maxy; ytick+=ytickIncrement)
             if (aff(ytick)>=fontSz*height)
               {
-                pango.setMarkup(axisLabel(ytick,ytickIncrement,exp_threshold));
+                pango.setMarkup(axisLabel(ytick,ytickIncrement,percent));
 
                 cairo_new_path(cairo);
                 cairo_move_to(cairo,iflogx(minx),aff(ytick));
@@ -744,7 +748,7 @@ namespace ecolab
               for (; ytick<maxy1; ytick+=ytickIncrement)
                 if (ytick>=miny1+fontSz*dy1)
                   {
-                    pango.setMarkup(axisLabel(ytick,ytickIncrement,exp_threshold));
+                    pango.setMarkup(axisLabel(ytick,ytickIncrement,percent));
                   
                     cairo_new_path(cairo);
                     double yt=aff((ytick-miny1)*rhsScale+miny);

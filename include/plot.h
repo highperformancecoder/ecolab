@@ -90,11 +90,13 @@ namespace ecolab
     bool displayRHSscale() const {
       return !penSide.empty() && miny1<maxy1;
     }
+    string axisLabel(double x, double scale, bool percent=false) const;
+
   public:
     Plot(): nxTicks(30), nyTicks(30), fontScale(1),
             offx(0), offy(0), logx(false), logy(false), 
             grid(false), subgrid(false), 
-            leadingMarker(false), autoscale(true), 
+            leadingMarker(false), autoscale(true), percent(false), 
             legend(false), legendSide(right), plotType(line), 
             minx(-1), maxx(1), miny(-1), maxy(1), miny1(1), maxy1(-1)
     {}
@@ -107,6 +109,7 @@ namespace ecolab
     bool grid, subgrid; ///< draw grid options
     bool leadingMarker; ///< draw a leading marker on the curve (full draw only)
     bool autoscale; ///< autoscale plot to data
+    bool percent; ///< scales y axis label by 100
     bool legend;  ///< add a legend to the plot
     Side legendSide; ///< legend drawn towards the left or right
     PlotType plotType;
