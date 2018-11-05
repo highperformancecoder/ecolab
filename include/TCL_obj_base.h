@@ -936,6 +936,15 @@ namespace ecolab
     Tcl_CreateObjCommand(interp(),desc.c_str(),TCL_oproc,(ClientData)t,TCL_cmd_data_delete);
   } 
 
+  template<class M>
+  typename enable_if<functional::is_nonmember_function_ptr<M>, void>::T
+  TCL_obj(TCL_obj_t& targ, const string& desc, M m) 
+  {
+    NewTCL_static_functor<M> *t=new NewTCL_static_functor<M>(targ,m);
+    TCL_OBJ_DBG(printf("registering %s\n",desc.c_str()));
+    Tcl_CreateObjCommand(interp(),desc.c_str(),TCL_oproc,(ClientData)t,TCL_cmd_data_delete);
+  } 
+
   /** methods with signature (int,char**) or TCL_args can be used to
      handle methods with variable arguments, or ones with reference
      arguments */
