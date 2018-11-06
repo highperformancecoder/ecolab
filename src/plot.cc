@@ -604,10 +604,13 @@ namespace ecolab
       XFY aff(logy, sy, miny, 0); //manual affine transform - see ticket #693
       if (xticks.size())
         {
-          unsigned tickIncr=xticks.size()/10+1;
+          unsigned startTick=0, endTick;
+          for (startTick=0; startTick<xticks.size() && xticks[startTick].first < minx; startTick++);
+          for (endTick=startTick; endTick<xticks.size() && xticks[endTick].first < maxx; endTick++);
+          unsigned tickIncr=(endTick-startTick)/nxTicks+1;
           double xtick=0, incr=0;
           pango.angle=xtickAngle*M_PI/180.0;
-          for (unsigned i=0; i<xticks.size(); i+=tickIncr)
+          for (unsigned i=startTick; i<endTick; i+=tickIncr)
             {
               auto& xt=xticks[i];
               xtick=logx? log10(xt.first): xt.first;

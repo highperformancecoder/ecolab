@@ -102,7 +102,7 @@ namespace ecolab
     {}
     virtual ~Plot() {}
 
-    int nxTicks, nyTicks; ///< number of x/y-axis ticks
+    unsigned nxTicks, nyTicks; ///< number of x/y-axis ticks
     double fontScale; ///< scale tick labels
     double offx, offy; ///< origin of plot within image
     bool logx, logy; ///< logarithmic plots (x/y axes)
