@@ -288,8 +288,6 @@ namespace ecolab
                   }
               }
           }
-        if (!(maxx>=minx) || !(maxy>=miny) || (displayRHSscale() && !(maxy1>=miny1)))
-          msg="invalid data";
       }
     if (!logx)
       {
