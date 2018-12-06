@@ -13,19 +13,19 @@
 #ifdef _WIN32
 #undef Realloc
 #include <windows.h>
-#endif
-
-#include "ecolab_epilogue.h"
-#define USE_WIN32_SURFACE defined(CAIRO_HAS_WIN32_SURFACE) && !defined(__CYGWIN__)
-
-#ifdef CAIRO_HAS_XLIB_SURFACE
-#include <cairo/cairo-xlib.h>
-#endif
 #if USE_WIN32_SURFACE
 #include <cairo/cairo-win32.h>
 // undocumented internal function for extracting the HDC from a Drawable
 extern "C" HDC TkWinGetDrawableDC(Display*, Drawable, void*);
 extern "C" HDC TkWinReleaseDrawableDC(Drawable, HDC, void*);
+#endif
+#endif
+
+#include "ecolab_epilogue.h"
+#define USE_WIN32_SURFACE defined(CAIRO_HAS_WIN32_SURFACE) && !defined(__CYGWIN__)
+
+#if defined(CAIRO_HAS_XLIB_SURFACE) && !defined(MAC_OSX_TK)
+#include <cairo/cairo-xlib.h>
 #endif
 
 #if defined(MAC_OSX_TK)

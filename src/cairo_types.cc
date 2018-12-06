@@ -11,7 +11,7 @@
 #include "cairo_base.h"
 #include "TCL_obj_base.h"
 #include "ecolab_epilogue.h"
-#ifdef CAIRO_HAS_XLIB_SURFACE
+#if defined(CAIRO_HAS_XLIB_SURFACE) && !defined(MAC_OSX_TK)
 #include <cairo/cairo-xlib.h>
 #endif
 // CYGWIN has problems with WIN32_SURFACE
