@@ -15,7 +15,7 @@ namespace ecolab
   {
     CGContextRef context;
     void* graphicsContext;
-    NSContext(Drawable win,int xoffs,int yoffs,int height);
+    NSContext(Drawable win,int xoffs,int yoffs);
     ~NSContext();
   };
 }

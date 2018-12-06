@@ -123,7 +123,7 @@ namespace
           yoffs+=Tk_Y(w);
         }
       
-      NSContext nctx(win, xoffs, yoffs, Tk_Height(c.tkWin));
+      NSContext nctx(win, xoffs, yoffs);
       c.csurf.surface.reset
         (new TkWinSurface
          (c.csurf, c.master,

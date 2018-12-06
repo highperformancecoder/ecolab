@@ -191,7 +191,7 @@ lib/libecolab$(ECOLIBS_EXT).a: $(OBJS) $(LIBMODS)
 	-cd graphcode; $(GRAPHCODE_MAKE) MAP=vmap libgraphcode.a
 	-cd graphcode; $(GRAPHCODE_MAKE) MAP=hmap libgraphcode.a
 	-cp -f graphcode/*.h graphcode/vmap graphcode/hmap include
-	ar r $@ graphcode/*.hmap graphcode/*.vmap $?
+	ar r $@ graphcode/*.hmap graphcode/*.vmap $^
 ifeq ($(OS),Darwin)
 	ranlib $@
 endif
