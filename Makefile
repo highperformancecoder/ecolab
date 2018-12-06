@@ -119,6 +119,7 @@ endif
 	echo IGRAPH=$(IGRAPH)>>$(MCFG)
 	echo SAUCY=$(SAUCY)>>$(MCFG)
 	echo CAIRO=$(CAIRO)>>$(MCFG)
+	echo PANGO=$(PANGO)>>$(MCFG)
 	echo BLT=$(BLT)>>$(MCFG)
 	echo BDB=$(BDB)>>$(MCFG)
 	echo GDBM=$(GDBM) >>$(MCFG)
