@@ -107,6 +107,30 @@ ifdef MXE
 	cp -r $(call search,lib*/tcl$(TCLVERSION)) include/tcl
 	cp -r $(call search,lib*/tk$(TCLVERSION)) include/tk
 endif
+# update Makefile.config with the configuration parameters used to build this
+	echo TK=$(TK)>$(MCFG)
+	echo ZLIB=$(ZLIB)>>$(MCFG)
+	echo READLINE=$(READLINE)>>$(MCFG)
+	echo XDR=$(XDR)>>$(MCFG)
+	echo UNURAN=$(UNURAN)>>$(MCFG)
+	echo PRNG=$(PRNG)>>$(MCFG)
+	echo GNUSL=$(GNUSL)>>$(MCFG)
+	echo PARMETIS=$(PARMETIS)>>$(MCFG)
+	echo IGRAPH=$(IGRAPH)>>$(MCFG)
+	echo SAUCY=$(SAUCY)>>$(MCFG)
+	echo CAIRO=$(CAIRO)>>$(MCFG)
+	echo PANGO=$(PANGO)>>$(MCFG)
+	echo BLT=$(BLT)>>$(MCFG)
+	echo BDB=$(BDB)>>$(MCFG)
+	echo GDBM=$(GDBM) >>$(MCFG)
+	echo GDBM_COMPAT=$(GDBM_COMPAT) >>$(MCFG)
+	echo MPI=$(MPI)>>$(MCFG)
+	echo PARALLEL=$(PARALLEL)>>$(MCFG)
+	echo OPENMP=$(OPENMP)>>$(MCFG)
+	echo GCC=$(GCC)>>$(MCFG)
+	echo NOGUI=$(NOGUI)>>$(MCFG)
+	echo AQUA=$(AQUA)>>$(MCFG)	
+	echo MAC_OSX_TK=$(MAC_OSX_TK)>>$(MCFG)
 
 # we want to build this target always when under AEGIS, otherwise only
 # when non-existing
@@ -167,7 +191,7 @@ lib/libecolab$(ECOLIBS_EXT).a: $(OBJS) $(LIBMODS)
 	-cd graphcode; $(GRAPHCODE_MAKE) MAP=vmap libgraphcode.a
 	-cd graphcode; $(GRAPHCODE_MAKE) MAP=hmap libgraphcode.a
 	-cp -f graphcode/*.h graphcode/vmap graphcode/hmap include
-	ar r $@ graphcode/*.hmap graphcode/*.vmap $?
+	ar r $@ graphcode/*.hmap graphcode/*.vmap $^
 ifeq ($(OS),Darwin)
 	ranlib $@
 endif
