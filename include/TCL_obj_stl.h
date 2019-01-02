@@ -239,7 +239,7 @@ namespace ecolab
   { 
     tclreturn r;
     for (typename T::const_iterator i=o.begin(); i!=o.end(); i++)
-      r<<i->first;
+      (r<<"\"")|i->first|"\"";
   }
   
   template <class T>
@@ -248,7 +248,7 @@ namespace ecolab
   { 
     tclreturn r;
     for (typename T::const_iterator i=o.begin(); i!=o.end(); i++)
-      r<<*i;
+      (r<<"\"")|*i|"\"";
   }
   
 
