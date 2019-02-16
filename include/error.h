@@ -42,7 +42,7 @@ namespace ecolab
     {
       va_list args;
       va_start(args, fmt);
-      vsprintf(errstring,fmt,args);
+      vsnprintf(errstring,sizeof(errstring),fmt,args);
       va_end(args);
       abort_if_debug();
     }
