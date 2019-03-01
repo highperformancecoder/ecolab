@@ -116,6 +116,7 @@ namespace ecolab
     double legendLeft=0.9; ///< x coordinate of legend in scale 0-1 if legendSide==boundingBox
     double legendTop=0.95; ///< y coordinate of legend in scale 0-1 if legendSide==boundingBox
     double legendFontSz=0.03; ///< y coordinate of legend in scale 0-1 if legendSide==boundingBox
+    const double legendOffset=0.06; ///< offset of legend text within legend box as fraction of width
     PlotType plotType;
     /// axis labels
     string xlabel, ylabel, y1label;

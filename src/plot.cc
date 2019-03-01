@@ -365,7 +365,8 @@ namespace ecolab
 
   void Plot::legendSize(double& width, double& height, double fy, cairo_t* cairo) const
   {
-     for (size_t i=0; i<x.size(); ++i)
+    width=0; height=0;
+    for (size_t i=0; i<x.size(); ++i)
       if (i<penLabel.size() && penLabel[i])
         {
           height += 1.3*penLabel[i]->height();
@@ -379,7 +380,7 @@ namespace ecolab
           height += 1.5*fy; //1.3*(p2.height());
           width = max(width, p2.width());
         }
- }
+  }
   
   void Plot::drawLegend(cairo_t* cairo, double w, double h) const
   {
@@ -408,13 +409,13 @@ namespace ecolab
     cairo_translate(cairo,0, h);
     cairo_scale(cairo,1,-1);
 
-    double labeloffs=xoffs+0.06*w;
+    double labeloffs=xoffs+legendOffset*w;
 
     legendSize(width,height,fy,cairo);
     if (height>0)
       {
         cairo::CairoSave cs(cairo);
-        cairo_rectangle(cairo,xoffs,yoffs+0.8*fy,width+0.06*w,-height);
+        cairo_rectangle(cairo,xoffs,yoffs+0.8*fy,width+legendOffset*w,-height);
         cairo_set_source_rgb(cairo,0,0,0);
         cairo_stroke_preserve(cairo);
         cairo_set_source_rgba(cairo,1,1,1,0.7);
