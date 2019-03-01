@@ -363,35 +363,9 @@ namespace ecolab
 
   }
 
-  void Plot::drawLegend(cairo_t* cairo, double w, double h) const
+  void Plot::legendSize(double& width, double& height, double fy, cairo_t* cairo) const
   {
-    double dx=maxx-minx, dy=maxy-miny;
-    double xoffs;
-    // compute width of labels
-    double width=0, height=0;
-    double fy=0.03*fontScale*h;
-    double yoffs=0.95*h-0.8*fy;
-
-    switch (legendSide)
-      {
-      case left:
-        xoffs=0.1*w;
-        break;
-      case right:
-        xoffs=0.9*w-width;
-        break;
-      case boundingBox:
-        xoffs=legendLeft*w;
-        fy=legendFontSz*h;
-        yoffs=legendTop*h-0.8*fy;
-        break;
-      }
-
-    cairo::CairoSave cs(cairo);
-    cairo_translate(cairo,0, h);
-    cairo_scale(cairo,1,-1);
-
-    for (size_t i=0; i<x.size(); ++i)
+     for (size_t i=0; i<x.size(); ++i)
       if (i<penLabel.size() && penLabel[i])
         {
           height += 1.3*penLabel[i]->height();
@@ -405,8 +379,38 @@ namespace ecolab
           height += 1.5*fy; //1.3*(p2.height());
           width = max(width, p2.width());
         }
+ }
+  
+  void Plot::drawLegend(cairo_t* cairo, double w, double h) const
+  {
+    double dx=maxx-minx, dy=maxy-miny;
+    double xoffs;
+    // compute width of labels
+    double width=0, height=0;
+    double fy=legendFontSz*fontScale*h;
+    double yoffs=0.95*h-0.8*fy;
+
+    switch (legendSide)
+      {
+      case left:
+        xoffs=0.1*w;
+        break;
+      case right:
+        xoffs=0.9*w-width;
+        break;
+      case boundingBox:
+        xoffs=legendLeft*w;
+        yoffs=legendTop*h-0.8*fy;
+        break;
+      }
+
+    cairo::CairoSave cs(cairo);
+    cairo_translate(cairo,0, h);
+    cairo_scale(cairo,1,-1);
+
     double labeloffs=xoffs+0.06*w;
-    
+
+    legendSize(width,height,fy,cairo);
     if (height>0)
       {
         cairo::CairoSave cs(cairo);
