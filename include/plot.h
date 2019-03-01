@@ -49,7 +49,8 @@ namespace ecolab
         return scale*((logy? log10(y): y)-o)+o1;
       }
     };
-    enum Side {left, right};
+    /// boundingBox is used explictly specify legend sizing via a bounding box relative to plot size
+    enum Side {left, right, boundingBox};
     enum PlotType {line, bar};
     
   private:    
@@ -112,6 +113,9 @@ namespace ecolab
     bool percent; ///< scales y axis label by 100
     bool legend;  ///< add a legend to the plot
     Side legendSide; ///< legend drawn towards the left or right
+    double legendLeft=0.9; ///< x coordinate of legend in scale 0-1 if legendSide==boundingBox
+    double legendTop=0.95; ///< y coordinate of legend in scale 0-1 if legendSide==boundingBox
+    double legendFontSz=0.03; ///< y coordinate of legend in scale 0-1 if legendSide==boundingBox
     PlotType plotType;
     /// axis labels
     string xlabel, ylabel, y1label;

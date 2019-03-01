@@ -370,6 +370,22 @@ namespace ecolab
     // compute width of labels
     double width=0, height=0;
     double fy=0.03*fontScale*h;
+    double yoffs=0.95*h-0.8*fy;
+
+    switch (legendSide)
+      {
+      case left:
+        xoffs=0.1*w;
+        break;
+      case right:
+        xoffs=0.9*w-width;
+        break;
+      case boundingBox:
+        xoffs=legendLeft*w;
+        fy=legendFontSz*h;
+        yoffs=legendTop*h-0.8*fy;
+        break;
+      }
 
     cairo::CairoSave cs(cairo);
     cairo_translate(cairo,0, h);
@@ -389,12 +405,7 @@ namespace ecolab
           height += 1.5*fy; //1.3*(p2.height());
           width = max(width, p2.width());
         }
-    if (legendSide==left)
-      xoffs=0.1*w;
-    else
-      xoffs=0.9*w-width;
     double labeloffs=xoffs+0.06*w;
-    double yoffs=0.95*h-0.8*fy;
     
     if (height>0)
       {
