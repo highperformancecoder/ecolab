@@ -78,8 +78,6 @@ namespace ecolab
     /// vertical or horizontal
     void drawGrid(cairo_t* cairo, double tick, double increment, bool vertical, const XFY&) const;
 
-    /// calculates the bounding box of the legend, given current font size settings
-    void legendSize(double& width, double& height, double fontSz, cairo_t*) const;
     void drawLegend(cairo_t*, double width, double height) const;
 
     void labelAxes(cairo_t*, double width, double height) const;
@@ -128,6 +126,8 @@ namespace ecolab
     /// height (or width) of an axis label in pixels
     double labelheight() const {return lh(width(), height());}
     double lh(double width, double height) const;
+    /// calculates the bounding box of the legend, given current font size settings
+    void legendSize(double& width, double& height, double fontSz, cairo_t*) const;
 
     cairo_surface_t* cairoSurface() const;
     int width() const;
