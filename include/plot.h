@@ -127,8 +127,8 @@ namespace ecolab
     /// height (or width) of an axis label in pixels
     double labelheight() const {return lh(width(), height());}
     double lh(double width, double height) const;
-    /// calculates the bounding box of the legend, given current font size settings
-    void legendSize(double& width, double& height, double fontSz, cairo_t*) const;
+    /// calculates the bounding box of the legend, given current font size settings, and the height of the plot
+    void legendSize(double& width, double& height, double plotHeight) const;
 
     cairo_surface_t* cairoSurface() const;
     int width() const;

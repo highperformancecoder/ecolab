@@ -363,9 +363,10 @@ namespace ecolab
 
   }
 
-  void Plot::legendSize(double& width, double& height, double fy, cairo_t* cairo) const
+  void Plot::legendSize(double& width, double& height, double plotHeight) const
   {
     width=0; height=0;
+    double fy=legendFontSz*fontScale*plotHeight;
     for (size_t i=0; i<x.size(); ++i)
       if (i<penLabel.size() && penLabel[i])
         {
@@ -374,7 +375,9 @@ namespace ecolab
         }
       else if (i<penTextLabel.size() && !penTextLabel[i].empty())
         {
-          Pango p2(cairo);
+          cairo::Surface surf
+            (cairo_recording_surface_create(CAIRO_CONTENT_COLOR,NULL));
+          Pango p2(surf.cairo());
           p2.setFontSize(fabs(fy));
           p2.setMarkup(penTextLabel[i]);
           height += 1.5*fy; //1.3*(p2.height());
@@ -411,7 +414,7 @@ namespace ecolab
 
     double labeloffs=xoffs+legendOffset*w;
 
-    legendSize(width,height,fy,cairo);
+    legendSize(width,height,h);
     if (height>0)
       {
         cairo::CairoSave cs(cairo);
