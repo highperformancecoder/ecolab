@@ -107,15 +107,14 @@ namespace ecolab
     string axisLabel(double x, double scale, bool percent=false) const;
 
   public:
-    Plot(): nxTicks(30), nyTicks(30), fontScale(1),
+    Plot(): palette(paletteSz), nxTicks(30), nyTicks(30), fontScale(1),
             offx(0), offy(0), logx(false), logy(false), 
             grid(false), subgrid(false), 
             leadingMarker(false), autoscale(true), percent(false), 
             legend(false), legendSide(right), plotType(line), 
-            minx(-1), maxx(1), miny(-1), maxy(1), miny1(1), maxy1(-1), palette(paletteSz)
-            
+            minx(-1), maxx(1), miny(-1), maxy(1), miny1(1), maxy1(-1)
     {
-      for (size_t i=0; i<paletteSz; ++i) palette[i].colour=ecolab::palette[i];
+      for (int i=0; i<paletteSz; ++i) palette[i].colour=ecolab::palette[i];
     }
     virtual ~Plot() {}
 

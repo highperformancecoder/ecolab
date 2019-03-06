@@ -417,6 +417,7 @@ namespace ecolab
 
     switch (legendSide)
       {
+      default:
       case left:
         xoffs=0.1*w;
         break;
