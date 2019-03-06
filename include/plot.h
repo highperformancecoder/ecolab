@@ -52,6 +52,19 @@ namespace ecolab
     /// boundingBox is used explictly specify legend sizing via a bounding box relative to plot size
     enum Side {left, right, boundingBox};
     enum PlotType {line, bar};
+
+    struct LineStyle
+    {
+      enum DashStyle {solid, dash, dot, dashDot};
+      cairo::Colour colour;
+      double width=1;
+      DashStyle dashStyle;
+      LineStyle(): colour{0,0,0,1}, width(1), dashStyle(solid) {}
+      std::vector<double> dashPattern() const;
+    };
+      
+    std::vector<LineStyle> palette;
+    void extendPalette() {palette.push_back(LineStyle());}
     
   private:    
     string m_image;
@@ -99,8 +112,11 @@ namespace ecolab
             grid(false), subgrid(false), 
             leadingMarker(false), autoscale(true), percent(false), 
             legend(false), legendSide(right), plotType(line), 
-            minx(-1), maxx(1), miny(-1), maxy(1), miny1(1), maxy1(-1)
-    {}
+            minx(-1), maxx(1), miny(-1), maxy(1), miny1(1), maxy1(-1), palette(paletteSz)
+            
+    {
+      for (size_t i=0; i<paletteSz; ++i) palette[i].colour=ecolab::palette[i];
+    }
     virtual ~Plot() {}
 
     unsigned nxTicks, nyTicks; ///< number of x/y-axis ticks

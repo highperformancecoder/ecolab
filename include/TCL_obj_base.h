@@ -1141,6 +1141,14 @@ namespace ecolab
 
   /// distinguish between maps and sets based on value_type of container
   template <class T> struct is_map;
+
+  /// redirect member pointers to old fashioned descriptor
+  template<class C, class T>                                          
+  typename enable_if<And<is_member_object_pointer<T>,                 
+                         Not<functional::is_nonmember_function_ptr<T> > >,void>::T 
+  TCL_obj(TCL_obj_t& b, const string& d, C& o, T y)           
+  {TCL_obj(b,d,o.*y);}                                             
+
 }
 
 namespace classdesc_access
@@ -1160,6 +1168,7 @@ namespace classdesc_access
   };
 }
 
+#include "TCL_obj_stl.h"
 
 #if defined(__GNUC__) && !defined(__ICC) && !defined(__clang__)
 #pragma GCC diagnostic push

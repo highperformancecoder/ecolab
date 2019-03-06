@@ -34,6 +34,27 @@ namespace ecolab
     };
 
   const int paletteSz = sizeof(palette)/sizeof(palette[0]);
+
+  vector<double> Plot::LineStyle::dashPattern() const
+  {
+    vector<double> r;
+    switch (dashStyle)
+      {
+      default:
+      case solid:
+        return r;
+      case dash:
+        r.push_back(5); r.push_back(2);
+        return r;
+      case dot:
+        r.push_back(2); r.push_back(3);
+        return r;
+      case dashDot:
+        r.push_back(5); r.push_back(2); r.push_back(2); r.push_back(2);
+        return r;
+      }
+  }
+
 }
 
 namespace 
@@ -47,7 +68,7 @@ namespace
     cairo_restore(cairo);
   }
 
-  // displays a string represent ×10^n
+ // displays a string represent ×10^n
   string orderOfMag(int n)
   {
     char label[20];
@@ -428,8 +449,11 @@ namespace ecolab
     for (size_t i=0; i<x.size(); ++i)
       if (i<penLabel.size() && penLabel[i])
         {
-          Colour& colour=palette[i%paletteSz];
-          cairo_set_source_rgba(cairo, colour.r, colour.g, colour.b, colour.a);
+          const LineStyle& ls=palette[i%palette.size()];
+          cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, ls.colour.a);
+          cairo_set_line_width(cairo, ls.width);
+          vector<double> dashPattern=ls.dashPattern();
+          cairo_set_dash(cairo, &dashPattern[0], dashPattern.size(), 0);
           cairo_move_to(cairo, xoffs, yoffs);
           cairo_rel_line_to(cairo, 0.05*dx, 0);
           stroke(cairo);
@@ -460,8 +484,11 @@ namespace ecolab
       else if (i<penTextLabel.size() && !penTextLabel[i].empty())
         {
           // render directly from text label
-          Colour& colour=palette[i%paletteSz];
-          cairo_set_source_rgba(cairo, colour.r, colour.g, colour.b, colour.a);
+          const LineStyle& ls=palette[i%palette.size()];
+          cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, ls.colour.a);
+          cairo_set_line_width(cairo, ls.width);
+          vector<double> dashPattern=ls.dashPattern();
+          cairo_set_dash(cairo, &dashPattern[0], dashPattern.size(), 0);
 
           cairo_move_to(cairo, xoffs, yoffs);
           cairo_rel_line_to(cairo, 0.05*w, 0);
@@ -784,7 +811,7 @@ namespace ecolab
       if (!x.empty())
         for (size_t i=0; i<x.size(); ++i)
           {
-            Colour& colour=palette[i%paletteSz];
+            const LineStyle& ls=palette[i%paletteSz];
 
             // transform y coordinates (handles RHS being a different scale)
             XFY xfy=aff;
@@ -801,26 +828,31 @@ namespace ecolab
                 switch (plotType)
                   {
                   case line:
-                    cairo_set_source_rgba(cairo, colour.r, colour.g, colour.b, colour.a);
+                    {
+                      cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, ls.colour.a);
+                      cairo_set_line_width(cairo, ls.width);
+                      vector<double> dashPattern=ls.dashPattern();
+                      cairo_set_dash(cairo, &dashPattern[0], dashPattern.size(), 0);
           
-                    cairo_new_path(cairo);
-                    cairo_move_to(cairo, iflogx(x[i][0]), xfy(y[i][0]));
-                    for (size_t j=1; j<x[i].size(); ++j)
-                      if (inBounds(x[i][j-1], y[i][j-1], side) && inBounds(x[i][j], y[i][j], side))
-                        cairo_line_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
-                      else
-                        cairo_move_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
+                      cairo_new_path(cairo);
+                      cairo_move_to(cairo, iflogx(x[i][0]), xfy(y[i][0]));
+                      for (size_t j=1; j<x[i].size(); ++j)
+                        if (inBounds(x[i][j-1], y[i][j-1], side) && inBounds(x[i][j], y[i][j], side))
+                          cairo_line_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
+                        else
+                          cairo_move_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
 
-                    if (leadingMarker)
-                      cairo_rectangle
-                        (cairo, iflogx(x[i].back()), xfy(y[i].back()), 
-                         0.01*dx,  0.01*dy*sy);
-                    stroke(cairo);
+                      if (leadingMarker)
+                        cairo_rectangle
+                          (cairo, iflogx(x[i].back()), xfy(y[i].back()), 
+                           0.01*dx,  0.01*dy*sy);
+                      stroke(cairo);
+                    }
                     break;
                   case bar:
                     {
                       // make bars translucent - see Minsky ticket #893
-                      cairo_set_source_rgba(cairo, colour.r, colour.g, colour.b, 0.5*colour.a);
+                      cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, 0.5*ls.colour.a);
                       size_t j=0;
                       float w = abs(iflogx(x[i][1]) - iflogx(x[i][0]));
                       if (inBounds(iflogx(x[i][j]), y[i][j], side))
@@ -904,8 +936,11 @@ namespace ecolab
         cairo_scale(cairo, sx, -sy);
         for (const unsigned* pen=startPen; pen<finishPen; ++pen)
           {
-            Colour& colour=palette[*pen%paletteSz];
-            cairo_set_source_rgba(cairo, colour.r, colour.g, colour.b, colour.a);
+            LineStyle& ls=palette[*pen%palette.size()];
+            cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, ls.colour.a);
+            cairo_set_line_width(cairo, ls.width);
+            vector<double> dashPattern=ls.dashPattern();
+            cairo_set_dash(cairo, &dashPattern[0], dashPattern.size(), 0);
             
             // transform y coordinates (handles RHS being a different scale)
             XFY xfy;
