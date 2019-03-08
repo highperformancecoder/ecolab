@@ -23,6 +23,7 @@ name of a C++ object.
 #include "ref.h"
 #include "error.h"
 #include "accessor.h"
+#include "classdesc.h"
 
 #include "isa_base.h"
 #include "function.h"

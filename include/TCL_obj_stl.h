@@ -17,9 +17,6 @@
 #include <sstream>
 
 #include <set>
-#include "TCL_obj_base.h"
-
-#include "TCL_obj_stl.h"
 
 #include <vector>
 #include <utility>
@@ -199,8 +196,15 @@ namespace ecolab
         r << "insufficient arguments";
         return TCL_ERROR;
       }
-    r << (*(TCL_obj_of_base*)v)(argv[1]);
-    return TCL_OK;
+    try {
+      r << (*(TCL_obj_of_base*)v)(argv[1]);
+      return TCL_OK;
+    }
+    catch (const std::exception& ex)
+      {
+        r<<ex.what();
+        return TCL_ERROR;
+      }
   }
 
   static int keys(ClientData v, Tcl_Interp *interp, int argc, 
@@ -263,28 +267,74 @@ namespace ecolab
     inline void put(const char *s) {tclreturn() << s; memberptr=atoi(s);} 
   };
 
-  template <class T, class idx_t>
-  class TCL_obj_of: TCL_obj_of_base
+  template <class T, class idx_t> class TCL_obj_of;
+
+  template <class T>
+  typename enable_if<is_const<T>, typename T::iterator>::T
+  getMapItem(T& obj, const typename T::key_type& k) {
+    typename T::iterator i=obj.find(k);
+    if (i==obj.end())
+      throw error("index %s not found",index);
+    return i;
+  }
+  template <class T>
+  typename enable_if<Not<is_const<T> >, typename T::iterator>::T
+  getMapItem(T& obj, const typename T::key_type& k) {
+    typename T::iterator i=obj.find(k);
+    if (i==obj.end())
+      return obj.insert(typename T::value_type(k,typename T::mapped_type())).first;
+    return i;
+  }
+
+  template <class T>
+  class TCL_obj_of<T, typename T::key_type>: TCL_obj_of_base
   {
     T& obj;
     string desc;
+
+
   public:
     TCL_obj_of(T& o, const string& d): obj(o), desc(d) {}
-    string operator()(const char* index) 
+    string operator()(const char* index)
     {
       string elname=desc+"("+index+")";
       // because TCL_obj_register assumes second time around calls are
       // base class registrations, we need to erase the member_entry
       // before registering the new handler, in case the element's
       // address has changed due to container resizing or whatever
-      TCL_obj_properties().erase(elname); 
-      TCL_obj(ecolab::null_TCL_obj,elname,obj[idx<idx_t>()(index)]);
+      TCL_obj_properties().erase(elname);
+      typename T::iterator i=getMapItem(obj, idx<typename T::key_type>()(index));
+      TCL_obj(ecolab::null_TCL_obj,elname,i->second);
       return elname;
     }
     void keys_of() {ecolab::keys_of(obj);}
   };
 
-  template <class T, class idx_t>
+  template <class T>
+  class TCL_obj_ofSequence: TCL_obj_of_base
+  {
+    T& obj;
+    string desc;
+  public:
+    TCL_obj_ofSequence(T& o, const string& d): obj(o), desc(d) {}
+    string operator()(const char* index)
+    {
+      string elname=desc+"("+index+")";
+      // because TCL_obj_register assumes second time around calls are
+      // base class registrations, we need to erase the member_entry
+      // before registering the new handler, in case the element's
+      // address has changed due to container resizing or whatever
+      TCL_obj_properties().erase(elname);
+      size_t i=atol(index);
+      if (i>=obj.size())
+        throw error("index %s out of bounds",index);
+      TCL_obj(ecolab::null_TCL_obj,elname,obj[i]);
+      return elname;
+    }
+    void keys_of() {ecolab::keys_of(obj);}
+  };
+
+  template <class T>
   class TCL_obj_of_vector_bool: TCL_obj_of_base
   {
     T& obj;
@@ -295,29 +345,24 @@ namespace ecolab
     {
       string elname=desc+"("+index+")";
       TCL_obj_properties().erase(elname); 
-      typename T::reference r(obj[idx<idx_t>()(index)]);
+      size_t i=atol(index);
+      if (i>=obj.size())
+        throw error("index %s out of bounds",index);
+      typename T::reference r(obj[i]);
       TCL_obj(ecolab::null_TCL_obj,elname,r);
       return elname;
     }
     void keys_of() {ecolab::keys_of(obj);}
   };
 
-  template <class idx_t>
-  struct TCL_obj_of<std::vector<bool>,idx_t>: 
-    public TCL_obj_of_vector_bool<std::vector<bool>,idx_t> 
+  template <>
+  struct TCL_obj_ofSequence<std::vector<bool>>: 
+    public TCL_obj_of_vector_bool<std::vector<bool>> 
   {
-    TCL_obj_of(std::vector<bool>& o, const string& d): 
-      TCL_obj_of_vector_bool<std::vector<bool>,idx_t>(o, d) {}
+    TCL_obj_ofSequence(std::vector<bool>& o, const string& d): 
+      TCL_obj_of_vector_bool<std::vector<bool>>(o, d) {}
   };
   
-  template <class idx_t>
-  struct TCL_obj_of<const std::vector<bool>,idx_t>: 
-    public TCL_obj_of_vector_bool<const std::vector<bool>,idx_t> 
-  {
-    TCL_obj_of(const std::vector<bool>& o, const string& d): 
-      TCL_obj_of_vector_bool<const std::vector<bool>,idx_t>(o, d) {}
-  };
-
   /* special case when only forward iterators are available */
   class iter {};
   template <class T>
@@ -401,7 +446,7 @@ namespace ecolab
     TCL_obj(targ,desc+".size",arg,&V::size);
     Tcl_CreateCommand(interp(),(desc+".@is_vector").c_str(),
                       (Tcl_CmdProc*)null_proc,NULL,NULL);
-    ClientData c=(ClientData)new TCL_obj_of<V,typename V::size_type>(arg,desc);
+    ClientData c=(ClientData)new TCL_obj_ofSequence<V>(arg,desc);
     Tcl_CreateCommand(interp(),(desc+".@elem").c_str(),(Tcl_CmdProc*)elem,c,
                       (Tcl_CmdDeleteProc*)del_obj);
   }
