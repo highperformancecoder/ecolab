@@ -274,7 +274,7 @@ namespace ecolab
   getMapItem(T& obj, const typename T::key_type& k) {
     typename T::iterator i=obj.find(k);
     if (i==obj.end())
-      throw error("index %s not found",index);
+      throw error("index %s not found",str(k).c_str());
     return i;
   }
   template <class T>
