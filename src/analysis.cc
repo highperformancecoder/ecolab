@@ -376,6 +376,7 @@ double maxDiff(double xmin, const array_ns::array<float>& data)
 struct logdist
 {
   virtual float operator()(float x) const=0;
+  virtual ~logdist() {}
 };
 
 double loglikelihood(const logdist& logp1, const logdist& logp2, unsigned n, float* x)

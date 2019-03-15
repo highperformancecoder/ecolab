@@ -54,7 +54,7 @@ namespace ecolab
   template <class T>
   void TCL_obj_onbase(TCL_obj_t& t,const classdesc::string& desc, T& arg)
   {
-    TCL_obj_register(t,desc,arg,true);
+    TCL_obj_registerBase(t,desc,arg);
     TCL_objp(t,desc,arg);
     TCL_obj_custom_register(desc,arg);
   }

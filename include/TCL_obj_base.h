@@ -643,21 +643,25 @@ namespace ecolab
   }
 
   template <class T>
-  void TCL_obj_register(const TCL_obj_t& targ, const string& desc, T& arg, 
-                        bool base=false)
+  void TCL_obj_register(const TCL_obj_t& targ, const string& desc, T& arg)
   {
     TCL_obj_hash::iterator it=TCL_obj_properties().find(desc);
-    if (!base || it==TCL_obj_properties().end())
-      {
-        member_entry<T> *m=new member_entry<T>(arg);
-        m->hook=targ.member_entry_hook;
-        m->thook=targ.member_entry_thook;
-        m->name=desc;
-        TCL_OBJ_DBG(printf("registering %s, with entry %x\n",desc.c_str(),m));
-        //  assert(TCL_newcommand(desc)); /* we just want the latest resgistration */
-        Tcl_CreateCommand(interp(),desc.c_str(),(Tcl_CmdProc*)TCL_proc,(ClientData)m,TCL_delete);
-        TCL_obj_properties()[desc].reset(m);
-      }
+    member_entry<T> *m=new member_entry<T>(arg);
+    m->hook=targ.member_entry_hook;
+    m->thook=targ.member_entry_thook;
+    m->name=desc;
+    TCL_OBJ_DBG(printf("registering %s, with entry %x\n",desc.c_str(),m));
+    //  assert(TCL_newcommand(desc)); /* we just want the latest resgistration */
+    Tcl_CreateCommand(interp(),desc.c_str(),(Tcl_CmdProc*)TCL_proc,(ClientData)m,TCL_delete);
+    TCL_obj_properties()[desc].reset(m);
+  }
+
+  template <class T>
+  void TCL_obj_registerBase(const TCL_obj_t& targ, const string& desc, T& arg)
+  {
+    TCL_obj_hash::iterator it=TCL_obj_properties().find(desc);
+    if (it==TCL_obj_properties().end())
+      TCL_obj_register(targ,desc,arg);
     else // registering a base class
       {
         assert(it->second);
@@ -666,6 +670,8 @@ namespace ecolab
       }
   }
 
+  
+  
   void TCL_obj_deregister(const string& desc );
 
   /// a 'hook' to allow registrations to occur for TCL_objects (overriding base classes)
