@@ -645,7 +645,6 @@ namespace ecolab
   template <class T>
   void TCL_obj_register(const TCL_obj_t& targ, const string& desc, T& arg)
   {
-    TCL_obj_hash::iterator it=TCL_obj_properties().find(desc);
     member_entry<T> *m=new member_entry<T>(arg);
     m->hook=targ.member_entry_hook;
     m->thook=targ.member_entry_thook;
