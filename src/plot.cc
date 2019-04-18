@@ -1046,6 +1046,8 @@ namespace ecolab
           }
         of<<endl;
       }
+    if (!of)
+      throw error("exporting to %s failed",filename.c_str());
   }
 
   

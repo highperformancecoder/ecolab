@@ -257,6 +257,7 @@ namespace ecolab
       y[pen].assign(yy, yy+sz);
     }
 
+    /// export plotting data as a CSV file. @throw if an I/O error occurs
     void exportAsCSV(const std::string& filename, const string& separator=",") const;
     
   protected: // only protected because of TCL_obj problems
