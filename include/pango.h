@@ -144,6 +144,7 @@ namespace ecolab
       cairo_text_extents(cairo,markup.c_str(),&bbox);
       
     }
+    void setText(const std::string& markup) {setMarkup(markup);}
     void setFontSize(unsigned sz) {
       fontSize=sz;
       cairo_set_font_size(cairo, sz);
