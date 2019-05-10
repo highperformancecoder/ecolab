@@ -9,6 +9,7 @@
 #if defined(CAIRO) && defined(TK)
 #include "cairoSurfaceImage.h"
 #include "tcl++.h"
+#include "pango.h"
 
 #include "ecolab_epilogue.h"
 #define USE_WIN32_SURFACE defined(CAIRO_HAS_WIN32_SURFACE) && !defined(__CYGWIN__)
@@ -143,6 +144,19 @@ namespace
       try
         {
           c.csurf.redraw(imageX,imageY,width,height);
+        }
+      catch (const std::exception& ex)
+        {
+          // display message in scary red letters
+          cairo_t* cairo=c.csurf.surface->cairo();
+          cairo_reset_clip(cairo);
+          cairo_identity_matrix(cairo);
+          cairo_set_source_rgba(cairo,1,0,0,0.5);
+          Pango p(cairo);
+          p.setFontSize(24);
+          p.setText(string("Error: ")+ex.what());
+          cairo_move_to(cairo,imageX+0.5*(width-p.width()),imageY+0.5*(height-p.height()));
+          p.show();
         }
       catch (...)
         {/* not much you can do about exceptions at this point */}
