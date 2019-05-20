@@ -600,6 +600,7 @@ endif
 ifdef PANGO
 FLAGS+=-DPANGO $(shell $(PKG_CONFIG) --cflags pangocairo)
 LIBS+=$(shell $(PKG_CONFIG) --libs pangocairo)
+LIBS+=$(shell $(PKG_CONFIG) --libs gobject-2.0)
 endif
 
 # list of actions to do classdesc on
