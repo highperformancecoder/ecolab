@@ -12,6 +12,7 @@
 
 #ifndef TCL_OBJ_STL_H
 #define TCL_OBJ_STL_H
+#include "TCL_obj_base.h"
 #include <string>
 #include <iostream>
 #include <sstream>
