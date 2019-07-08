@@ -19,7 +19,7 @@ GDBM=-lgdbm_compat
 endif
 GDBM+=-lgdbm
 
-MODELS=testrefassign test_tclobjref TCL_obj_vector_bool testref testgraph test_boostgraph testCacheDBM testCairo testTCL_objConstT testTCL_objString test_tcl_stl tcl-arrays complex_tcl_args accessor
+MODELS=testrefassign test_tclobjref TCL_obj_vector_bool testref testgraph test_boostgraph testCacheDBM testCairo testTCL_objConstT testTCL_objString test_tcl_stl tcl-arrays complex_tcl_args accessor vector-pair
 # vector-pair - doesn't currently compile - see ticket #161
 #EXTRAMODELS=test_tcl_stl.exe tcl-arrays.exe complex_tcl_args.exe
 EXES=test_omp_rw_lock testCheckpointableFile test_netcomplexity test_boostgraph test_ecostrstream posTest testarrays  callTclArgsMethod pangoTest

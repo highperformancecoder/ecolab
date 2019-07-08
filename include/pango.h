@@ -30,7 +30,23 @@ namespace ecolab
   {
     cairo_t* cairo;
     PangoLayout* layout;
-    PangoFontDescription* fd;
+    //PangoFontDescription* fd;
+    struct FontDescription
+    {
+      PangoFontDescription* fd;
+      FontDescription(PangoLayout* l) {
+        fd=pango_font_description_copy(pango_layout_get_font_description(l));
+        if (!fd) // if NULL, we must get it from the context
+          {
+            fd=pango_font_description_copy
+              (pango_context_get_font_description(pango_layout_get_context(l)));
+          }
+      }
+      ~FontDescription() {
+        pango_font_description_free(fd);
+      }
+      operator PangoFontDescription*() {return fd;}
+    };
     PangoRectangle bbox;
     void operator=(const Pango&);
     Pango(const Pango&);
@@ -40,24 +56,18 @@ namespace ecolab
     Pango(cairo_t* cairo): 
       cairo(cairo), layout(pango_cairo_create_layout(cairo)), angle(0) 
     {
-      fd=pango_font_description_copy(pango_layout_get_font_description(layout));
-      if (!fd) // if NULL, we must get it from the context
-        {
-          fd=pango_font_description_copy
-            (pango_context_get_font_description(pango_layout_get_context(layout)));
-        }
+      FontDescription fd(layout);
       if (defaultFamily)
         pango_font_description_set_family(fd,defaultFamily);
       pango_layout_set_font_description(layout, fd); //assume ownership not passed
     }
     ~Pango() {
-      if (fd) pango_font_description_free(fd);
       if (layout) g_object_unref(layout);
     }
 #if defined(__cplusplus) && __cplusplus>=201103L
-    Pango(Pango&& x): cairo(x.cairo), layout(x.layout), fd(x.fd),
+    Pango(Pango&& x): cairo(x.cairo), layout(x.layout),
                       bbox(x.bbox), angle(x.angle)
-    {x.layout=nullptr; x.fd=nullptr;}
+    {x.layout=nullptr;}
 #endif
     /// set text to be displayed in pango markup language
     void setMarkup(const std::string& markup) {
@@ -72,14 +82,17 @@ namespace ecolab
     }
     void setFontSize(double sz) {
       if (gint(sz*PANGO_SCALE)<=0) return;
+      FontDescription fd(layout);
       pango_font_description_set_size(fd, gint(sz*PANGO_SCALE));
       pango_layout_set_font_description(layout, fd); //asume ownership not passed?
     }
     void setFontFamily(const char* family) {
+      FontDescription fd(layout);
       pango_font_description_set_family(fd,family);
       pango_layout_set_font_description(layout, fd); //asume ownership not passe 
   }
     double getFontSize() const {
+      FontDescription fd(layout);
       return pango_font_description_get_size(fd)/double(PANGO_SCALE);
     }
     void show() {
