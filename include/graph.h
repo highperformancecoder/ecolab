@@ -184,7 +184,7 @@ namespace ecolab
     const Graph::const_iterator_base& operator++() {
       G::const_iterator::operator++(); return *this;}
     bool operator==(const GraphAdaptor_const_iterator_base& x) const {
-      return G::const_iterator::operator==(x);
+      return static_cast<const typename G::const_iterator&>(*this)==x;
     }
     bool operator==(const Graph::const_iterator_base& x) const {
       const GraphAdaptor_const_iterator_base* xp=
