@@ -271,6 +271,7 @@ FLAGS+=$(DIRS:%=-I%/include)
 ifeq ($(findstring CYGWIN,$(OS)),CYGWIN)
 OS=CYGWIN
 XDR=
+FLAGS+=-D_POSIX_SOURCE
 CLASSDESC=$(ECOLAB_HOME)/bin/classdesc.exe
 endif
 
