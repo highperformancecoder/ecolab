@@ -52,4 +52,12 @@ namespace classdesc_access
     public classdesc::NullDescriptor<classdesc::unpack_t> {};
 }
 #endif
+
+namespace classdesc
+{
+  template <>
+  inline string typeName<ecolab::CairoSurface>() {return "ecolab::CairoSurface";}
+}
+
+
 #endif
