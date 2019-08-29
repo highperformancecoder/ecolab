@@ -55,8 +55,10 @@ namespace classdesc_access
 
 namespace classdesc
 {
-  template <>
-  inline string typeName<ecolab::CairoSurface>() {return "ecolab::CairoSurface";}
+  template <> struct tn<ecolab::CairoSurface>
+  {
+    static string name() {return "ecolab::CairoSurface";}
+  };
 }
 
 

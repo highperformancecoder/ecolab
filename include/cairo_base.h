@@ -406,7 +406,15 @@ namespace ecolab
 #endif  // #ifdef TK
 
   }
-  
 }
+
+namespace classdesc
+{
+  template <> struct tn<ecolab::cairo::Surface>
+  {
+    static string name() {return "ecolab::cairo::Surface";}
+  };
+}
+
 #endif
 #endif
