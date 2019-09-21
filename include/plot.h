@@ -59,7 +59,7 @@ namespace ecolab
       cairo::Colour colour;
       double width=1;
       DashStyle dashStyle;
-      LineStyle(): colour{0,0,0,1}, width(1), dashStyle(solid) {}
+      LineStyle(): colour{0,0,0,1}, width{1}, dashStyle{solid} {}
       std::vector<double> dashPattern() const;
     };
       

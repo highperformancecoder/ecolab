@@ -52,6 +52,16 @@ namespace ecolab
 #pragma omit TCL_obj ecolab::Accessor
 #endif
 
+namespace classdesc
+{
+  template <class T, class G, class S>
+  struct tn<ecolab::Accessor<T,G,S> >
+  {
+    static string name() {return "ecolab::Accessor<"+typeName<T>()+","+
+        typeName<G>()+","+typeName<S>()+">";}
+  };
+}
+
 namespace classdesc_access
 {
   namespace cd=classdesc;
