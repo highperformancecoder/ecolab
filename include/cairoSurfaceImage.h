@@ -51,6 +51,7 @@ namespace classdesc_access
   struct access_unpack<ecolab::CairoSurface>:
     public classdesc::NullDescriptor<classdesc::unpack_t> {};
 }
+#endif
 
 namespace classdesc
 {
@@ -60,5 +61,5 @@ namespace classdesc
   };
 }
 
-#endif
+
 #endif
