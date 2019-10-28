@@ -258,7 +258,9 @@ namespace ecolab
     }
 
     /// export plotting data as a CSV file. @throw if an I/O error occurs
-    void exportAsCSV(const std::string& filename, const string& separator=",") const;
+    void exportAsCSV(const std::string& filename, const string& separator) const;
+    void exportAsCSV(const std::string& filename) const
+    {exportAsCSV(filename,",");}
     
   protected: // only protected because of TCL_obj problems
     std::vector<std::pair<double,std::string>> xticks;
