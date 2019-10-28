@@ -638,9 +638,8 @@ namespace ecolab
       
 
       cairo_set_source_rgba(cairo, 0, 0, 0, 1);
-      double xtickIncrement, xtick;
 
-      if (xtickIncrement<0) return; //avoid infinte loop
+
 
       // work out the font size we should use
       double fontSz=0.02*fontScale;
@@ -686,7 +685,7 @@ namespace ecolab
         {
           LogScale ls(minx, maxx, nxTicks);
           int i=0;
-          for (xtick=ls(0); xtick<maxx; i++, xtick=ls(i))
+          for (double xtick=ls(0); xtick<maxx; i++, xtick=ls(i))
             if (xtick>=minx)
               {
                 pango.setMarkup(logAxisLabel(xtick));
@@ -703,7 +702,9 @@ namespace ecolab
         }
       else
         {
+          double xtickIncrement, xtick;
           computeIncrementAndOffset(minx, maxx, nxTicks, xtickIncrement, xtick);
+          if (xtickIncrement<0) return; //avoid infinite loop
           cairo_move_to(cairo, maxx-0.05*dx*(1+fontScale), aff(miny+0.04*dy*(1+fontScale)));
           showOrderOfMag(pango, xtickIncrement, exp_threshold);
 
@@ -765,7 +766,7 @@ namespace ecolab
         {
           double ytickIncrement, ytick;
           computeIncrementAndOffset(miny, maxy, nyTicks, ytickIncrement, ytick);
-          if (ytickIncrement<0) return; //avoid infinte loop
+          if (ytickIncrement<0) return; //avoid infinite loop
 
           cairo_move_to(cairo, minx+0.01*dx, aff(maxy));
           showOrderOfMag(pango, ytickIncrement, exp_threshold);
@@ -789,6 +790,7 @@ namespace ecolab
             {
               // draw scale on right hand side
               computeIncrementAndOffset(miny1, maxy1, nyTicks, ytickIncrement, ytick);
+              if (ytickIncrement<0) return; //avoid infinite loop
 
               cairo_move_to(cairo, maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin, aff(maxy));
               showOrderOfMag(pango, ytickIncrement, exp_threshold);
