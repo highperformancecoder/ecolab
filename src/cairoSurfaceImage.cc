@@ -14,9 +14,14 @@
 #include "ecolab_epilogue.h"
 #define USE_WIN32_SURFACE defined(CAIRO_HAS_WIN32_SURFACE) && !defined(__CYGWIN__)
 
+#include <cairo/cairo-ps.h>
+#include <cairo/cairo-pdf.h>
+#include <cairo/cairo-svg.h>
+
 #ifdef _WIN32
 #undef Realloc
 #include <windows.h>
+#include <wingdi.h>
 #if USE_WIN32_SURFACE
 #include <cairo/cairo-win32.h>
 // undocumented internal function for extracting the HDC from a Drawable
@@ -192,4 +197,97 @@ void CairoSurface::registerImage()
   if (!Tk_MainWindow(interp())) Tk_Init(interp());
   Tk_CreateImageType(&canvasImage);
 }
+
+cairo::SurfacePtr CairoSurface::vectorRender(const char* filename, cairo_surface_t* (*s)(const char *,double,double))
+{
+  cairo::SurfacePtr tmp(new cairo::Surface(cairo_recording_surface_create
+                                           (CAIRO_CONTENT_COLOR_ALPHA,nullptr)));
+  surface.swap(tmp);
+  redrawWithBounds();
+  double left=surface->left(), top=surface->top();
+  surface->surface
+    (s(filename, surface->width(), surface->height()));
+  if (s==cairo_ps_surface_create)
+    cairo_ps_surface_set_eps(surface->surface(),true);
+  cairo_surface_set_device_offset(surface->surface(), -left, -top);
+  redrawWithBounds();
+  cairo_surface_flush(surface->surface());
+  surface.swap(tmp);
+  cairo_status_t status=cairo_surface_status(tmp->surface());
+  if (status!=CAIRO_STATUS_SUCCESS)
+    throw error("cairo rendering error: %s",cairo_status_to_string(status));
+  return tmp;
+}
+  
+void CairoSurface::renderToPS(const char* filename)
+{vectorRender(filename,cairo_ps_surface_create);}
+
+void CairoSurface::renderToPDF(const char* filename)
+{vectorRender(filename,cairo_pdf_surface_create);}
+
+void CairoSurface::renderToSVG(const char* filename)
+{vectorRender(filename,cairo_svg_surface_create);}
+
+namespace
+{
+  cairo_surface_t* pngDummy(const char*,double width,double height)
+  {return cairo_image_surface_create(CAIRO_FORMAT_ARGB32,width,height);}
+}
+  
+void CairoSurface::renderToPNG(const char* filename)
+{
+  auto tmp=vectorRender(filename,pngDummy);
+  cairo_surface_write_to_png(tmp->surface(),filename);
+}
+
+#ifdef _WIN32
+namespace
+{
+  struct SurfAndDC
+  {
+    HDC hdc;
+    cairo_surface_t* surf;
+  };
+    
+  cairo_user_data_key_t closeKey;
+  void closeFile(void *x)
+  {
+      SurfAndDC* s(static_cast<SurfAndDC*>(x));
+      cairo_surface_flush(s->surf);
+      // nb the Delete... function deletes the handle created by Close...
+      DeleteEnhMetaFile(CloseEnhMetaFile(s->hdc));
+      DeleteDC(s->hdc);
+      delete s;
+  }
+
+  cairo_surface_t* createEMFSurface(const char* filename, double width, double height)
+  {
+    HDC hdc=CreateEnhMetaFileA(nullptr,filename,nullptr,"Minsky\0");
+    cairo_surface_t* surf=cairo_win32_surface_create_with_format(hdc,CAIRO_FORMAT_ARGB32);
+    // initialise the image background 
+    cairo_t* cairo=cairo_create(surf);
+    // extend the background a bit beyond the bounding box to allow
+    // for additional black stuff inserted by GDI
+    cairo_rectangle(cairo,0,0,width+50,height+50);
+    cairo_set_source_rgb(cairo,1,1,1);
+    cairo_clip_preserve(cairo);
+    cairo_fill(cairo);
+    cairo_destroy(cairo);
+    // set up a callback to flush and close the EMF file
+    cairo_surface_set_user_data(surf,&closeKey,new SurfAndDC{hdc,surf},closeFile);
+    
+    return surf;
+  }
+}
+
+void CairoSurface::renderToEMF(const char* filename)
+{vectorRender(filename,createEMFSurface);}
+
+#else
+
+void CairoSurface::renderToEMF(const char* filename)
+{throw std::runtime_error("EMF functionality only available on Windows");}
+
+#endif
+
 #endif
