@@ -1567,6 +1567,7 @@ namespace ecolab
 
     public:
       typedef T value_type;
+      typedef size_t size_type; 
 
       explicit array(size_t s=0) 
       {
@@ -1605,6 +1606,8 @@ namespace ecolab
         dt->sz=s;
       } 
 
+      void clear() {resize(0);}
+      
       /// resize array to \a s elements, and initialise to \a val
       template <class V>
       void resize(size_t s, const V& val) {resize(s); operator=(val);}
@@ -2519,6 +2522,8 @@ namespace classdesc
     static std::string name()
     {return "ecolab::array<"+typeName<T>()+">";}
   };
+
+  template <class T> struct is_sequence<ecolab::array<T> >: public true_type {};
 }
 
 #endif
