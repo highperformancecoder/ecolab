@@ -40,7 +40,9 @@ $(MODELS): %: %.o $(ECOLIBS)
 $(MODELS:=.app): %.app: %
 	$(ECOLAB_HOME)/utils/mkmacapp $<
 
+ifneq ($(MAKECMDGOALS),clean)
 include $(MODELS:=.d)
+endif
 
 clean:
 	$(BASIC_CLEAN)
