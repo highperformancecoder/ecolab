@@ -308,13 +308,13 @@ $(ECOLAB_HOME)/$(MCFG):
 	@if [ -n "$(call search,include/db4/db.h)" -o -n "$(call search,include/db.h)" ]; then \
 	  echo BDB=1>>$(MCFG); \
         else \
-	  if [ -n "$(call search,lib*/libgdbm.*)" -o -n "$(call search,lib*/*/libgdbm.*)" ]; then \
+	  if [ -n "$(call search,lib*/libgdbm.so)" -o -n "$(call search,lib*/*/libgdbm.so)" -o -n "$(call search,lib*/libgdbm.a)" -o -n "$(call search,lib*/*/libgdbm.a)" ]; then \
 	 	echo GDBM=1 >>$(MCFG) ; \
 	  fi \
 	fi
 	@if $(PKG_CONFIG) --exists pangocairo; then echo PANGO=1>>$(MCFG); fi
 # check whether the new ndbmcompatibility library is present	
-	@if [ -n "$(call search,lib*/libgdbm_compat.*)" -o -n "$(call search,lib*/*/libgdbm.a)" ]; then \
+	@if [ -n "$(call search,lib*/libgdbm_compat.so)" -o -n "$(call search,lib*/*/libgdbm_compat.so)" -o -n "$(call search,lib*/libgdbm_compat.a)" -o -n "$(call search,lib*/*/libgdbm_compat.a)" ]; then \
 	 	echo GDBM_COMPAT=1 >>$(MCFG) ; \
 	fi
 # record value of following configuration variables 
