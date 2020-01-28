@@ -187,9 +187,11 @@ namespace classdesc_access
 
   
   template <class T, class V, int N>
-  struct access_pack<ecolab::TCLAccessor<T,V,N> >: public cd::NullDescriptor<pack_t> {};
+  struct access_pack<ecolab::TCLAccessor<T,V,N> >:
+    public cd::NullDescriptor<cd::pack_t> {};
   template <class T, class V, int N>
-  struct access_unpack<ecolab::TCLAccessor<T,V,N> >: public cd::NullDescriptor<unpack_t> {};
+  struct access_unpack<ecolab::TCLAccessor<T,V,N> >:
+    public cd::NullDescriptor<cd::unpack_t> {};
 
   template <class T, class V, int N>
   struct access_TCL_obj<ecolab::TCLAccessor<T,V,N> >
