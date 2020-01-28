@@ -22,7 +22,6 @@ name of a C++ object.
 #include "pack_stl.h"
 #include "ref.h"
 #include "error.h"
-#include "accessor.h"
 #include "classdesc.h"
 
 #include "isa_base.h"
@@ -1117,34 +1116,6 @@ namespace classdesc_access
 
 namespace ecolab
 {
-  /// for accessors (overloaded getter/setters that pretend to be attributes)
-  template <class F>
-  struct TCL_accessor: public cmd_data
-  {
-    const F& f;
-    TCL_accessor(const F& f): f(f) {}
-    void proc(int argc, Tcl_Obj *const argv[]) {
-      tclreturn r;
-      if (argc<=1)
-        r << f();
-      else
-        r << f(TCL_args(argc, argv));
-    }
-    void proc(int, const char **) {}  
-  };
-
-  /// const version - only getter is called
-  template <class F>
-  struct TCL_accessor<const F>: public cmd_data
-  {
-    const F f;
-    TCL_accessor(F f): f(f) {}
-    void proc(int argc, Tcl_Obj *const argv[]) {
-      tclreturn() << f();
-    }
-    void proc(int, const char **) {}  
-  };
-
   /// distinguish between maps and sets based on value_type of container
   template <class T> struct is_map;
 
@@ -1155,23 +1126,6 @@ namespace ecolab
   TCL_obj(TCL_obj_t& b, const string& d, C& o, T y)           
   {TCL_obj(b,d,o.*y);}                                             
 
-}
-
-namespace classdesc_access
-{
-  namespace cd=classdesc;
-  template <class T, class G, class S>
-  struct access_TCL_obj<ecolab::Accessor<T,G,S> >
-   {
-     template <class U>
-     void operator()(cd::TCL_obj_t& t, const cd::string& d, U& a)
-     {
-       TCL_OBJ_DBG(printf("registering %s\n",d.c_str()););
-       Tcl_CreateObjCommand(ecolab::interp(),d.c_str(),ecolab::TCL_oproc,
-                            (ClientData)new ecolab::TCL_accessor<U>(a),
-                            ecolab::TCL_cmd_data_delete);
-     }
-  };
 }
 
 #include "TCL_obj_stl.h"

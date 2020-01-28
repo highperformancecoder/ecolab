@@ -1,3 +1,4 @@
+#include "../include/accessor.h"
 
 struct Foo
 {
