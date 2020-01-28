@@ -109,7 +109,7 @@ namespace ecolab
   {
   public:
     using Getter=V (T::*)() const;
-    using Setter=V (T::*)(V);
+    using Setter=V (T::*)(const V&);
     TCLAccessor(const std::string& name, Getter g, Setter s):
       name(name), _self(static_cast<T&>(*this)), g(g), s(s) {}
     TCLAccessor(const TCLAccessor& x):
