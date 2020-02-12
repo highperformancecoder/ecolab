@@ -149,6 +149,7 @@ namespace ecolab
     void operator=(const Pango&);
     Pango(const Pango&);
   public:
+    static const char *defaultFamily;
     double angle; // angle the text  
     Pango(cairo_t* cairo): 
       cairo(cairo), fontSize(10), angle(0) {}

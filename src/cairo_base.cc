@@ -11,9 +11,7 @@
 #include "pango.h"
 #include "ecolab_epilogue.h"
 
-#ifdef PANGO
 const char *ecolab::Pango::defaultFamily=NULL;
-#endif
 
 #if defined(CAIRO) && defined(TK)
 
