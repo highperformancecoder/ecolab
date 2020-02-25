@@ -89,7 +89,7 @@ SOVERSION=$(subst D0,D,$(subst D00,D,$(VERSION)))
 
 #chmod command is to counteract AEGIS removing execute privelege from scripts
 ifdef AEGIS
-aegis-all: version.h Makefile.version
+aegis-all: 
 	$(MAKE) all
 	$(MAKE) latex-docs 
 	cd gml2pajek && $(MAKE)
@@ -100,7 +100,7 @@ all: all-without-models
 	$(MAKE) models 
 	-$(CHMOD) a+x models/*.tcl
 
-all-without-models: version.h ecolab-libs
+all-without-models: ecolab-libs
 	$(MAKE) bin/ecolab$(ECOLIBS_EXT)
 	-$(CHMOD) a+x $(SCRIPTS)
 # copy in the system built TCL library
@@ -132,28 +132,6 @@ endif
 	echo NOGUI=$(NOGUI)>>$(MCFG)
 	echo AQUA=$(AQUA)>>$(MCFG)	
 	echo MAC_OSX_TK=$(MAC_OSX_TK)>>$(MCFG)
-
-# we want to build this target always when under AEGIS, otherwise only
-# when non-existing
-ifdef AEGIS
-.PHONY: version.h
-.PHONY: Makefile.version
-endif
-
-version.h:
-	rm -f include/version.h
-ifdef AEGIS
-	echo '#define VERSION "'$(version)'"' >include/version.h
-else
-	echo '#define VERSION "unknown"' >include/version.h
-endif
-
-Makefile.version:
-ifdef version
-	rm -f $@
-	echo 'VERSION=$(version)' >$@
-endif
-
 
 ecolab-libs: lib bin $(CLASSDESC) include/nauty_sizes.h
 	$(MAKE) $(UTILS) 
