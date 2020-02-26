@@ -71,16 +71,18 @@ namespace
  // displays a string represent ×10^n
   string orderOfMag(int n)
   {
-    char label[20];
+    ostringstream label;
     if (abs(n)<=3)
-      sprintf(label,"×%-6.*f",(n>0? 0: -n),pow(10.0,n));
+      label<<"×"<<(n>0? 0: -n),pow(10.0,n);
     else
-#ifdef PANGO
-      sprintf(label,"×10<sup>%d</sup>",n); //pango markup used here
+      {
+#if defined(PANGO) && !defined(_WIN32)
+        label<<"×10<sup>"<<n<<"</sup>";
 #else
-      sprintf(label,"E%d",n); //fall back to basic Cairo text
+        label<<"1E"<<n;
 #endif
-    return label;
+      }
+    return label.str();
   }    
 
   // axis labels are either just the leading digit, or an order of
@@ -101,7 +103,11 @@ namespace
           {
             int omag=int(log10(x));
             int lead=x*pow(10,-omag);
-            sprintf(label,"%d×10<sup>%d</sup>",lead,omag);
+#if defined(PANGO) && !defined(_WIN32)
+           sprintf(label,"%d×10<sup>%d</sup>",lead,omag);
+#else
+           sprintf(label,"%dE%d",lead,omag);
+#endif
           }
         return label;
   }
@@ -109,6 +115,7 @@ namespace
 
   void showOrderOfMag(ecolab::Pango& pango, double scale, unsigned threshold)
   {
+    if (scale<=0) return; // scale shouldn't be -ve, but just in case
     scale=floor(log10(scale));
     if (abs(scale)>=threshold-1)
       {
@@ -766,7 +773,7 @@ namespace ecolab
         {
           double ytickIncrement, ytick;
           computeIncrementAndOffset(miny, maxy, nyTicks, ytickIncrement, ytick);
-          if (ytickIncrement<0) return; //avoid infinite loop
+          if (ytickIncrement<=0) return; //avoid infinite loop
 
           cairo_move_to(cairo, minx+0.01*dx, aff(maxy));
           showOrderOfMag(pango, ytickIncrement, exp_threshold);
