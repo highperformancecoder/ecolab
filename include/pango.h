@@ -47,7 +47,7 @@ namespace ecolab
       }
       operator PangoFontDescription*() {return fd;}
     };
-    PangoRectangle bbox;
+    PangoRectangle bbox{0,0,0,0};
     void operator=(const Pango&);
     Pango(const Pango&);
   public:

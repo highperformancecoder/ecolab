@@ -203,7 +203,6 @@ refine(graph *g, int *lab, int *ptn, int level, int *numcells,
 #endif
 
 	longcode = *numcells;
-	split1 = -1;
 	hint = 0;
 	while (*numcells < n && ((split1 = hint, ISELEMENT(active,split1))
                              || (split1 = nextelement(active,M,split1)) >= 0
@@ -359,7 +358,6 @@ refine1(graph *g, int *lab, int *ptn, int level, int *numcells,
 #endif
 
 	longcode = *numcells;
-	split1 = -1;
 
         hint = 0;
         while (*numcells < n && ((split1 = hint, ISELEMENT1(active,split1))

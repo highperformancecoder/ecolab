@@ -157,7 +157,7 @@ namespace
     NodeMapperID::next_nodeID=0; //reset numeric labels to go from zero
     map<std::string,NodeMapperID> nodeID;
 
-    unsigned node1;
+    unsigned node1=0;
     while (getline(i,buf))
       {
         istringstream is(buf);

@@ -362,7 +362,7 @@ namespace ecolab
         if (vertical)
           {
             double dx=0.1*increment;
-            for (double x=tick+dx; x<tick+increment; x+=dx)
+            for (double x=tick+dx; x<tick+increment; x+=dx) //NOLINT
               {
                 cairo_move_to(cairo,iflogx(x),xfy(miny));
                 cairo_line_to(cairo,iflogx(x),xfy(maxy));
@@ -371,7 +371,7 @@ namespace ecolab
         else
           {
             double dy=0.1*increment;
-            for (double y=tick+dy; y<tick+increment; y+=dy)
+            for (double y=tick+dy; y<tick+increment; y+=dy) //NOLINT
               {
                 cairo_move_to(cairo,iflogx(minx),xfy(y));
                 cairo_line_to(cairo,iflogx(maxx),xfy(y));
@@ -415,7 +415,7 @@ namespace ecolab
   
   void Plot::drawLegend(cairo_t* cairo, double w, double h) const
   {
-    double dx=maxx-minx, dy=maxy-miny;
+    double dx=maxx-minx;
     double xoffs;
     // compute width of labels
     double width=0, height=0;
@@ -514,18 +514,13 @@ namespace ecolab
 
   void Plot::labelAxes(cairo_t* cairo, double width, double height) const
   {
-    double dx=maxx-minx, dy=maxy-miny;
+    double dy=maxy-miny;
     
     // axis label font size (in pixels)
     double lh=0.05*fontScale*(height-2*offy)/(1+0.03*fontScale);
     // offsets to allow space for axis labels
-    double loffx=lh*!ylabel.empty(), 
-      loffx1=lh*!y1label.empty(), 
-      loffy=lh*!xlabel.empty();
+    double loffx, loffx1, loffy;
 
-
-    double sx=(width-offx-loffx-loffx1)/dx, 
-      sy=(height-2*offy-loffy)/dy;
 
     // work out the font size we should use
     double fontSz=0.03*fontScale;
@@ -609,10 +604,9 @@ namespace ecolab
         return;
       }
       
-    double dx=maxx-minx, dy=maxy-miny, dy1=maxy1-miny1;
-    dx=iflogx(maxx)-iflogx(minx);
-    dy=iflogy(maxy)-iflogy(miny);
-    dy1=iflogy(maxy1)-iflogy(miny1);
+    double dx=iflogx(maxx)-iflogx(minx);
+    double dy=iflogy(maxy)-iflogy(miny);
+    double dy1=iflogy(maxy1)-iflogy(miny1);
     
     // axis label font size (in pixels)
     // offsets to allow space for axis labels
@@ -692,7 +686,7 @@ namespace ecolab
         {
           LogScale ls(minx, maxx, nxTicks);
           int i=0;
-          for (double xtick=ls(0); xtick<maxx; i++, xtick=ls(i))
+          for (double xtick=ls(0); xtick<maxx; i++, xtick=ls(i)) //NOLINT
             if (xtick>=minx)
               {
                 pango.setMarkup(logAxisLabel(xtick));
@@ -715,7 +709,7 @@ namespace ecolab
           cairo_move_to(cairo, maxx-0.05*dx*(1+fontScale), aff(miny+0.04*dy*(1+fontScale)));
           showOrderOfMag(pango, xtickIncrement, exp_threshold);
 
-          for (; xtick<maxx; xtick+=xtickIncrement)
+          for (; xtick<maxx; xtick+=xtickIncrement) //NOLINT
             if (xtick>=minx)
               {
                 pango.setMarkup(axisLabel(xtick,xtickIncrement));
@@ -738,7 +732,7 @@ namespace ecolab
         {
           LogScale ls(miny, maxy, nyTicks);
           int i=0;
-          for (double ytick=ls(0); ytick<maxy; i++, ytick=ls(i))
+          for (double ytick=ls(0); ytick<maxy; i++, ytick=ls(i)) //NOLINT
             if (aff(ytick)>=fontSz*height)
               {
                 pango.setMarkup(logAxisLabel(ytick));
@@ -754,7 +748,7 @@ namespace ecolab
           if (displayRHSscale())
             {
               LogScale ls(miny1, maxy1, nyTicks);
-              for (double ytick=ls(i=0); ytick<maxy1; i++, ytick=ls(i))
+              for (double ytick=ls(i=0); ytick<maxy1; i++, ytick=ls(i)) //NOLINT
                 if (aff(ytick)>=fontSz*height)
                   {
                     pango.setMarkup(logAxisLabel(ytick));
@@ -778,7 +772,7 @@ namespace ecolab
           cairo_move_to(cairo, minx+0.01*dx, aff(maxy));
           showOrderOfMag(pango, ytickIncrement, exp_threshold);
           
-          for (; ytick<maxy; ytick+=ytickIncrement)
+          for (; ytick<maxy; ytick+=ytickIncrement) //NOLINT
             if (aff(ytick)>=fontSz*height)
               {
                 pango.setMarkup(axisLabel(ytick,ytickIncrement,percent));
@@ -802,7 +796,7 @@ namespace ecolab
               cairo_move_to(cairo, maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin, aff(maxy));
               showOrderOfMag(pango, ytickIncrement, exp_threshold);
 
-              for (; ytick<maxy1; ytick+=ytickIncrement)
+              for (; ytick<maxy1; ytick+=ytickIncrement) //NOLINT
                 if (ytick>=miny1+fontSz*dy1)
                   {
                     pango.setMarkup(axisLabel(ytick,ytickIncrement,percent));

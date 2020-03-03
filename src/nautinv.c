@@ -245,7 +245,7 @@ quadruples(graph *g, int *lab, int *ptn, int level, int numcells, int tvpos,
              wv = workshort[v];
              for (v1 = 0; v1 < n-2; ++v1)
              {
-                wv1 = workshort[v1];
+               wv1 = workshort[v1]; //NOLINT
                 if (wv1 == wv && v1 <= v) continue;
                 wv1 += wv;
                 gw = GRAPHROW(g,v1,m);
@@ -1111,7 +1111,7 @@ indsets(graph *g, int *lab, int *ptn, int level, int numcells, int tvpos,
             wv[0] = workshort[v[0]];
             s0 = (set*)wss;
             EMPTYSET(s0,m);
-            for (i = v[0]+1; i < n; ++i) ADDELEMENT(s0,i);
+            for (i = v[0]+1; i < n; ++i) ADDELEMENT(s0,i);//NOLINT
             gv = GRAPHROW(g,v[0],m);
             for (i = M; --i >= 0;) s0[i] &= ~gv[i];
             ss = 1;

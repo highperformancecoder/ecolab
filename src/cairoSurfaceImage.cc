@@ -12,7 +12,9 @@
 #include "pango.h"
 
 #include "ecolab_epilogue.h"
-#define USE_WIN32_SURFACE defined(CAIRO_HAS_WIN32_SURFACE) && !defined(__CYGWIN__)
+#if defined(CAIRO_HAS_WIN32_SURFACE) && !defined(__CYGWIN__)
+#define USE_WIN32_SURFACE
+#endif
 
 #include <cairo/cairo-ps.h>
 #include <cairo/cairo-pdf.h>
@@ -22,7 +24,7 @@
 #undef Realloc
 #include <windows.h>
 #include <wingdi.h>
-#if USE_WIN32_SURFACE
+#ifdef USE_WIN32_SURFACE
 #include <cairo/cairo-win32.h>
 // undocumented internal function for extracting the HDC from a Drawable
 extern "C" HDC TkWinGetDrawableDC(Display*, Drawable, void*);
@@ -109,7 +111,7 @@ namespace
     {
       clock_t t0=clock();
       CD& c=*(CD*)cd;
-#if USE_WIN32_SURFACE
+#ifdef USE_WIN32_SURFACE
       // TkWinGetDrawableDC is an internal (ie undocumented) routine
       // for getting the DC. We need to declare something to take
       // the state parameter - two long longs should be ample here
@@ -168,7 +170,7 @@ namespace
       cairo_surface_flush(c.csurf.surface->surface());
       // release surface prior to any context going out of scope
       c.csurf.surface->surface(NULL);
-#if USE_WIN32_SURFACE
+#ifdef USE_WIN32_SURFACE
       RestoreDC(hdc,-1);
       TkWinReleaseDrawableDC(win, hdc, state);
 #endif

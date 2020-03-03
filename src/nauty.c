@@ -529,7 +529,7 @@ firstpathnode(int *lab, int *ptn, int level, int numcells)
                              = (set*)ALLOCS(alloc_m,sizeof(set))) == NULL)
                 alloc_error("tcell");
             tcnode_parent->next = tcnode_this;
-            tcnode_this->next = NULL;
+            tcnode_this->next = NULL; //NOLINT
         }
         tcell = tcnode_this->tcellptr;
 #else
@@ -629,7 +629,7 @@ firstpathnode(int *lab, int *ptn, int level, int numcells)
         }
         MULTIPLY(stats->grpsize1,stats->grpsize2,index);
 
-        if (tcellsize == index && allsamelevel == level + 1)
+        if (tcellsize == index && allsamelevel == level + 1) //NOLINT
             --allsamelevel;
 
         if (domarkers)
@@ -675,7 +675,7 @@ othernode(int *lab, int *ptn, int level, int numcells)
                          = (set*)ALLOCS(alloc_m,sizeof(set))) == NULL)
                 alloc_error("tcell");
             tcnode_parent->next = tcnode_this;
-            tcnode_this->next = NULL;
+            tcnode_this->next = NULL; //NOLINT
         }
         tcell = tcnode_this->tcellptr;
 #else
