@@ -109,7 +109,19 @@ namespace ecolab
     Tcl_Obj* get() const {return ref;}
   };
 
-
+  /// count class that exposes const public attribute
+  class TCL_args_count
+  {
+  protected:
+    int m_count;
+  public:
+    TCL_args_count(int c=0): m_count(c), count(m_count) {}
+    TCL_args_count(const TCL_args_count& x): m_count(x.count), count(m_count) {}
+    void operator=(const TCL_args_count& x) {m_count=x.count;}
+    const int& count;
+  };
+   
+  
   /**
      \brief Represent arguments to TCL commands
 
@@ -138,10 +150,9 @@ namespace ecolab
 
      args[-1] refers to the command name.
   */
-  class TCL_args
+  class TCL_args: public TCL_args_count
   {
     int nextArg;
-    int m_count;
     std::vector<TCLObjRef> argv;
     Tcl_Obj *  pop_arg()
     {
@@ -153,9 +164,8 @@ namespace ecolab
     CLASSDESC_ACCESS(TCL_args);
     
   public:
-    const int& count;
-    TCL_args(): nextArg(1), m_count(0), argv(1), count(m_count) {}
-    TCL_args(int a, Tcl_Obj *const *v): nextArg(1), m_count(a), count(m_count)
+    TCL_args(): nextArg(1), argv(1) {}
+    TCL_args(int a, Tcl_Obj *const *v): TCL_args_count(a), nextArg(1)
     {
       m_count--;
       for (int i=0; i<a; ++i)

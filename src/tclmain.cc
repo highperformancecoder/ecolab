@@ -72,7 +72,7 @@ void do_slave_loop()
 {
   /* we have to assume a maximum size of message passed through :( */
   tclcmd cmd;
-  eco_string c;
+  string c;
   for (;;)  /* the only way out of this loop is to send the quit command */
     {
       MPIbuf().bcast(0) >> c;
@@ -249,7 +249,7 @@ void ecolab::parsendf(const char* fmt, ...)
   va_start(args, fmt);
   vsprintf(buffer,fmt,args);
   va_end(args);
-  MPIbuf() << eco_string(buffer) << bcast(0);
+  MPIbuf() << string(buffer) << bcast(0);
 }
 
 void ecolab::parsend(const string& s) {MPIbuf()<<s<<bcast(0);}
@@ -277,9 +277,9 @@ NEWCMD(nprocs,0)
 
 namespace trap
 {
-  eco_string sigcmd[32];
+  string sigcmd[32];
   void sighand(int s) {Tcl_Eval(interp(),sigcmd[s].c_str());}
-  hash_map<eco_string,int> signum;   /* signal name to number table */
+  hash_map<string,int> signum;   /* signal name to number table */
   struct init_t
   {
     init_t()
@@ -433,7 +433,7 @@ NEWCMD(cli,0)
   cmd << "savebgerror\n";
 #ifdef READLINE
   char *c;
-  eco_string prompt((const char*)tclvar("argv(0)")); prompt+='>';
+  string prompt((const char*)tclvar("argv(0)")); prompt+='>';
   while ( (c=readline(const_cast<char*>(prompt.c_str())))!=NULL && strcmp(c,"exit")!=0)
 #else
   char c[512];
