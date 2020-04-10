@@ -17,11 +17,21 @@ extern "C"
   typedef void (*__sighandler_t) (int);
   extern __sighandler_t signal (int __sig, __sighandler_t __handler);
 }
+#ifndef SIG_DFL
 #define SIG_DFL	((__sighandler_t) 0)		/* Default action.  */
+#endif
+#ifndef SIGILL
 #define	SIGILL		4	/* Illegal instruction (ANSI).  */
+#endif
+#ifndef SIGABRT
 #define	SIGABRT		6	/* Abort (ANSI).  */
+#endif
+#ifndef SIGBUS
 #define	SIGBUS		7	/* BUS error (4.2 BSD).  */
+#endif
+#ifndef SIGSEGV
 #define	SIGSEGV		11	/* Segmentation violation (ANSI).  */
+#endif
 
 
 using namespace std;
