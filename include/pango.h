@@ -50,6 +50,11 @@ namespace ecolab
     PangoRectangle bbox{0,0,0,0};
     void operator=(const Pango&);
     Pango(const Pango&);
+    void throwOnError() const {
+      auto status=cairo_status(cairo);
+      if (status!=CAIRO_STATUS_SUCCESS)
+        throw error(cairo_status_to_string(status));
+    }
   public:
     double angle; // angle the text
     static const char *defaultFamily;
@@ -103,13 +108,14 @@ namespace ecolab
 //      cairo_stroke(cairo);
 //      cairo_restore(cairo);
 
-      cairo_save(cairo);
+      cairo::CairoSave cs(cairo);
       cairo_identity_matrix(cairo);
       cairo_rotate(cairo, angle);
       cairo_rel_move_to(cairo,left(),top());
       pango_cairo_update_layout(cairo, layout);
+      throwOnError();
       pango_cairo_show_layout(cairo, layout);
-      cairo_restore(cairo);
+      throwOnError();
     }
     /// return index into the markup string corresponding to \a x from
     /// the start of the string in screen coordinates

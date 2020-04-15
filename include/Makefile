@@ -631,7 +631,7 @@ $(UTILS): %: %.cc tokeninput.h
 .cc.d: 
 	$(CPLUSPLUS) $(FLAGS)  $(CXXFLAGS) -MM -MG $< >$@
 
-.h.cd: $(CLASSDESC)
+.h.cd:
 	$(CLASSDESC) -nodef -typeName -i $< >$@
 	$(CLASSDESC) -nodef -onbase -I $(CDINCLUDE) -I $(ECOLAB_HOME)/include -i $< $(ACTIONS) >>$@
 	$(CLASSDESC) -nodef -onbase -typeName -I $(CDINCLUDE) -I $(ECOLAB_HOME)/include -i $< \
