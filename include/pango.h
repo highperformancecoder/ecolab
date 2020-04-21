@@ -19,6 +19,7 @@
 #else
 #include <cairo.h>
 #endif
+#include <error.h>
 
 #include <string>
 #include <assert.h>
