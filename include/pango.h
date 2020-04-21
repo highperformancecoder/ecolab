@@ -16,9 +16,8 @@
 
 #ifdef PANGO
 #include <pango/pangocairo.h>
-#else
-#include <cairo_base.h>
 #endif
+#include <cairo_base.h>
 #include <error.h>
 
 #include <string>
