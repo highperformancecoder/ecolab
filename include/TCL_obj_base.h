@@ -337,8 +337,9 @@ namespace ecolab
 namespace classdesc
 {
   /// TCL_obj descriptor object 
-  struct TCL_obj_t
+  class TCL_obj_t
   {
+  public:
     ecolab::TCL_obj_checkr_base *check_functor;
     /// whether to use xdr_pack or binary pack in checkpoint/restart
     bool xdr_check;
@@ -486,7 +487,7 @@ namespace ecolab
 #pragma omit TCL_obj ecolab::ref
 #endif
 
-  template <class T> class ref;
+  template <class T> struct ref;
 
   /* member_entry is defined in its own namespace, as 
      template<class T> void operator<<(ostream& x,const T& y) 

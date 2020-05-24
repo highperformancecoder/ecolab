@@ -83,7 +83,7 @@ namespace ecolab
       Surface(cairo_surface_t* s=NULL,
               double width=-1, double height=-1): m_surface(NULL), m_cairo(NULL)
       {surface(s, width, height);}
-      ~Surface() {
+      virtual ~Surface() {
         if (m_cairo) cairo_destroy(m_cairo);
         if (m_surface) cairo_surface_destroy(m_surface);
       }

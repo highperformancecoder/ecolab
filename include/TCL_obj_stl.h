@@ -34,7 +34,7 @@ namespace ecolab
     virtual void keys_of()=0;
   };
 
-  static void del_obj(ClientData c)
+  static inline void del_obj(ClientData c)
   { delete (TCL_obj_of_base*)c;}
  
   template <class T> std::string quoteTCL(const T& x);
@@ -188,7 +188,7 @@ namespace ecolab
     return i;
   }
 
-  static  int elem(ClientData v, Tcl_Interp *interp, int argc, 
+  static inline int elem(ClientData v, Tcl_Interp *interp, int argc, 
                    CONST84 char** argv) 
   {
     tclreturn r;
@@ -208,7 +208,7 @@ namespace ecolab
       }
   }
 
-  static int keys(ClientData v, Tcl_Interp *interp, int argc, 
+  static inline int keys(ClientData v, Tcl_Interp *interp, int argc, 
                   CONST84 char** argv) 
   {((TCL_obj_of_base*)v)->keys_of(); return TCL_OK;}
 
