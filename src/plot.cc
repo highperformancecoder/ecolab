@@ -333,15 +333,15 @@ namespace ecolab
   (cairo_t* cairo, double tick, double increment, bool vertical, const XFY& xfy) const
   {
     // draw first subgrid if necessary
-    double min=vertical? minx: miny;
+    double min=vertical? minx: xfy.o;
     if (tick > min && tick-increment<=min) 
       drawGrid(cairo, tick-increment, increment, vertical, xfy);
 
     cairo_save(cairo);
     if (vertical)
       {
-        cairo_move_to(cairo,iflogx(tick),xfy(miny));
-        cairo_line_to(cairo,iflogx(tick),xfy(maxy));
+        cairo_move_to(cairo,iflogx(tick),xfy(xfy.o));
+        cairo_line_to(cairo,iflogx(tick),xfy(displayLHSscale()? maxy: maxy1));
       }
     else
       {
@@ -589,10 +589,10 @@ namespace ecolab
     const char* errMsg=NULL;
     if (logx && minx<=0)
       errMsg = "logx requires positive range";
-    else if (logy && (miny<=0 || (displayRHSscale() && miny1<=0)))
+    else if (logy && (displayLHSscale() && miny<=0 || (displayRHSscale() && miny1<=0)))
       errMsg = "logy requires positive range";
     // ! used here, rather than reverse comparison to allow for NaNs, which always compare false
-    else if (!(maxx>minx) || !(maxy>miny) || (displayRHSscale() && !(maxy1>miny1)))
+    else if (!(maxx>minx) || (!displayLHSscale() && !displayRHSscale()))
       errMsg = "no data";
 
     if (msg || errMsg)
@@ -620,8 +620,8 @@ namespace ecolab
 
     width-=offx+loffx+loffx1;
     height-=2*offy+loffy;
-    double sx=width/dx, sy=height/dy;
-    double rhsScale = dy/dy1;
+    double sx=width/dx, sy=displayLHSscale()? height/dy: height/dy1;
+    double rhsScale = displayLHSscale()? dy/dy1: 1;
 
     {
       cairo::CairoSave cs(cairo);
@@ -646,7 +646,7 @@ namespace ecolab
       double fontSz=0.02*fontScale;
       Pango pango(cairo);
       pango.setFontSize(fontSz*height);
-      XFY aff(logy, sy, miny, 0); //manual affine transform - see ticket #693
+      XFY aff(logy, sy, displayLHSscale()? miny: miny1, 0); //manual affine transform - see ticket #693
       if (xticks.size())
         {
           unsigned startTick=0, endTick;
@@ -726,66 +726,75 @@ namespace ecolab
               }
         }
     
-      double rightMargin=0.02*dx;
+      double rightMargin=0.05*dx;
 
       if (logy)
         {
-          LogScale ls(miny, maxy, nyTicks);
-          int i=0;
-          for (double ytick=ls(0); ytick<maxy; i++, ytick=ls(i)) //NOLINT
-            if (aff(ytick)>=fontSz*height)
-              {
-                pango.setMarkup(logAxisLabel(ytick));
-                cairo_new_path(cairo);
-                cairo_move_to(cairo,iflogx(minx),aff(ytick));
-                cairo_line_to(cairo,iflogx(minx)+fontSz*dx,aff(ytick));
-                stroke(cairo);
-                cairo_move_to(cairo,iflogx(minx),aff(ytick));
-                pango.show();
-                if (grid)
-                  drawGrid(cairo, ytick, ls(i+1)-ytick, false, aff);
-              }
+          if (displayLHSscale())
+            {
+              LogScale ls(miny, maxy, nyTicks);
+              int i=0;
+              for (double ytick=ls(0); ytick<maxy; i++, ytick=ls(i)) //NOLINT
+                if (aff(ytick)>=fontSz*height)
+                  {
+                    pango.setMarkup(logAxisLabel(ytick));
+                    cairo_new_path(cairo);
+                    cairo_move_to(cairo,iflogx(minx),aff(ytick));
+                    cairo_line_to(cairo,iflogx(minx)+fontSz*dx,aff(ytick));
+                    stroke(cairo);
+                    cairo_move_to(cairo,iflogx(minx),aff(ytick));
+                    pango.show();
+                    if (grid)
+                      drawGrid(cairo, ytick, ls(i+1)-ytick, false, aff);
+                  }
+            }
           if (displayRHSscale())
             {
               LogScale ls(miny1, maxy1, nyTicks);
-              for (double ytick=ls(i=0); ytick<maxy1; i++, ytick=ls(i)) //NOLINT
+              int i=0;
+              for (double ytick=ls(0); ytick<maxy1; i++, ytick=ls(i)) //NOLINT
                 if (aff(ytick)>=fontSz*height)
                   {
                     pango.setMarkup(logAxisLabel(ytick));
                   
                     cairo_new_path(cairo);
-                    double yt=aff((ytick-miny1)*rhsScale+miny);
+                    double yt=aff((ytick-miny1)*rhsScale+aff.o);
                     cairo_move_to(cairo,maxx,yt);
                     cairo_line_to(cairo,minx+0.95*dx,yt);
                     stroke(cairo);
                     cairo_move_to(cairo,maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin,yt);
                     pango.show();
+                    if (grid && !displayLHSscale())
+                      drawGrid(cairo, ytick, ls(i+1)-ytick, false, aff);
                   }
             }
         }
       else
         {
           double ytickIncrement, ytick;
-          computeIncrementAndOffset(miny, maxy, nyTicks, ytickIncrement, ytick);
-          if (ytickIncrement<=0) return; //avoid infinite loop
+          if (displayLHSscale())
+            {
+              computeIncrementAndOffset(miny, maxy, nyTicks, ytickIncrement, ytick);
+              if (ytickIncrement<=0) return; //avoid infinite loop
 
-          cairo_move_to(cairo, minx+0.01*dx, aff(maxy));
-          showOrderOfMag(pango, ytickIncrement, exp_threshold);
-          
-          for (; ytick<maxy; ytick+=ytickIncrement) //NOLINT
-            if (aff(ytick)>=fontSz*height)
-              {
-                pango.setMarkup(axisLabel(ytick,ytickIncrement,percent));
-
-                cairo_new_path(cairo);
-                cairo_move_to(cairo,iflogx(minx),aff(ytick));
-                cairo_line_to(cairo,iflogx(minx)+fontSz*dx,aff(ytick));
-                stroke(cairo);
-                cairo_move_to(cairo,iflogx(minx),aff(ytick));
-                pango.show();
-                if (grid)
-                  drawGrid(cairo, ytick, ytickIncrement, false, aff);
-              }
+              cairo_move_to(cairo, minx+0.01*dx, aff(maxy));
+              showOrderOfMag(pango, ytickIncrement, exp_threshold);
+              
+              for (; ytick<maxy; ytick+=ytickIncrement) //NOLINT
+                if (aff(ytick)>=fontSz*height)
+                  {
+                    pango.setMarkup(axisLabel(ytick,ytickIncrement,percent));
+                    
+                    cairo_new_path(cairo);
+                    cairo_move_to(cairo,iflogx(minx),aff(ytick));
+                    cairo_line_to(cairo,iflogx(minx)+fontSz*dx,aff(ytick));
+                    stroke(cairo);
+                    cairo_move_to(cairo,iflogx(minx),aff(ytick));
+                    pango.show();
+                    if (grid)
+                      drawGrid(cairo, ytick, ytickIncrement, false, aff);
+                  }
+            }
 
           if (displayRHSscale())
             {
@@ -802,12 +811,14 @@ namespace ecolab
                     pango.setMarkup(axisLabel(ytick,ytickIncrement,percent));
                   
                     cairo_new_path(cairo);
-                    double yt=aff((ytick-miny1)*rhsScale+miny);
+                    double yt=aff((ytick-miny1)*rhsScale+aff.o);
                     cairo_move_to(cairo,maxx,yt);
                     cairo_line_to(cairo,minx+0.95*dx,yt);
                     stroke(cairo);
                     cairo_move_to(cairo,maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin,yt);
                     pango.show();
+                    if (grid && !displayLHSscale())
+                      drawGrid(cairo, ytick, ytickIncrement, false, aff);
                   }
             }
         }

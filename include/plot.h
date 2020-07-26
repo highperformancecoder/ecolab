@@ -101,9 +101,8 @@ namespace ecolab
          || (side==right && y>=miny1 && y<=maxy1));
     }
 
-    bool displayRHSscale() const {
-      return !penSide.empty() && miny1<maxy1;
-    }
+    bool displayRHSscale() const {return !penSide.empty() && miny1<maxy1;}
+    bool displayLHSscale() const {return miny<maxy;}
     string axisLabel(double x, double scale, bool percent=false) const;
 
   public:
