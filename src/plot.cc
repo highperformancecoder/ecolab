@@ -589,7 +589,7 @@ namespace ecolab
     const char* errMsg=NULL;
     if (logx && minx<=0)
       errMsg = "logx requires positive range";
-    else if (logy && (displayLHSscale() && miny<=0 || (displayRHSscale() && miny1<=0)))
+    else if (logy && ((displayLHSscale() && miny<=0) || (displayRHSscale() && miny1<=0)))
       errMsg = "logy requires positive range";
     // ! used here, rather than reverse comparison to allow for NaNs, which always compare false
     else if (!(maxx>minx) || (!displayLHSscale() && !displayRHSscale()))
