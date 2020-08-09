@@ -73,7 +73,7 @@ namespace
   {
     ostringstream label;
     if (abs(n)<=3)
-      label<<"×"<<(n>0? 0: -n),pow(10.0,n);
+      label<<"×"<<pow(10.0,n);
     else
       {
 #if defined(PANGO) && !defined(_WIN32)
@@ -802,6 +802,7 @@ namespace ecolab
               computeIncrementAndOffset(miny1, maxy1, nyTicks, ytickIncrement, ytick);
               if (ytickIncrement<0) return; //avoid infinite loop
 
+              pango.setText("XXXXX");
               cairo_move_to(cairo, maxx-(pango.width()*fontSz*dx)/pango.height()-rightMargin, aff(maxy));
               showOrderOfMag(pango, ytickIncrement, exp_threshold);
 
