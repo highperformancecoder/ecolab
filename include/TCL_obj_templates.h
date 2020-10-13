@@ -356,9 +356,9 @@ namespace ecolab
   {
     assert(memberptr);
     try {
-		*memberptr=std::stod(s);
-		tclreturn() << std::stod(s);
-	} catch(...) {}
+	*memberptr=std::stod(s);
+    } catch(...) {}
+    tclreturn() << *memberptr;	  
   }  
 
   template <class T> inline void member_entry<const Enum_handle<T> >::get() 
