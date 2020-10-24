@@ -89,10 +89,9 @@ namespace ecolab
       FontDescription fd(layout);
       auto size=gint(sz*PANGO_SCALE);
 #ifdef _WIN32
-      // adjust scale factor avoid too big a font size for Windows
-      if (size>0x7FFF) size=0x7FFF;
+      // clamp font size on Windows to avoid too big a font for the rendering library
+      size=std::min(size, 30000);
 #endif
-      std::cout << "setting font size "<<size<<std::endl;
       pango_font_description_set_size(fd, size);
       pango_layout_set_font_description(layout, fd); //asume ownership not passed?
     }

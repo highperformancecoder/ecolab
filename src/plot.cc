@@ -15,14 +15,6 @@
 #include <fstream>
 using namespace std;
 
-#ifdef _WIN32
-// For WPango Windows bug workaround
-#include <windows.h>
-#include <gdiplus.h>
-#include <cairo/cairo-win32.h>
-#include <boost/locale.hpp>
-using boost::locale::conv::utf_to_utf;
-#endif
 extern "C" void ecolab_plot_link() {}
 
 using ecolab::cairo::Colour;
@@ -67,105 +59,6 @@ namespace ecolab
 
 namespace 
 {
-
-  // substitute a call out to GDI font rendering when on Windows
-  //#ifdef _WIN32
-  #if 0
-  struct GDIStartUp
-  {
-    GDIStartUp(const GDIStartUp&)=delete;
-    void operator=(const GDIStartUp&)=delete;
-    ULONG_PTR  gdiplusToken;
-    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-    HDC dc;
-    HWND hwnd;
-    HFONT font;
-    PAINTSTRUCT ps;
-    GDIStartUp(cairo_t* cairo)
-    {
-      Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-//      hwnd=WindowFromDC(cairo_win32_surface_get_dc(cairo_get_target(cairo)));
-//      dc=BeginPaint(hwnd, &ps);
-//      // set a suitable font
-//      font = CreateFont
-//        (12, 0, 0, 0, FW_NORMAL, FALSE/*italic*/, FALSE/*underline*/, 
-//         FALSE/*strikethrough*/, DEFAULT_CHARSET/* how to specify unicode?*/, 
-//         OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-//         DEFAULT_PITCH | FF_SWISS, NULL);
-//      SelectObject(dc, font);
-    }
-    ~GDIStartUp()
-    {
-//      DeleteObject(font);
-//      EndPaint(hwnd, &ps);
-      Gdiplus::GdiplusShutdown(gdiplusToken);
-    }
-  };
-
-    class WPango: GDIStartUp
-    {
-      cairo_t *cr;
-      PAINTSTRUCT ps;
-      unique_ptr<Gdiplus::Graphics> gc;
-      Gdiplus::FontFamily fontFamily{utf_to_utf<WCHAR>(ecolab::Pango::defaultFamily).c_str()};
-      unique_ptr<Gdiplus::Font> font{new Gdiplus::Font(&fontFamily, 12)};
-    Gdiplus::SolidBrush brush{Gdiplus::Color(0,0,0)};
-    Gdiplus::RectF bbox;
-    basic_string<WCHAR> text;
-  public:
-      WPango(cairo_t* cairo): GDIStartUp(cairo),
-                              cr(cairo), gc(Gdiplus::Graphics::FromHDC(cairo_win32_surface_get_dc(cairo_get_target(cairo))))
-      {
-        cout << "gc() status="<<gc->GetLastStatus()<<endl;
-      }
-    void setMarkup(const std::string& s) {setText(s);} // No markup processing
-    void setText(const std::string& s) {
-      text=utf_to_utf<WCHAR>(s);
-      Gdiplus::RectF layoutRect;
-      gc->GetClipBounds(&layoutRect);
-         cout << "gc.GetClipBounds status="<<gc->GetLastStatus()<<endl;
-      gc->MeasureString(text.c_str(), -1, font.get(), layoutRect, &bbox);
-         cout << "gc.MeasureString status="<<gc->GetLastStatus()<<endl;
-    }
-    double angle;
-    void show() {
-      auto g=gc->Save();
-         cout << "gc.Save status="<<gc->GetLastStatus()<<endl;
-         Gdiplus::Matrix identity;
-         // MSDN does say whether ownership is passed here. I'm guessing not.
-         gc->SetTransform(&identity);
-      gc->RotateTransform(angle*180 / 3.1415927);
-      double x,y;
-      cairo_get_current_point(cr,&x,&y);
-      cairo_user_to_device(cr,&x,&y);
-      y-=height();
-      cout<<"x:"<<x<<" y:"<<y<<endl;
-      Gdiplus::PointF origin{float(x),float(y)};
-      //Gdiplus::PointF origin{0,0};
-      cout << utf_to_utf<char>(text) <<  " length="<<text.length()<<endl;
-      cout<<"font "<<font.get()<<" brush "<<&brush<<endl;
-         cout << "gc.RotateTransform status="<<gc->GetLastStatus()<<endl;
-         cout << "FontFamily status="<<fontFamily.GetLastStatus()<<endl;
-        cout << "Font status="<<font->GetLastStatus()<<endl;
-        cout << "Brush status="<<brush.GetLastStatus()<<endl;
-     auto status=gc->DrawString(text.c_str(),text.length(),font.get(),origin, &brush);
-      if (status!=Gdiplus::Ok)
-        cout << "DrawString failed: "<<status<<endl;
-      gc->Restore(g);
-    }
-    void setFontSize(unsigned sz) {
-      cout<<"size:"<<sz<<endl;
-      font.reset(new Gdiplus::Font(&fontFamily,sz));
-      cout << "Font status="<<font->GetLastStatus()<<endl;
-   }
-    double width() const {return bbox.Width;}
-    double height() const {return bbox.Height;}
-
-  };
-#else
-  typedef ecolab::Pango WPango;
-#endif
-  
   // stroke the current path using the default linewidth
   void stroke(cairo_t* cairo)
   {
@@ -220,7 +113,7 @@ namespace
   }
 
 
-  void showOrderOfMag(WPango& pango, double scale, unsigned threshold)
+  void showOrderOfMag(ecolab::Pango& pango, double scale, unsigned threshold)
   {
     if (scale<=0) return; // scale shouldn't be -ve, but just in case
     scale=floor(log10(scale));
@@ -751,7 +644,7 @@ namespace ecolab
 
       // work out the font size we should use
       double fontSz=0.02*fontScale;
-      WPango pango(cairo);
+      Pango pango(cairo);
       pango.setFontSize(fontSz*height);
       XFY aff(logy, sy, displayLHSscale()? miny: miny1, 0); //manual affine transform - see ticket #693
       if (xticks.size())
