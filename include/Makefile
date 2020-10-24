@@ -143,6 +143,7 @@ endif
 DIRS=$(ECOLAB_HOME) $(HOME)/usr/mxe $(subst bin/$(CPLUSPLUS),$(MXE_PREFIX),$(shell which $(CPLUSPLUS)))
 PKG_CONFIG_PATH:=$(HOME)/usr/mxe/lib/pkgconfig:$(PKG_CONFIG_PATH)
 PKG_CONFIG=env PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) $(MXE_PREFIX)-pkg-config
+LIBS+=-lgdiplus
 
 # xdr on MXE is positively ancient, so just disable it here
 XDR=

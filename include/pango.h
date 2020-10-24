@@ -30,7 +30,6 @@ namespace ecolab
   {
     cairo_t* cairo;
     PangoLayout* layout;
-    //PangoFontDescription* fd;
     struct FontDescription
     {
       PangoFontDescription* fd;
@@ -88,7 +87,13 @@ namespace ecolab
     void setFontSize(double sz) {
       if (gint(sz*PANGO_SCALE)<=0) return;
       FontDescription fd(layout);
-      pango_font_description_set_size(fd, gint(sz*PANGO_SCALE));
+      auto size=gint(sz*PANGO_SCALE);
+#ifdef _WIN32
+      // adjust scale factor avoid too big a font size for Windows
+      if (size>0x7FFF) size=0x7FFF;
+#endif
+      std::cout << "setting font size "<<size<<std::endl;
+      pango_font_description_set_size(fd, size);
       pango_layout_set_font_description(layout, fd); //asume ownership not passed?
     }
     void setFontFamily(const char* family) {
