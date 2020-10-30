@@ -54,6 +54,7 @@ namespace ecolab
       if (status!=CAIRO_STATUS_SUCCESS)
         throw error(cairo_status_to_string(status));
     }
+    double scale=1;
   public:
     double angle; // angle the text
     static const char *defaultFamily;
@@ -85,15 +86,7 @@ namespace ecolab
       pango_layout_get_extents(layout,0,&bbox);
     }
     void setFontSize(double sz) {
-      if (gint(sz*PANGO_SCALE)<=0) return;
-      FontDescription fd(layout);
-      auto size=gint(sz*PANGO_SCALE);
-#ifdef _WIN32
-      // clamp font size on Windows to avoid too big a font for the rendering library
-      size=std::min(size, 30000);
-#endif
-      pango_font_description_set_size(fd, size);
-      pango_layout_set_font_description(layout, fd); //asume ownership not passed?
+      scale=sz/getFontSize();
     }
     void setFontFamily(const char* family) {
       FontDescription fd(layout);
@@ -116,6 +109,7 @@ namespace ecolab
       cairo_identity_matrix(cairo);
       cairo_rotate(cairo, angle);
       cairo_rel_move_to(cairo,left(),top());
+      cairo_scale(cairo,scale,scale);
       pango_cairo_update_layout(cairo, layout);
       throwOnError();
       pango_cairo_show_layout(cairo, layout);
