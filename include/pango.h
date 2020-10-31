@@ -86,7 +86,7 @@ namespace ecolab
       pango_layout_get_extents(layout,0,&bbox);
     }
     void setFontSize(double sz) {
-      scale=sz/getFontSize();
+      scale*=sz/getFontSize();
     }
     void setFontFamily(const char* family) {
       FontDescription fd(layout);
@@ -95,7 +95,7 @@ namespace ecolab
   }
     double getFontSize() const {
       FontDescription fd(layout);
-      return pango_font_description_get_size(fd)/double(PANGO_SCALE);
+      return scale*pango_font_description_get_size(fd)/double(PANGO_SCALE);
     }
     void show() {
 //      cairo_save(cairo);
@@ -106,7 +106,6 @@ namespace ecolab
 //      cairo_restore(cairo);
 
       cairo::CairoSave cs(cairo);
-      cairo_identity_matrix(cairo);
       cairo_rotate(cairo, angle);
       cairo_rel_move_to(cairo,left(),top());
       cairo_scale(cairo,scale,scale);

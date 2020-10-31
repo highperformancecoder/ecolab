@@ -206,6 +206,18 @@ namespace
         maxy=1;
       }
   }
+
+  // A Pango that wraps it's show() method into an identity context
+  struct IPango: public ecolab::Pango
+  {
+    cairo_t* cairo;
+    IPango(cairo_t* cairo): Pango(cairo), cairo(cairo) {}
+    void show() {
+      ecolab::cairo::CairoSave cs(cairo);
+      cairo_identity_matrix(cairo);
+      Pango::show();
+    }
+  };
 }
 
 namespace ecolab
@@ -405,7 +417,7 @@ namespace ecolab
         {
           cairo::Surface surf
             (cairo_recording_surface_create(CAIRO_CONTENT_COLOR,NULL));
-          Pango p2(surf.cairo());
+          IPango p2(surf.cairo());
           p2.setFontSize(fabs(fy));
           p2.setMarkup(penTextLabel[i]);
           height += 1.5*fy; //1.3*(p2.height());
@@ -502,7 +514,7 @@ namespace ecolab
           cairo_rel_line_to(cairo, 0.05*w, 0);
           stroke(cairo);
 
-          Pango p2(cairo);
+          IPango p2(cairo);
           p2.setFontSize(fy);
           p2.setMarkup(penTextLabel[i]);
           cairo_move_to(cairo, labeloffs, yoffs+0.8*fy);
@@ -529,7 +541,7 @@ namespace ecolab
 
     cairo_save(cairo);
     cairo_translate(cairo,0.5*width,0.5*height);
-    Pango pango(cairo);
+    IPango pango(cairo);
     if (!xlabel.empty())
       {
         pango.setFontSize(0.6*lh);
@@ -597,7 +609,7 @@ namespace ecolab
 
     if (msg || errMsg)
       {
-        Pango pango(cairo);
+        IPango pango(cairo);
         pango.setMarkup(errMsg? errMsg: msg);
         cairo_move_to(cairo,0.5*(width-pango.width()),0.5*(height-pango.height()));
         pango.show();
@@ -644,7 +656,7 @@ namespace ecolab
 
       // work out the font size we should use
       double fontSz=0.02*fontScale;
-      Pango pango(cairo);
+      IPango pango(cairo);
       pango.setFontSize(fontSz*height);
       XFY aff(logy, sy, displayLHSscale()? miny: miny1, 0); //manual affine transform - see ticket #693
       if (xticks.size())
