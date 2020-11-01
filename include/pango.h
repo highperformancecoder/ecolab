@@ -118,7 +118,7 @@ namespace ecolab
     /// the start of the string in screen coordinates
     std::string::size_type posToIdx(double x) const {
       int r=0, graphemeOffset;
-      pango_layout_xy_to_index(layout, PANGO_SCALE*x, 0, &r, &graphemeOffset);
+      pango_layout_xy_to_index(layout, PANGO_SCALE*(x/scale), 0, &r, &graphemeOffset);
       // nb ignoring offset into multibyte characters
       return r;
     }
@@ -129,17 +129,17 @@ namespace ecolab
       pango_layout_index_to_line_x(layout, idx, false, &line, &pos);
       // nb ignoring multiline possibilities
       assert(line==0);
-      return double(pos)/PANGO_SCALE;
+      return scale*double(pos)/PANGO_SCALE;
     }
     
     /// width of rendered text
-    double width() const {return double(bbox.width)/PANGO_SCALE;}
+    double width() const {return scale*double(bbox.width)/PANGO_SCALE;}
     /// height of rendered text
-    double height() const {return double(bbox.height)/PANGO_SCALE;}
+    double height() const {return scale*double(bbox.height)/PANGO_SCALE;}
     /// x-coordinate of left hand side of the rendered text
-    double left() const {return double(bbox.x)/PANGO_SCALE;}
+    double left() const {return scale*double(bbox.x)/PANGO_SCALE;}
     /// y-coordinate of the top of the rendered text
-    double top() const {return double(bbox.y)/PANGO_SCALE;}
+    double top() const {return scale*double(bbox.y)/PANGO_SCALE;}
  };
 #else // fall back to basic Cairo text handling
   class Pango
