@@ -59,6 +59,18 @@ namespace ecolab
 
 namespace 
 {
+  // A Pango that wraps it's show() method into an identity context
+  struct IPango: public ecolab::Pango
+  {
+    cairo_t* cairo;
+    IPango(cairo_t* cairo): Pango(cairo), cairo(cairo) {}
+    void show() {
+      ecolab::cairo::CairoSave cs(cairo);
+      cairo_identity_matrix(cairo);
+      Pango::show();
+    }
+  };
+
   // stroke the current path using the default linewidth
   void stroke(cairo_t* cairo)
   {
@@ -113,7 +125,7 @@ namespace
   }
 
 
-  void showOrderOfMag(ecolab::Pango& pango, double scale, unsigned threshold)
+  void showOrderOfMag(IPango& pango, double scale, unsigned threshold)
   {
     if (scale<=0) return; // scale shouldn't be -ve, but just in case
     scale=floor(log10(scale));
@@ -207,17 +219,6 @@ namespace
       }
   }
 
-  // A Pango that wraps it's show() method into an identity context
-  struct IPango: public ecolab::Pango
-  {
-    cairo_t* cairo;
-    IPango(cairo_t* cairo): Pango(cairo), cairo(cairo) {}
-    void show() {
-      ecolab::cairo::CairoSave cs(cairo);
-      cairo_identity_matrix(cairo);
-      Pango::show();
-    }
-  };
 }
 
 namespace ecolab
