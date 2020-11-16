@@ -350,8 +350,9 @@ namespace ecolab
     *memberptr=s;
     tclreturn() << s;
   }
-  
-  // deal with special float values. for ticket 1253
+
+#if defined(__cplusplus) && __cplusplus>=201103L
+  // deal with special float values. for Minsky ticket 1253
   template <> inline void member_entry<double>::put(const char *s)
   {
     assert(memberptr);
@@ -360,7 +361,8 @@ namespace ecolab
     } catch(...) {}
     tclreturn() << *memberptr;	  
   }  
-
+#endif
+  
   template <class T> inline void member_entry<const Enum_handle<T> >::get() 
   {tclreturn()<<string(*memberptr);}
 

@@ -670,7 +670,7 @@ namespace ecolab
           pango.angle=xtickAngle*M_PI/180.0;
           for (unsigned i=startTick; i<endTick; i+=tickIncr)
             {
-              auto& xt=xticks[i];
+              const std::pair<double,std::string>& xt=xticks[i];
               xtick=logx? log10(xt.first): xt.first;
               cairo_new_path(cairo);
               cairo_move_to(cairo,xtick,0);
@@ -1049,7 +1049,7 @@ namespace ecolab
 
   void Plot::exportAsCSV(const std::string& filename, const string& separator) const
   {
-    ofstream of(filename);
+    ofstream of(filename.c_str());
     of<<"#"<<ylabel<<" by "<<xlabel<<endl;
     of<<"#";
     if (!xticks.empty())

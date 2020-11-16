@@ -357,11 +357,11 @@ namespace ecolab
   };
 
   template <>
-  struct TCL_obj_ofSequence<std::vector<bool>>: 
-    public TCL_obj_of_vector_bool<std::vector<bool>> 
+  struct TCL_obj_ofSequence<std::vector<bool> >: 
+    public TCL_obj_of_vector_bool<std::vector<bool> > 
   {
     TCL_obj_ofSequence(std::vector<bool>& o, const string& d): 
-      TCL_obj_of_vector_bool<std::vector<bool>>(o, d) {}
+      TCL_obj_of_vector_bool<std::vector<bool> >(o, d) {}
   };
   
   /* special case when only forward iterators are available */

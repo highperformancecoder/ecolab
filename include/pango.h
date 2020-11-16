@@ -46,21 +46,23 @@ namespace ecolab
       }
       operator PangoFontDescription*() {return fd;}
     };
-    PangoRectangle bbox{0,0,0,0};
+    PangoRectangle bbox;
     void operator=(const Pango&);
     Pango(const Pango&);
     void throwOnError() const {
-      auto status=cairo_status(cairo);
+      cairo_status_t status=cairo_status(cairo);
       if (status!=CAIRO_STATUS_SUCCESS)
         throw error(cairo_status_to_string(status));
     }
-    double scale=1;
+    double scale;
   public:
     double angle; // angle the text
     static const char *defaultFamily;
     Pango(cairo_t* cairo): 
-      cairo(cairo), layout(pango_cairo_create_layout(cairo)), angle(0) 
+      cairo(cairo), layout(pango_cairo_create_layout(cairo)), scale(1), angle(0) 
     {
+      PangoRectangle tmp={0,0,0,0};
+      bbox=tmp;
       FontDescription fd(layout);
       if (defaultFamily)
         pango_font_description_set_family(fd,defaultFamily);
