@@ -613,8 +613,13 @@ RPACTIONS=TCL_obj isa
 
 .SUFFIXES: .cc .c .o .h .d .cd
 
+DCXX=$(CPLUSPLUS)
+ifdef DISTCC
+DCXX=distcc
+endif
+
 .cc.o: 
-	$(CPLUSPLUS) -c $(FLAGS) $(CXXFLAGS) $(OPT) -o $@ $<
+	$(DCXX) -c $(FLAGS) $(CXXFLAGS) $(OPT) -o $@ $<
 
 .c.o: 
 	$(CC) -c $(FLAGS) $(OPT) -o $@ $<
