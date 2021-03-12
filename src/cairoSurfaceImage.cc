@@ -168,8 +168,10 @@ namespace
       catch (...)
         {/* not much you can do about exceptions at this point */}
       cairo_surface_flush(c.csurf.surface->surface());
+#ifndef MAC_OSX_TK
       // release surface prior to any context going out of scope
       c.csurf.surface->surface(NULL);
+#endif
 #ifdef USE_WIN32_SURFACE
       RestoreDC(hdc,-1);
       TkWinReleaseDrawableDC(win, hdc, state);
