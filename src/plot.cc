@@ -840,6 +840,7 @@ namespace ecolab
       if (!x.empty())
         for (size_t i=0; i<x.size(); ++i)
           {
+            if (x[i].empty()) continue;
             const LineStyle& ls=palette[i%paletteSz];
 
             // transform y coordinates (handles RHS being a different scale)
@@ -851,12 +852,11 @@ namespace ecolab
                 xfy.o=miny1;
                 side=right;
               }
-
-            if (x[i].size()>1)
+            
+            switch (plotType)
               {
-                switch (plotType)
-                  {
-                  case line:
+              case line:
+                    if (x[i].size()>1)
                     {
                       cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, ls.colour.a);
                       cairo_set_line_width(cairo, ls.width);
@@ -883,11 +883,16 @@ namespace ecolab
                       // make bars translucent - see Minsky ticket #893
                       cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, 0.5*ls.colour.a);
                       size_t j=0;
-                      float w = abs(iflogx(x[i][1]) - iflogx(x[i][0]));
+                      float w = x[i].size()>1? abs(iflogx(x[i][1]) - iflogx(x[i][0])): 0;
                       if (inBounds(iflogx(x[i][j]), y[i][j], side))
                         {
-                          cairo_rectangle(cairo, iflogx(x[i][0])-0.5*w, 0, w, 
-                                          xfy(y[i][0]));
+                          if (x[i].size()>1)
+                            cairo_rectangle(cairo, iflogx(x[i][0])-0.5*w, 0, w, 
+                                            xfy(y[i][0]));
+                          else
+                            cairo_rectangle(cairo, iflogx(minx), 0, iflogx(maxx)-iflogx(minx), 
+                                            xfy(y[i][0]));
+                          
                           cairo_fill(cairo);
                         }
                       for (++j; j<x[i].size()-1; ++j)
@@ -899,7 +904,7 @@ namespace ecolab
                                             xfy(y[i][j]));
                             cairo_fill(cairo);
                           }
-                      if (inBounds(iflogx(x[i][j]), y[i][j], side))
+                      if (x[i].size()>1 && inBounds(iflogx(x[i][j]), y[i][j], side))
                         {
                           w=abs(iflogx(x[i][j]) - iflogx(x[i][j-1]));
                           cairo_rectangle(cairo, iflogx(x[i][j])-0.5*w, 0, w, 
@@ -907,7 +912,6 @@ namespace ecolab
                           cairo_fill(cairo);
                         }
                     }
-                  }
               }
           }
     }
