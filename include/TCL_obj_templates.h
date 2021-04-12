@@ -339,20 +339,9 @@ namespace ecolab
 
   template <class T> inline void member_entry<T>::put(const char *s)
   {
-#if (defined(__osf__))
-    /* Tru 64 istream fails when eof encountered while reading
-       stream !! - append a whitespace character to stream to
-       ensure correct behaviour */
-    const char *os=s;
-    s=new char[strlen(s)+2]; strcpy((char*)s,(char*)os); 
-    strcat((char*)s," ");
-#endif
     assert(memberptr);
     std::istringstream r(s); r>>*memberptr;
     tclreturn() << s;
-#if (defined(__osf__))
-    delete [] s;
-#endif
   }
 
   template <> inline void member_entry<string>::put(const char *s)
@@ -362,6 +351,18 @@ namespace ecolab
     tclreturn() << s;
   }
 
+#if defined(__cplusplus) && __cplusplus>=201103L
+  // deal with special float values. for Minsky ticket 1253
+  template <> inline void member_entry<double>::put(const char *s)
+  {
+    assert(memberptr);
+    try {
+	*memberptr=std::stod(s);
+    } catch(...) {}
+    tclreturn() << *memberptr;	  
+  }  
+#endif
+  
   template <class T> inline void member_entry<const Enum_handle<T> >::get() 
   {tclreturn()<<string(*memberptr);}
 

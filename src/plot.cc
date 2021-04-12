@@ -59,6 +59,18 @@ namespace ecolab
 
 namespace 
 {
+  // A Pango that wraps it's show() method into an identity context
+  struct IPango: public ecolab::Pango
+  {
+    cairo_t* cairo;
+    IPango(cairo_t* cairo): Pango(cairo), cairo(cairo) {}
+    void show() {
+      ecolab::cairo::CairoSave cs(cairo);
+      cairo_identity_matrix(cairo);
+      Pango::show();
+    }
+  };
+
   // stroke the current path using the default linewidth
   void stroke(cairo_t* cairo)
   {
@@ -113,7 +125,7 @@ namespace
   }
 
 
-  void showOrderOfMag(ecolab::Pango& pango, double scale, unsigned threshold)
+  void showOrderOfMag(IPango& pango, double scale, unsigned threshold)
   {
     if (scale<=0) return; // scale shouldn't be -ve, but just in case
     scale=floor(log10(scale));
@@ -206,6 +218,7 @@ namespace
         maxy=1;
       }
   }
+
 }
 
 namespace ecolab
@@ -405,7 +418,7 @@ namespace ecolab
         {
           cairo::Surface surf
             (cairo_recording_surface_create(CAIRO_CONTENT_COLOR,NULL));
-          Pango p2(surf.cairo());
+          IPango p2(surf.cairo());
           p2.setFontSize(fabs(fy));
           p2.setMarkup(penTextLabel[i]);
           height += 1.5*fy; //1.3*(p2.height());
@@ -502,7 +515,7 @@ namespace ecolab
           cairo_rel_line_to(cairo, 0.05*w, 0);
           stroke(cairo);
 
-          Pango p2(cairo);
+          IPango p2(cairo);
           p2.setFontSize(fy);
           p2.setMarkup(penTextLabel[i]);
           cairo_move_to(cairo, labeloffs, yoffs+0.8*fy);
@@ -529,7 +542,7 @@ namespace ecolab
 
     cairo_save(cairo);
     cairo_translate(cairo,0.5*width,0.5*height);
-    Pango pango(cairo);
+    IPango pango(cairo);
     if (!xlabel.empty())
       {
         pango.setFontSize(0.6*lh);
@@ -597,7 +610,7 @@ namespace ecolab
 
     if (msg || errMsg)
       {
-        Pango pango(cairo);
+        IPango pango(cairo);
         pango.setMarkup(errMsg? errMsg: msg);
         cairo_move_to(cairo,0.5*(width-pango.width()),0.5*(height-pango.height()));
         pango.show();
@@ -644,7 +657,7 @@ namespace ecolab
 
       // work out the font size we should use
       double fontSz=0.02*fontScale;
-      Pango pango(cairo);
+      IPango pango(cairo);
       pango.setFontSize(fontSz*height);
       XFY aff(logy, sy, displayLHSscale()? miny: miny1, 0); //manual affine transform - see ticket #693
       if (xticks.size())
@@ -657,7 +670,7 @@ namespace ecolab
           pango.angle=xtickAngle*M_PI/180.0;
           for (unsigned i=startTick; i<endTick; i+=tickIncr)
             {
-              auto& xt=xticks[i];
+              const std::pair<double,std::string>& xt=xticks[i];
               xtick=logx? log10(xt.first): xt.first;
               cairo_new_path(cairo);
               cairo_move_to(cairo,xtick,0);
@@ -827,6 +840,7 @@ namespace ecolab
       if (!x.empty())
         for (size_t i=0; i<x.size(); ++i)
           {
+            if (x[i].empty()) continue;
             const LineStyle& ls=palette[i%paletteSz];
 
             // transform y coordinates (handles RHS being a different scale)
@@ -838,12 +852,11 @@ namespace ecolab
                 xfy.o=miny1;
                 side=right;
               }
-
-            if (x[i].size()>1)
+            
+            switch (plotType)
               {
-                switch (plotType)
-                  {
-                  case line:
+              case line:
+                    if (x[i].size()>1)
                     {
                       cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, ls.colour.a);
                       cairo_set_line_width(cairo, ls.width);
@@ -870,11 +883,16 @@ namespace ecolab
                       // make bars translucent - see Minsky ticket #893
                       cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, 0.5*ls.colour.a);
                       size_t j=0;
-                      float w = abs(iflogx(x[i][1]) - iflogx(x[i][0]));
+                      float w = x[i].size()>1? abs(iflogx(x[i][1]) - iflogx(x[i][0])): 0;
                       if (inBounds(iflogx(x[i][j]), y[i][j], side))
                         {
-                          cairo_rectangle(cairo, iflogx(x[i][0])-0.5*w, 0, w, 
-                                          xfy(y[i][0]));
+                          if (x[i].size()>1)
+                            cairo_rectangle(cairo, iflogx(x[i][0])-0.5*w, 0, w, 
+                                            xfy(y[i][0]));
+                          else
+                            cairo_rectangle(cairo, iflogx(minx), 0, iflogx(maxx)-iflogx(minx), 
+                                            xfy(y[i][0]));
+                          
                           cairo_fill(cairo);
                         }
                       for (++j; j<x[i].size()-1; ++j)
@@ -886,7 +904,7 @@ namespace ecolab
                                             xfy(y[i][j]));
                             cairo_fill(cairo);
                           }
-                      if (inBounds(iflogx(x[i][j]), y[i][j], side))
+                      if (x[i].size()>1 && inBounds(iflogx(x[i][j]), y[i][j], side))
                         {
                           w=abs(iflogx(x[i][j]) - iflogx(x[i][j-1]));
                           cairo_rectangle(cairo, iflogx(x[i][j])-0.5*w, 0, w, 
@@ -894,7 +912,6 @@ namespace ecolab
                           cairo_fill(cairo);
                         }
                     }
-                  }
               }
           }
     }
@@ -1036,7 +1053,7 @@ namespace ecolab
 
   void Plot::exportAsCSV(const std::string& filename, const string& separator) const
   {
-    ofstream of(filename);
+    ofstream of(filename.c_str());
     of<<"#"<<ylabel<<" by "<<xlabel<<endl;
     of<<"#";
     if (!xticks.empty())

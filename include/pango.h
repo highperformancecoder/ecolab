@@ -30,7 +30,6 @@ namespace ecolab
   {
     cairo_t* cairo;
     PangoLayout* layout;
-    //PangoFontDescription* fd;
     struct FontDescription
     {
       PangoFontDescription* fd;
@@ -47,20 +46,23 @@ namespace ecolab
       }
       operator PangoFontDescription*() {return fd;}
     };
-    PangoRectangle bbox{0,0,0,0};
+    PangoRectangle bbox;
     void operator=(const Pango&);
     Pango(const Pango&);
     void throwOnError() const {
-      auto status=cairo_status(cairo);
+      cairo_status_t status=cairo_status(cairo);
       if (status!=CAIRO_STATUS_SUCCESS)
         throw error(cairo_status_to_string(status));
     }
+    double scale;
   public:
     double angle; // angle the text
     static const char *defaultFamily;
     Pango(cairo_t* cairo): 
-      cairo(cairo), layout(pango_cairo_create_layout(cairo)), angle(0) 
+      cairo(cairo), layout(pango_cairo_create_layout(cairo)), scale(1), angle(0) 
     {
+      PangoRectangle tmp={0,0,0,0};
+      bbox=tmp;
       FontDescription fd(layout);
       if (defaultFamily)
         pango_font_description_set_family(fd,defaultFamily);
@@ -86,10 +88,7 @@ namespace ecolab
       pango_layout_get_extents(layout,0,&bbox);
     }
     void setFontSize(double sz) {
-      if (gint(sz*PANGO_SCALE)<=0) return;
-      FontDescription fd(layout);
-      pango_font_description_set_size(fd, gint(sz*PANGO_SCALE));
-      pango_layout_set_font_description(layout, fd); //asume ownership not passed?
+      scale*=sz/getFontSize();
     }
     void setFontFamily(const char* family) {
       FontDescription fd(layout);
@@ -98,7 +97,7 @@ namespace ecolab
   }
     double getFontSize() const {
       FontDescription fd(layout);
-      return pango_font_description_get_size(fd)/double(PANGO_SCALE);
+      return scale*pango_font_description_get_size(fd)/double(PANGO_SCALE);
     }
     void show() {
 //      cairo_save(cairo);
@@ -109,9 +108,9 @@ namespace ecolab
 //      cairo_restore(cairo);
 
       cairo::CairoSave cs(cairo);
-      cairo_identity_matrix(cairo);
       cairo_rotate(cairo, angle);
       cairo_rel_move_to(cairo,left(),top());
+      cairo_scale(cairo,scale,scale);
       pango_cairo_update_layout(cairo, layout);
       throwOnError();
       pango_cairo_show_layout(cairo, layout);
@@ -121,7 +120,7 @@ namespace ecolab
     /// the start of the string in screen coordinates
     std::string::size_type posToIdx(double x) const {
       int r=0, graphemeOffset;
-      pango_layout_xy_to_index(layout, PANGO_SCALE*x, 0, &r, &graphemeOffset);
+      pango_layout_xy_to_index(layout, PANGO_SCALE*(x/scale), 0, &r, &graphemeOffset);
       // nb ignoring offset into multibyte characters
       return r;
     }
@@ -132,17 +131,17 @@ namespace ecolab
       pango_layout_index_to_line_x(layout, idx, false, &line, &pos);
       // nb ignoring multiline possibilities
       assert(line==0);
-      return double(pos)/PANGO_SCALE;
+      return scale*double(pos)/PANGO_SCALE;
     }
     
     /// width of rendered text
-    double width() const {return double(bbox.width)/PANGO_SCALE;}
+    double width() const {return scale*double(bbox.width)/PANGO_SCALE;}
     /// height of rendered text
-    double height() const {return double(bbox.height)/PANGO_SCALE;}
+    double height() const {return scale*double(bbox.height)/PANGO_SCALE;}
     /// x-coordinate of left hand side of the rendered text
-    double left() const {return double(bbox.x)/PANGO_SCALE;}
+    double left() const {return scale*double(bbox.x)/PANGO_SCALE;}
     /// y-coordinate of the top of the rendered text
-    double top() const {return double(bbox.y)/PANGO_SCALE;}
+    double top() const {return scale*double(bbox.y)/PANGO_SCALE;}
  };
 #else // fall back to basic Cairo text handling
   class Pango

@@ -168,8 +168,10 @@ namespace
       catch (...)
         {/* not much you can do about exceptions at this point */}
       cairo_surface_flush(c.csurf.surface->surface());
+#ifndef MAC_OSX_TK
       // release surface prior to any context going out of scope
       c.csurf.surface->surface(NULL);
+#endif
 #ifdef USE_WIN32_SURFACE
       RestoreDC(hdc,-1);
       TkWinReleaseDrawableDC(win, hdc, state);
@@ -203,7 +205,7 @@ void CairoSurface::registerImage()
 cairo::SurfacePtr CairoSurface::vectorRender(const char* filename, cairo_surface_t* (*s)(const char *,double,double))
 {
   cairo::SurfacePtr tmp(new cairo::Surface(cairo_recording_surface_create
-                                           (CAIRO_CONTENT_COLOR_ALPHA,nullptr)));
+                                           (CAIRO_CONTENT_COLOR_ALPHA,NULL)));
   surface.swap(tmp);
   redrawWithBounds();
   double left=surface->left(), top=surface->top();
@@ -238,7 +240,7 @@ namespace
   
 void CairoSurface::renderToPNG(const char* filename)
 {
-  auto tmp=vectorRender(filename,pngDummy);
+  cairo::SurfacePtr tmp=vectorRender(filename,pngDummy);
   cairo_surface_write_to_png(tmp->surface(),filename);
 }
 

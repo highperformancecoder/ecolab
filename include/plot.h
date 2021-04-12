@@ -57,9 +57,12 @@ namespace ecolab
     {
       enum DashStyle {solid, dash, dot, dashDot};
       cairo::Colour colour;
-      double width=1;
+      double width;
       DashStyle dashStyle;
-      LineStyle(): colour{0,0,0,1}, width{1}, dashStyle{solid} {}
+      LineStyle(): width(1), dashStyle(solid) {
+        cairo::Colour tmp={0,0,0,1};
+        colour=tmp;
+      }
       std::vector<double> dashPattern() const;
     };
       
@@ -74,7 +77,7 @@ namespace ecolab
     cairo::SurfacePtr surface;
 
     // record error message from setMinMax
-    const char* msg=nullptr;
+    const char* msg;
     
 
     CLASSDESC_ACCESS(Plot);
@@ -96,7 +99,7 @@ namespace ecolab
     void labelAxes(cairo_t*, double width, double height) const;
 
     bool inBounds(float x, float y, Side side) const {
-      return x>=minx && x<=maxx &&
+      return std::isfinite(x) && std::isfinite(y) && x>=minx && x<=maxx &&
         ((side==left && y>=miny && y<=maxy)
          || (side==right && y>=miny1 && y<=maxy1));
     }
@@ -106,12 +109,12 @@ namespace ecolab
     string axisLabel(double x, double scale, bool percent=false) const;
 
   public:
-    Plot(): palette(paletteSz), nxTicks(30), nyTicks(30), fontScale(1),
+    Plot(): palette(paletteSz), msg(NULL), nxTicks(30), nyTicks(30), fontScale(1),
             offx(0), offy(0), logx(false), logy(false), 
             grid(false), subgrid(false), 
             leadingMarker(false), autoscale(true), percent(false), 
-            legend(false), legendSide(right), plotType(line), 
-            minx(-1), maxx(1), miny(-1), maxy(1), miny1(1), maxy1(-1)
+            legend(false), legendSide(right), legendLeft(0.9), legendTop(0.95), legendFontSz(0.03), legendOffset(0.06),
+            plotType(line), xtickAngle(-45), exp_threshold(4), minx(-1), maxx(1), miny(-1), maxy(1), miny1(1), maxy1(-1)
     {
       for (int i=0; i<paletteSz; ++i) palette[i].colour=ecolab::palette[i];
     }
@@ -127,16 +130,16 @@ namespace ecolab
     bool percent; ///< scales y axis label by 100
     bool legend;  ///< add a legend to the plot
     Side legendSide; ///< legend drawn towards the left or right
-    double legendLeft=0.9; ///< x coordinate of legend in scale 0-1 if legendSide==boundingBox
-    double legendTop=0.95; ///< y coordinate of legend in scale 0-1 if legendSide==boundingBox
-    double legendFontSz=0.03; ///< y coordinate of legend in scale 0-1 if legendSide==boundingBox
-    const double legendOffset=0.06; ///< offset of legend text within legend box as fraction of width
+    double legendLeft; ///< x coordinate of legend in scale 0-1 if legendSide==boundingBox
+    double legendTop; ///< y coordinate of legend in scale 0-1 if legendSide==boundingBox
+    double legendFontSz; ///< y coordinate of legend in scale 0-1 if legendSide==boundingBox
+    const double legendOffset; ///< offset of legend text within legend box as fraction of width
     PlotType plotType;
     /// axis labels
     string xlabel, ylabel, y1label;
-    double xtickAngle=-45; ///< angle (in degrees) at which xtick labels are drawn
+    double xtickAngle; ///< angle (in degrees) at which xtick labels are drawn
     /// if |log_10 (x)| < exp_threshold, do not rescale tick value
-    unsigned exp_threshold=4;
+    unsigned exp_threshold;
     
     /// height (or width) of an axis label in pixels
     double labelheight() const {return lh(width(), height());}
@@ -262,7 +265,7 @@ namespace ecolab
     {exportAsCSV(filename,",");}
     
   protected: // only protected because of TCL_obj problems
-    std::vector<std::pair<double,std::string>> xticks;
+    std::vector<std::pair<double,std::string> > xticks;
      
     
   private:
