@@ -1,18 +1,13 @@
 language: cpp
-compiler: gcc
 sudo: required
-dist: trusty
-group: deprecated-2017Q3
+os:
+    - linux
 
-before_install: 
-  - wget http://download.opensuse.org/repositories/home:hpcoder1/xUbuntu_14.04/Release.key
-  - sudo apt-key add - < Release.key
-  - echo 'deb http://download.opensuse.org/repositories/home:/hpcoder1/xUbuntu_14.04/ /' >/tmp/hpcoders.list 
-  - sudo mv /tmp/hpcoders.list /etc/apt/sources.list.d/
-  - sudo apt-get update -qq
-  - ./build_and_install_deps.sh
-script: 
-  - make DEBUG=1 AEGIS=1
-  - Xvfb :0 &
-  - export DISPLAY=:0
-  - make DEBUG=1 AEGIS=1 sure
+services:
+    - docker
+
+before_install:
+    - docker pull highperformancecoder/builttravisciimage
+
+script:
+  -  docker build --network=host  .
