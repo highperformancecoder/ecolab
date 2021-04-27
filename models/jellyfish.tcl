@@ -82,6 +82,8 @@ radii_dist.set_gen rdist
 # scale distribution to model scale
 radii_dist.scale 0.01*$scale
 
+parallel puts "init finished [myid] [nprocs]"
+
 # <no. jellies> 
 add_jellyfish 2000
 
