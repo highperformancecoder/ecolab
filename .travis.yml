@@ -10,4 +10,5 @@ before_install:
     - docker pull highperformancecoder/builttravisciimage
 
 script:
-  -  sudo docker build --network=host .
+#  -  sudo docker build --network=host .
+  -  docker run --network=host --security-opt="seccomp=unconfined" -v .:/root "cd /root && xvfb-run make DEBUG=1 AEGIS=1"
