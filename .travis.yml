@@ -11,4 +11,4 @@ before_install:
 
 script:
 #  -  sudo docker build --network=host .
-  -  docker run --network=host --security-opt="seccomp=unconfined" -v .:/root "cd /root && xvfb-run make DEBUG=1 AEGIS=1"
+  -  docker run --network=host --security-opt="seccomp=unconfined" -v .:/root highperformancecoder/builttravisciimage "cd /root && xvfb-run make DEBUG=1 AEGIS=1"
