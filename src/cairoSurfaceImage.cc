@@ -208,10 +208,11 @@ cairo::SurfacePtr CairoSurface::vectorRender(const char* filename, cairo_surface
   redrawWithBounds();
   double left=surface->left(), top=surface->top();
   surface->surface
-    (s(filename, surface->width(), surface->height()));
+    (s(filename, surface->width()*resolutionScaleFactor, surface->height()*resolutionScaleFactor));
   if (s==cairo_ps_surface_create)
     cairo_ps_surface_set_eps(surface->surface(),true);
   cairo_surface_set_device_offset(surface->surface(), -left, -top);
+  cairo_surface_set_device_scale(surface->surface(), resolutionScaleFactor, resolutionScaleFactor);
   redrawWithBounds();
   cairo_surface_flush(surface->surface());
   surface.swap(tmp);
