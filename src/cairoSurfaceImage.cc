@@ -117,8 +117,9 @@ namespace
       // the state parameter - two long longs should be ample here
       long long state[2];
       HDC hdc=TkWinGetDrawableDC(display, win, state);
+      if (!hdc) return;
       //HDC hdc=GetDC(Tk_GetHWND(win));
-      SaveDC(hdc);
+      int savedDC=SaveDC(hdc);
       c.csurf.surface.reset
         (new TkWinSurface
          (c.csurf, c.master,
@@ -168,12 +169,9 @@ namespace
       catch (...)
         {/* not much you can do about exceptions at this point */}
       cairo_surface_flush(c.csurf.surface->surface());
-#ifndef MAC_OSX_TK
-      // release surface prior to any context going out of scope
-      c.csurf.surface->surface(NULL);
-#endif
 #ifdef USE_WIN32_SURFACE
-      RestoreDC(hdc,-1);
+      if (savedDC)
+        RestoreDC(hdc,savedDC);
       TkWinReleaseDrawableDC(win, hdc, state);
 #endif
       c.csurf.reportDrawTime(double(clock()-t0)/CLOCKS_PER_SEC);
@@ -210,10 +208,11 @@ cairo::SurfacePtr CairoSurface::vectorRender(const char* filename, cairo_surface
   redrawWithBounds();
   double left=surface->left(), top=surface->top();
   surface->surface
-    (s(filename, surface->width(), surface->height()));
+    (s(filename, surface->width()*resolutionScaleFactor, surface->height()*resolutionScaleFactor));
   if (s==cairo_ps_surface_create)
     cairo_ps_surface_set_eps(surface->surface(),true);
   cairo_surface_set_device_offset(surface->surface(), -left, -top);
+  cairo_surface_set_device_scale(surface->surface(), resolutionScaleFactor, resolutionScaleFactor);
   redrawWithBounds();
   cairo_surface_flush(surface->surface());
   surface.swap(tmp);

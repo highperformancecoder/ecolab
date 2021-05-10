@@ -40,6 +40,8 @@ namespace ecolab
     cairo::SurfacePtr vectorRender
     (const char* filename, cairo_surface_t* (*s)(const char *,double,double));
 
+    /// increase output resolution of pixmap surfaces by this factor
+    double resolutionScaleFactor=1.0;
     /// render to a postscript file
     void renderToPS(const char* filename);
     /// render to a PDF file
