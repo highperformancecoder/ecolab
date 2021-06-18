@@ -172,7 +172,7 @@ namespace ecolab
     }
     
     /// redraw the plot
-    void redraw();
+    bool redraw();
     /// draw the plot onto a given surface
     virtual void draw(cairo::Surface&);
     void draw(cairo_t*, double width, double height) const;
