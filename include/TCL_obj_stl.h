@@ -132,7 +132,7 @@ namespace ecolab
             r+='\\';
         r+=os.str()[i];
       }
-    if (r.find(' ')!=std::string::npos)
+    if (r.empty() || r.find(' ')!=std::string::npos)
       r="{"+r+"}";
     return r;
   }
