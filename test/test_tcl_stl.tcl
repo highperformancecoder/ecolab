@@ -72,7 +72,7 @@ if {[vstring(0)]!="hello"} {exit 10}
 
 vvstring.@elem 0
 vvstring(0) {hello world}
-if {[vvstring]!="{hello world} "} {exit 11}
+if {[vvstring]!="{hello world} {}"} {exit 11}
 
 # the following lines should trigger a bug when same chaperone passed
 # to multiple commands

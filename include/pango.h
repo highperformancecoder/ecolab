@@ -16,7 +16,6 @@
 
 #ifdef PANGO
 #include <pango/pangocairo.h>
-#endif
 #include <cairo_base.h>
 #include <error.h>
 
@@ -25,7 +24,6 @@
 
 namespace ecolab
 {
-#ifdef PANGO
   class Pango
   {
     cairo_t* cairo;
@@ -143,9 +141,9 @@ namespace ecolab
     /// y-coordinate of the top of the rendered text
     double top() const {return scale*double(bbox.y)/PANGO_SCALE;}
  };
+}
 #else // fall back to basic Cairo text handling
 #include "noPango.h"
 #endif
-}
 
 #endif
