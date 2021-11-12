@@ -56,8 +56,10 @@ namespace ecolab
   public:
     double angle; // angle the text
     static const char *defaultFamily;
+    /// an additional font size scale factor to help rendering on Windows high DPI displays.
+    static double scaleFactor;
     Pango(cairo_t* cairo): 
-      cairo(cairo), layout(pango_cairo_create_layout(cairo)), scale(1), angle(0) 
+      cairo(cairo), layout(pango_cairo_create_layout(cairo)), scale(scaleFactor), angle(0) 
     {
       PangoRectangle tmp={0,0,0,0};
       bbox=tmp;
@@ -86,7 +88,7 @@ namespace ecolab
       pango_layout_get_extents(layout,0,&bbox);
     }
     void setFontSize(double sz) {
-      scale*=sz/getFontSize();
+      scale=scaleFactor*sz/getFontSize();
     }
     void setFontFamily(const char* family) {
       FontDescription fd(layout);

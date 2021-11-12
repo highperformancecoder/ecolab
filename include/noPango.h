@@ -25,6 +25,7 @@ namespace ecolab
     Pango(const Pango&);
   public:
     static const char *defaultFamily;
+    static double scaleFactor;
     double angle; // angle the text  
     Pango(cairo_t* cairo): 
       cairo(cairo), fontSize(10), angle(0) {}

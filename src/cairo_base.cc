@@ -90,6 +90,8 @@ namespace
 
 namespace ecolab
 {
+  double Pango::scaleFactor=1;
+  
   namespace cairo
   {
     void CairoImage::resize(size_t width, size_t height)
