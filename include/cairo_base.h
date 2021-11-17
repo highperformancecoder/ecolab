@@ -38,9 +38,13 @@ namespace ecolab
     class CairoSave
     {
       cairo_t* cairo;
+      CairoSave(const CairoSave&);
+      void operator=(const CairoSave&);
     public:
       CairoSave(cairo_t* cairo): cairo(cairo) {cairo_save(cairo);}
-      ~CairoSave() {cairo_restore(cairo);}
+      /// restore cairo context, after which destructor becomes a nop
+      void restore() {cairo_restore(cairo); cairo=NULL;}
+      ~CairoSave() {if (cairo) cairo_restore(cairo);}
     };
     
     /// Container object for managing cairo_surface_t lifetimes

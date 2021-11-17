@@ -138,6 +138,30 @@ namespace ecolab
   
 }
 
+/** @{ convenience macros for handling multiple accessor declarations
+    ECOLAB_ACESSOR_DECL(class,name,type) declares a type \a class_type that can be inherited in the class, which can then be initialised using ECOLAB_ACESSOR_INIT
+\verbatim
+    class Foo;
+    ECOLAB_ACESSOR_DECL(Foo,bar,double);
+    class Foo: public Foo_bar
+    {
+    public:
+      Foo(): ECOLAB_ACESSOR_INIT(Foo,bar) {}
+    }
+\endverbatim 
+ **/
+#define ECOLAB_ACESSOR_DECL(class,name,type)                               \
+  struct class##_##name: public ecolab::TCLAccessor<class,type>     \
+  {                                                                 \
+    class##_##name(const std::string& name, Getter g, Setter s):    \
+      ecolab::TCLAccessor<class,type>(name,g,s) {}                  \
+  };
+
+#define ECOLAB_ACESSOR_INIT(class,name)                                    \
+  class##_##name(#name, (class##_##name::Getter)&class::name, (class##_##name::Setter)&class::name)
+
+/// @}
+
 #ifdef _CLASSDESC
 #pragma omit pack ecolab::Accessor
 #pragma omit unpack ecolab::Accessor

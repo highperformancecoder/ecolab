@@ -919,7 +919,7 @@ namespace ecolab
 #endif    
   }
   
-  void Plot::redraw()
+  bool Plot::redraw()
   {
 #if defined(CAIRO)
     if (surface)
@@ -927,8 +927,10 @@ namespace ecolab
         surface->clear();
         draw(*surface);
         surface->blit();
+        return true;
       }
 #endif
+    return false;
   }
         
   void Plot::clear()
