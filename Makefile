@@ -356,15 +356,5 @@ compileTest:
 # note, this currently fails
 #	$(MAKE) clean; $(MAKE) DYNAMIC=1
 
-ECOLAB_VERSION=$(shell git describe)
-
 dist:
-	git archive --format=tar --prefix=ecolab-$(ECOLAB_VERSION)/ HEAD -o /tmp/ecolab-$(ECOLAB_VERSION).tar
-	# add in classdesc submodule
-	cd classdesc; git archive --format=tar --prefix=ecolab-$(ECOLAB_VERSION)/classdesc/ HEAD -o /tmp/$$.tar
-	tar Af /tmp/ecolab-$(ECOLAB_VERSION).tar /tmp/$$.tar
-	rm /tmp/$$.tar
-	cd graphcode; git archive --format=tar --prefix=ecolab-$(ECOLAB_VERSION)/graphcode/ HEAD -o /tmp/$$.tar
-	tar Af /tmp/ecolab-$(ECOLAB_VERSION).tar /tmp/$$.tar
-	rm /tmp/$$.tar
-	gzip -f /tmp/ecolab-$(ECOLAB_VERSION).tar
+	sh makeDist.sh
