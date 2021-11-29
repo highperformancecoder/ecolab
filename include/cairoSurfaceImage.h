@@ -43,15 +43,15 @@ namespace ecolab
     /// increase output resolution of pixmap surfaces by this factor
     double resolutionScaleFactor=1.0;
     /// render to a postscript file
-    void renderToPS(const char* filename);
+    void renderToPS(const std::string& filename);
     /// render to a PDF file
-    void renderToPDF(const char* filename);
+    void renderToPDF(const std::string& filename);
     /// render to an SVG file
-    void renderToSVG(const char* filename);
+    void renderToSVG(const std::string& filename);
     /// render to a PNG image file
-    void renderToPNG(const char* filename);
+    void renderToPNG(const std::string& filename);
     /// render canvas to a EMF file. Windows only.
-    void renderToEMF(const char* filename);
+    void renderToEMF(const std::string& filename);
   };
 }
 

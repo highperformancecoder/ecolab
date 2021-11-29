@@ -222,14 +222,14 @@ cairo::SurfacePtr CairoSurface::vectorRender(const char* filename, cairo_surface
   return tmp;
 }
   
-void CairoSurface::renderToPS(const char* filename)
-{vectorRender(filename,cairo_ps_surface_create);}
+void CairoSurface::renderToPS(const string& filename)
+{vectorRender(filename.c_str(),cairo_ps_surface_create);}
 
-void CairoSurface::renderToPDF(const char* filename)
-{vectorRender(filename,cairo_pdf_surface_create);}
+void CairoSurface::renderToPDF(const string& filename)
+{vectorRender(filename.c_str(),cairo_pdf_surface_create);}
 
-void CairoSurface::renderToSVG(const char* filename)
-{vectorRender(filename,cairo_svg_surface_create);}
+void CairoSurface::renderToSVG(const string& filename)
+{vectorRender(filename.c_str(),cairo_svg_surface_create);}
 
 namespace
 {
@@ -237,10 +237,10 @@ namespace
   {return cairo_image_surface_create(CAIRO_FORMAT_ARGB32,width,height);}
 }
   
-void CairoSurface::renderToPNG(const char* filename)
+void CairoSurface::renderToPNG(const string& filename)
 {
-  cairo::SurfacePtr tmp=vectorRender(filename,pngDummy);
-  cairo_surface_write_to_png(tmp->surface(),filename);
+  cairo::SurfacePtr tmp=vectorRender(filename.c_str(),pngDummy);
+  cairo_surface_write_to_png(tmp->surface(),filename.c_str());
 }
 
 #ifdef _WIN32
@@ -283,12 +283,12 @@ namespace
   }
 }
 
-void CairoSurface::renderToEMF(const char* filename)
-{vectorRender(filename,createEMFSurface);}
+void CairoSurface::renderToEMF(const string& filename)
+{vectorRender(filename.c_str(),createEMFSurface);}
 
 #else
 
-void CairoSurface::renderToEMF(const char* filename)
+void CairoSurface::renderToEMF(const string& filename)
 {throw std::runtime_error("EMF functionality only available on Windows");}
 
 #endif
