@@ -24,6 +24,7 @@ namespace ecolab
   struct CairoSurface
   {
     Exclude<cairo::SurfacePtr> surface;
+    /// @return true if something drawn
     virtual bool redraw(int x0, int y0, int width, int height)=0;
     virtual void redrawWithBounds() {redraw(-1e9,-1e9,2e9,2e9);} //TODO better name for this?
     virtual ~CairoSurface() {}
