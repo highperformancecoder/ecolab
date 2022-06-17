@@ -88,7 +88,7 @@ namespace ecolab
       pango_layout_get_extents(layout,0,&bbox);
     }
     void setFontSize(double sz) {
-      scale=scaleFactor*sz/getFontSize();
+      scale*=scaleFactor*sz/getFontSize();
     }
     void setFontFamily(const char* family) {
       FontDescription fd(layout);
