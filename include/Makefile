@@ -458,15 +458,19 @@ TCLLIBS=-framework Tk
 endif
 TCLLIBS+=-framework Tcl
 else
+
 TCLVERSION=$(shell . $(call search,lib*/tclConfig.sh); echo $$TCL_VERSION)
 ifdef TK
-TCLLIBS+=$(shell . $(call search,lib*/tkConfig.sh); echo $$TK_LIB_FLAG $$TK_STUB_LIB_FLAG $$TK_LIBS $$TK_XLIBSW)
+TCLLIBS+=$(shell . $(call search,lib*/tkConfig.sh); echo $$TK_LIB_FLAG $$TK_STUB_LIB_FLAG)
+TKDEPLIBS=$(shell . $(call search,lib*/tkConfig.sh); echo $$TK_LIBS $$TK_XLIBSW)
 FLAGS+=$(shell . $(call search,lib*/tkConfig.sh); echo $$TK_INCLUDE_SPEC)
 endif
-TCLLIBS+=$(shell . $(call search,lib*/tclConfig.sh); echo $$TCL_LIB_SPEC $$TCL_STUB_LIB_FLAG $$TCL_LIBS)
+TCLLIBS+=$(shell . $(call search,lib*/tclConfig.sh); echo $$TCL_LIB_SPEC $$TCL_STUB_LIB_FLAG $$TCL_LIBS) $(TKDEPLIBS)
 FLAGS+=$(shell . $(call search,lib*/tclConfig.sh); echo $$TCL_INCLUDE_SPEC)
-endif
-endif
+
+endif # AQUA
+
+endif # conditional ensure TCL is present
 
 ifeq ($(OS),CYGWIN)
 #The default Cygwin installation of Tcl/Tk stuffs up tcl/tkConfig.sh,
