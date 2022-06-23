@@ -28,16 +28,47 @@ namespace ecolab
     clock_t start_e, start_u, start_s;
     bool started;
     Times(): counts(0), elapsed(0), user(0), system(0), started(false) {}
+    void start();
+    void stop();
   };
 
+  
   /// return the static timer map. The first call to this method
-  /// creates the the map, and is not threadsafe. Using the returned
-  /// map directly is not threadsafe.
+  /// creates the the map, and starts the Overall timer and is not
+  /// threadsafe. Using the returned map directly is not threadsafe.
   inline std::map<std::string, Times>& timers() {
     static std::map<std::string, Times> _timers;
     return _timers;
   }
 
+  inline void Times::start()
+  {
+#if !defined(__MINGW32__) && !defined(__MINGW32_VERSION)
+    if (started) return;
+    started = true;
+    counts++;
+          
+    struct tms tbuf;
+    start_e = times(&tbuf);
+    start_u = tbuf.tms_utime;
+    start_s = tbuf.tms_stime;
+#endif
+  }
+
+  inline void Times::stop()
+  {
+#if !defined(__MINGW32__) && !defined(__MINGW32_VERSION)
+    if (!started) return;
+    started = false;
+
+    static const double seconds=1.0/sysconf(_SC_CLK_TCK);
+    struct tms tbuf;
+    elapsed += (times(&tbuf)-start_e)*seconds;
+    user += (tbuf.tms_utime-start_u)*seconds;
+    system += (tbuf.tms_stime-start_s)*seconds;
+#endif
+  }
+ 
   /// start the named timer. This call is threadsafe in an OpenMP
   /// parallel region.
   inline void start_timer(const std::string& s)
@@ -46,19 +77,7 @@ namespace ecolab
 #pragma omp critical(ecolab_timers)
 #endif
     {
-#if !defined(__MINGW32__) && !defined(__MINGW32_VERSION)
-      Times& t=timers()[s];
-      if (!t.started)
-        {
-          t.started = true;
-          t.counts++;
-          
-          struct tms tbuf;
-          t.start_e = times(&tbuf);
-          t.start_u = tbuf.tms_utime;
-          t.start_s = tbuf.tms_stime;
-        }
-#endif
+      timers()[s].start();
     }
   }
 
@@ -66,23 +85,12 @@ namespace ecolab
   /// parallel region.
   inline void stop_timer(const std::string& s)
   {
-#if !defined(__MINGW32__) && !defined(__MINGW32_VERSION)
-      Times& t=timers()[s];
-      if (t.started)
-        {
-          t.started = false;
-
-          static const double seconds=1.0/sysconf(_SC_CLK_TCK);
-          std::cout<<seconds<<std::endl;
-          struct tms tbuf;
-          t.elapsed += (times(&tbuf)-t.start_e)*seconds;
-          t.user += (tbuf.tms_utime-t.start_u)*seconds;
-          t.system += (tbuf.tms_stime-t.start_s)*seconds;
-        }
+#ifdef _OPENMP
+#pragma omp critical(ecolab_timers)
 #endif
+    timers()[s].stop();
   }
 
- 
   /// RAII class for timing code blocks.
   class Timer
   {
@@ -116,6 +124,7 @@ namespace ecolab
         " Counts: "<<times[i].second.counts<<" "<<times[i].first<<std::endl;
     std::cout << "----------------------------------------------------------"<<
       std::endl;
+      
   }
 }
 #endif
