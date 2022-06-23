@@ -51,7 +51,8 @@ namespace ecolab
       if (!t.started)
         {
           t.started = true;
-
+          t.counts++;
+          
           struct tms tbuf;
           t.start_e = times(&tbuf);
           t.start_u = tbuf.tms_utime;
@@ -67,14 +68,16 @@ namespace ecolab
   {
 #if !defined(__MINGW32__) && !defined(__MINGW32_VERSION)
       Times& t=timers()[s];
-      if (!t.started)
+      if (t.started)
         {
-          t.started = true;
+          t.started = false;
 
+          static const double seconds=1.0/sysconf(_SC_CLK_TCK);
+          std::cout<<seconds<<std::endl;
           struct tms tbuf;
-          t.start_e = times(&tbuf);
-          t.start_u = tbuf.tms_utime;
-          t.start_s = tbuf.tms_stime;
+          t.elapsed += (times(&tbuf)-t.start_e)*seconds;
+          t.user += (tbuf.tms_utime-t.start_u)*seconds;
+          t.system += (tbuf.tms_stime-t.start_s)*seconds;
         }
 #endif
   }
