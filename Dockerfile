@@ -1,4 +1,4 @@
 FROM highperformancecoder/builttravisciimage
 COPY . /root
-RUN cd /root && xvfb-run make DEBUG=1 AEGIS=1
+RUN cd /root && make -j4 AEGIS=1
 
