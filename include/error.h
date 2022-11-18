@@ -47,7 +47,6 @@ namespace ecolab
       abort_if_debug();
     }
     error() {errstring[0]='\0'; abort_if_debug();}
-    error(const error& e) {strncpy(errstring,e.errstring,200);}
   };
 }
 #endif

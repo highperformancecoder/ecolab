@@ -370,13 +370,13 @@ namespace ecolab
 
 
     ///tclvars may be freely mixed with arithmetic  expressions 
-    tclvar operator=(double x) {dput(x); return *this;}
-    tclvar operator=(const char* x) {
+    tclvar& operator=(double x) {dput(x); return *this;}
+    tclvar& operator=(const char* x) {
       if (!interpExiting) Tcl_SetVar(interp(),name.c_str(),x,TCL_GLOBAL_ONLY); 
       return *this;
     }
-    tclvar operator=(const string& x) {return (*this)=x.c_str();}
-    tclvar operator+=(const string& x)
+    tclvar& operator=(const string& x) {return (*this)=x.c_str();}
+    tclvar& operator+=(const string& x)
     {return (*this)=(*this)+x;}
 
     string operator+(const string& x) 
