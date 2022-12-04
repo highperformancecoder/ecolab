@@ -95,7 +95,7 @@ CPP=$(CPLUSPLUS) -E
 FLAGS+=-UHAVE_MPI_CPP
 else
 CC=gcc
-CPLUSPLUS=g++ -std=c++11
+CPLUSPLUS=g++
 LINK=g++
 CPP=g++ -E
 endif
@@ -133,7 +133,6 @@ GCC=1
 FLAGS+=-DSTATIC_BUILD -DNO_FWD_DECLARE_STL -DMXE
 CC=$(MXE_PREFIX)-gcc
 CPLUSPLUS=$(MXE_PREFIX)-g++
-CXXFLAGS=-std=c++11
 LINK=$(CPLUSPLUS)
 CPP=$(CPLUSPLUS) -E
 # rewrite ecolab home to be the mxe one
