@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>MPIbuf_array</TITLE>
+<META NAME="description" CONTENT="MPIbuf_array">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node79.html">
+<LINK REL="previous" HREF="node77.html">
+<LINK REL="up" HREF="node75.html">
+<LINK REL="next" HREF="node79.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html1440"
+  HREF="node79.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html1434"
+  HREF="node75.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html1428"
+  HREF="node77.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html1436"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html1438"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1441"
+  HREF="node79.html">MPIslave</A>
+<B> Up:</B> <A NAME="tex2html1435"
+  HREF="node75.html">classdescMP</A>
+<B> Previous:</B> <A NAME="tex2html1429"
+  HREF="node77.html">Manipulators</A>
+ &nbsp; <B>  <A NAME="tex2html1437"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1439"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H3><A NAME="SECTION000149300000000000000">
+MPIbuf_array</A>
+</H3>
+
+<P>
+<code>MPIbuf_array</code> is a convenience type for managing a group of
+messages:
+<PRE>
+  class MPIbuf_array
+  {
+  public:
+    
+    MPIbuf_array(unsigned n);
+    MPIbuf&amp; operator[](unsigned i);
+
+    bool testall();
+    int testany();
+    vector&lt;int&gt; testsome();
+    void waitall();
+    int waitany();
+    vector&lt;int&gt; waitsome();
+  };
+</PRE>
+
+<P>
+The <code>testall()</code>, <code>testany</code> etc methods perform the MPI
+equivalent call on the group of messages.
+
+<P>
+<code>MPIbuf_array</code> is useful for managing an all-to-all calculation,
+as per the following typical example:
+
+<P>
+<PRE>
+    {
+        tag++;
+        MPIbuf_array sendbuf(nprocs());
+        for (unsigned proc=0; proc&lt;nprocs(); proc++)
+          {
+            if (proc==myid()) continue;
+            sendbuf[proc] &lt;&lt; requests[proc] &lt;&lt; isend(proc,tag);
+          }
+        for (int i=0; i&lt;nprocs()-1; i++)
+          {
+            MPIbuf b; 
+            b.get(MPI_ANY_SOURCE,tag);
+            b &gt;&gt; rec_req[b.proc];
+          }
+     }
+</PRE>
+
+<P>
+Note that the outer pair of braces that all messages have been sent
+and received in the group. Using an explicit tag is useful to prevent
+message groups from interfering with each other.
+
+<P>
+<BR><HR>
+
+</BODY>
+</HTML>

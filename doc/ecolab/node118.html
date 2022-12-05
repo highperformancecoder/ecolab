@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>Random number functions</TITLE>
+<META NAME="description" CONTENT="Random number functions">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node119.html">
+<LINK REL="previous" HREF="node117.html">
+<LINK REL="up" HREF="node115.html">
+<LINK REL="next" HREF="node119.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html2027"
+  HREF="node119.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html2021"
+  HREF="node115.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html2015"
+  HREF="node117.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html2023"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html2025"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html2028"
+  HREF="node119.html">Stream Functions</A>
+<B> Up:</B> <A NAME="tex2html2022"
+  HREF="node115.html">Global functions</A>
+<B> Previous:</B> <A NAME="tex2html2016"
+  HREF="node117.html">Array functions</A>
+ &nbsp; <B>  <A NAME="tex2html2024"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html2026"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H3><A NAME="SECTION000173300000000000000"></A><A NAME="random_fun"></A>
+<BR>
+Random number functions
+</H3>
+
+<P>
+array's random number functions allow arrays to be filled with random
+numbers efficiently in a single call. Most of these functions use the
+<code>array_urand</code><A NAME="5430"></A> uniform random object (of type <A HREF="node125.html#random"
+ NAME="5435">urand</A>), which is
+accessible from TCL. The <code>fillgrand()</code> function makes use of the
+TCL accessible <code>array_grand</code><A NAME="5436"></A> object, which is
+of type <A HREF="node125.html#random"
+ NAME="5441">gaussrand</A>.
+
+<P>
+
+<UL>
+<LI>void <TT>fillrand</TT><A NAME="5444"></A>(array <EM>x</EM>) 
+
+<P>
+Fill <EM>x</EM> with random numbers from the uniform distribution over <SPAN CLASS="MATH"></SPAN>
+
+<P>
+</LI>
+<LI>void <TT>fillprand</TT><A NAME="5448"></A>(array <EM>x</EM>)
+
+<P>
+Fill <EM>x</EM> with random numbers from the Poisson distribution <SPAN CLASS="MATH"></SPAN>
+
+<P>
+</LI>
+<LI>void <TT>fillgrand</TT><A NAME="5453"></A>(array <EM>x</EM>)
+
+<P>
+Fill <EM>x</EM> with random numbers from the Gaussian distribution <SPAN CLASS="MATH"></SPAN>
+
+<P>
+</LI>
+<LI>void <TT>fill_unique_rand</TT><A NAME="5458"></A>(array <EM>    x</EM>, int <EM>max</EM>)
+
+<P>
+Fill <EM>x</EM> with random integers from the range [0..<EM>max</EM>] such
+that no two integers are the same.
+
+<P>
+</LI>
+</UL>
+
+<P>
+<BR><HR>
+
+</BODY>
+</HTML>

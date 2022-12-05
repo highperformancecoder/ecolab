@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>MPIbuf</TITLE>
+<META NAME="description" CONTENT="MPIbuf">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node77.html">
+<LINK REL="previous" HREF="node75.html">
+<LINK REL="up" HREF="node75.html">
+<LINK REL="next" HREF="node77.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html1412"
+  HREF="node77.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html1406"
+  HREF="node75.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html1400"
+  HREF="node75.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html1408"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html1410"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1413"
+  HREF="node77.html">Manipulators</A>
+<B> Up:</B> <A NAME="tex2html1407"
+  HREF="node75.html">classdescMP</A>
+<B> Previous:</B> <A NAME="tex2html1401"
+  HREF="node75.html">classdescMP</A>
+ &nbsp; <B>  <A NAME="tex2html1409"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1411"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H3><A NAME="SECTION000149100000000000000"></A><A NAME="3656"></A>
+<BR>
+MPIbuf
+</H3>
+
+<P>
+<TT>MPIbuf</TT><A NAME="3658"></A> is derived from <TT>pack_t</TT>, and so
+arbitrary objects can be placed into an <TT>MPIbuf</TT> in just the same
+way as a <TT>pack_t</TT>. If the <code>HETERO</code><A NAME="3662"></A>
+preprocessor symbol is defined, then MPIbuf is derived from <TT>xdr_pack</TT><A NAME="3664"></A> instead, so MPIbufs can be safely used on
+a heterogenous cluster -- thus obviating the need to use the MPI
+compound type mechanism (<TT>MPI_Type*</TT> series of functions).
+
+<P>
+Specification:
+<PRE>
+ class MPIbuf: public pack_t
+{
+public:
+  MPI_Comm Communicator;
+  int myid();   /* utility functions returning rank and number in */
+  int nprocs(); /* current communicator */
+  bool const_buffer;  /* in send_recv, all messages of same length */
+  int proc, tag; /* store status of receives */
+
+  MPIbuf(): pack_t() {Communicator=MPI_COMM_WORLD; const_buffer=false;}
+
+  bool sent(); //has asynchronous message been sent?
+  void wait(); //wait for asynchronous message to be sent
+
+  void send(int proc, int tag);
+  void isend(int proc, int tag); //asynchronous send
+
+  MPIbuf&amp; get(int p=MPI_ANY_SOURCE, int t=MPI_ANY_TAG);
+  void send_recv(int dest, int sendtag, 
+                 int source=MPI_ANY_SOURCE, int recvtag=MPI_ANY_TAG);
+  void bcast(int root);
+
+  MPIbuf&amp; gather(int root);
+  MPIbuf&amp; scatter(int root); 
+
+  MPIbuf&amp; reset();
+  bool msg_waiting(int source=MPI_ANY_SOURCE, int tag=MPI_ANY_TAG);
+};
+</PRE>
+
+<P>
+The simplest additional operations are <TT>send</TT> and <TT>get</TT>. <TT>  send</TT> sends the buffer contents to the nominated processor, with the
+  nominated message tag, and clears the buffer. <TT>get</TT> receives the
+  next message into the buffer -- if processor or tag are specified,
+  the message is restricted to those that match.<A NAME="3672"></A><A NAME="3673"></A>
+<TT>get</TT> returns the value of <code>*this</code>, so the message can be
+  unpacked on one line, eg:
+<PRE>
+buffer.get() &gt;&gt; x &gt;&gt; y;
+</PRE>
+  <TT>get</TT> places the source and message tag for the received message
+  in <TT>proc</TT> and <TT>tag</TT>.<A NAME="3680"></A><A NAME="3681"></A>
+
+<P>
+<TT>send_recv</TT><A NAME="3683"></A> does a simultaneous send and
+receive, sending the buffer to the nominated destination, with
+nominated tag. If the flag <TT>const_buffer</TT><A NAME="3685"></A> is
+set, then all messages must be of equal length. The prevents the need
+to send the message sizes first.
+
+<P>
+<TT>bcast</TT><A NAME="3687"></A> performs a broadcast.
+
+<P>
+<TT>gather</TT><A NAME="3689"></A> concatenates the MPIbufs from all nodes
+onto the MPIbuf on the root node. If <TT>const_buffer</TT><A NAME="3691"></A> is set, then the more efficient
+<TT>MPI_Gather</TT> is used, otherwise the buffer sizes are gathered
+first, and <TT>MPI_Gatherv</TT> used.
+
+<P>
+<TT>scatter</TT><A NAME="3695"></A> scatters an MPIbuf from the root node to
+all the nodes. The data destined for each node must be separated by
+<TT>mark</TT><A NAME="3697"></A> objects, as in:
+<PRE>
+cmd &lt;&lt; A &lt;&lt; mark() &lt;&lt; B &lt;&lt; mark(); cmd.scatter(0);
+</PRE>
+Again, if the data to be scattered is of identical size for each node,
+set the  <TT>const_buffer</TT><A NAME="3701"></A>, and the more
+efficient <TT>MPI_Scatter</TT> will be employed instead of <TT>MPI_Scatterv</TT>.
+
+<P>
+By default, all operations take place in the <code>MPI_COMM_WORLD</code>
+communicator. This behaviour can be changed by assigning a different
+communicator to <code>MPIbuf::Communicator</code><A NAME="3704"></A>
+
+<P>
+Messages can be sent asynchronously using
+<code>isend()</code>. <code>sent()</code> can be used to test whether the message
+has been passed, and <code>wait()</code> can be used to stall until the
+message has been sent. <code>wait()</code> is always called prior to the MPIbuf
+object being destroyed.
+
+<P>
+
+<DIV CLASS="navigation"><HR>
+<!--Navigation Panel-->
+<A NAME="tex2html1412"
+  HREF="node77.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html1406"
+  HREF="node75.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html1400"
+  HREF="node75.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html1408"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html1410"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1413"
+  HREF="node77.html">Manipulators</A>
+<B> Up:</B> <A NAME="tex2html1407"
+  HREF="node75.html">classdescMP</A>
+<B> Previous:</B> <A NAME="tex2html1401"
+  HREF="node75.html">classdescMP</A>
+ &nbsp; <B>  <A NAME="tex2html1409"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1411"
+  HREF="node143.html">Index</A></B> </DIV>
+<!--End of Navigation Panel-->
+
+</BODY>
+</HTML>

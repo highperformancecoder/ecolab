@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>Display</TITLE>
+<META NAME="description" CONTENT="Display">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node20.html">
+<LINK REL="previous" HREF="node18.html">
+<LINK REL="up" HREF="node16.html">
+<LINK REL="next" HREF="node20.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html544"
+  HREF="node20.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html538"
+  HREF="node16.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html532"
+  HREF="node18.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html540"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html542"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html545"
+  HREF="node20.html">Connect_plot</A>
+<B> Up:</B> <A NAME="tex2html539"
+  HREF="node16.html">Instrumentation</A>
+<B> Previous:</B> <A NAME="tex2html533"
+  HREF="node18.html">Histogram</A>
+ &nbsp; <B>  <A NAME="tex2html541"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html543"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H3><A NAME="SECTION00076300000000000000"></A><A NAME="display"></A>
+<BR>
+Display
+</H3>
+
+<P>
+Usage:
+
+<P>
+<TT>display</TT><A NAME="560"></A> <EM>model_var</EM> <EM>identity_var</EM>
+
+<P>
+This command plots each component of the <EM>model variable</EM> as a function
+of time. The <EM>identity variable</EM> is used to ensure continuity of
+the curves, and colouring them to aid identification of species. The
+index of the component is not a good proxy for this, as the index of a
+particular species may have changed through a <TT>condense</TT>
+operation. 
+
+<P>
+Traditional <I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I> usage of this command is
+<PRE>
+display ecolab.density ecolab.species
+</PRE>
+
+<P>
+The colour of the lines used are controlled by the <TT>  palette</TT> TCL variable.(&#167;<A HREF="node21.html#palette">6.7</A>) This is a list of X-window
+colours to use.
+
+<P>
+The namespace for this widget is constructed by appending the 1st
+argument to the string &ldquo;display_&rdquo;. Any unacceptable characters are
+replaced by '_', so it may take a little experimentation to find the
+correct namespace name.
+display supports the following methods:
+
+<UL>
+<LI>display_<EM>model_var</EM>::print <EM>filename</EM> -- produce a postscript
+  representation to a file
+</LI>
+<LI>display_<EM>model_var</EM>::clear -- clear the plot
+</LI>
+</UL>
+
+<P>
+<BR><HR>
+
+</BODY>
+</HTML>

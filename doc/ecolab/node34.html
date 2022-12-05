@@ -1,0 +1,297 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>Mutation</TITLE>
+<META NAME="description" CONTENT="Mutation">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node35.html">
+<LINK REL="previous" HREF="node33.html">
+<LINK REL="up" HREF="node32.html">
+<LINK REL="next" HREF="node35.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html767"
+  HREF="node35.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html761"
+  HREF="node32.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html755"
+  HREF="node33.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html763"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html765"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html768"
+  HREF="node35.html">Input Parameters</A>
+<B> Up:</B> <A NAME="tex2html762"
+  HREF="node32.html">The Eco Lab Model</A>
+<B> Previous:</B> <A NAME="tex2html756"
+  HREF="node33.html">Lotka-Volterra Dynamics</A>
+ &nbsp; <B>  <A NAME="tex2html764"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html766"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION000122000000000000000"></A><A NAME="mutation"></A>
+<BR>
+Mutation
+</H2>
+
+<P>
+With mutation, equation (<A HREF="node32.html#lotka-volterra">1</A>) reads
+<BR>
+<DIV ALIGN="RIGHT" CLASS="mathdisplay">
+
+<!-- MATH
+ \begin{equation}
+\dot{\mbox{\boldmath {$n$}}} = \mbox{${\bf r}$}*\mbox{\boldmath {$n$}}+ \mbox{\boldmath {$n$}}*\mbox{\boldmath {$\beta$}}\mbox{\boldmath {$n$}}+ {\tt mutate}(\mbox{\boldmath {$\mu$}},\mbox{${\bf r}$},\mbox{\boldmath {$n$}}).
+\end{equation}
+ -->
+<TABLE WIDTH="100%" ALIGN="CENTER">
+<TR VALIGN="MIDDLE"><TD></TD>
+<TD CLASS="eqno" WIDTH=10 ALIGN="RIGHT">
+(<SPAN CLASS="arabic">9</SPAN>)</TD></TR>
+</TABLE>
+<BR CLEAR="ALL"></DIV><P></P>
+
+<P>
+The difficulty with adding mutation to this model is how to define the
+mapping between genotype space and phenotype space, or in other words,
+what defines the <EM>embryology</EM>. A few studies, including Ray's
+Tierra world, do this with an explicit mapping from the genotype to to
+some particular organism property (e.g. interpreted as machine language
+instructions, or as weight in a neural net). These organisms then
+interact with one another to determine the population dynamics. In
+this model, however, we are doing away with the organismal layer, and
+so an explicit embryology is impossible. The only possibility left is
+to use a statistical model of embryology. The mapping between
+genotype space and the population parameters <!-- MATH
+ $\mbox{${\bf r}$}$
+ -->
+<SPAN CLASS="MATH"></SPAN>,
+<!-- MATH
+ $\mbox{\boldmath {$\beta$}}{}$
+ -->
+<SPAN CLASS="MATH"></SPAN> is expected to look like a rugged
+landscape, however, if two genotypes are close together (in a Hamming
+sense) then one might expect that the phenotypes are likely to be
+similar, as would the population parameters. This I call <EM>random
+embryology with locality</EM>.
+
+<P>
+In the simple case of point mutations, the probability <SPAN CLASS="MATH"></SPAN> of any
+child lying distance <SPAN CLASS="MATH"></SPAN> in genotype space from its parent follows a
+Poisson distribution. Random embryology with locality implies that the
+phenotypic parameters are distributed randomly about the parent
+species, with a standard deviation that depends monotonically on the
+genotypic displacement. The simplest such model is to distribute the
+phenotypic parameters in a Gaussian fashion about the parent's values,
+with standard deviation proportional to the genotypic displacement.
+This constant of proportionality can be conflated with the species'
+intrinsic mutation rate, to give rise another phenotypic parameter
+<!-- MATH
+ $\mbox{\boldmath {$\mu$}}$
+ -->
+<SPAN CLASS="MATH"></SPAN>.  It is assumed that the probability of a mutation generating a
+previously existing species is negligible, and can be ignored. We also
+need another arbitrary parameter <SPAN CLASS="MATH"></SPAN>, &ldquo;species radius&rdquo;, or
+<code>ecolab.sp_sep</code>,<A NAME="2191"></A> which can be understood as the
+minimum genotypic distance separating species, conflated with the same
+constant of proportionality as <!-- MATH
+ $\mbox{\boldmath {$\mu$}}$
+ -->
+<SPAN CLASS="MATH"></SPAN>.
+
+<P>
+In summary, the mutation algorithm is as follows:
+
+<OL>
+<LI>The number of mutant species arising from species <SPAN CLASS="MATH"></SPAN> within a
+timestep is <!-- MATH
+ $\mu_i\alpha_in_i/\rho$
+ -->
+<SPAN CLASS="MATH"></SPAN>. This number is rounded
+stochastically to the nearest integer, e.g. 0.25 is rounded up to 1
+25% of the time and down to 0 75% of the time.
+
+<P>
+</LI>
+<LI>Roll a random number from a Poisson distribution
+<!-- MATH
+ $e^{-x/\mu+\rho}$
+ -->
+<SPAN CLASS="MATH"></SPAN> to determine the standard deviation <SPAN CLASS="MATH"></SPAN> of phenotypic
+variation. 
+
+<P>
+</LI>
+<LI>Vary <!-- MATH
+ $\mbox{${\bf r}$}$
+ -->
+<SPAN CLASS="MATH"></SPAN> according to a Gaussian distribution about the
+  parents' values, with <!-- MATH
+ $\sigma\alpha_0$
+ -->
+<SPAN CLASS="MATH"></SPAN> as the standard deviation,
+  where <SPAN CLASS="MATH"></SPAN> is the range of values that <!-- MATH
+ $\mbox{${\bf r}$}$
+ -->
+<SPAN CLASS="MATH"></SPAN> is initialised to,
+  ie <SPAN CLASS="MATH"></SPAN>=<code>ecolab.repro_max</code><A NAME="2194"></A><SPAN CLASS="MATH"></SPAN>
+  <code>ecolab.repro_min</code><A NAME="2195"></A>
+
+<P>
+</LI>
+<LI>The diagonal part of <!-- MATH
+ $\mbox{\boldmath {$\beta$}}$
+ -->
+<SPAN CLASS="MATH"></SPAN> must be negative, so vary <!-- MATH
+ $\mbox{\boldmath {$\beta$}}$
+ -->
+<SPAN CLASS="MATH"></SPAN>
+according to a log-normal distribution. This means that if the old
+value is <SPAN CLASS="MATH"></SPAN>, the new value becomes
+<!-- MATH
+ $\beta'=-\exp(\log_e(\beta)+\sigma)$
+ -->
+<SPAN CLASS="MATH"></SPAN>. These values cannot become
+arbitrarily small, however, as this would imply that some species make
+arbitrarily small demands on the environment, and will become infinite
+in number. In <I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I>, the diagonal interactions terms are prevented from
+becoming larger than <!-- MATH
+ $-r/(.1*{\tt INT\_MAX})$
+ -->
+<SPAN CLASS="MATH"></SPAN>.
+
+<P>
+</LI>
+<LI>The offdiagonal components of <!-- MATH
+ $\mbox{\boldmath {$\beta$}}$
+ -->
+<SPAN CLASS="MATH"></SPAN>, are varied in a similar
+fashion to <!-- MATH
+ $\mbox{${\bf r}$}$
+ -->
+<SPAN CLASS="MATH"></SPAN>. However new connections are added, or old ones
+removed according to <!-- MATH
+ $\lfloor 1/r\rfloor$
+ -->
+<SPAN CLASS="MATH"></SPAN>, where <SPAN CLASS="MATH"></SPAN> is
+chosen from a stepped uniform distribution 
+<BR><P></P>
+<DIV ALIGN="CENTER" CLASS="mathdisplay">
+<!-- MATH
+ \begin{displaymath}
+P(x)=\left\{
+\begin{array}{ll}
+0.25(1-g) & \mathrm{if}\; x\leq0\\
+0.25(1+g) & \mathrm{if}\; x>0\\
+\end{array}
+\right.
+\end{displaymath}
+ -->
+
+
+</DIV>
+<BR CLEAR="ALL">
+<P></P>
+where <SPAN CLASS="MATH"></SPAN> (default of 0) is specified by the TCL variable
+<code>generalization_bias</code><A NAME="2205"></A>. The values on
+the new connections are chosen from the same initial distribution that
+the offdiagonal values where originally set with, ie the range
+<code>ecolab.odiag_min</code><A NAME="2206"></A> to
+<code>ecolab.odiag_max</code><A NAME="2207"></A>. Since <SPAN CLASS="MATH"></SPAN> in
+condition (<A HREF="node33.html#boundedness3">8</A>) is computationally expensive, we use a
+slightly stronger criterion that is sufficient, computationally
+tractable yet still allows &ldquo;interesting&rdquo; non-definite matrix
+behaviour namely that the sum <!-- MATH
+ $\beta_{ij}+\beta_{ji}$
+ -->
+<SPAN CLASS="MATH"></SPAN> should be
+nonpositive.
+
+<P>
+</LI>
+<LI><!-- MATH
+ $\mbox{\boldmath {$\mu$}}$
+ -->
+<SPAN CLASS="MATH"></SPAN> must be positive, so should evolve according to the
+  log-normal distribution like the diagonal components of <!-- MATH
+ $\mbox{\boldmath {$\beta$}}$
+ -->
+<SPAN CLASS="MATH"></SPAN>.
+  Similar to <!-- MATH
+ $\mbox{\boldmath {$\beta$}}$
+ -->
+<SPAN CLASS="MATH"></SPAN>, it is a catastrophe to allow <!-- MATH
+ $\mbox{\boldmath {$\mu$}}$
+ -->
+<SPAN CLASS="MATH"></SPAN> to become
+  arbitrarily large. In the real world, mutation normally exists at
+  some fixed background rate -- species can reduce the level of
+  mutation by improving their genetic repair algorithms. In <I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I>,
+  this ceiling on <!-- MATH
+ $\mbox{\boldmath {$\mu$}}$
+ -->
+<SPAN CLASS="MATH"></SPAN> is given by the
+  <code>ecolab.mut_max</code><A NAME="2212"></A> variable.
+
+<P>
+</LI>
+</OL>
+
+<P>
+
+<DIV CLASS="navigation"><HR>
+<!--Navigation Panel-->
+<A NAME="tex2html767"
+  HREF="node35.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html761"
+  HREF="node32.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html755"
+  HREF="node33.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html763"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html765"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html768"
+  HREF="node35.html">Input Parameters</A>
+<B> Up:</B> <A NAME="tex2html762"
+  HREF="node32.html">The Eco Lab Model</A>
+<B> Previous:</B> <A NAME="tex2html756"
+  HREF="node33.html">Lotka-Volterra Dynamics</A>
+ &nbsp; <B>  <A NAME="tex2html764"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html766"
+  HREF="node143.html">Index</A></B> </DIV>
+<!--End of Navigation Panel-->
+
+</BODY>
+</HTML>

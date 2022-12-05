@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>STL containers</TITLE>
+<META NAME="description" CONTENT="STL containers">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="previous" HREF="node58.html">
+<LINK REL="up" HREF="node51.html">
+<LINK REL="next" HREF="node60.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html1164"
+  HREF="node60.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html1158"
+  HREF="node51.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html1154"
+  HREF="node58.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html1160"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html1162"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html1165"
+  HREF="node60.html">pack/unpack</A>
+<B> Up:</B> <A NAME="tex2html1159"
+  HREF="node51.html">Object Reflection</A>
+<B> Previous:</B> <A NAME="tex2html1155"
+  HREF="node58.html">Excluding particular members from</A>
+ &nbsp; <B>  <A NAME="tex2html1161"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html1163"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H3><A NAME="SECTION000141800000000000000">
+STL containers</A>
+</H3>
+
+<P>
+Container support for standard STL containers is handled automatically
+by the standard descriptors. To extend the support to custom
+containers, it is necessary to inform classdesc that your custom type
+is a container, and that is done via two type traits:
+<code>is_sequence</code><A NAME="3480"></A><A NAME="is_sequence"></A> and
+<code>is_associative_container</code><A NAME="3482"></A><A NAME="is_associative_container"></A>,
+which handle these two concepts from the standard library. The
+standard sequence containers are vector, deque and list, and the
+standard associative containers are set, map, and the multi_ and
+unordered_ variants of those.
+
+<P>
+To enable support for your custom container, eg one that conforms to
+the sequence concept, define a type trait for your custom container
+somewhere prior to <A HREF="node52.html#classdesc_epilogue"><code>classdesc\_epilogue.h</code></A> being included. For example:
+<PRE>
+namespace classdesc
+{
+  template &lt;&gt; struct is_sequence&lt;MyContainer&gt;: public true_type {};
+}
+</PRE>
+
+<P>
+If you wish to support containers in your own custom descriptor, you
+should ideally not refer to specific types, but use these type traits
+to write truly generic code. This involves quite advance
+metaprogramming skills, but you can use the file <code>pack_stl.h</code> as
+an exemplar.
+
+<P>
+<BR><HR>
+
+</BODY>
+</HTML>

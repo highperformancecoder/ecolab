@@ -1,0 +1,342 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>random.cc</TITLE>
+<META NAME="description" CONTENT="random.cc">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node131.html">
+<LINK REL="previous" HREF="node124.html">
+<LINK REL="up" HREF="ecolab.html">
+<LINK REL="next" HREF="node126.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html2121"
+  HREF="node126.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html2115"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html2109"
+  HREF="node124.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html2117"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html2119"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html2122"
+  HREF="node126.html">TCL interface</A>
+<B> Up:</B> <A NAME="tex2html2116"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html2110"
+  HREF="node124.html">Statistical Analysis</A>
+ &nbsp; <B>  <A NAME="tex2html2118"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html2120"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION000200000000000000000"></A><A NAME="random"></A>
+<BR>
+random.cc
+</H1>
+
+<P>
+This module abstracts the concept of a random number generator. The
+base types are:
+<A NAME="5968"></A><A NAME="5969"></A><A NAME="5970"></A><A NAME="5971"></A>
+<A NAME="5972"></A>
+
+<P>
+<PRE>
+class random_gen
+{
+public:
+  virtual double rand()=0;
+};
+
+class affinerand: public random_gen
+{
+public:
+  double scale, offset;
+  affinerand(double s=1, double o=0, random_gen *g=NULL);
+  void Set_gen(random_gen*);
+  void set_gen(TCL_args args) {Set_gen(args);}
+  template &lt;class T&gt; void new_gen(const T&amp;);
+  double rand() {return scale*gen-&gt;rand()+offset;}
+};
+</PRE>
+
+<P>
+<code>random_gen</code> is an abstract base class representing a random
+number generator. <code>affinerand</code> performs a simple affine
+transformation on the contained random generator. The
+<code>random_gen*</code> argument to <code>affine_rand()</code> may be used to set
+the random generator employed. If <code>NULL</code> (default) is passed for
+this parameter, a uniform random generator of type urand is created
+and used. After creation, you can either set the random generator to
+be something else using <code>Set_gen</code>, or create a new random
+generator of the same type as the passed argument using
+<code>new_gen</code>. The <code>set_gen</code> method is callable from TCL, and
+takes a named <code>random_gen</code> object as an argument. The class's
+destructor will delete a generator created with newgen, but not delete
+an object passed by setgen. For example, a normal distribution with
+mean m and standard deviation s can be obtained with the declaration:
+<PRE>
+affinerand(s,m).newgen(gaussrand());
+</PRE>
+
+<P>
+The other classes are:
+
+<P>
+<PRE>
+class urand: public random_gen
+{
+public:
+  double rand();
+  void Seed(int s);
+  void seed(TCL_args args) {Seed(args);}
+#if defined(UNURAN) || defined(GNUSL)
+  void Set_gen(char *);
+  void set_gen(TCL_args args) {Set_gen(args);}
+  urand(const char* descr) {Set_gen(descr);}
+#endif
+};
+
+class gaussrand: public random_gen
+{
+public:
+  urand uni;
+  double rand();
+};
+</PRE>
+
+<P>
+<code>urand</code> simply returns a uniform random variate in [0,1]. The
+basic <I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I> code contains a uniform generator which is simply an
+interface to the standard library <code>rand()</code> call, and a Gaussian
+random generator, which is based on the algorithm described in
+Abramowitz and Stegun (1964) sec. 26.8.6.a(2).
+
+<P>
+<code>gaussrand</code> returns a normal variate with mean 0 and standard
+deviation 1. Use <code>gaussrand</code> coupled with <code>affinerand</code> to
+change the mean and standard deviation:
+<PRE>
+affinerand gen(2,.5,new gaussrand);
+</PRE>
+defines a gaussian generator variable <TT>gen</TT> with standard
+deviation 2 and mean .5.
+
+<P>
+As of <I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I>.4.D7, replacements for these routines using freely
+available libraries, unuran and GNUSL are available. The Makefile will
+select the <A NAME="tex2html23"
+  HREF="http://statistik.wu-wien.ac.at/unuran/">UNURAN
+  library</A>
+if available,
+otherwise the <A NAME="tex2html24"
+  HREF="http://www.gnu.org/software/gsl/">GNU Scientific
+  Library</A>
+will be selected. If
+neither of these packages are available, the original basic behaviour
+is selected. Please read the section on <A HREF="node127.html#basic_RNG_problems">problems with the
+  basic random number library</A>.
+
+<P>
+Both UNURAN and GNUSL provide a text interface to selecting and
+configuring the uniform random generator. The method <code>Set_gen</code>
+provides a way passing <A NAME="tex2html25"
+  HREF="http://statistik.wu-wien.ac.at/prng/prng/doc/prng.html">PRNG
+  parameters</A>
+to the underlying PRNG generator. By default the Mersenne Twister
+algorithm is used, which is acknowledged as being one of the most
+efficient random generator available. The algorithms available
+through PRNG are:
+
+<P>
+<DL>
+<DT><STRONG>EICG</STRONG></DT>
+<DD>explicit inversive congruential generator
+</DD>
+<DT><STRONG>ICG</STRONG></DT>
+<DD>inversive congruential generator
+</DD>
+<DT><STRONG>LCG</STRONG></DT>
+<DD>linear congruential generator
+</DD>
+<DT><STRONG>QCG</STRONG></DT>
+<DD>quadratic congruential generator
+</DD>
+<DT><STRONG>MT19937</STRONG></DT>
+<DD>Mersenne Twister
+</DD>
+<DT><STRONG>MEICG</STRONG></DT>
+<DD>modified explicit inversive congruential generator
+</DD>
+<DT><STRONG>DICG</STRONG></DT>
+<DD>digital inversive congruential generator
+</DD>
+</DL>
+
+<P>
+The set available through GNUSL are:
+<DL>
+<DT><STRONG>mt19937</STRONG></DT>
+<DD>Mersenne Twister
+</DD>
+<DT><STRONG>ranlxs0,ranlxs1,ranlxs2,ranlxd1,ranlxd2</STRONG></DT>
+<DD>L&#252;scher's RANLUX at
+  different levels of precision and luxury.
+</DD>
+<DT><STRONG>cmrg</STRONG></DT>
+<DD>combined multiple recursive generator by L'Ecuyer
+</DD>
+<DT><STRONG>mrg</STRONG></DT>
+<DD>fifth-order multiple recursive generator by L'Ecuyer,
+  Blouin and Coutre
+</DD>
+<DT><STRONG>taus,taus2</STRONG></DT>
+<DD>maximally equidistributed combined Tausworthe
+  generator by L'Ecuyer
+</DD>
+<DT><STRONG>gfsr4</STRONG></DT>
+<DD>Four-tap shift-register-sequence random-number generator
+  by Ziff.
+</DD>
+</DL>
+Note that only the generator can be selected through the GNUSL string
+interface -- parameters cannot be set. The GNUSL documentation
+recommends mt19937, taus or gfsr4 for general purpose
+simulation. mt19937 is the default.
+
+<P>
+<PRE>
+class distrand: public random_gen
+{
+public:
+  int nsamp;  /* no. of sample points in distribution */
+  int width;  /* digits of precision (base 16) used from prob. distribution */
+  double min, max;  /* distribution endpoints */
+  distrand(): nsamp(10), width(3), min(0), max(1);
+  void Init(int argc, char *argv[]);
+  void init(double (*f)(double));
+  double rand();
+};
+
+#ifdef UNURAN
+class unuran: public random_gen
+{
+public:
+  urand uni;
+  UNUR_RAN *get_gen(); //get pointer to UNUR_RAN object for UNURAN API use
+  /* specify a random generator according to unuran's string interface */
+  void Set_gen(const char *descr);
+  void set_gen(TCL_args args) {Set_gen(args);}
+  unuran();
+  unuran(const char* descr) {Set_gen(descr);}
+  double rand();
+};
+#endif
+</PRE>
+
+<P>
+<code>distrand</code> returns a deviate from an arbitrary
+distribution function (which needn't be normalised) supplied to
+<code>Init</code> (or <code>init</code>). The instance variables <code>nsamp=10</code>,
+<code>width=3</code>, <code>min=0</code> and <code>max=1</code> should be modified
+before calling <code>init</code>. <code>Init</code> provides a TCL interface --
+it takes one argument, the name of a TCL procedure implementing the
+distribution. This class implements the method due to
+Marsaglia[<A
+ HREF="node142.html#Marsaglia63">4</A>]. The UNURAN and GNUSL libraries provide
+other, perhaps better routines for doing the same things.
+
+<P>
+Finally, <code>unuran</code> allows an arbitrary UNURAN generator to be
+specified using <A NAME="tex2html26"
+  HREF="http://statistik.wu-wien.ac.at/unuran/unuran/doc/unuran.html">UNURAN's string
+  interface</A>.
+For example, <code>gaussrand</code> is equivalent to
+<code>unuran("normal()")</code>. The string interface is powerful and
+comprehensive, with a large number of predefined distributions and
+methods provided, and the ability to specify arbitrary
+distributions. It obviates the need to use <code>distrand</code>, which is a
+rather obsolete algorithm.
+
+<P>
+GNUSL does not provide a string interace to its general nonuniform
+distributions. For the moment, you will need to implement your own
+object interfaces to which ever routines you want to use. You may use
+the gaussrand example as a template.
+
+<P>
+<BR><HR>
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></A>
+
+<UL CLASS="ChildLinks">
+<LI><A NAME="tex2html2123"
+  HREF="node126.html">TCL interface</A>
+<LI><A NAME="tex2html2124"
+  HREF="node127.html">Problems with the basic random number library</A>
+<UL>
+<LI><A NAME="tex2html2125"
+  HREF="node128.html">Basic urand objects are not independent</A>
+<LI><A NAME="tex2html2126"
+  HREF="node129.html">Basic urand algorithm not efficient</A>
+<LI><A NAME="tex2html2127"
+  HREF="node130.html">Basic Gaussrand is correlated</A>
+</UL></UL>
+<!--End of Table of Child-Links-->
+
+<DIV CLASS="navigation"><HR>
+<!--Navigation Panel-->
+<A NAME="tex2html2121"
+  HREF="node126.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html2115"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html2109"
+  HREF="node124.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html2117"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html2119"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html2122"
+  HREF="node126.html">TCL interface</A>
+<B> Up:</B> <A NAME="tex2html2116"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html2110"
+  HREF="node124.html">Statistical Analysis</A>
+ &nbsp; <B>  <A NAME="tex2html2118"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html2120"
+  HREF="node143.html">Index</A></B> </DIV>
+<!--End of Navigation Panel-->
+
+</BODY>
+</HTML>

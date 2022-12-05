@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>Palette Variable</TITLE>
+<META NAME="description" CONTENT="Palette Variable">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node22.html">
+<LINK REL="previous" HREF="node16.html">
+<LINK REL="up" HREF="node10.html">
+<LINK REL="next" HREF="node22.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html570"
+  HREF="node22.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html564"
+  HREF="node10.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html558"
+  HREF="node20.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html566"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html568"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html571"
+  HREF="node22.html">Making movies</A>
+<B> Up:</B> <A NAME="tex2html565"
+  HREF="node10.html">Constructing an experiment</A>
+<B> Previous:</B> <A NAME="tex2html559"
+  HREF="node20.html">Connect_plot</A>
+ &nbsp; <B>  <A NAME="tex2html567"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html569"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION00077000000000000000"></A><A NAME="palette"></A>
+<BR>
+Palette Variable
+</H2>
+
+<P>
+This variable is used by the <TT>display</TT><A NAME="591"></A> and <TT>  connect_plot</TT><A NAME="593"></A> and <TT>plot</TT><A NAME="595"></A>
+commands to define a palette of colours for colouring the species in
+the instruments. If the TCL variable <TT>palette</TT><A NAME="597"></A> is
+assigned a list of X-windows colours (on many systems, a list of such
+colours is found in <TT>/usr/lib/X11/rgb.txt</TT>), then the palette
+class can be used like an array within C++, returning the colour name
+as a string:
+<PRE>
+palette[i]
+</PRE>
+returns the <code>i%n</code>th colour, where <TT>n</TT> is the number of
+colours in the palette list.
+
+<P>
+<BR><HR>
+
+</BODY>
+</HTML>

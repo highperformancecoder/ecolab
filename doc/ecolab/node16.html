@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>Instrumentation</TITLE>
+<META NAME="description" CONTENT="Instrumentation">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node21.html">
+<LINK REL="previous" HREF="node15.html">
+<LINK REL="up" HREF="node10.html">
+<LINK REL="next" HREF="node17.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html498"
+  HREF="node17.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html492"
+  HREF="node10.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html486"
+  HREF="node15.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html494"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html496"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html499"
+  HREF="node17.html">Plot</A>
+<B> Up:</B> <A NAME="tex2html493"
+  HREF="node10.html">Constructing an experiment</A>
+<B> Previous:</B> <A NAME="tex2html487"
+  HREF="node15.html">Object Browser</A>
+ &nbsp; <B>  <A NAME="tex2html495"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html497"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION00076000000000000000">
+Instrumentation</A>
+</H2>
+
+<P>
+Currently four instrumented widgets are included in the <I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I>
+distribution. The first time these widgets are called, they
+instantiate themselves in a separate window. This follows the
+philosophy that initialisation should be a transparent operation. A
+number of these widgets depend on the BLT toolkit, so it is wise to
+include BLT<A NAME="514"></A> at the compilation stage. Each widget is
+independent, and so multiple instruments can be operating at the same
+time.
+
+<P>
+<A NAME="widgets_namespace"></A>Each such widget creates a new namespace <EM>x</EM>, the name of which is either
+supplied by the user, or generated from the arguments. Also created is
+a window heirarchy starting with .<EM>x</EM>. The widget command returns
+the namespace name which can be captured for future reference. 
+
+<P>
+One of the uses of this namespace is to call the widget specific
+<code>print</code> command<A NAME="518"></A>, which dumps a postscript
+representation of the widget to a named file. For example, a plot
+window start with <code>plot nsp ...</code> can be printed to &ldquo;plot.ps&rdquo;
+using
+<PRE>
+nsp::print plot.ps
+</PRE> 
+
+<P>
+<BR><HR>
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></A>
+
+<UL CLASS="ChildLinks">
+<LI><A NAME="tex2html500"
+  HREF="node17.html">Plot</A>
+<LI><A NAME="tex2html501"
+  HREF="node18.html">Histogram</A>
+<LI><A NAME="tex2html502"
+  HREF="node19.html">Display</A>
+<LI><A NAME="tex2html503"
+  HREF="node20.html">Connect_plot</A>
+</UL>
+<!--End of Table of Child-Links-->
+<BR><HR>
+
+</BODY>
+</HTML>

@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2017.2 (Released Jan 23, 2017) -->
+<HTML>
+<HEAD>
+<TITLE>Error reporting</TITLE>
+<META NAME="description" CONTENT="Error reporting">
+<META NAME="keywords" CONTENT="ecolab">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2017.2">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="ecolab.css">
+
+<LINK REL="next" HREF="node31.html">
+<LINK REL="previous" HREF="node29.html">
+<LINK REL="up" HREF="ecolab.html">
+<LINK REL="next" HREF="node31.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html695"
+  HREF="node31.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html689"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html683"
+  HREF="node29.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html691"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html693"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html696"
+  HREF="node31.html">Eco Lab coding style</A>
+<B> Up:</B> <A NAME="tex2html690"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html684"
+  HREF="node29.html">Creating a New Model</A>
+ &nbsp; <B>  <A NAME="tex2html692"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html694"
+  HREF="node143.html">Index</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION000100000000000000000">
+Error reporting</A>
+</H1>
+
+<P>
+<I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I> now uses C++ standard exceptions to report errors -- the
+old <code>longjmp</code> mechanism has now gone. When you want to report an
+error from within your user written commands and methods, throw an
+object of type <code>error</code><A NAME="746"></A>, which is defined in
+<code>tcl++.h</code><A NAME="747"></A>. <code>error</code> has a convenient constructor
+that works a bit like printf, eg
+<PRE>
+  throw error("%d arguments is too many!",nargs);
+</PRE>
+
+<P>
+<I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I> will trap all exceptions in user written routines and
+methods, and return a <code>TCL_ERROR</code> result. If its an exception derived
+from the standard <code>exception</code> class (which <code>error</code> is), then
+it will place the value returned by its <code>what()</code> method as the
+result field of the TCL command. Any other caught exception will
+report &ldquo;Unknown exception caught&rdquo;.
+
+<P>
+What happens when <I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I> traps an exception depends on exactly
+where it occurs -- if it occurs as a result of executing a script,
+the error is reported on standard output, and <I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I> exits with a
+non-zero return value (useful for writing test scripts, for
+example). If it occurs while the GUI environment is in operation, then
+a dialog box pops up, offering information to debug what went
+wrong. If it occurs as part of the command line interpreter (ie when
+<I CLASS="sans"><I CLASS="slanted">    Eco Lab</I></I> is reading its commands from standard input) then the error
+result is reported on standard output, and execution continues.
+
+<P>
+When the DEBUGGING flag set at make time, the error constructor will
+call <code>abort()</code>, which can be caught by a debugger.
+
+<P>
+
+<DIV CLASS="navigation"><HR>
+<!--Navigation Panel-->
+<A NAME="tex2html695"
+  HREF="node31.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html689"
+  HREF="ecolab.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html683"
+  HREF="node29.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A> 
+<A NAME="tex2html691"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents.png"></A> 
+<A NAME="tex2html693"
+  HREF="node143.html">
+<IMG WIDTH="43" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="index" SRC="index.png"></A> 
+<BR>
+<B> Next:</B> <A NAME="tex2html696"
+  HREF="node31.html">Eco Lab coding style</A>
+<B> Up:</B> <A NAME="tex2html690"
+  HREF="ecolab.html">Eco Lab Documentation</A>
+<B> Previous:</B> <A NAME="tex2html684"
+  HREF="node29.html">Creating a New Model</A>
+ &nbsp; <B>  <A NAME="tex2html692"
+  HREF="node1.html">Contents</A></B> 
+ &nbsp; <B>  <A NAME="tex2html694"
+  HREF="node143.html">Index</A></B> </DIV>
+<!--End of Navigation Panel-->
+
+</BODY>
+</HTML>
