@@ -233,7 +233,7 @@ namespace ecolab
         {
           unsigned node1, node2;
           if (sscanf(buf.c_str(),"%d%*2c%d",&node1,&node2)!=2)
-            throw error("Invalid edge");
+            continue;
           // attempt to read weight attribute
           float weight = 1;
           const char* c=strstr(buf.c_str(), "weight");
