@@ -34,6 +34,11 @@ ifdef AEGIS
 CXXFLAGS+=-std=c++11
 endif
 
+# when upgrading MXE, this will need to be removed 
+ifdef MXE
+CXXFLAGS+=-std=c++11
+endif
+
 
 # for mingw, make should still be inoked with PREFIX=/mingw, or to root location 
 # of all development libraries and includes, so that $(PREFIX)/include and
