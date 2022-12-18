@@ -107,13 +107,13 @@ endif
 
 # choose 32 bits by preference
 ifdef MXE
-MXE_32bit=$(shell if which i686-w64-mingw32.static-g++>&/dev/null; then echo 1; fi)
-MXE_64bit=$(shell if which x86_64-w64-mingw32.static-g++>&/dev/null; then echo 1; fi)
+MXE_32bit=$(shell if which i686-w64-mingw32.shared-g++>&/dev/null; then echo 1; fi)
+MXE_64bit=$(shell if which x86_64-w64-mingw32.shared-g++>&/dev/null; then echo 1; fi)
 ifeq ($(MXE_32bit),1)
-MXE_PREFIX=i686-w64-mingw32.static
+MXE_PREFIX=i686-w64-mingw32.shared
 else
 ifeq ($(MXE_64bit),1)
-MXE_PREFIX=x86_64-w64-mingw32.static
+MXE_PREFIX=x86_64-w64-mingw32.shared
 else
 $(error "MXE compiler not found")
 endif
@@ -121,16 +121,16 @@ endif
 
 # force 64 bit build
 ifdef MXE64
-MXE_64bit=$(shell if which x86_64-w64-mingw32.static-g++>&/dev/null; then echo 1; fi)
+MXE_64bit=$(shell if which x86_64-w64-mingw32.shared-g++>&/dev/null; then echo 1; fi)
 ifeq ($(MXE_64bit),1)
-MXE_PREFIX=x86_64-w64-mingw32.static
+MXE_PREFIX=x86_64-w64-mingw32.shared
 else
 $(error "MXE compiler not found")
 endif
 endif
 
 GCC=1
-FLAGS+=-DSTATIC_BUILD -DNO_FWD_DECLARE_STL -DMXE
+FLAGS+= -DNO_FWD_DECLARE_STL -DMXE -DSTATIC_BUILD
 CC=$(MXE_PREFIX)-gcc
 CPLUSPLUS=$(MXE_PREFIX)-g++
 LINK=$(CPLUSPLUS)
@@ -483,14 +483,6 @@ endif
 TCLLIBS+=-ltcl
 endif
 endif
-
-#ifndef MXE
-#ifneq ($(OS),MINGW)
-#ifdef TK
-#TCLLIBS+=-lX11
-#endif
-#endif
-#endif
 
 # AIX defines an exception class in it's math.h header. This fixes its wagon.
 ifeq ($(OS),AIX)

@@ -14,7 +14,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sstream>
-using namespace std;
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::min;
+using std::istringstream;
+using std::ostringstream;
 using namespace ecolab;
 
 //#include <signal.h>
