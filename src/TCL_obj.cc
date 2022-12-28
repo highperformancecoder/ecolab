@@ -14,8 +14,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sstream>
-using namespace std;
 using namespace ecolab;
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::ostringstream;
 
 //#include <signal.h>
 extern "C" 
