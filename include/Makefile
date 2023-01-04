@@ -434,10 +434,10 @@ SHELL=bash
 ifndef GCC
 ifndef MPICC
 CC=cc
-CPP_FLAGS=-ptr $(ECOLAB_HOME)/cxx_repository 
-CPLUSPLUS=cxx $(CPP_FLAGS)
+CXXFLAGS=-ptr $(ECOLAB_HOME)/cxx_repository 
+CPLUSPLUS=cxx $(CXXFLAGS)
 CPP=cxx -E 
-LINK=cxx $(CPP_FLAGS)
+LINK=cxx $(CXXFLAGS)
 FLAGS+= -DNO_HASH -D_POSIX_SOURCE -D__STDC__ -D__USE_STD_IOSTREAM -DRUNTIME_LINK_ERROR
 endif
 endif
