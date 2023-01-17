@@ -531,9 +531,6 @@ namespace ecolab
     
     // axis label font size (in pixels)
     double lh=0.05*fontScale*(height-2*offy)/(1+0.03*fontScale);
-    // offsets to allow space for axis labels
-    double loffx, loffx1, loffy;
-
 
     // work out the font size we should use
     double fontSz=0.03*fontScale;
