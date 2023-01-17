@@ -182,38 +182,11 @@ namespace ecolab
     /// add a datapoint
     void add(unsigned pen, double x, double y) 
     {if (surface) add(*surface,pen,x,y);}
-    void add(cairo::Surface&, unsigned pen, double x, double y);
     /// add multiple points (C=container - eg vector/array)
     template <class C> 
     void add(unsigned pen, const C& x, const C& y) 
     {if (surface) add(*surface,pen,x,y);}
-    template <class C>
-    void add(cairo::Surface& surf, unsigned pen, const C& x1, const C& y1)
-    {
-      assert(x1.size()==y1.size());
-      bool doRedraw=false;
-      if (pen>=x.size())
-        {
-          x.resize(pen+1);
-          y.resize(pen+1);
-        }
-      for (size_t i=0; i<x1.size(); ++i)
-        {
-          doRedraw|=x1[i]<minx||x1[i]>maxx || y1[i]<miny||y1[i]>maxy;
-          x[pen].push_back(x1[i]);
-          y[pen].push_back(y1[i]);
-        }
-      addNew(surf,doRedraw,&pen,&pen+1,x1.size());
-    }
 
-    /// add multiple pens worth of data in one hit
-    void add(const array_ns::array<unsigned>& pens, double x, 
-             const array_ns::array<double>& y) 
-    {if (surface) add(*surface,pens,x,y);}     
-    void add(cairo::Surface& surf, 
-                   const array_ns::array<unsigned>& pens, 
-                   double x1, const array_ns::array<double>& y1);
-    
     /// label a pen (for display in a legend). The string may contain
     /// pango markup.
     void labelPen(unsigned pen, const string& label);
@@ -246,6 +219,43 @@ namespace ecolab
     /// add a point to the graph withour redrwaing anything
     void addPt(unsigned pen, double x, double y);
 
+    /// export plotting data as a CSV file. @throw if an I/O error occurs
+    void exportAsCSV(const std::string& filename, const string& separator) const;
+    void exportAsCSV(const std::string& filename) const
+    {exportAsCSV(filename,",");}
+    
+  protected: // only protected because of TCL_obj problems
+    std::vector<std::pair<double,std::string> > xticks;
+     
+    void add(cairo::Surface&, unsigned pen, double x, double y);
+    void add(cairo::Surface& surf, 
+                   const array_ns::array<unsigned>& pens, 
+                   double x1, const array_ns::array<double>& y1);
+
+    /// add multiple pens worth of data in one hit
+    void add(const array_ns::array<unsigned>& pens, double x, 
+             const array_ns::array<double>& y) 
+    {if (surface) add(*surface,pens,x,y);}     
+    
+    template <class C>
+    void add(cairo::Surface& surf, unsigned pen, const C& x1, const C& y1)
+    {
+      assert(x1.size()==y1.size());
+      bool doRedraw=false;
+      if (pen>=x.size())
+        {
+          x.resize(pen+1);
+          y.resize(pen+1);
+        }
+      for (size_t i=0; i<x1.size(); ++i)
+        {
+          doRedraw|=x1[i]<minx||x1[i]>maxx || y1[i]<miny||y1[i]>maxy;
+          x[pen].push_back(x1[i]);
+          y[pen].push_back(y1[i]);
+        }
+      addNew(surf,doRedraw,&pen,&pen+1,x1.size());
+    }
+
     /// assign a complete curve for \a pen
     /// \a x and \a y should have the same size, if not, the larger is truncated
     void setPen(unsigned pen, const double* xx, const double* yy, size_t sz)
@@ -259,15 +269,7 @@ namespace ecolab
       y[pen].assign(yy, yy+sz);
     }
 
-    /// export plotting data as a CSV file. @throw if an I/O error occurs
-    void exportAsCSV(const std::string& filename, const string& separator) const;
-    void exportAsCSV(const std::string& filename) const
-    {exportAsCSV(filename,",");}
-    
-  protected: // only protected because of TCL_obj problems
-    std::vector<std::pair<double,std::string> > xticks;
-     
-    
+   
   private:
     std::vector<cairo::SurfacePtr> penLabel;
     std::vector<string> penTextLabel;

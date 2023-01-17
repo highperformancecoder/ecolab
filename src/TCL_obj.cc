@@ -22,6 +22,7 @@ using std::istringstream;
 using std::ostringstream;
 using namespace ecolab;
 
+
 //#include <signal.h>
 extern "C" 
 {

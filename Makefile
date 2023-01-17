@@ -52,6 +52,10 @@ FLAGS+=-D__MINGW32_VERSION=$(__MINGW32_VERSION) -DTK -DCAIRO
 endif
 endif
 
+ifeq ($(OS),Darwin)
+CXXFLAGS+=-std=c++11
+endif
+
 VPATH=include src models
 
 # objects to build ecolab.a
@@ -161,7 +165,7 @@ models: $(ELIBS)
 $(UTILS): %: %.cc 
 	$(CPLUSPLUS) -g $(FLAGS) $< -o $@
 
-GRAPHCODE_MAKE=$(MAKE) CC="$(CC)" CPLUSPLUS="$(CPLUSPLUS)" FLAGS="$(FLAGS) $(OPT)"
+GRAPHCODE_MAKE=$(MAKE) CC="$(CC)" CPLUSPLUS="$(CPLUSPLUS)" FLAGS="$(FLAGS) $(CXXFLAGS) $(OPT)"
 
 lib: 
 	-mkdir -p lib

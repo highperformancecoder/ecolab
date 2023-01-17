@@ -21,12 +21,16 @@ namespace ecolab
       image create cairoSurface -surface minsky.canvas
  */
 
-  struct CairoSurface
+  struct CairoSurfaceRedraw
   {
-    Exclude<cairo::SurfacePtr> surface;
+    cairo::SurfacePtr surface;
     /// @return true if something drawn
     virtual bool redraw(int x0, int y0, int width, int height)=0;
     virtual void redrawWithBounds() {redraw(-1e9,-1e9,2e9,2e9);} //TODO better name for this?
+  };
+  
+  struct CairoSurface: public Exclude<CairoSurfaceRedraw>
+  {
     virtual ~CairoSurface() {}
     // arrange a callback with the drawing time in seconds
     virtual void reportDrawTime(double) {}
