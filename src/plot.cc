@@ -105,11 +105,11 @@ namespace
     if (x<=0) return ""; // -ve values meaningless
         if (x>=0.01 && x<1)
           {
-            sprintf(label,"%.2f",x);
+            snprintf(label,sizeof(label),"%.2f",x);
           }
         else if (x>=1 && x<=100)
           {
-            sprintf(label,"%.0f",x);
+            snprintf(label,sizeof(label),"%.0f",x);
           }
         else
           {
