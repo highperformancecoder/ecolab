@@ -202,10 +202,10 @@ namespace ecolab
       void clear() {
         if (imageBlock.transparency)
           // make it transparent
-          memset(&imageData[0],0,imageData.size());
+          memset(imageData.data(),0,imageData.size());
         else
           // make it white
-          memset(&imageData[0],255,imageData.size());
+          memset(imageData.data(),255,imageData.size());
       }
       TkPhotoSurface(Tk_PhotoHandle photo, bool transparency=true): 
         photo(photo), compositing(false)
@@ -219,10 +219,10 @@ namespace ecolab
         Tk_PhotoGetSize(photo, &width, &height);
         imageBlock = PhotoImageBlock(width, height, transparency);
         imageData.resize(imageBlock.pitch * imageBlock.height);
-        imageBlock.pixelPtr = &imageData[0];
+        imageBlock.pixelPtr = imageData.data();
 
         surface( cairo_image_surface_create_for_data
-                 (&imageData[0], transparency? 
+                 (imageData.data(), transparency? 
                   CAIRO_FORMAT_ARGB32: CAIRO_FORMAT_RGB24,
                   width, height, imageBlock.pitch));
       }

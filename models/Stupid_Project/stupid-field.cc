@@ -180,10 +180,10 @@ void Space::repartition()
   if (myid>0)
     {
       MPIbuf buf;
-      char* data=reinterpret_cast<char*>(&food_avail[0]);
+      char* data=reinterpret_cast<char*>(food_avail.data());
       buf.get();
       buf.unpackraw(data,buf.size());
-      data=reinterpret_cast<char*>(&food_production[0]);
+      data=reinterpret_cast<char*>(food_production.data());
       buf.get();
       buf.unpackraw(data,buf.size());
     }      
@@ -571,7 +571,7 @@ void Space::draw(const eco_string& canvas)
     }
 
   vector<unsigned char> pp(3*nx*ny);
-  Tk_PhotoImageBlock block={&pp[0],nx,ny,nx*3,3,{0,1,2}};
+  Tk_PhotoImageBlock block={pp.data(),nx,ny,nx*3,3,{0,1,2}};
   //  Tk_PhotoGetImage(handle,&block);
 
   for (int i=0; i<nx; i++)
