@@ -225,7 +225,7 @@ clean:
 	-cd classdesc; $(MAKE) clean
 	-cd graphcode; $(MAKE) clean
 	-cd test; $(MAKE) clean
-	-cd doc; $(BASIC_CLEAN) *.aux *.dvi *.log *.blg *.toc *.lof *.ps; rm -rf ecolab
+	-cd doc; $(BASIC_CLEAN) *.aux *.dvi *.log *.blg *.toc *.lof *.ps
 	-rm -f $(UTILS)
 	-rm -f lib/* bin/*
 	-rm -rf classdesc-lib cxx_repository
