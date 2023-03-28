@@ -48,7 +48,7 @@ namespace ecolab
       else
         {
           data[ds]|=bitrange(mod(start));
-          memset(&data[0]+ds+1,255,(de-ds-1)*(WORDSIZE>>3));
+          memset(data.data()+ds+1,255,(de-ds-1)*(WORDSIZE>>3));
           data[de]|=~bitrange(me);
         }
     else
@@ -57,7 +57,7 @@ namespace ecolab
       else
         {
           data[ds]&=~bitrange(mod(start));
-          memset(&data[0]+ds+1,0,(de-ds-1)*(WORDSIZE>>3));
+          memset(data.data()+ds+1,0,(de-ds-1)*(WORDSIZE>>3));
           data[de]&=bitrange(me);
         }
   }    
@@ -276,8 +276,8 @@ namespace ecolab
     {
       rep.n=g.nodes();
       rep.e=g.links();
-      rep.adj=&adj[0];
-      rep.edg=&edg[0];
+      rep.adj=adj.data();
+      rep.edg=edg.data();
       // count neighbours of each node
       for (DiGraph::const_iterator i=g.begin(); i!=g.end(); ++i)
         if (i->source()<g.nodes()-1)
@@ -294,7 +294,7 @@ namespace ecolab
       saucy* s=saucy_alloc(rep.n);
       saucy_stats stats;
       vector<int> colours(rep.n);
-      saucy_search(s,&rep,true,&colours[0],saucy_null_consumer,NULL,&stats);
+      saucy_search(s,&rep,true,colours.data(),saucy_null_consumer,NULL,&stats);
       saucy_free(s);
       return lnfactorial(rep.n) - stats.grpsize_exp * log(10) - 
         log(stats.grpsize_base);

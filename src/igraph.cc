@@ -29,7 +29,7 @@ void ecolab::IGraph::addEdges(const Graph& g)
   for (Graph::const_iterator e=g.begin(); e!=g.end(); ++e)
     {edges.push_back(e->source()); edges.push_back(e->target());}
   igraph_vector_t iv;
-  igraph_vector_view(&iv,&edges[0],edges.size());
+  igraph_vector_view(&iv,edges.data(),edges.size());
   igraph_add_edges(this,&iv,0);
 }
 

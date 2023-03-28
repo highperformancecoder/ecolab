@@ -111,7 +111,7 @@ struct DynSysGen: public DynSys, public NetworkFromTimeSeries
     gsl_odeiv2_driver_set_nmax(rkData.driver, 1);
     for (int i=0; i<nsteps; ++i)
       {
-        gsl_odeiv2_driver_apply(rkData.driver,&t,1,&x[0]);
+        gsl_odeiv2_driver_apply(rkData.driver,&t,1,x.data());
         for (size_t j=0; j<size(); ++j)
           (*this)[j]<<=x[j];
       }

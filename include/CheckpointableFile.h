@@ -64,7 +64,7 @@ namespace ecolab
     /// write a vector of data
     template <class T, class A>
     void write(const std::vector<T,A>& buf)
-    {if (!buf.empty()) write(&buf[0],sizeof(T),buf.size());}
+    {if (!buf.empty()) write(buf.data(),sizeof(T),buf.size());}
 
     /// stream data as text like std::iostream
     template <class T>

@@ -295,8 +295,8 @@ namespace ecolab
     bitvect num(unsigned start,unsigned nbits) const;
     bool equal(const bitvect& y, unsigned len, unsigned offs) const;
     void setrange(unsigned start,unsigned end,bool value);
-    bitref operator[] (unsigned i) {assert(i<sz); return bitref(&data[0],i);}
-    const_bitref operator[] (unsigned i) const {assert(i<sz); return const_bitref(&data[0],i);}
+    bitref operator[] (unsigned i) {assert(i<sz); return bitref(data.data(),i);}
+    const_bitref operator[] (unsigned i) const {assert(i<sz); return const_bitref(data.data(),i);}
     unsigned size() const {return sz;}
     /// increment the bitfield
     void operator++(int);
