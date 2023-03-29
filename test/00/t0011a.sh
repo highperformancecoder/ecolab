@@ -54,8 +54,10 @@ cp $RANDOMCC .
 touch random_basic.cd random_unuran.cd random_gsl.cd
 g++ -DTR1 -w -c -DHAVE_LONGLONG -I. -I$here/include -I$BL/include -I$BL1/include -I$HOME/usr/include random.cc
 if test $? -ne 0; then echo -n "Basic: "; fail; fi
-g++ -DTR1 -w -c -DHAVE_LONGLONG -I. -I$here/include -I$BL/include -I$BL1/include -I$HOME/usr/include -DUNURAN random.cc
-if test $? -ne 0; then echo -n "UNURAN: "; fail; fi
+if [ "$TRAVIS" != 1 ]; then
+    g++ -DTR1 -w -c -DHAVE_LONGLONG -I. -I$here/include -I$BL/include -I$BL1/include -I$HOME/usr/include -DUNURAN random.cc
+    if test $? -ne 0; then echo -n "UNURAN: "; fail; fi
+fi
 g++ -DTR1 -w -c -DHAVE_LONGLONG -I. -I$here/include -I$BL/include -I$BL1/include -I$HOME/usr/include -DGNUSL random.cc
 if test $? -ne 0; then echo -n "GNUSL: "; fail; fi
 

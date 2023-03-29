@@ -16,15 +16,34 @@ shift
 passed=0
 failed=0
 for i in $*; do 
-  echo -n "$i: "
-  bash $i &> /dev/null
-  if test $? -eq 0 ; then 
-    passed=`expr $passed + 1`
-    echo passed
-  else
-    failed=`expr $failed + 1`
-    echo -e "\033[31mfailed\033[0m"
-  fi
+    echo -n "$i: "
+    if [ "$TRAVIS" = 1 ]; then
+        # skip certain tests that don't make sense in CI
+        # t0003a.sh: Lotka-Volterra
+        # t0009a.sh, t0011a.sh, t0020a.sh:  # unuran
+        # t0026a.sh: igraph
+        # t0031a.sh: MPI
+        if [ \
+             $i = test/00/t0003a.sh -o \
+             $i = test/00/t0009a.sh -o \
+             $i = test/00/t0011a.sh -o \
+             $i = test/00/t0020a.sh -o \
+             $i = test/00/t0026a.sh -o \
+             $i = test/00/t0031a.sh    \
+           ]; then
+            echo skipped
+            continue
+        fi
+    fi
+    
+    bash $i &> /dev/null
+    if test $? -eq 0 ; then 
+        passed=`expr $passed + 1`
+        echo passed
+    else
+        failed=`expr $failed + 1`
+        echo -e "\033[31mfailed\033[0m"
+    fi
 done
 
 echo "$passed tests passed, $failed tests failed"
