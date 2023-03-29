@@ -474,7 +474,7 @@ namespace ecolab
           cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, ls.colour.a);
           cairo_set_line_width(cairo, ls.width);
           vector<double> dashPattern=ls.dashPattern();
-          cairo_set_dash(cairo, &dashPattern[0], dashPattern.size(), 0);
+          cairo_set_dash(cairo, dashPattern.data(), dashPattern.size(), 0);
           cairo_move_to(cairo, xoffs, yoffs);
           cairo_rel_line_to(cairo, 0.05*dx, 0);
           stroke(cairo);
@@ -509,7 +509,7 @@ namespace ecolab
           cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, ls.colour.a);
           cairo_set_line_width(cairo, ls.width);
           vector<double> dashPattern=ls.dashPattern();
-          cairo_set_dash(cairo, &dashPattern[0], dashPattern.size(), 0);
+          cairo_set_dash(cairo, dashPattern.data(), dashPattern.size(), 0);
 
           cairo_move_to(cairo, xoffs, yoffs);
           cairo_rel_line_to(cairo, 0.05*w, 0);
@@ -858,7 +858,7 @@ namespace ecolab
                       cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, ls.colour.a);
                       cairo_set_line_width(cairo, ls.width);
                       vector<double> dashPattern=ls.dashPattern();
-                      cairo_set_dash(cairo, &dashPattern[0], dashPattern.size(), 0);
+                      cairo_set_dash(cairo, dashPattern.data(), dashPattern.size(), 0);
           
                       cairo_new_path(cairo);
                       cairo_move_to(cairo, iflogx(x[i][0]), xfy(y[i][0]));
@@ -972,7 +972,7 @@ namespace ecolab
             cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, ls.colour.a);
             cairo_set_line_width(cairo, ls.width);
             vector<double> dashPattern=ls.dashPattern();
-            cairo_set_dash(cairo, &dashPattern[0], dashPattern.size(), 0);
+            cairo_set_dash(cairo, dashPattern.data(), dashPattern.size(), 0);
             
             // transform y coordinates (handles RHS being a different scale)
             XFY xfy;

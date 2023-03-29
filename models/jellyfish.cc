@@ -376,7 +376,7 @@ void lake_t::draw_density(TCL_args args)
       }
 
   vector<unsigned char> pp(3*width*height,255);
-  Tk_PhotoImageBlock block={&pp[0],int(width),int(height),int(width)*3,3,{0,1,2}};
+  Tk_PhotoImageBlock block={pp.data(),int(width),int(height),int(width)*3,3,{0,1,2}};
   float invlogmaxj=1/log(maxj+1);
   for (unsigned x=0; x<width; x++)
     for (unsigned y=0; y<height; y++)
