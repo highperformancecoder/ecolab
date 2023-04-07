@@ -503,7 +503,7 @@ namespace ecolab
   /* remove trailing newline, if any. */
   inline std::string chomp(const std::string& s)
   {
-    if (s[s.length()-1]=='\n') return s.substr(0,s.length()-1);
+    if (!s.empty() && s[s.length()-1]=='\n') return s.substr(0,s.length()-1);
     else return s;
   }
       
