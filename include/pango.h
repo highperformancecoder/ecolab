@@ -88,12 +88,13 @@ namespace ecolab
       pango_layout_get_extents(layout,0,&bbox);
     }
     void setFontSize(double sz) {
+      if (!isfinite(sz)) return; // cowardly refuse to set a non real valued font size
       scale*=scaleFactor*sz/getFontSize();
     }
     void setFontFamily(const char* family) {
       FontDescription fd(layout);
       pango_font_description_set_family(fd,family);
-      pango_layout_set_font_description(layout, fd); //asume ownership not passe 
+      pango_layout_set_font_description(layout, fd); //asume ownership not passed
   }
     double getFontSize() const {
       FontDescription fd(layout);
