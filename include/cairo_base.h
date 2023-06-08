@@ -218,7 +218,7 @@ namespace ecolab
         int width, height;
         Tk_PhotoGetSize(photo, &width, &height);
         imageBlock = PhotoImageBlock(width, height, transparency);
-        imageData.resize(imageBlock.pitch * imageBlock.height);
+        imageData.resize(size_t(imageBlock.pitch) * imageBlock.height);
         imageBlock.pixelPtr = imageData.data();
 
         surface( cairo_image_surface_create_for_data
