@@ -76,6 +76,8 @@ namespace ecolab
                       bbox(x.bbox), angle(x.angle)
     {x.layout=nullptr;}
 #endif
+
+    cairo_t* cairoContext() const {return cairo;}
     /// set text to be displayed in pango markup language
     void setMarkup(const std::string& markup) {
       pango_layout_set_markup(layout, markup.c_str(), -1);
