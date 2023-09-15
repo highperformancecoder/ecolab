@@ -599,8 +599,8 @@ namespace ecolab
     const char* errMsg=NULL;
     if (logx && minx<=0)
       errMsg = "logx requires positive range";
-    else if (logy && ((displayLHSscale() && miny<=0) || (displayRHSscale() && miny1<=0)))
-      errMsg = "logy requires positive range";
+    //else if (logy && ((displayLHSscale() && miny<=0) || (displayRHSscale() && miny1<=0)))
+        //errMsg = "logy requires positive range";
     // ! used here, rather than reverse comparison to allow for NaNs, which always compare false
     else if (!(maxx>minx) || (!displayLHSscale() && !displayRHSscale()))
       errMsg = "no data";
@@ -615,9 +615,26 @@ namespace ecolab
       }
       
     double dx=iflogx(maxx)-iflogx(minx);
-    double dy=iflogy(maxy)-iflogy(miny);
-    double dy1=iflogy(maxy1)-iflogy(miny1);
+    auto mm=miny, mm1=miny1;
     
+    if (logy) // calculate miny from the minimum positive value
+      {
+        mm=maxy, mm1=maxy1;
+        for (size_t pen=0; pen<y.size(); ++pen)
+          if (pen>=penSide.size() || penSide[pen]==left)
+            {
+              for (auto j: y[pen])
+                if (j>0 && j<mm)
+                  mm=j;
+            }
+          else
+            for (auto j: y[pen])
+              if (j>0 && j<mm1)
+                mm1=j;
+      }
+    double dy=iflogy(maxy)-iflogy(mm);
+    double dy1=iflogy(maxy1)-iflogy(mm1);
+        
     // axis label font size (in pixels)
     // offsets to allow space for axis labels
     double loffx=lh(width,height)*!ylabel.empty(), 
@@ -656,7 +673,7 @@ namespace ecolab
       double fontSz=0.02*fontScale;
       IPango pango(cairo);
       pango.setFontSize(fontSz*height);
-      XFY aff(logy, sy, displayLHSscale()? miny: miny1, 0); //manual affine transform - see ticket #693
+      XFY aff(logy, sy, displayLHSscale()? mm: mm1, 0); //manual affine transform - see ticket #693
       if (xticks.size())
         {
           unsigned startTick=0, endTick;
@@ -716,7 +733,7 @@ namespace ecolab
           double xtickIncrement, xtick;
           computeIncrementAndOffset(minx, maxx, nxTicks, xtickIncrement, xtick);
           if (xtickIncrement<0) return; //avoid infinite loop
-          cairo_move_to(cairo, maxx-0.05*dx*(1+fontScale), aff(miny+0.04*dy*(1+fontScale)));
+          cairo_move_to(cairo, maxx-0.05*dx*(1+fontScale), aff(mm+0.04*dy*(1+fontScale)));
           showOrderOfMag(pango, xtickIncrement, exp_threshold);
 
           for (; xtick<maxx; xtick+=xtickIncrement) //NOLINT
@@ -725,10 +742,10 @@ namespace ecolab
                 pango.setMarkup(axisLabel(xtick,xtickIncrement));
               
                 cairo_new_path(cairo);
-                cairo_move_to(cairo,xtick,aff(miny));
-                cairo_line_to(cairo,xtick,aff(miny)+fontSz*height);
+                cairo_move_to(cairo,xtick,aff(mm));
+                cairo_line_to(cairo,xtick,aff(mm)+fontSz*height);
                 stroke(cairo);
-                cairo_move_to(cairo,xtick,aff(miny)+fontSz*height*2);
+                cairo_move_to(cairo,xtick,aff(mm)+fontSz*height*2);
                 pango.show();
               
                 if (grid)
@@ -742,7 +759,7 @@ namespace ecolab
         {
           if (displayLHSscale())
             {
-              LogScale ls(miny, maxy, nyTicks);
+              LogScale ls(mm, maxy, nyTicks);
               int i=0;
               for (double ytick=ls(0); ytick<maxy; i++, ytick=ls(i)) //NOLINT
                 if (aff(ytick)>=fontSz*height)
@@ -760,7 +777,7 @@ namespace ecolab
             }
           if (displayRHSscale())
             {
-              LogScale ls(miny1, maxy1, nyTicks);
+              LogScale ls(mm1, maxy1, nyTicks);
               int i=0;
               for (double ytick=ls(0); ytick<maxy1; i++, ytick=ls(i)) //NOLINT
                 if (aff(ytick)>=fontSz*height)
@@ -768,7 +785,7 @@ namespace ecolab
                     pango.setMarkup(logAxisLabel(ytick));
                   
                     cairo_new_path(cairo);
-                    double yt=aff((ytick-miny1)*rhsScale+aff.o);
+                    double yt=aff((ytick-mm1)*rhsScale+aff.o);
                     cairo_move_to(cairo,maxx,yt);
                     cairo_line_to(cairo,minx+0.95*dx,yt);
                     stroke(cairo);
@@ -784,7 +801,7 @@ namespace ecolab
           double ytickIncrement, ytick;
           if (displayLHSscale())
             {
-              computeIncrementAndOffset(miny, maxy, nyTicks, ytickIncrement, ytick);
+              computeIncrementAndOffset(mm, maxy, nyTicks, ytickIncrement, ytick);
               if (ytickIncrement<=0) return; //avoid infinite loop
 
               cairo_move_to(cairo, minx+0.01*dx, aff(maxy));
@@ -809,7 +826,7 @@ namespace ecolab
           if (displayRHSscale())
             {
               // draw scale on right hand side
-              computeIncrementAndOffset(miny1, maxy1, nyTicks, ytickIncrement, ytick);
+              computeIncrementAndOffset(mm1, maxy1, nyTicks, ytickIncrement, ytick);
               if (ytickIncrement<0) return; //avoid infinite loop
 
               pango.setText("XXXXX");
@@ -817,12 +834,12 @@ namespace ecolab
               showOrderOfMag(pango, ytickIncrement, exp_threshold);
 
               for (; ytick<maxy1; ytick+=ytickIncrement) //NOLINT
-                if (ytick>=miny1+fontSz*dy1)
+                if (ytick>=mm1+fontSz*dy1)
                   {
                     pango.setMarkup(axisLabel(ytick,ytickIncrement,percent));
                   
                     cairo_new_path(cairo);
-                    double yt=aff((ytick-miny1)*rhsScale+aff.o);
+                    double yt=aff((ytick-mm1)*rhsScale+aff.o);
                     cairo_move_to(cairo,maxx,yt);
                     cairo_line_to(cairo,minx+0.95*dx,yt);
                     stroke(cairo);
@@ -846,7 +863,7 @@ namespace ecolab
             if (i<penSide.size() && penSide[i]==right)
               {
                 xfy.scale*=rhsScale;
-                xfy.o=miny1;
+                xfy.o=mm1;
                 side=right;
               }
             
@@ -861,14 +878,19 @@ namespace ecolab
                       cairo_set_dash(cairo, dashPattern.data(), dashPattern.size(), 0);
           
                       cairo_new_path(cairo);
-                      cairo_move_to(cairo, iflogx(x[i][0]), xfy(y[i][0]));
+                      auto xfyyij=xfy(y[i][0]);
+                      if (isfinite(xfyyij))
+                        cairo_move_to(cairo, iflogx(x[i][0]), xfy(y[i][0]));
                       for (size_t j=1; j<x[i].size(); ++j)
-                        if (inBounds(x[i][j-1], y[i][j-1], side) && inBounds(x[i][j], y[i][j], side))
-                          cairo_line_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
-                        else
-                          cairo_move_to(cairo, iflogx(x[i][j]), xfy(y[i][j]));
-
-                      if (leadingMarker)
+                        {
+                          xfyyij=xfy(y[i][j]);
+                          if (inBounds(x[i][j-1], y[i][j-1], side) && inBounds(x[i][j], y[i][j], side))
+                            cairo_line_to(cairo, iflogx(x[i][j]), xfyyij);
+                          else if (isfinite(xfyyij))
+                            cairo_move_to(cairo, iflogx(x[i][j]), xfyyij);
+                        }
+                          
+                      if (leadingMarker && isfinite(xfy(y[i].back())))
                         cairo_rectangle
                           (cairo, iflogx(x[i].back()), xfy(y[i].back()), 
                            0.01*dx,  0.01*dy*sy);

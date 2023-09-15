@@ -43,7 +43,7 @@ namespace ecolab
       double scale, o, o1;
       XFY():logy(false), scale(1), o(0), o1(0)  {}
       XFY(bool logy, double scale, double o, double o1): 
-        logy(logy), scale(scale), o(logy? log10(o): o), o1(o1) {
+        logy(logy), scale(scale), o(logy? (o>0? log10(o): 0): o), o1(o1) {
       }
       double operator()(double y) const {
         return scale*((logy? log10(y): y)-o)+o1;
@@ -68,7 +68,7 @@ namespace ecolab
       
     std::vector<LineStyle> palette;
     void extendPalette() {palette.push_back(LineStyle());}
-    
+
   private:    
     string m_image;
     std::vector<std::vector<double> > x;
@@ -99,7 +99,7 @@ namespace ecolab
     void labelAxes(cairo_t*, double width, double height) const;
 
     bool inBounds(float x, float y, Side side) const {
-      return std::isfinite(x) && std::isfinite(y) && x>=minx && x<=maxx &&
+      return std::isfinite(x) && std::isfinite(y) && x>=minx && x<=maxx && (!logy || y>0) &&
         ((side==left && y>=miny && y<=maxy)
          || (side==right && y>=miny1 && y<=maxy1));
     }
