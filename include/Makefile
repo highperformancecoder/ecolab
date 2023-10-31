@@ -385,9 +385,11 @@ LIBTIRPC=$(shell if $(PKG_CONFIG) libtirpc; then $(PKG_CONFIG) --libs libtirpc; 
 FLAGS+=-DXDR_PACK $(LIBTIRPC)
 endif
 
+ifndef MXE
 ifdef READLINE
 FLAGS+=-DREADLINE
 LIBS+=-lreadline -lncurses
+endif
 endif
 
 ifdef BDB
