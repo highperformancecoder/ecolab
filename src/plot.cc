@@ -1072,30 +1072,77 @@ namespace ecolab
       }
   }
 
+  string stripPangoMarkup(const string& markedUptext)
+  {
+    char *tmp=nullptr;
+    if (pango_parse_markup(markedUptext.c_str(),-1,0,nullptr,&tmp,nullptr,nullptr))
+      {
+        string ret(tmp);
+        g_free(tmp);
+        return ret;
+      }
+    return markedUptext; // failed to parse, return original text
+  }
+
+  struct Round
+  {
+    double scale, iscale;
+    // round data to 5 significant places
+    Round(const Plot& p): scale(1e5/(p.maxx-p.minx)), iscale(1/scale) {}
+    double operator()(double x) {return iscale*round(x*scale);}
+  };
+  
   void Plot::exportAsCSV(const std::string& filename, const string& separator) const
   {
+    map<double,string> tickLabels(xticks.begin(),xticks.end());
+
+    Round round(*this);
+    
+    // assemble the data into a map, keyed by the x values
+    map<double,vector<double>> values;
+    for (size_t i=0, j=0; i<x.size(); ++i)
+      if (!x[i].empty())
+        {
+          for (size_t k=0; k<x[i].size(); ++k)
+            {
+              auto& v=values[round(x[i][k])]; // rounding used to merge neighbouring x values
+              v.resize(j+1,nan("")); // use NaN to represent missing values
+              v[j]=y[i][k];
+            }
+          j++;
+        }
+
     ofstream of(filename.c_str());
     of<<"#"<<ylabel<<" by "<<xlabel<<endl;
-    of<<"#";
+    of<<"#x";
     if (!xticks.empty())
-      of<<"labelx"<<separator<<"label"<<separator;
+      of<<separator<<"x-label";
     for (size_t i=0; i<x.size(); ++i)
-      of << (i>0? separator:"")<<"x"<<i<<separator<<"y"<<i;
-    of<<endl;
-    size_t maxxsize=xticks.size();
-    for (size_t i=0; i<x.size(); ++i) maxxsize=max(maxxsize, x[i].size());
+      if (!x[i].empty())
+        if (i<penTextLabel.size() && !penTextLabel[i].empty())
+          of<<separator << stripPangoMarkup(penTextLabel[i]);
+        else
+          of<<separator <<"y"<<i;
 
-    for (size_t i=0; i<maxxsize; ++i)
+    of<<endl;
+
+    for (auto i: values)
       {
+        of<<i.first;
         if (!xticks.empty())
-          of<<xticks[i].first<<separator<<xticks[i].second<<separator;
-        for (size_t j=0; j<x.size(); ++j)
           {
-            if (j>0) of<<separator;
-            if (i<x[j].size() && i<y[j].size() && isfinite(y[j][i]))
-              of << x[j][i]<<separator<<y[j][i];
-            else
-              of << separator;
+            of<<separator;
+            auto iter=tickLabels.lower_bound(i.first);
+            if (iter==tickLabels.end()) --iter;
+            // select label closest to i.first
+            auto prior=iter; if (prior!=tickLabels.begin()) --prior;
+            if (abs(i.first-prior->first)<abs(i.first-iter->first)) iter=prior;
+            of<<iter->second;
+          }
+        for (auto j: i.second)
+          {
+            of<<separator;
+            if (isfinite(j)) of<<j;
           }
         of<<endl;
       }
