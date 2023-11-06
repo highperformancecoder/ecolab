@@ -1119,10 +1119,12 @@ namespace ecolab
       of<<separator<<"x-label";
     for (size_t i=0; i<x.size(); ++i)
       if (!x[i].empty())
-        if (i<penTextLabel.size() && !penTextLabel[i].empty())
-          of<<separator << stripPangoMarkup(penTextLabel[i]);
-        else
-          of<<separator <<"y"<<i;
+        {
+          if (i<penTextLabel.size() && !penTextLabel[i].empty())
+            of<<separator << stripPangoMarkup(penTextLabel[i]);
+          else
+            of<<separator <<"y"<<i;
+        }
 
     of<<endl;
 
