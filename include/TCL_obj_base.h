@@ -92,6 +92,11 @@ namespace ecolab
 #pragma omit TCL_obj ecolab::TCL_args
 #endif
 
+#if defined(__GNUC__) && !defined(__ICC)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
+  
   /// RAII TCL_Obj ref
   class TCLObjRef
   {
@@ -102,6 +107,7 @@ namespace ecolab
     ~TCLObjRef() {Tcl_DecrRefCount(ref);}
     TCLObjRef(const TCLObjRef& x): ref(x.ref) {Tcl_IncrRefCount(ref);}
     TCLObjRef& operator=(const TCLObjRef& x) {
+      Tcl_DecrRefCount(ref);
       ref=x.ref;
       Tcl_IncrRefCount(ref);
       return *this;
@@ -109,6 +115,11 @@ namespace ecolab
     Tcl_Obj* get() const {return ref;}
   };
 
+#if defined(__GNUC__) && !defined(__ICC)
+#pragma GCC diagnostic pop
+#endif
+
+  
   /// count class that exposes const public attribute
   class TCL_args_count
   {

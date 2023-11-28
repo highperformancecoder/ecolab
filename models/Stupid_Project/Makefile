@@ -13,6 +13,10 @@ include $(ECOLAB_HOME)/include/Makefile
 
 MODELS=stupid01 stupid02 stupid03 stupid04 stupid05 stupid06 stupid09 stupid10 stupid11 stupid12 stupid14 stupid15 stupid16
 
+# graphcode uses std::iterator, which is deprecated
+# I don't know why the compiler is flagging Cell as uninitialised
+CXXFLAGS+=-Wno-deprecated-declarations -Wno-maybe-uninitialized
+
 ifdef TK
 MODELS+=stupid-field
 endif

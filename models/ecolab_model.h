@@ -23,6 +23,7 @@ using classdesc::Object;
 class ecolab_point: public Object<ecolab_point,GRAPHCODE_NS::object>
 {
 protected:
+  using Object<ecolab_point,GRAPHCODE_NS::object>::pack;
   // override object::pack
   template <class A, class M> 
   A pack(const A& e, const M& mask, long ntrue=-1)
