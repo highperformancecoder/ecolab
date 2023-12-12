@@ -96,7 +96,7 @@ FLAGS+=-UHAVE_MPI_CPP
 else
 CC=gcc
 CPLUSPLUS=g++
-LINK=g++
+LINK=$(CPLUSPLUS)
 CPP=g++ -E
 endif
 
