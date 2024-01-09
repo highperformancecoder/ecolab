@@ -298,8 +298,8 @@ namespace ecolab
       {
         minx=logx? 0.1: -1;
         maxx=1;
-        miny=logy? 0.1: -1;
-        maxy=1;
+        miny1=miny=logy? 0.1: -1;
+        maxy1=maxy=1;
       }
     else
       {
@@ -340,6 +340,17 @@ namespace ecolab
     adjustMinyMaxy(miny,maxy);
     adjustMinyMaxy(miny1,maxy1);
 
+    // adjust minx, miny, miny1 etc if tickIncrement too small
+    double tickIncrement, tick;
+    computeIncrementAndOffset(minx, maxx, nxTicks, tickIncrement, tick);
+    if ((maxx-tick)>100*tickIncrement) minx=tick;
+    computeIncrementAndOffset(miny, maxy, nyTicks, tickIncrement, tick);
+    if ((maxy-tick)>100*tickIncrement) miny=tick;
+    if (finite(miny1) && finite(maxy1))
+      {
+        computeIncrementAndOffset(miny1, maxy1, nyTicks, tickIncrement, tick);
+        if ((maxy1-tick)>100*tickIncrement) miny1=tick;
+      }
   }
 
   void Plot::drawGrid
