@@ -346,7 +346,7 @@ namespace ecolab
     if ((maxx-tick)>100*tickIncrement) minx=tick;
     computeIncrementAndOffset(miny, maxy, nyTicks, tickIncrement, tick);
     if ((maxy-tick)>100*tickIncrement) miny=tick;
-    if (finite(miny1) && finite(maxy1))
+    if (isfinite(miny1) && isfinite(maxy1))
       {
         computeIncrementAndOffset(miny1, maxy1, nyTicks, tickIncrement, tick);
         if ((maxy1-tick)>100*tickIncrement) miny1=tick;
