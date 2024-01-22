@@ -63,10 +63,11 @@ namespace
   struct IPango: public ecolab::Pango
   {
     cairo_t* cairo;
-    IPango(cairo_t* cairo): Pango(cairo), cairo(cairo) {}
+    double scalex=1, scaley=1;
+    IPango(cairo_t* cairo, double scalex, double scaley): Pango(cairo), cairo(cairo), scalex(scalex), scaley(scaley) {}
     void show() {
       ecolab::cairo::CairoSave cs(cairo);
-      cairo_identity_matrix(cairo);
+      cairo_scale(cairo,scalex,scaley);
       Pango::show();
     }
   };
@@ -429,7 +430,7 @@ namespace ecolab
         {
           cairo::Surface surf
             (cairo_recording_surface_create(CAIRO_CONTENT_COLOR,NULL));
-          IPango p2(surf.cairo());
+          Pango p2(surf.cairo());
           p2.setFontSize(fabs(fy));
           p2.setMarkup(penTextLabel[i]);
           height += 1.5*fy; //1.3*(p2.height());
@@ -526,7 +527,7 @@ namespace ecolab
           cairo_rel_line_to(cairo, 0.05*w, 0);
           stroke(cairo);
 
-          IPango p2(cairo);
+          IPango p2(cairo,1,-1);
           p2.setFontSize(fy);
           p2.setMarkup(penTextLabel[i]);
           cairo_move_to(cairo, labeloffs, yoffs+0.8*fy);
@@ -550,7 +551,7 @@ namespace ecolab
 
     cairo_save(cairo);
     cairo_translate(cairo,0.5*width,0.5*height);
-    IPango pango(cairo);
+    Pango pango(cairo);
     if (!xlabel.empty())
       {
         pango.setFontSize(0.6*lh);
@@ -563,7 +564,7 @@ namespace ecolab
       {
         pango.setFontSize(0.6*lh);
         pango.setMarkup(ylabel);
-        cairo_move_to(cairo,offx-0.5*width,0.5*pango.width());
+        cairo_move_to(cairo,offx-0.52*width,0.5*pango.width());
         pango.angle=-0.5*M_PI;
         pango.show();
       }
@@ -618,7 +619,7 @@ namespace ecolab
 
     if (msg || errMsg)
       {
-        IPango pango(cairo);
+        Pango pango(cairo);
         pango.setMarkup(errMsg? errMsg: msg);
         cairo_move_to(cairo,0.5*(width-pango.width()),0.5*(height-pango.height()));
         pango.show();
@@ -682,7 +683,7 @@ namespace ecolab
 
       // work out the font size we should use
       double fontSz=0.02*fontScale;
-      IPango pango(cairo);
+      IPango pango(cairo,1/sx,-1);
       pango.setFontSize(fontSz*height);
       XFY aff(logy, sy, displayLHSscale()? mm: mm1, 0); //manual affine transform - see ticket #693
       if (xticks.size())
