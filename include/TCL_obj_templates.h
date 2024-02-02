@@ -107,7 +107,7 @@ namespace ecolab
       {                                                                 \
 	assert( strcmp(argv[0]+strlen(argv[0])-strlen(".delete"),       \
 		       ".delete")==0);                                  \
-        std::string s(argv[0]);                                         \
+        const std::string s(argv[0]);                                         \
         ecolab::TCL_obj_deregister(s.substr(0,s.length()-strlen(".delete"))); \
         delete (x*)cd;                                                  \
         return TCL_OK;                                                  \
@@ -116,7 +116,7 @@ namespace ecolab
       int createobject(ClientData cd, Tcl_Interp *interp, int argc, Tcl_Obj *const*argv) \
       {                                                                 \
 	if (argc<2) throw ecolab::error("object name not specified");   \
-        std::string name=Tcl_GetString(argv[1]);                        \
+        const std::string name=Tcl_GetString(argv[1]);                        \
         /* strip object name from argument list */                      \
         ecolab::TCL_args largv(1,argv);                                 \
         for (int i=2; i<argc; ++i) largv.pushObj(argv[i]);              \
