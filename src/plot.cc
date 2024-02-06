@@ -145,7 +145,7 @@ namespace
   void computeIncrementAndOffset
   (double minv, double maxv, int maxTicks, double& incr, double& offset)
   {
-    double scale=pow(10.0, int(log10(max(abs(minv), abs(maxv)))));
+    double scale=pow(10.0, max(int(log10(maxv-minv)), int(0.25*log10(max(abs(minv), abs(maxv))))));
     offset = scale * int(minv/scale); 
     incr = scale;
     double d=maxv-minv;
@@ -193,7 +193,7 @@ namespace
     if (amm>10*numeric_limits<double>::min())
       {
         double dy=maxy-miny;
-        if (abs(dy)>=1e-2*amm)
+        if (abs(dy)>=1e-4*amm)
           {
             // adjust to make sure there is some space around edges 
             miny -= 0.1*dy;
