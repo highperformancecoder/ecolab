@@ -1226,13 +1226,26 @@ namespace ecolab
     // user coordinates
     double xu,yu,yu1;
     if (logx)
-      xu=minx*pow(10, mx*log10(maxx/minx));
+      xu=minx*exp(mx*log(maxx/minx));
     else
       xu=mx*(maxx-minx)+minx;
     if (logy)
       {
-        yu=miny*pow(10, my*log10(maxy/miny));
-        yu1=miny1*pow(10, my*log10(maxy1/miny1));
+        // calculate miny from the minimum positive value
+        auto mm=maxy, mm1=maxy1;
+        for (size_t pen=0; pen<y.size(); ++pen)
+          if (pen>=penSide.size() || penSide[pen]==left)
+            {
+              for (auto j: y[pen])
+                if (j>0 && j<mm)
+                  mm=j;
+            }
+          else
+            for (auto j: y[pen])
+              if (j>0 && j<mm1)
+                mm1=j;
+        yu=mm*exp(my*log(maxy/mm));
+        yu1=mm1*exp(my*log(maxy1/mm1));
       }
     else
       {
