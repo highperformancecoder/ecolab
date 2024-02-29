@@ -223,8 +223,17 @@ namespace ecolab
     void exportAsCSV(const std::string& filename, const string& separator) const;
     void exportAsCSV(const std::string& filename) const
     {exportAsCSV(filename,",");}
-    
+
   protected: // only protected because of TCL_obj problems
+    /// default formatter suitable for plots of numeric data
+    static std::string defaultFormatter(double,double);
+    using Formatter=std::function<std::string(double,double)>;
+    /// if \a (x,y) within ([0,1],[0,1]), then paint a value box corresponding to closest curve
+    /// @param tolerance - how close in user relative coordinates the mouse needs to be to a data point
+    /// @param formatter - produce text label given (x,y) values 
+    /// @return true if the value label changes from previous, indicating that the plot needs repainting
+    bool mouseMove(double x, double y, double tolerance, Plot::Formatter formatter=defaultFormatter);
+    
     std::vector<std::pair<double,std::string> > xticks;
      
     void add(cairo::Surface&, unsigned pen, double x, double y);
@@ -269,6 +278,9 @@ namespace ecolab
       y[pen].assign(yy, yy+sz);
     }
 
+    double mouseX=-1, mouseY=-1; ///< position in user coordinates of value box
+    unsigned mousePen=0; // discovered pen 
+    std::string valueString;
    
   private:
     std::vector<cairo::SurfacePtr> penLabel;

@@ -18,6 +18,12 @@ using namespace std;
 extern "C" void ecolab_plot_link() {}
 
 using ecolab::cairo::Colour;
+
+namespace
+{
+  inline double sqr(double x) {return x*x;}
+}
+
 namespace ecolab
 {
   Colour palette[]=
@@ -665,6 +671,11 @@ namespace ecolab
     double sx=width/dx, sy=displayLHSscale()? height/dy: height/dy1;
     double rhsScale = displayLHSscale()? dy/dy1: 1;
 
+    // work out the font size we should use
+    double fontSz=0.02*fontScale;
+    IPango pango(cairo,1/sx,-1);
+    pango.setFontSize(fontSz*height);
+    
     {
       cairo::CairoSave cs(cairo);
       cairo_translate(cairo, offx+loffx-iflogx(minx)*sx, height);
@@ -684,10 +695,6 @@ namespace ecolab
 
 
 
-      // work out the font size we should use
-      double fontSz=0.02*fontScale;
-      IPango pango(cairo,1/sx,-1);
-      pango.setFontSize(fontSz*height);
       XFY aff(logy, sy, displayLHSscale()? mm: mm1, 0); //manual affine transform - see ticket #693
       if (xticks.size())
         {
@@ -948,7 +955,46 @@ namespace ecolab
                     }
               }
           }
+    // display value near mouse pointer
+    if (!valueString.empty())
+      {
+        cairo::CairoSave cs(cairo);
+        cairo_set_source_rgb(cairo,0,0,0);
+        
+        // if on RHS of plot, send label leftwards
+        auto mx=iflogx(mouseX); // convert to user coordinates;
+        XFY xfy=aff;
+        if (mousePen<penSide.size() && penSide[mousePen]==right)
+          {
+            xfy.scale*=rhsScale;
+            xfy.o=mm1;
+          }
+        auto my=xfy(mouseY);
+        // put a marker where the found location is (mouse can be slightly different)
+        const LineStyle& ls=palette[mousePen%paletteSz];
+        cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, 0.5*ls.colour.a);
+        {
+          cairo::CairoSave cs(cairo);
+          cairo_scale(cairo,1/sx,1);
+          cairo_arc(cairo,sx*mx,my,1.5*ls.width,0,2*M_PI);
+          cairo_fill(cairo);
+        }
+
+        pango.setMarkup(valueString);
+        // slight offsets to avoid obscuring the marker
+        mx+=0.1*pango.width()/sx;
+        if (mouseX>0.5*(minx+maxx)) mx-=1.2*pango.width()/sx;
+        //if (logx) mx=(mx);
+        cairo_rectangle(cairo,mx,my,pango.width()/sx,pango.height());
+        cairo_set_source_rgb(cairo,1,1,1);
+        cairo_fill(cairo);
+        cairo_set_source_rgb(cairo,0,0,0);
+        cairo_move_to(cairo,mx,my+pango.height());
+        pango.show();
+      }
+    
     }
+
     if (legend) drawLegend(cairo,width,height);
 #endif    
   }
@@ -1165,6 +1211,70 @@ namespace ecolab
       }
     if (!of)
       throw error("exporting to %s failed",filename.c_str());
+  }
+
+  string Plot::defaultFormatter(double x, double y)
+  {
+    ostringstream r;
+    r.precision(3);
+    r<<"("<<x<<","<<y<<")";
+    return r.str();
+  }
+    
+  bool Plot::mouseMove(double mx, double my, double tolerance, Formatter formatter)
+  {
+    // user coordinates
+    double xu,yu,yu1;
+    if (logx)
+      xu=minx*pow(10, mx*log10(maxx/minx));
+    else
+      xu=mx*(maxx-minx)+minx;
+    if (logy)
+      {
+        yu=miny*pow(10, my*log10(maxy/miny));
+        yu1=miny1*pow(10, my*log10(maxy1/miny1));
+      }
+    else
+      {
+        yu=my*(maxy-miny)+miny;
+        yu1=my*(maxy1-miny1)+miny1;
+      }
+    
+    double xp=std::numeric_limits<double>::max(), yp;
+    double mind=std::numeric_limits<double>::max();
+    assert(x.size()==y.size());
+    for (size_t pen=0; pen<x.size(); ++pen)
+      {
+        assert(x[pen].size()==y[pen].size());
+        auto side=pen<penSide.size()? penSide[pen]: left;
+        for (size_t i=0; i<x[pen].size(); ++i)
+          {
+            double dy = y[pen][i] - (side==left? yu: yu1);
+            double sy = side==left? maxy-miny: maxy1-miny1;
+            if (abs(x[pen][i]-xu) >= tolerance*(maxx-minx) ||
+                abs(dy) >= tolerance*sy)
+              continue; // ignore any data outside of tolerance
+            double d=sqr(x[pen][i]-xu)+sqr(dy);
+            if (d<mind)
+              {
+                xp=x[pen][i];
+                yp=y[pen][i];
+                mousePen=pen;
+                mind=d;
+              }
+          }
+      }
+    string valueString1;
+    if (xp<maxx)
+      valueString1=formatter(xp,yp);
+    if (valueString1!=valueString)
+      {
+        valueString=valueString1;
+        mouseX=xp;
+        mouseY=yp;
+        return true;
+      }
+    return false;
   }
 
   
