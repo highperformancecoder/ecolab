@@ -42,7 +42,7 @@ namespace ecolab
       bool logy;
       double scale, o, o1;
       XFY():logy(false), scale(1), o(0), o1(0)  {}
-      XFY(bool logy, double scale, double o, double o1): 
+      XFY(bool logy, double scale, double o, double o1):
         logy(logy), scale(scale), o(logy? (o>0? log10(o): 0): o), o1(o1) {
       }
       double operator()(double y) const {
@@ -51,7 +51,7 @@ namespace ecolab
     };
     /// boundingBox is used explictly specify legend sizing via a bounding box relative to plot size
     enum Side {left, right, boundingBox};
-    enum PlotType {line, bar};
+    enum PlotType {line, bar, scatter, line_scatter};
 
     struct LineStyle
     {
@@ -140,6 +140,7 @@ namespace ecolab
     double xtickAngle; ///< angle (in degrees) at which xtick labels are drawn
     /// if |log_10 (x)| < exp_threshold, do not rescale tick value
     unsigned exp_threshold;
+    unsigned symbolEvery=1; ///< every symbolEvery data points, a symbol is plotted.
     
     /// height (or width) of an axis label in pixels
     double labelheight() const {return lh(width(), height());}

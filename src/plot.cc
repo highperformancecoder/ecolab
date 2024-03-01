@@ -892,6 +892,7 @@ namespace ecolab
             switch (plotType)
               {
               case line:
+              case line_scatter:
                     if (x[i].size()>1)
                     {
                       cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, ls.colour.a);
@@ -953,10 +954,30 @@ namespace ecolab
                           cairo_fill(cairo);
                         }
                     }
+              default: break;
+              }
+            // now handle scatter options
+            switch (plotType)
+              {
+              case scatter: case line_scatter:
+                {
+                  cairo::CairoSave cs(cairo);
+                  cairo_scale(cairo,1/sx,1);
+                  cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, ls.colour.a);
+                  for (size_t j=0; j<x[i].size(); j+=symbolEvery)
+                    if (inBounds(iflogx(x[i][j]), y[i][j], side))
+                      {
+                        cairo_arc(cairo, sx*iflogx(x[i][j]), xfy(y[i][j]), 1.5*ls.width, 0, 2*M_PI);
+                        cairo_fill(cairo);
+                      }
+                }
+                break;
+              default: break;
               }
           }
-    // display value near mouse pointer
-    if (!valueString.empty())
+
+      // display value near mouse pointer
+      if (!valueString.empty())
       {
         cairo::CairoSave cs(cairo);
         cairo_set_source_rgb(cairo,0,0,0);
@@ -984,7 +1005,6 @@ namespace ecolab
         // slight offsets to avoid obscuring the marker
         mx+=0.1*pango.width()/sx;
         if (mouseX>0.5*(minx+maxx)) mx-=1.2*pango.width()/sx;
-        //if (logx) mx=(mx);
         cairo_rectangle(cairo,mx,my,pango.width()/sx,pango.height());
         cairo_set_source_rgb(cairo,1,1,1);
         cairo_fill(cairo);
@@ -992,7 +1012,6 @@ namespace ecolab
         cairo_move_to(cairo,mx,my+pango.height());
         pango.show();
       }
-    
     }
 
     if (legend) drawLegend(cairo,width,height);
