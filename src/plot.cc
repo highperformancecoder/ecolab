@@ -924,7 +924,7 @@ namespace ecolab
                     {
                       // make bars translucent - see Minsky ticket #893
                       Colour barColour={ls.colour.r, ls.colour.g, ls.colour.b, 0.5*ls.colour.a};
-                      Colour shadow={0.4, 0.4, 0.6, 0.3};
+                      Colour shadow={0.4, 0.4, 0.6, 0.025};
                       
                       auto showBox=[&](double x, double y, double w, double h, Colour& c) {
                         cairo_set_source_rgba(cairo, c.r, c.g, c.b, c.a);
@@ -934,16 +934,29 @@ namespace ecolab
                       auto shadowShowBox=[&](double x, double y, double w) {
                         cairo::CairoSave cs(cairo);
                         showBox(x,0,w,y,barColour);
-                        // use a clip path to mask out the bar from the shadow
-                        cairo_move_to(cairo,x,y);
-                        cairo_rel_line_to(cairo,w,0);
-                        cairo_rel_line_to(cairo,0,-y);
-                        cairo_rel_line_to(cairo,5/sx,0);
-                        cairo_rel_line_to(cairo,0,y+5);
-                        cairo_rel_line_to(cairo,-w-5/sx,0);
-                        cairo_clip(cairo);
-                        showBox(x+5/sx,0,w,y+5,shadow);
-                        
+                        // outline box element
+                        if (w*sx>10)
+                          {
+                            {
+                              cairo::CairoSave cs(cairo);
+                              cairo_scale(cairo,1/sx,1);
+                              cairo_set_line_width(cairo,1);
+                              cairo_rectangle(cairo,x*sx,0,w*sx,y);
+                              cairo_set_source_rgb(cairo, barColour.r, barColour.g, barColour.b);
+                              cairo_stroke(cairo);
+                            }
+                            // use a clip path to mask out the bar from the shadow
+                            cairo_move_to(cairo,x,y);
+                            cairo_rel_line_to(cairo,w,0);
+                            cairo_rel_line_to(cairo,0,-y);
+                            cairo_rel_line_to(cairo,10/sx,0);
+                            cairo_rel_line_to(cairo,0,y+10);
+                            cairo_rel_line_to(cairo,-w-10/sx,0);
+                            cairo_clip(cairo);
+                            // emulate blur by overlapping multiple drop shadows
+                            for (double i=3; i<8; i+=0.5)
+                              showBox(x+i/sx,0,w,y+i,shadow);
+                          }
                       };
                       
                       size_t j=0;
