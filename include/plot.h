@@ -56,13 +56,11 @@ namespace ecolab
     struct LineStyle
     {
       enum DashStyle {solid, dash, dot, dashDot};
-      cairo::Colour colour;
+      cairo::Colour colour{0,0,0,1};
       double width;
+      double barWidth=1; // bar width as a fraction of available space
       DashStyle dashStyle;
-      LineStyle(): width(1), dashStyle(solid) {
-        cairo::Colour tmp={0,0,0,1};
-        colour=tmp;
-      }
+      LineStyle(): width(1), dashStyle(solid) {}
       std::vector<double> dashPattern() const;
     };
       
@@ -73,7 +71,6 @@ namespace ecolab
     string m_image;
     std::vector<std::vector<double> > x;
     std::vector<std::vector<double> > y;
-    //classdesc::shared_ptr<cairo::TkPhotoSurface> surface;
     cairo::SurfacePtr surface;
 
     // record error message from setMinMax
@@ -141,7 +138,7 @@ namespace ecolab
     /// if |log_10 (x)| < exp_threshold, do not rescale tick value
     unsigned exp_threshold;
     unsigned symbolEvery=1; ///< every symbolEvery data points, a symbol is plotted.
-    
+
     /// height (or width) of an axis label in pixels
     double labelheight() const {return lh(width(), height());}
     double lh(double width, double height) const;

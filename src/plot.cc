@@ -923,35 +923,47 @@ namespace ecolab
                   case bar:
                     {
                       // make bars translucent - see Minsky ticket #893
-                      cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, 0.5*ls.colour.a);
+                      Colour barColour={ls.colour.r, ls.colour.g, ls.colour.b, 0.5*ls.colour.a};
+                      Colour shadow={0.4, 0.4, 0.6, 0.3};
+                      
+                      auto showBox=[&](double x, double y, double w, double h, Colour& c) {
+                        cairo_set_source_rgba(cairo, c.r, c.g, c.b, c.a);
+                        cairo_rectangle(cairo, x, y, w, h);
+                        cairo_fill(cairo);
+                      };
+                      auto shadowShowBox=[&](double x, double y, double w) {
+                        cairo::CairoSave cs(cairo);
+                        showBox(x,0,w,y,barColour);
+                        // use a clip path to mask out the bar from the shadow
+                        cairo_move_to(cairo,x,y);
+                        cairo_rel_line_to(cairo,w,0);
+                        cairo_rel_line_to(cairo,0,-y);
+                        cairo_rel_line_to(cairo,5/sx,0);
+                        cairo_rel_line_to(cairo,0,y+5);
+                        cairo_rel_line_to(cairo,-w-5/sx,0);
+                        cairo_clip(cairo);
+                        showBox(x+5/sx,0,w,y+5,shadow);
+                        
+                      };
+                      
                       size_t j=0;
-                      float w = x[i].size()>1? abs(iflogx(x[i][1]) - iflogx(x[i][0])): 0;
                       if (inBounds(iflogx(x[i][j]), y[i][j], side))
                         {
-                          if (x[i].size()>1)
-                            cairo_rectangle(cairo, iflogx(x[i][0])-0.5*w, 0, w, 
-                                            xfy(y[i][0]));
-                          else
-                            cairo_rectangle(cairo, iflogx(minx), 0, iflogx(maxx)-iflogx(minx), 
-                                            xfy(y[i][0]));
-                          
-                          cairo_fill(cairo);
+                          auto w = ls.barWidth*(x[i].size()>1? abs(iflogx(x[i][1]) - iflogx(x[i][0])): iflogx(maxx)-iflogx(minx));
+                          auto xx=x[i].size()>1? iflogx(x[i][0])-0.5*w: iflogx(minx);
+                          shadowShowBox(xx,xfy(y[i][0]),w);
                         }
                       for (++j; j<x[i].size()-1; ++j)
                         if (inBounds(iflogx(x[i][j]), y[i][j], side))
                           {
-                            w=min(abs(iflogx(x[i][j]) - iflogx(x[i][j-1])), 
+                            auto w=ls.barWidth*min(abs(iflogx(x[i][j]) - iflogx(x[i][j-1])), 
                                   abs(iflogx(x[i][j+1])-iflogx(x[i][j])));
-                            cairo_rectangle(cairo, iflogx(x[i][j])-0.5*w, 0, w, 
-                                            xfy(y[i][j]));
-                            cairo_fill(cairo);
+                            shadowShowBox(iflogx(x[i][j])-0.5*w, xfy(y[i][j]), w);
                           }
                       if (x[i].size()>1 && inBounds(iflogx(x[i][j]), y[i][j], side))
                         {
-                          w=abs(iflogx(x[i][j]) - iflogx(x[i][j-1]));
-                          cairo_rectangle(cairo, iflogx(x[i][j])-0.5*w, 0, w, 
-                                          xfy(y[i][j]));
-                          cairo_fill(cairo);
+                          auto w=ls.barWidth*abs(iflogx(x[i][j]) - iflogx(x[i][j-1]));
+                          shadowShowBox(iflogx(x[i][j])-0.5*w, xfy(y[i][j]), w);
                         }
                     }
               default: break;
