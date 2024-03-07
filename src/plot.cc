@@ -1297,7 +1297,7 @@ namespace ecolab
         yu1=my*(maxy1-miny1)+miny1;
       }
     
-    double xp=std::numeric_limits<double>::max(), yp;
+    double xp=std::numeric_limits<double>::max(), yp=xp;
     double mind=std::numeric_limits<double>::max();
     assert(x.size()==y.size());
     for (size_t pen=0; pen<x.size(); ++pen)
