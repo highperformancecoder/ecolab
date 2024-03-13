@@ -50,7 +50,7 @@ namespace ecolab
       }
     };
     /// boundingBox is used explictly specify legend sizing via a bounding box relative to plot size
-    enum Side {left, right, boundingBox};
+    enum Side {left, right, boundingBox, marker};
     enum PlotType {line, bar, scatter, line_scatter};
 
     struct LineStyle

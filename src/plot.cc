@@ -334,7 +334,7 @@ namespace ecolab
                         if (y[i][j]<miny1) miny1=y[i][j];
                         if (y[i][j]>maxy1) maxy1=y[i][j];
                       }
-                    else
+                    else if (i>=penSide.size() || i<penSide.size() && penSide[i]==left)
                       {
                         if (y[i][j]<miny) miny=y[i][j];
                         if (y[i][j]>maxy) maxy=y[i][j];
