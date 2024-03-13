@@ -322,17 +322,23 @@ namespace ecolab
             assert(x[i].size()==y[i].size());
             for (size_t j=0; j<x[i].size(); ++j)
               {
-                if (x[i][j]<minx) minx=x[i][j];
-                if (x[i][j]>maxx) maxx=x[i][j];
-                if (i<penSide.size() && penSide[i]==right)
+                if (finite(x[i][j]))
                   {
-                    if (y[i][j]<miny1) miny1=y[i][j];
-                    if (y[i][j]>maxy1) maxy1=y[i][j];
+                    if (x[i][j]<minx) minx=x[i][j];
+                    if (x[i][j]>maxx) maxx=x[i][j];
                   }
-                else
+                if (finite(y[i][j]))
                   {
-                    if (y[i][j]<miny) miny=y[i][j];
-                    if (y[i][j]>maxy) maxy=y[i][j];
+                    if (i<penSide.size() && penSide[i]==right)
+                      {
+                        if (y[i][j]<miny1) miny1=y[i][j];
+                        if (y[i][j]>maxy1) maxy1=y[i][j];
+                      }
+                    else
+                      {
+                        if (y[i][j]<miny) miny=y[i][j];
+                        if (y[i][j]>maxy) maxy=y[i][j];
+                      }
                   }
               }
           }
