@@ -918,8 +918,9 @@ namespace ecolab
                           else if (isfinite(xfyyij))
                             cairo_move_to(cairo, iflogx(x[i][j]), xfyyij);
                         }
-                          
-                      if (leadingMarker && isfinite(xfy(y[i].back())))
+
+                      // markers don't need the leading marker.
+                      if (leadingMarker && (i>=penSide.size() || penSide[i]!=marker) && isfinite(xfy(y[i].back())))
                         cairo_rectangle
                           (cairo, iflogx(x[i].back()), xfy(y[i].back()), 
                            0.01*dx,  0.01*dy*sy);
