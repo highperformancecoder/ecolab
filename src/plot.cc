@@ -301,7 +301,7 @@ namespace ecolab
     msg=NULL;
     
     // calculate min/max
-    if (x.empty())
+    if (x.empty() || (!penSide.empty() && penSide[0]==marker))
       {
         minx=logx? 0.1: -1;
         maxx=1;
