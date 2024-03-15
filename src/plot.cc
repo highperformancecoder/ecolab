@@ -294,6 +294,13 @@ namespace ecolab
     penSide[pen]=side;
   }
 
+  bool Plot::onlyMarkers() const
+  {
+    bool r=true;
+    for (size_t i=0; i<x.size(); ++i)
+      r &= x[i].empty() || (i<penSide.size() && penSide[i]==marker);
+    return r;
+  }
 
   void Plot::setMinMax()
   {
@@ -301,7 +308,7 @@ namespace ecolab
     msg=NULL;
     
     // calculate min/max
-    if (x.empty())
+    if (onlyMarkers())
       {
         minx=logx? 0.1: -1;
         maxx=1;
@@ -322,12 +329,12 @@ namespace ecolab
             assert(x[i].size()==y[i].size());
             for (size_t j=0; j<x[i].size(); ++j)
               {
-                if (finite(x[i][j]))
+                if (isfinite(x[i][j]))
                   {
                     if (x[i][j]<minx) minx=x[i][j];
                     if (x[i][j]>maxx) maxx=x[i][j];
                   }
-                if (finite(y[i][j]))
+                if (isfinite(y[i][j]))
                   {
                     if (i<penSide.size() && penSide[i]==right)
                       {
@@ -918,8 +925,9 @@ namespace ecolab
                           else if (isfinite(xfyyij))
                             cairo_move_to(cairo, iflogx(x[i][j]), xfyyij);
                         }
-                          
-                      if (leadingMarker && isfinite(xfy(y[i].back())))
+
+                      // markers don't need the leading marker.
+                      if (leadingMarker && (i>=penSide.size() || penSide[i]!=marker) && isfinite(xfy(y[i].back())))
                         cairo_rectangle
                           (cairo, iflogx(x[i].back()), xfy(y[i].back()), 
                            0.01*dx,  0.01*dy*sy);
