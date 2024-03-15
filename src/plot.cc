@@ -294,6 +294,13 @@ namespace ecolab
     penSide[pen]=side;
   }
 
+  bool Plot::onlyMarkers() const
+  {
+    bool r=true;
+    for (size_t i=0; i<x.size(); ++i)
+      r &= x[i].empty() || (i<penSide.size() && penSide[i]==marker);
+    return r;
+  }
 
   void Plot::setMinMax()
   {
@@ -301,7 +308,7 @@ namespace ecolab
     msg=NULL;
     
     // calculate min/max
-    if (x.empty() || (!penSide.empty() && penSide[0]==marker))
+    if (onlyMarkers())
       {
         minx=logx? 0.1: -1;
         maxx=1;

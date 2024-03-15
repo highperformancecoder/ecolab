@@ -104,7 +104,7 @@ namespace ecolab
     bool displayRHSscale() const {return !penSide.empty() && miny1<maxy1;}
     bool displayLHSscale() const {return miny<maxy;}
     string axisLabel(double x, double scale, bool percent=false) const;
-
+    bool onlyMarkers() const; ///< return true if the only data is marker data
   public:
     Plot(): palette(paletteSz), msg(NULL), nxTicks(30), nyTicks(30), fontScale(1),
             offx(0), offy(0), logx(false), logy(false), 
