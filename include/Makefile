@@ -258,11 +258,6 @@ endif
 
 ifeq ($(CC),icc)
 FLAGS+=-DBOOST_TR1
-else
-ifneq ($(OS),Darwin)
-# enable the use of TR1 - good for gcc
-FLAGS+=-DTR1
-endif
 endif
 
 # add standard list of search paths, -L/usr/lib32 must be before this statement
