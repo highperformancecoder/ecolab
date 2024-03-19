@@ -58,7 +58,7 @@ namespace ecolab
       enum DashStyle {solid, dash, dot, dashDot};
       cairo::Colour colour{0,0,0,1};
       double width;
-      double barWidth=1; // bar width as a fraction of available space
+      double barWidth=1.5; // bar width as a fraction of available space
       DashStyle dashStyle;
       LineStyle(): width(1), dashStyle(solid) {}
       std::vector<double> dashPattern() const;
@@ -142,8 +142,6 @@ namespace ecolab
     /// height (or width) of an axis label in pixels
     double labelheight() const {return lh(width(), height());}
     double lh(double width, double height) const;
-    /// calculates the bounding box of the legend, given current font size settings, and the height of the plot
-    void legendSize(double& width, double& height, double plotHeight) const;
 
     cairo_surface_t* cairoSurface() const;
     int width() const;
@@ -232,6 +230,9 @@ namespace ecolab
     /// @return true if the value label changes from previous, indicating that the plot needs repainting
     bool mouseMove(double x, double y, double tolerance, Plot::Formatter formatter=defaultFormatter);
     
+    /// calculates the bounding box of the legend, given current font size settings, and the height of the plot
+    void legendSize(double& xoff, double& yoff, double& width, double& height, double plotWidth, double plotHeight) const;
+
     std::vector<std::pair<double,std::string> > xticks;
      
     void add(cairo::Surface&, unsigned pen, double x, double y);

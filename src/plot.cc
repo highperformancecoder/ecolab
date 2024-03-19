@@ -397,7 +397,7 @@ namespace ecolab
       }
 
     cairo_save(cairo);
-    cairo_set_source_rgba(cairo,0.5,0.5,0.5,1);
+    cairo_set_source_rgba(cairo,0.5,0.5,0.5,0.5);
     cairo_identity_matrix(cairo);
     cairo_set_line_width(cairo,1);
     cairo_stroke(cairo);
@@ -427,7 +427,7 @@ namespace ecolab
         
         
         cairo_save(cairo);
-        cairo_set_source_rgba(cairo,0.8,0.8,0.8,1);
+        cairo_set_source_rgba(cairo,0.8,0.8,0.8,0.5);
         cairo_identity_matrix(cairo);
         cairo_set_line_width(cairo,1);
         cairo_stroke(cairo);
@@ -438,8 +438,24 @@ namespace ecolab
 
   }
 
-  void Plot::legendSize(double& width, double& height, double plotHeight) const
+  void Plot::legendSize(double& xoffs, double& yoffs, double& width, double& height, double plotWidth, double plotHeight) const
   {
+    yoffs=0.95*plotHeight;
+    switch (legendSide)
+      {
+      default:
+      case left:
+        xoffs=0.1*plotWidth;
+        break;
+      case right:
+        xoffs=0.9*plotWidth;
+        break;
+      case boundingBox:
+        xoffs=legendLeft*plotWidth;
+        yoffs=legendTop*plotHeight;
+        break;
+      }
+
     width=0; height=0;
     double fy=legendFontSz*fontScale*plotHeight;
     for (size_t i=0; i<x.size(); ++i)
@@ -463,44 +479,30 @@ namespace ecolab
   void Plot::drawLegend(cairo_t* cairo, double w, double h) const
   {
     double dx=maxx-minx;
-    double xoffs;
+    double xoffs=0;
     // compute width of labels
     double width=0, height=0;
     double fy=legendFontSz*fontScale*h;
     double yoffs=0.95*h-0.8*fy;
 
-    switch (legendSide)
-      {
-      default:
-      case left:
-        xoffs=0.1*w;
-        break;
-      case right:
-        xoffs=0.9*w-width;
-        break;
-      case boundingBox:
-        xoffs=legendLeft*w;
-        yoffs=legendTop*h-0.8*fy;
-        break;
-      }
 
     cairo::CairoSave cs(cairo);
     cairo_translate(cairo,0, h);
     cairo_scale(cairo,1,-1);
 
+    legendSize(xoffs,yoffs,width,height,w,h);
     double labeloffs=xoffs+legendOffset*w;
 
-    legendSize(width,height,h);
     if (height>0)
       {
         cairo::CairoSave cs(cairo);
-        cairo_rectangle(cairo,xoffs,yoffs+0.8*fy,width+legendOffset*w,-height);
+        cairo_rectangle(cairo,xoffs,yoffs,width+legendOffset*w,-height);
         cairo_set_source_rgb(cairo,0,0,0);
         cairo_stroke_preserve(cairo);
         cairo_set_source_rgba(cairo,1,1,1,0.7);
         cairo_fill(cairo);
       }
-    
+    yoffs-=0.8*fy;
     for (size_t i=0; i<x.size(); ++i)
       if (i<penLabel.size() && penLabel[i])
         {
@@ -564,7 +566,7 @@ namespace ecolab
     double dy=maxy-miny;
     
     // axis label font size (in pixels)
-    double lh=0.05*fontScale*(height-2*offy)/(1+0.03*fontScale);
+    double lh=0.03*fontScale*(height-2*offy)/(1+0.03*fontScale);
 
     // work out the font size we should use
     double fontSz=0.03*fontScale;
@@ -578,7 +580,7 @@ namespace ecolab
       {
         pango.setFontSize(0.6*lh);
         pango.setMarkup(xlabel);
-        cairo_move_to(cairo,-0.5*pango.width(),0.5*height-pango.height());
+        cairo_move_to(cairo,-0.5*pango.width(),0.48*height-pango.height());
         pango.show();
       }
     
@@ -586,7 +588,7 @@ namespace ecolab
       {
         pango.setFontSize(0.6*lh);
         pango.setMarkup(ylabel);
-        cairo_move_to(cairo,offx-0.52*width,0.5*pango.width());
+        cairo_move_to(cairo,offx-0.48*width,0.5*pango.width());
         pango.angle=-0.5*M_PI;
         pango.show();
       }
@@ -595,7 +597,7 @@ namespace ecolab
       {
         pango.setFontSize(0.6*lh);
         pango.setMarkup(y1label);
-        cairo_move_to(cairo,0.5*width-pango.height(),0.5*pango.width());
+        cairo_move_to(cairo,0.48*width-pango.height(),0.5*pango.width());
         pango.show();
       }
     cairo_restore(cairo);
@@ -679,19 +681,19 @@ namespace ecolab
     
     labelAxes(cairo,width,height);
 
-    width-=offx+loffx+loffx1;
-    height-=2*offy+loffy;
-    double sx=width/dx, sy=displayLHSscale()? height/dy: height/dy1;
-    double rhsScale = displayLHSscale()? dy/dy1: 1;
-
-    // work out the font size we should use
-    double fontSz=0.02*fontScale;
-    IPango pango(cairo,1/sx,-1);
-    pango.setFontSize(fontSz*height);
-    
     {
       cairo::CairoSave cs(cairo);
-      cairo_translate(cairo, offx+loffx-iflogx(minx)*sx, height);
+      auto w=width-offx-loffx-loffx1;
+      auto h=height-2*offy-loffy;
+      double sx=w/dx, sy=displayLHSscale()? h/dy: h/dy1;
+      double rhsScale = displayLHSscale()? dy/dy1: 1;
+
+      // work out the font size we should use
+      double fontSz=0.02*fontScale;
+      IPango pango(cairo,1/sx,-1);
+      pango.setFontSize(0.6*fontSz*h);
+    
+      cairo_translate(cairo, offx+loffx-iflogx(minx)*sx, h);
 
       // NB do not use cairo scaling in y direction, but rather manually scale before passing to cairo.
       // See ticket #693
@@ -699,7 +701,7 @@ namespace ecolab
       cairo_new_path(cairo);
 
       cairo_set_source_rgba(cairo, 0,0,0,1); //black
-      cairo_rectangle(cairo,iflogx(minx),0,dx,height);
+      cairo_rectangle(cairo,iflogx(minx),0,dx,h);
       cairo_clip_preserve(cairo);
       stroke(cairo);
       
@@ -723,9 +725,9 @@ namespace ecolab
               xtick=logx? log10(xt.first): xt.first;
               cairo_new_path(cairo);
               cairo_move_to(cairo,xtick,0);
-              cairo_line_to(cairo,xtick,fontSz*height);
+              cairo_line_to(cairo,xtick,fontSz*h);
               stroke(cairo);
-              cairo_move_to(cairo,xtick,fontSz*height*2);
+              cairo_move_to(cairo,xtick,fontSz*h*2);
               pango.setMarkup(xt.second);
               pango.show();
               if (grid)
@@ -754,9 +756,9 @@ namespace ecolab
                 pango.setMarkup(logAxisLabel(xtick));
                 cairo_new_path(cairo);
                 cairo_move_to(cairo,log10(xtick),0);
-                cairo_line_to(cairo,log10(xtick),fontSz*height);
+                cairo_line_to(cairo,log10(xtick),fontSz*h);
                 stroke(cairo);
-                cairo_move_to(cairo,log10(xtick),fontSz*height*2);
+                cairo_move_to(cairo,log10(xtick),fontSz*h*2);
                 pango.show();
               
                 if (grid)
@@ -778,9 +780,9 @@ namespace ecolab
               
                 cairo_new_path(cairo);
                 cairo_move_to(cairo,xtick,aff(mm));
-                cairo_line_to(cairo,xtick,aff(mm)+fontSz*height);
+                cairo_line_to(cairo,xtick,aff(mm)+fontSz*h);
                 stroke(cairo);
-                cairo_move_to(cairo,xtick,aff(mm)+fontSz*height*2);
+                cairo_move_to(cairo,xtick,aff(mm)+fontSz*h*2);
                 pango.show();
               
                 if (grid)
@@ -797,7 +799,7 @@ namespace ecolab
               LogScale ls(mm, maxy, nyTicks);
               int i=0;
               for (double ytick=ls(0); ytick<maxy; i++, ytick=ls(i)) //NOLINT
-                if (aff(ytick)>=fontSz*height)
+                if (aff(ytick)>=fontSz*h)
                   {
                     pango.setMarkup(logAxisLabel(ytick));
                     cairo_new_path(cairo);
@@ -815,7 +817,7 @@ namespace ecolab
               LogScale ls(mm1, maxy1, nyTicks);
               int i=0;
               for (double ytick=ls(0); ytick<maxy1; i++, ytick=ls(i)) //NOLINT
-                if (aff(ytick)>=fontSz*height)
+                if (aff(ytick)>=fontSz*h)
                   {
                     pango.setMarkup(logAxisLabel(ytick));
                   
@@ -843,7 +845,7 @@ namespace ecolab
               showOrderOfMag(pango, ytickIncrement, exp_threshold);
               
               for (; ytick<maxy; ytick+=ytickIncrement) //NOLINT
-                if (aff(ytick)>=fontSz*height)
+                if (aff(ytick)>=fontSz*h)
                   {
                     pango.setMarkup(axisLabel(ytick,ytickIncrement,percent));
                     
