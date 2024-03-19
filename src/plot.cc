@@ -588,7 +588,7 @@ namespace ecolab
       {
         pango.setFontSize(0.6*lh);
         pango.setMarkup(ylabel);
-        cairo_move_to(cairo,offx-0.48*width,0.5*pango.width());
+        cairo_move_to(cairo,offx-0.5*width+0.5*pango.height(),0.5*pango.width());
         pango.angle=-0.5*M_PI;
         pango.show();
       }
@@ -597,7 +597,7 @@ namespace ecolab
       {
         pango.setFontSize(0.6*lh);
         pango.setMarkup(y1label);
-        cairo_move_to(cairo,0.48*width-pango.height(),0.5*pango.width());
+        cairo_move_to(cairo,0.5*width-1.5*pango.height(),0.5*pango.width());
         pango.show();
       }
     cairo_restore(cairo);
