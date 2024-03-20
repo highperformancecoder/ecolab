@@ -51,16 +51,18 @@ namespace ecolab
     };
     /// boundingBox is used explictly specify legend sizing via a bounding box relative to plot size
     enum Side {left, right, boundingBox, marker};
-    enum PlotType {line, bar, scatter, line_scatter};
+    // automatic means use Plot::plotType for all pens
+    enum PlotType {line, bar, scatter, line_scatter, automatic};
 
     struct LineStyle
     {
       enum DashStyle {solid, dash, dot, dashDot};
       cairo::Colour colour{0,0,0,1};
       double width;
-      double barWidth=1.5; // bar width as a fraction of available space
+      double barWidth; // bar width as a fraction of available space
       DashStyle dashStyle;
-      LineStyle(): width(1), dashStyle(solid) {}
+      PlotType plotType;
+      LineStyle(): width(1), barWidth(1.5), dashStyle(solid), plotType(automatic) {}
       std::vector<double> dashPattern() const;
     };
       

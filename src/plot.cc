@@ -903,7 +903,8 @@ namespace ecolab
                 xfy.o=mm1;
                 side=right;
               }
-            
+
+            auto plotType=ls.plotType==automatic? this->plotType: ls.plotType;
             switch (plotType)
               {
               case line:
