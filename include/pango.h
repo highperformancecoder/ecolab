@@ -17,8 +17,8 @@
 #ifdef PANGO
 #include <pango/pangocairo.h>
 #include <cairo_base.h>
-#include <error.h>
 
+#include <stdexcept>
 #include <string>
 #include <assert.h>
 
@@ -50,7 +50,7 @@ namespace ecolab
     void throwOnError() const {
       cairo_status_t status=cairo_status(cairo);
       if (status!=CAIRO_STATUS_SUCCESS)
-        throw error(cairo_status_to_string(status));
+        throw std::runtime_error(cairo_status_to_string(status));
     }
     double scale;
   public:
