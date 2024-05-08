@@ -224,8 +224,11 @@ namespace ecolab
 
   protected: // only protected because of TCL_obj problems
     /// default formatter suitable for plots of numeric data
-    static std::string defaultFormatter(double,double);
-    using Formatter=std::function<std::string(double,double)>;
+    /// @param label - pen label
+    /// @param x x coordinate of point to be labelled
+    /// @param y y coordinate of point to be labelled
+    static std::string defaultFormatter(const string& label,double x,double y);
+    using Formatter=std::function<std::string(const string&,double,double)>;
     /// if \a (x,y) within ([0,1],[0,1]), then paint a value box corresponding to closest curve
     /// @param tolerance - how close in user relative coordinates the mouse needs to be to a data point
     /// @param formatter - produce text label given (x,y) values 

@@ -892,7 +892,7 @@ namespace ecolab
         for (size_t i=0; i<x.size(); ++i)
           {
             if (x[i].empty()) continue;
-            const LineStyle& ls=palette[i%paletteSz];
+            const LineStyle& ls=palette[i%palette.size()];
 
             // transform y coordinates (handles RHS being a different scale)
             XFY xfy=aff;
@@ -1034,7 +1034,7 @@ namespace ecolab
           }
         auto my=xfy(mouseY);
         // put a marker where the found location is (mouse can be slightly different)
-        const LineStyle& ls=palette[mousePen%paletteSz];
+        const LineStyle& ls=palette[mousePen%palette.size()];
         cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, 0.5*ls.colour.a);
         {
           cairo::CairoSave cs(cairo);
@@ -1274,11 +1274,11 @@ namespace ecolab
       throw error("exporting to %s failed",filename.c_str());
   }
 
-  string Plot::defaultFormatter(double x, double y)
+  string Plot::defaultFormatter(const string& label, double x, double y)
   {
     ostringstream r;
     r.precision(3);
-    r<<"("<<x<<","<<y<<")";
+    r<<label<<":("<<x<<","<<y<<")";
     return r.str();
   }
     
@@ -1316,6 +1316,7 @@ namespace ecolab
     
     double xp=std::numeric_limits<double>::max(), yp=xp;
     double mind=std::numeric_limits<double>::max();
+    string penLabel;
     assert(x.size()==y.size());
     for (size_t pen=0; pen<x.size(); ++pen)
       {
@@ -1333,6 +1334,7 @@ namespace ecolab
               {
                 xp=x[pen][i];
                 yp=y[pen][i];
+                penLabel=penTextLabel[pen];
                 mousePen=pen;
                 mind=d;
               }
@@ -1340,7 +1342,7 @@ namespace ecolab
       }
     string valueString1;
     if (xp<maxx)
-      valueString1=formatter(xp,yp);
+      valueString1=formatter(penLabel,xp,yp);
     if (valueString1!=valueString)
       {
         valueString=valueString1;
