@@ -1334,7 +1334,7 @@ namespace ecolab
               {
                 xp=x[pen][i];
                 yp=y[pen][i];
-                penLabel=penTextLabel[pen];
+                penLabel=pen<penTextLabel.size()? penTextLabel[pen]: "";
                 mousePen=pen;
                 mind=d;
               }
