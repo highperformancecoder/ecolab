@@ -76,6 +76,21 @@ namespace
       cairo_scale(cairo,scalex,scaley);
       Pango::show();
     }
+    // draw a translucent background to make the text "pop"
+    void drawBackground() const {
+      double x,y;
+      cairo_get_current_point(cairo,&x,&y);
+      {
+        ecolab::cairo::CairoSave cs(cairo);
+        cairo_set_source_rgba(cairo,1,1,1,0.4);
+        cairo_translate(cairo,x,y);
+        cairo_scale(cairo,scalex,scaley);
+        cairo_rotate(cairo,angle);
+        cairo_rectangle(cairo,0,0,width(),height());
+        cairo_fill(cairo);
+      }
+      cairo_move_to(cairo,x,y);
+    }
   };
 
   // stroke the current path using the default linewidth
@@ -711,85 +726,6 @@ namespace ecolab
 
 
       XFY aff(logy, sy, displayLHSscale()? mm: mm1, 0); //manual affine transform - see ticket #693
-      if (xticks.size())
-        {
-          unsigned startTick=0, endTick;
-          for (startTick=0; startTick<xticks.size() && xticks[startTick].first < minx; startTick++);
-          for (endTick=startTick; endTick<xticks.size() && xticks[endTick].first < maxx; endTick++);
-          unsigned tickIncr=(endTick-startTick)/nxTicks+1;
-          double xtick=0, incr=0;
-          pango.angle=xtickAngle*M_PI/180.0;
-          for (unsigned i=startTick; i<endTick; i+=tickIncr)
-            {
-              const std::pair<double,std::string>& xt=xticks[i];
-              xtick=logx? log10(xt.first): xt.first;
-              cairo_new_path(cairo);
-              cairo_move_to(cairo,xtick,0);
-              cairo_line_to(cairo,xtick,fontSz*h);
-              stroke(cairo);
-              cairo_move_to(cairo,xtick,fontSz*h*2);
-              pango.setMarkup(xt.second);
-              pango.show();
-              if (grid)
-                {
-                  if (i<xticks.size()-tickIncr)
-                    {
-                      double nextX=xticks[i+tickIncr].first;
-                      if (logx) nextX=log10(nextX);
-                      incr=fabs(nextX-xtick);
-                    }
-                  drawGrid(cairo, xtick, incr, true, aff);
-                }
-            }
-          pango.angle=0;
-          if (grid && incr) // extend grid all the way
-            while ((xtick+=incr)<maxx)
-              drawGrid(cairo, xtick, incr, true, aff);
-        }
-      else if (logx)
-        {
-          LogScale ls(minx, maxx, nxTicks);
-          int i=0;
-          for (double xtick=ls(0); xtick<maxx; i++, xtick=ls(i)) //NOLINT
-            if (xtick>=minx)
-              {
-                pango.setMarkup(logAxisLabel(xtick));
-                cairo_new_path(cairo);
-                cairo_move_to(cairo,log10(xtick),0);
-                cairo_line_to(cairo,log10(xtick),fontSz*h);
-                stroke(cairo);
-                cairo_move_to(cairo,log10(xtick),fontSz*h*2);
-                pango.show();
-              
-                if (grid)
-                  drawGrid(cairo, xtick, ls(i+1)-xtick, true, aff);
-              }
-        }
-      else
-        {
-          double xtickIncrement, xtick;
-          computeIncrementAndOffset(minx, maxx, nxTicks, xtickIncrement, xtick);
-          if (xtickIncrement<0) return; //avoid infinite loop
-          cairo_move_to(cairo, maxx-0.05*dx*(1+fontScale), aff(mm+0.04*dy*(1+fontScale)));
-          showOrderOfMag(pango, xtickIncrement, exp_threshold);
-
-          for (; xtick<maxx; xtick+=xtickIncrement) //NOLINT
-            if (xtick>=minx)
-              {
-                pango.setMarkup(axisLabel(xtick,xtickIncrement));
-              
-                cairo_new_path(cairo);
-                cairo_move_to(cairo,xtick,aff(mm));
-                cairo_line_to(cairo,xtick,aff(mm)+fontSz*h);
-                stroke(cairo);
-                cairo_move_to(cairo,xtick,aff(mm)+fontSz*h*2);
-                pango.show();
-              
-                if (grid)
-                  drawGrid(cairo, xtick, xtickIncrement, true, aff);
-              }
-        }
-    
       double rightMargin=0.05*dx;
 
       if (logy)
@@ -848,7 +784,7 @@ namespace ecolab
                 if (aff(ytick)>=fontSz*h)
                   {
                     pango.setMarkup(axisLabel(ytick,ytickIncrement,percent));
-                    
+
                     cairo_new_path(cairo);
                     cairo_move_to(cairo,iflogx(minx),aff(ytick));
                     cairo_line_to(cairo,iflogx(minx)+fontSz*dx,aff(ytick));
@@ -874,7 +810,7 @@ namespace ecolab
                 if (ytick>=mm1+fontSz*dy1)
                   {
                     pango.setMarkup(axisLabel(ytick,ytickIncrement,percent));
-                  
+
                     cairo_new_path(cairo);
                     double yt=aff((ytick-mm1)*rhsScale+aff.o);
                     cairo_move_to(cairo,maxx,yt);
@@ -911,11 +847,12 @@ namespace ecolab
               case line_scatter:
                     if (x[i].size()>1)
                     {
+                      cairo::CairoSave cs(cairo);
                       cairo_set_source_rgba(cairo, ls.colour.r, ls.colour.g, ls.colour.b, ls.colour.a);
                       cairo_set_line_width(cairo, ls.width);
                       vector<double> dashPattern=ls.dashPattern();
                       cairo_set_dash(cairo, dashPattern.data(), dashPattern.size(), 0);
-          
+
                       cairo_new_path(cairo);
                       auto xfyyij=xfy(y[i][0]);
                       if (isfinite(xfyyij))
@@ -942,7 +879,7 @@ namespace ecolab
                       // make bars translucent - see Minsky ticket #893
                       Colour barColour={ls.colour.r, ls.colour.g, ls.colour.b, 0.5*ls.colour.a};
                       Colour shadow={0.4, 0.4, 0.6, 0.025};
-                      
+
                       auto showBox=[&](double x, double y, double w, double h, Colour& c) {
                         cairo_set_source_rgba(cairo, c.r, c.g, c.b, c.a);
                         cairo_rectangle(cairo, x, y, w, h);
@@ -1017,6 +954,88 @@ namespace ecolab
               default: break;
               }
           }
+
+      if (xticks.size())
+        {
+          unsigned startTick=0, endTick;
+          for (startTick=0; startTick<xticks.size() && xticks[startTick].first < minx; startTick++);
+          for (endTick=startTick; endTick<xticks.size() && xticks[endTick].first < maxx; endTick++);
+          unsigned tickIncr=(endTick-startTick)/nxTicks+1;
+          double xtick=0, incr=0;
+          pango.angle=xtickAngle*M_PI/180.0;
+          for (unsigned i=startTick; i<endTick; i+=tickIncr)
+            {
+              const std::pair<double,std::string>& xt=xticks[i];
+              xtick=logx? log10(xt.first): xt.first;
+              cairo_new_path(cairo);
+              cairo_move_to(cairo,xtick,0);
+              cairo_line_to(cairo,xtick,fontSz*h);
+              stroke(cairo);
+              cairo_move_to(cairo,xtick,fontSz*h*2);
+              pango.setMarkup(xt.second);
+              pango.drawBackground();
+              pango.show();
+              if (grid)
+                {
+                  if (i<xticks.size()-tickIncr)
+                    {
+                      double nextX=xticks[i+tickIncr].first;
+                      if (logx) nextX=log10(nextX);
+                      incr=fabs(nextX-xtick);
+                    }
+                  drawGrid(cairo, xtick, incr, true, aff);
+                }
+            }
+          pango.angle=0;
+          if (grid && incr) // extend grid all the way
+            while ((xtick+=incr)<maxx)
+              drawGrid(cairo, xtick, incr, true, aff);
+        }
+      else if (logx)
+        {
+          LogScale ls(minx, maxx, nxTicks);
+          int i=0;
+          for (double xtick=ls(0); xtick<maxx; i++, xtick=ls(i)) //NOLINT
+            if (xtick>=minx)
+              {
+                pango.setMarkup(logAxisLabel(xtick));
+                cairo_new_path(cairo);
+                cairo_move_to(cairo,log10(xtick),0);
+                cairo_line_to(cairo,log10(xtick),fontSz*h);
+                stroke(cairo);
+                cairo_move_to(cairo,log10(xtick),fontSz*h*2);
+                pango.drawBackground();
+                pango.show();
+
+                if (grid)
+                  drawGrid(cairo, xtick, ls(i+1)-xtick, true, aff);
+              }
+        }
+      else
+        {
+          double xtickIncrement, xtick;
+          computeIncrementAndOffset(minx, maxx, nxTicks, xtickIncrement, xtick);
+          if (xtickIncrement<0) return; //avoid infinite loop
+          cairo_move_to(cairo, maxx-0.05*dx*(1+fontScale), aff(mm+0.04*dy*(1+fontScale)));
+          showOrderOfMag(pango, xtickIncrement, exp_threshold);
+
+          for (; xtick<maxx; xtick+=xtickIncrement) //NOLINT
+            if (xtick>=minx)
+              {
+                pango.setMarkup(axisLabel(xtick,xtickIncrement));
+
+                cairo_new_path(cairo);
+                cairo_move_to(cairo,xtick,aff(mm));
+                cairo_line_to(cairo,xtick,aff(mm)+fontSz*h);
+                stroke(cairo);
+                cairo_move_to(cairo,xtick,aff(mm)+fontSz*h*2);
+                pango.drawBackground();
+                pango.show();
+
+                if (grid)
+                  drawGrid(cairo, xtick, xtickIncrement, true, aff);
+              }
+        }
 
       // display value near mouse pointer
       if (!valueString.empty())
@@ -1117,7 +1136,7 @@ namespace ecolab
             cairo_set_line_width(cairo, ls.width);
             vector<double> dashPattern=ls.dashPattern();
             cairo_set_dash(cairo, dashPattern.data(), dashPattern.size(), 0);
-            
+
             // transform y coordinates (handles RHS being a different scale)
             XFY xfy;
             if (*pen<penSide.size() && penSide[*pen]==right)
