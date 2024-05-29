@@ -1042,7 +1042,7 @@ namespace ecolab
       {
         cairo::CairoSave cs(cairo);
         cairo_set_source_rgb(cairo,0,0,0);
-        
+
         // if on RHS of plot, send label leftwards
         auto mx=iflogx(mouseX); // convert to user coordinates;
         XFY xfy=aff;
