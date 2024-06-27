@@ -255,13 +255,13 @@ namespace ecolab
   string Plot::Image(const string& im, bool transparency)
   {
 #if defined(TK)
-    Tk_PhotoHandle photo = Tk_FindPhoto(interp(), im.c_str());
-    if (photo)
-      {
-        surface.reset(new cairo::TkPhotoSurface(photo,transparency));
-        cairo_surface_set_device_offset(surface->surface(),0.5*surface->width(),0.5*surface->height());
-      }
-    redraw();
+//    Tk_PhotoHandle photo = Tk_FindPhoto(interp(), im.c_str());
+//    if (photo)
+//      {
+//        surface.reset(new cairo::TkPhotoSurface(photo,transparency));
+//        cairo_surface_set_device_offset(surface->surface(),0.5*surface->width(),0.5*surface->height());
+//      }
+//    redraw();
 #endif
     return m_image=im;
   }
@@ -1201,17 +1201,17 @@ namespace ecolab
       addNew(surf, doRedraw, pens.begin(), pens.end(), 1);
     }      
 
-  void Plot::plot(TCL_args args)
-  {
-    if (args.count>1) 
-      {
-        double x=args;
-        array_ns::array<double> y; args>>y;
-        assert(args.count==0);
-        array_ns::array<unsigned> pens=pcoord(y.size());
-        add(pens,x,y);
-      }
-  }
+//  void Plot::plot(TCL_args args)
+//  {
+//    if (args.count>1) 
+//      {
+//        double x=args;
+//        array_ns::array<double> y; args>>y;
+//        assert(args.count==0);
+//        array_ns::array<unsigned> pens=pcoord(y.size());
+//        add(pens,x,y);
+//      }
+//  }
 
   string stripPangoMarkup(const string& markedUptext)
   {
@@ -1371,10 +1371,6 @@ namespace ecolab
       }
     return false;
   }
-
-  
-  TCLTYPE(Plot);
-
 }
 
 

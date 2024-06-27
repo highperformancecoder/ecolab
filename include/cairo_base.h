@@ -9,7 +9,6 @@
 #ifndef CAIRO_BASE_H
 #define CAIRO_BASE_H
 #if defined(CAIRO)
-#include "tcl++.h"
 #include "classdesc.h"
 #include "arrays.h"
 
@@ -229,30 +228,30 @@ namespace ecolab
 
       void resize(size_t width, size_t height)
       {
-#if TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 5
-        Tk_PhotoSetSize(photo, width, height);
-#else
-        Tk_PhotoSetSize(interp(), photo, width, height);
-#endif
-        init(imageBlock.transparency);
+//#if TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 5
+//        Tk_PhotoSetSize(photo, width, height);
+//#else
+//        Tk_PhotoSetSize(interp(), photo, width, height);
+//#endif
+//        init(imageBlock.transparency);
       }
 
       /// copy the cairo output into the TkPhoto
       void blit(unsigned x, unsigned y, unsigned width, unsigned height) 
       {
-        imageBlock.pixelPtr=&imageData[x*imageBlock.pixelSize + y*imageBlock.pitch];
-        if (width != unsigned(imageBlock.width) || 
-            height != unsigned(imageBlock.height))
-#if TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 5
-          Tk_PhotoSetSize(photo, width, height);
-        Tk_PhotoPutBlock
-          (photo, &imageBlock, 0, 0, width, height, 
-          compositing? TK_PHOTO_COMPOSITE_OVERLAY:TK_PHOTO_COMPOSITE_SET);
-#else
-          Tk_PhotoSetSize(interp(), photo, width, height);
-        Tk_PhotoPutBlock(interp(), photo, &imageBlock, 0, 0, width, height, 
-          compositing? TK_PHOTO_COMPOSITE_OVERLAY:TK_PHOTO_COMPOSITE_SET);
-#endif
+//        imageBlock.pixelPtr=&imageData[x*imageBlock.pixelSize + y*imageBlock.pitch];
+//        if (width != unsigned(imageBlock.width) || 
+//            height != unsigned(imageBlock.height))
+//#if TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 5
+//          Tk_PhotoSetSize(photo, width, height);
+//        Tk_PhotoPutBlock
+//          (photo, &imageBlock, 0, 0, width, height, 
+//          compositing? TK_PHOTO_COMPOSITE_OVERLAY:TK_PHOTO_COMPOSITE_SET);
+//#else
+//          Tk_PhotoSetSize(interp(), photo, width, height);
+//        Tk_PhotoPutBlock(interp(), photo, &imageBlock, 0, 0, width, height, 
+//          compositing? TK_PHOTO_COMPOSITE_OVERLAY:TK_PHOTO_COMPOSITE_SET);
+//#endif
       }
       void blit() {blit(0,0,imageBlock.width, imageBlock.height);}
       void requestRedraw() {blit();}

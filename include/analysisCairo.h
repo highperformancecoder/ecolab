@@ -16,10 +16,10 @@ namespace ecolab
   {
     HistoGram() {plotType=bar;}
     // overload add_data to plot the data
-    void add_data(TCL_args args) {
-      HistoStats::add_data(args);
-      reread();
-    }
+//    void add_data(TCL_args args) {
+//      HistoStats::add_data(args);
+//      reread();
+//    }
     void reread() {
       Plot::clear();
       if (size() && max>min) Plot::add(1,bins(), histogram());
@@ -28,7 +28,7 @@ namespace ecolab
       Plot::clear();
       HistoStats::clear();
     }
-    void outputdat(TCL_args args);
+    //    void outputdat(TCL_args args);
   };
 }
 

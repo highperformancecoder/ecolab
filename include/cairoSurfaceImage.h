@@ -29,7 +29,7 @@ namespace ecolab
     virtual void redrawWithBounds() {redraw(-1e9,-1e9,2e9,2e9);} //TODO better name for this?
   };
   
-  struct CairoSurface: public Exclude<CairoSurfaceRedraw>
+  struct CairoSurface: public classdesc::Exclude<CairoSurfaceRedraw>
   {
     virtual ~CairoSurface() {}
     // arrange a callback with the drawing time in seconds

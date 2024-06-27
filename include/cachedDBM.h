@@ -14,10 +14,7 @@
 
 #include "pack_base.h"
 #include "classdesc_access.h"
-//#include "pack_stl.h"
-//#include "error.h"
-#include "TCL_obj_base.h"
-#include "TCL_obj_stl.h"
+#include "error.h"
 #include "omp_rw_lock.h"
 
 #include <string.h>
@@ -27,8 +24,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <utility>
+
 #include <limits>
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace ecolab
 {
@@ -113,7 +113,7 @@ namespace ecolab
   class cachedDBM_base : protected base_map<key,val>
   {
     typedef base_map<key,val> Base;
-    shared_ptr<Db> db;
+    std::shared_ptr<Db> db;
     bool readonly;
     classdesc::string filename;
     typedef std::map<key,size_t> TSMap;
@@ -131,10 +131,6 @@ namespace ecolab
       readonly=mode=='r';
       if (!db->opened()) throw error("DBM file %s open failed",fname);
       filename=fname;
-    }
-    void Init(TCL_args args) {
-      char *fname=args, *mode=args;
-      init(fname,mode[0]);
     }
     //  void init(const char *fname, char *mode="w") {init(fname,mode[0]);}
     void close() {if (db) {commit(); db->close(); db.reset();} clear();}
@@ -178,19 +174,6 @@ namespace ecolab
       ts++;
       timestamp[k]=ts; //not so important if we pick up a simultaneous timestamp
       return Base::get(k);
-    }
-
-    /// TCL accessor version of \codeoperator []\endcode. 
-    /// \code elem x \endcode  returns the value of \code (*this)[x]\endcode.
-    /// \code elem x y \endcode does \code return (*this)[x]=y \endcode.
-    val elem(TCL_args args)
-    {
-      if (args.count>=2)
-        return operator[](args[0].get<key>())=args[1].get<val>();
-      else if (args.count==1)
-        return operator[](args[0].get<key>());
-      else
-        return val();
     }
 
     /// number of elements in cache
@@ -310,7 +293,7 @@ namespace ecolab
     /// iterator type for iterating over keys
     class KeyValueIterator
     {
-      shared_ptr<Db> db;
+      std::shared_ptr<Db> db;
       std::pair<key,val> keyValue; 
       void getKV(bool (Db::*op)(Datum&, Datum&) const)
       {
@@ -327,7 +310,7 @@ namespace ecolab
       /// initialises to an end() iterator
       KeyValueIterator() {}
       /// initialises to a begin() iterator of database \a fname
-      KeyValueIterator(const string& fname): db(new Db(fname.c_str(), Db::read)) 
+      KeyValueIterator(const std::string& fname): db(new Db(fname.c_str(), Db::read)) 
       {getKV(&Db::firstkey);}
       KeyValueIterator& operator++() {getKV(&Db::nextkey); return *this;}
       // iterator comparison is undefined when referring to different
@@ -351,7 +334,7 @@ namespace ecolab
     {
     public:
       KeyIterator() {}
-      KeyIterator(const string& fname): KeyValueIterator(fname) {}
+      KeyIterator(const std::string& fname): KeyValueIterator(fname) {}
       const key operator*() const {return KeyValueIterator::operator*().first;}
       const key* operator->() const 
       {return &KeyValueIterator::operator*().first;}

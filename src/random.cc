@@ -14,16 +14,6 @@ using std::vector;
 extern "C" void ecolab_random_link() {}
 
 double affinerand::rand() {return scale*gen->rand()+offset;}
-void affinerand::set_gen(TCL_args args) 
-{
-  char *name=args;
-  if (TCL_obj_properties().count(name)==0)
-    throw error("%s does not exist!",name);
-  if (random_gen *gen=TCL_obj_properties()[name]->memberPtrCasted<random_gen>())
-    Set_gen(gen);
-  else
-    throw error("%s has incorrect argument type",name); 
-}
 
 #ifdef UNURAN
 #ifdef PRNG
@@ -61,7 +51,6 @@ double unuran::rand()
 
 #elif defined(GNUSL)
 double urand::rand() {return gsl_rng_uniform(gen);}
-void urand::set_gen(TCL_args args)  {Set_gen(args);}
 double gaussrand::rand() {return gsl_ran_gaussian(uni.gen,1.0);}
 #else
 
@@ -77,19 +66,19 @@ double gaussrand::rand()
 
 
 static eco_strstream tclfun;
-static double tdist(double x)
-{
-  tclcmd cmd;
-  cmd << tclfun << x << "\n";
-  return atof(cmd.result.c_str());
-}
+//static double tdist(double x)
+//{
+//  tclcmd cmd;
+//  cmd << tclfun << x << "\n";
+//  return atof(cmd.result.c_str());
+//}
 
-void distrand::Init(int argc, char *argv[])
-{
-  if (argc < 2) throw error("no function supplied to %s",argv[0]);
-  tclfun << argv[1];
-  init(tdist);
-}
+//void distrand::Init(int argc, char *argv[])
+//{
+//  if (argc < 2) throw error("no function supplied to %s",argv[0]);
+//  tclfun << argv[1];
+//  init(tdist);
+//}
 
 /* Technique explained in Abramowitz and Stegun, S26.8.2 - to base 16
    rather than base 10 */
@@ -153,11 +142,4 @@ double distrand::rand()
   return a[trunctowidth(u-P[i],i+1)+PP[i]];
 }
 
-TCLPOLYTYPE(urand, random_gen)
-TCLPOLYTYPE(affinerand, random_gen)
-TCLPOLYTYPE(gaussrand, random_gen)
-TCLPOLYTYPE(distrand, random_gen)
 
-#ifdef UNURAN
-TCLPOLYTYPE(unuran, random_gen)
-#endif

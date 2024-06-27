@@ -9,7 +9,6 @@
 
 #if defined(CAIRO) && defined(TK)
 #include "cairo_base.h"
-#include "TCL_obj_base.h"
 #include "ecolab_epilogue.h"
 #if defined(CAIRO_HAS_XLIB_SURFACE) && !defined(MAC_OSX_TK)
 #include <cairo/cairo-xlib.h>
@@ -50,22 +49,22 @@ namespace ecolab
       {
         string name;
         Image() {
-          tclcmd cmd;
-          cmd << "image create photo\n";
-          name=cmd.result;
+//          tclcmd cmd;
+//          cmd << "image create photo\n";
+//          name=cmd.result;
         }
         // protect with interp in case destructor called after interpreter exited
-        ~Image() {if (!interpExiting) tclcmd() << "image delete"<<name<<"\n";}
+        //~Image() {if (!interpExiting) tclcmd() << "image delete"<<name<<"\n";}
       };
 
       //A version of TkPhotoSurface that manages its own Tk image
       struct TkCanvasPhotoSurface: public Image, public ecolab::cairo::TkPhotoSurface
       {
-        Tk_Image image; // save the image for decoupling changedproc at right time
-        TkCanvasPhotoSurface():
-          TkPhotoSurface(Tk_FindPhoto(interp(), name.c_str())), image(NULL) {}
-        // protect with interp in case destructor called after interpreter exited
-        ~TkCanvasPhotoSurface() {if (!interpExiting) Tk_FreeImage(image);}
+//        Tk_Image image; // save the image for decoupling changedproc at right time
+//        TkCanvasPhotoSurface():
+//          TkPhotoSurface(Tk_FindPhoto(interp(), name.c_str())), image(NULL) {}
+//        // protect with interp in case destructor called after interpreter exited
+//        ~TkCanvasPhotoSurface() {if (!interpExiting) Tk_FreeImage(image);}
       };
 
 
@@ -80,7 +79,7 @@ namespace ecolab
           // force redraw to happen immediately, to prevent Tk from
           // unnecessarily redrawing other items in between the items
           // being redrawn
-          tclcmd() << "update\n";
+          //tclcmd() << "update\n";
         }
       };
     }
@@ -808,12 +807,12 @@ namespace ecolab
         // Could not find *any way* of obtaining a CGContextRef needed to use a Cairo Quartz surface!
 #else // X11 code
         int depth;
-        Visual *visual = Tk_GetVisual(interp(), win, "default", &depth, NULL);
-        imgPtr->cairoItem->cairoSurface.reset
-          (new CanvasSurface
-           (cairo_xlib_surface_create
-            (display, drawable, visual, Tk_Width(win), Tk_Height(win)),
-            canvas, imgPtr->header));
+//        Visual *visual = Tk_GetVisual(interp(), win, "default", &depth, NULL);
+//        imgPtr->cairoItem->cairoSurface.reset
+//          (new CanvasSurface
+//           (cairo_xlib_surface_create
+//            (display, drawable, visual, Tk_Width(win), Tk_Height(win)),
+//            canvas, imgPtr->header));
 #endif
 
         Tk_CanvasDrawableCoords(canvas, imgPtr->x, imgPtr->y,
@@ -1127,7 +1126,7 @@ namespace ecolab
           NULL, 0, NULL, NULL     /* reserved */
         };
       // ensure Tk_Init is called.
-      if (!Tk_MainWindow(interp())) Tk_Init(interp());
+      //      if (!Tk_MainWindow(interp())) Tk_Init(interp());
       return c;
     }
 #if defined(__GNUC__) && !defined(__ICC)

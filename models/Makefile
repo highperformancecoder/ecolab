@@ -10,7 +10,7 @@ endif
 endif
 
 # compile 3 D jellyfish version
-FLAGS+=-DTHREE_D
+FLAGS+=-DTHREE_D -UTK
 
 include $(ECOLAB_HOME)/include/Makefile
 
@@ -19,11 +19,11 @@ ifdef AEGIS
 CXXFLAGS+=-std=c++11
 endif
 
-MODELS=ecolab shadow newman jellyfish webworld netcomplexity
+#MODELS=ecolab shadow newman jellyfish webworld netcomplexity
+MODELS=ecolab
 
 #chmod command is to counteract AEGIS removing execute privelege from scripts
-all: $(MODELS)
-	-$(CHMOD) a+x *.tcl
+all: $(MODELS:=.so)
 # Stupid_Project takes ages to build, so only do on regression runs.
 ifdef AEGIS
 	$(MAKE) -C Stupid_Project
@@ -37,8 +37,8 @@ endif
 $(MODELS:=.o): %.o: %.cc 
 
 # how to build a model executable
-$(MODELS): %: %.o $(ECOLIBS)
-	$(LINK) $(FLAGS) $*.o $(MODLINK) $(LIBS) -o $@
+$(MODELS:=.so): %.so: %.o ../lib/libecolab.a
+	$(LINK) $(FLAGS) -shared $*.o $(LIBS) -o $@
 
 #make MacOS application bundles
 $(MODELS:=.app): %.app: %

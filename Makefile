@@ -27,7 +27,7 @@ include include/Makefile
 #undefine ECOLAB_LIB here so that ecolab_library is not set to the
 #compiled location. INSTALLED_ECOLAB_LIB is for the generic ecolab
 #binary
-FLAGS+=-UECOLAB_LIB -DINSTALLED_ECOLAB_LIB=\"$(PREFIX)/include\"
+#FLAGS+=-UECOLAB_LIB -DINSTALLED_ECOLAB_LIB=\"$(PREFIX)/include\"
 
 ifdef AEGIS
 # must build and test against c++11 now, as TR1 has goone!
@@ -61,9 +61,9 @@ VPATH=include src models
 # objects to build ecolab.a
 OBJS=src/automorph.o src/auxil.o src/arrays.o src/sparse_mat.o \
 	src/findFirst.o src/graph.o src/netcomplexity.o src/naugraph.o \
-	src/nautil.o src/nauty.o src/nautinv.o src/cachedDBM.o src/TCL_obj.o src/igraph.o \
-	src/cairo_types.o src/cairo_base.o  src/cairoSurfaceImage.o src/plot.o src/tcl_arrays.o \
-	src/tclgraph.o src/analysis.o src/random.o  src/ecolab.o
+	src/nautil.o src/nauty.o src/nautinv.o src/cachedDBM.o src/igraph.o \
+	src/cairo_types.o src/cairo_base.o  src/cairoSurfaceImage.o src/plot.o \
+	src/analysis.o src/random.o
 
 ifdef XDR
 OBJS+=src/xdr_pack.o
@@ -75,7 +75,7 @@ CXXFLAGS+=-DMAC_OSX_TK
 OBJS+=src/getContext.o
 endif
 
-CDHDRS=ref.cd random.cd random_basic.cd TCL_obj_base.cd RESTProcess_base.cd signature.cd netcomplexity.cd graph.cd cachedDBM.cd sparse_mat.cd analysis.cd analysisBLT.cd analysisCairo.cd plot.cd cairoSurfaceImage.cd polyRESTProcess.cd
+CDHDRS=analysis.cd analysisBLT.cd analysisCairo.cd cachedDBM.cd cairoSurfaceImage.cd graph.cd graphcode.cd netcomplexity.cd object.cd plot.cd poly.cd polyRESTProcess.cd polyRESTProcessBase.cd ref.cd random.cd random_basic.cd RESTProcess_base.cd signature.cd sparse_mat.cd
 
 ifdef UNURAN
 CDHDRS+=random_unuran.cd
@@ -110,7 +110,6 @@ all: all-without-models
 	-$(CHMOD) a+x models/*.tcl
 
 all-without-models: ecolab-libs
-	$(MAKE) bin/ecolab$(ECOLIBS_EXT)
 	-$(CHMOD) a+x $(SCRIPTS)
 # copy in the system built TCL library
 ifdef MXE
@@ -244,9 +243,9 @@ latex-docs:
 	if which latex; then cd doc; rm -f *.aux *.dvi *.log *.blg *.toc *.lof *.out; latex -interaction=batchmode ecolab; fi
 
 # bin/ecolab is a no model ecolab binary that only works from installed location
-bin/ecolab$(ECOLIBS_EXT): src/ecolab.o src/tclmain.o lib/libecolab$(ECOLIBS_EXT).a
-	$(LINK) $(FLAGS) src/ecolab.o src/tclmain.o  $(LIBS) -o $@
-	-find . \( -name "*.cc" -o -name "*.h" \) -print |etags -
+#bin/ecolab$(ECOLIBS_EXT): src/ecolab.o src/tclmain.o lib/libecolab$(ECOLIBS_EXT).a
+#	$(LINK) $(FLAGS) src/ecolab.o src/tclmain.o  $(LIBS) -o $@
+#	-find . \( -name "*.cc" -o -name "*.h" \) -print |etags -
 
 .PHONY: install
 install: all-without-models

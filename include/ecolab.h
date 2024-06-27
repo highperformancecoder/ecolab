@@ -52,17 +52,15 @@ typedef classdesc::string eco_string;
 
 #include "eco_strstream.h"
 
-#include "tcl++.h"
-
-#ifdef BLT
-extern "C" {
-#include <blt.h>
-int Blt_Init(Tcl_Interp*);
-}
-#endif
 
 namespace ecolab
 {
+  /* these are defined to default values, even if MPI is false */
+  /// MPI process ID and number of processes
+  // for now - need to figure out how to launch python interpreters in MPI later.
+  inline unsigned myid() {return 0;}
+  inline unsigned nprocs() {return 1;}
+
   using classdesc::pack_t;
   using classdesc::unpack_t;
   using classdesc::xdr_pack;
@@ -70,8 +68,6 @@ namespace ecolab
   using classdesc::is_array;
 }
 
-#include "TCL_obj_base.h"
-#include "TCL_obj_stl.h"
 #include "random.h"
 
 #ifdef MPI_SUPPORT

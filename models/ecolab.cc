@@ -19,55 +19,70 @@ using array_ns::pcoord;
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
 
+#include "pythonBuffer.h"
 #include "ecolab_model.h"
 #include "ecolab_model.cd"
 #include "graphcode.cd"
+#include "object.cd"
+#include "poly.cd"
 #include "ecolab_epilogue.h"
+
+namespace classdesc
+{
+  template <> inline std::string typeName< ::GRAPHCODE_NS::hmap >()
+  {return "::GRAPHCODE_NS::hmap";}
+}
+
+namespace classdesc_access
+{
+  template <>
+  struct access_RESTProcess<::GRAPHCODE_NS::hmap>:
+    public classdesc::NullDescriptor<RESTProcess_t> {};
+}
 
 namespace model
 {
   ecolab_model ecolab;
-  make_model(ecolab);
+  CLASSDESC_PYTHON_MODULE(ecolab,ecolab);
 }
 
-void ecolab_grid::set_grid(TCL_args args)
+void ecolab_grid::set_grid(unsigned x, unsigned y)
 {
-  parallel(args);
-  unsigned x=args, y=args;
+  //parallel(args);
   if (x*y>1)
     {
       Grid2D::clear();
       objects.clear();
       instantiate(x,y);
-      uni.Seed(myid+1); /*ensure uni has distinct random seed on each processor*/
+      uni.Seed(myid()+1); /*ensure uni has distinct random seed on each processor*/
     }
 }
 
-string ecolab_grid::get(TCL_args args)
+string ecolab_grid::get(unsigned x, unsigned y)
 {
-  std::string cmd((char*)args[-1]);
+  //  std::string cmd((char*)args[-1]);
   eco_strstream name;
-  std::string::size_type dotpos=cmd.rfind('.');
-  if (dotpos!=std::string::npos)
-    name|cmd.substr(0,dotpos);
-  else
-    name|cmd;
-  unsigned x=args, y=args;
-  name|'('|x|','|y|')';
-  ::TCL_obj(null_TCL_obj,name.str(),cell(objects[x+y*xsize]));
+//  std::string::size_type dotpos=cmd.rfind('.');
+//  if (dotpos!=std::string::npos)
+//    name|cmd.substr(0,dotpos);
+//  else
+//    name|cmd;
+//  unsigned x=args, y=args;
+//  name|'('|x|','|y|')';
+//  ::TCL_obj(null_TCL_obj,name.str(),cell(objects[x+y*xsize]));
   return name.str(); 
 }
 
-void ecolab_grid::forall(TCL_args args)
-{
-  typedef void (ecolab_point::*epm_ptr)(TCL_args);
-  declare(method, epm_ptr, (char*)args);
-  for (iterator i=begin(); i!=end(); i++) (cell(*i).*method)(args);
-}
+//void ecolab_grid::forall(TCL_args args)
+//{
+//  typedef void (ecolab_point::*epm_ptr)(TCL_args);
+//  declare(method, epm_ptr, (char*)args);
+//  for (iterator i=begin(); i!=end(); i++) (cell(*i).*method)(args);
+//}
 
-void ecolab_model::distribute_cells(TCL_args args)
+void ecolab_model::distribute_cells()
 {
-  parallel(args);
+  //parallel(args);
 #ifdef MPI_SUPPORT
   MPIbuf() << *this << bcast(0) >> *this;
   rebuild_local_list();
@@ -77,23 +92,21 @@ void ecolab_model::distribute_cells(TCL_args args)
 void ecolab_grid::gather()
 {
 #ifdef MPI_SUPPORT
-  if (myid==0) parsend("ecolab.gather");
+  if (myid()==0) parsend("ecolab.gather");
 #endif
   Grid2D::gather();
 }
 
-void ecolab_model::random_interaction(TCL_args args)
+void ecolab_model::random_interaction(unsigned conn, double sigma)
 {
-  interaction.init_rand(args[0], args[1]);  
+  interaction.init_rand(conn,sigma);  
   foodweb = interaction;
 }
 
-void ecolab_model::generate(TCL_args args)
+void ecolab_model::generate(unsigned niter)
 {
-  parallel(args);
+  //parallel(args);
   if (tstep==0) make_consistent();
-  unsigned niter;
-  if (args.count) niter=args;  else niter=1;
   for (iterator i=begin(); i!=end(); i++) 
     cell(*i).generate(niter);
   tstep+=niter;
@@ -113,9 +126,9 @@ void ecolab_point::condense(const array<bool>& mask, unsigned mask_true)
   density = pack( density, mask, mask_true); 
 }
 
-void ecolab_model::condense(TCL_args args)   /* remove extinct species */
+void ecolab_model::condense()   /* remove extinct species */
 {
-  parallel(args);
+  //parallel(args);
   array<int> lmask(species.size()), map /* extinctions*/;
   array<bool> mask, mask_off;
   unsigned mask_true;
@@ -162,9 +175,9 @@ void ecolab_model::condense(TCL_args args)   /* remove extinct species */
 */
 
 
-void ecolab_model::mutate(TCL_args args)
+void ecolab_model::mutate()
 {
-  parallel(args);
+  //parallel(args);
   array<double> mut_scale(sp_sep * repro_rate * mutation * (tstep - last_mut_tstep));
   last_mut_tstep=tstep;
   array<unsigned> new_sp, cell_ids;
@@ -175,10 +188,10 @@ void ecolab_model::mutate(TCL_args args)
     }
 #ifdef MPI_SUPPORT
   MPIbuf b; b<<new_sp<<cell_ids; b.gather(0);
-  if (myid==0)
+  if (myid()==0)
     {
       new_sp.resize(0); cell_ids.resize(0);
-      for (unsigned i=0; i<nprocs; i++) 
+      for (unsigned i=0; i<nprocs(); i++) 
 	{
 	  array<int> n,c;
 	  b>>n>>c;
@@ -218,8 +231,8 @@ void do_row_or_col(array<double>& tmp, double range, double minval, double gdist
   double r;
   unsigned ntrue;
   int j, pos;
-  tclvar gen_bias("generalization_bias"); /* gen \in [-1,1] */
-  double gen= exists(gen_bias)? (double)gen_bias:0.0;
+  //tclvar gen_bias("generalization_bias"); /* gen \in [-1,1] */
+  double gen= /*exists(gen_bias)? (double)gen_bias:*/0.0;
 
   /* create or delete some connections */
   r = (2.0*rand())/RAND_MAX - 1+gen;
@@ -349,8 +362,8 @@ void ecolab_model::mutate_model(array<int> new_sp)
     }
 
   model_data::create <<=  array<double>(new_sp.size(),0);
-  species <<= pcoord(new_sp.size())*nprocs + sp_cntr;
-  sp_cntr+=new_sp.size()*nprocs;
+  species <<= pcoord(new_sp.size())*nprocs() + sp_cntr;
+  sp_cntr+=new_sp.size()*nprocs();
 
   assert(sum(mutation<0)==0);
   assert(sum(interaction.diag>=0)==0);
@@ -393,9 +406,9 @@ double which_salt(const ecolab_point& x,
     else return y.salt;
 }    
 
-void ecolab_model::migrate(TCL_args args)
+void ecolab_model::migrate()
 {
-  parallel(args);
+  //parallel(args);
   /* refer to the local cell list */
   Ptrlist& cells=*static_cast<Graph*>(this); 
 
@@ -444,7 +457,7 @@ void ecolab_model::migrate(TCL_args args)
   MPI_Reduce(&mig,&m,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
   mig=m;
 #endif
-  if (myid==0) assert(sum(ssum==0)==int(ssum.size()));
+  if (myid()==0) assert(sum(ssum==0)==int(ssum.size()));
 #endif
 }
 

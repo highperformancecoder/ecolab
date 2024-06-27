@@ -130,11 +130,11 @@ namespace ecolab
 
     void CairoImage::attachToImage(const std::string& imgName)
     {
-      Tk_PhotoHandle photo=Tk_FindPhoto(interp(),imgName.c_str());
-      if (photo)
-        cairoSurface.reset(new TkPhotoSurface(photo));
-      else
-        throw error("image %s not found", imgName.c_str());
+//      Tk_PhotoHandle photo=Tk_FindPhoto(interp(),imgName.c_str());
+//      if (photo)
+//        cairoSurface.reset(new TkPhotoSurface(photo));
+//      else
+//        throw error("image %s not found", imgName.c_str());
     }
 
    double CairoImage::distanceFrom(double x, double y) const

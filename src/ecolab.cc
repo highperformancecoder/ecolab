@@ -11,3 +11,4 @@
 
 //ecolab::tclvar TCL_obj_lib("ecolab_library",INSTALLED_ECOLAB_LIB);
 static int dum=ecolab::setEcoLabLib(INSTALLED_ECOLAB_LIB);
+

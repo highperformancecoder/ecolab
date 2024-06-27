@@ -20,6 +20,7 @@ BDB=
 TIMER=
 # use TkPhotoSurface for CairoItem, overriding platform specific optimisation
 TKPHOTOSURFACE=
+NOGUI=1
 
 # enables ecolab for the MXE environment 
 MXE=
@@ -379,6 +380,8 @@ FLAGS+=-DZLIB
 LIBS+=-lz
 endif
 
+FLAGS+=$(shell $(PKG_CONFIG) --cflags python3)
+
 ifdef XDR
 # libtirpc is where the XDR routines have been moved to from glibc
 LIBTIRPC=$(shell if $(PKG_CONFIG) libtirpc; then $(PKG_CONFIG) --libs libtirpc; fi)
@@ -503,7 +506,7 @@ endif
 #CYG_ECOLAB_LIB=$(subst \,/,$(shell cygpath -w  $(ECOLAB_HOME)/include))
 #FLAGS+=-DECOLAB_LIB=\"$(CYG_ECOLAB_LIB)\"
 #else
-FLAGS+=-DECOLAB_LIB=\"$(ECOLAB_HOME)/include\"
+#FLAGS+=-DECOLAB_LIB=\"$(ECOLAB_HOME)/include\"
 #endif
 
 ifdef DEBUGGING
@@ -565,7 +568,8 @@ ifdef MXE
 LIBMODS=$(ALWAYSLINK:%=%.o) ecolabResources.o
 endif
 
-MODS=tclmain.o $(LIBMODS)
+#MODS=tclmain.o $(LIBMODS)
+MODS=
 MODLINK=$(MODS:%=$(ECOLAB_HOME)/lib/%)
 
 
@@ -601,7 +605,7 @@ endif
 
 # list of actions to do classdesc on
 ACTIONS=pack unpack
-RPACTIONS=TCL_obj isa
+RPACTIONS=RESTProcess json_pack json_unpack
 
 .SUFFIXES: .cc .c .o .h .d .cd
 

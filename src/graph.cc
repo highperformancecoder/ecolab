@@ -255,15 +255,15 @@ namespace ecolab
         }
     }
 
-    template <class T, class G>
-    bool asg(member_entry_base* me, const G& y)
-    {
-      // should really do this via a virtual function!
-      member_entry<T>* r=*dynamic_cast<member_entry<T>*>(me);
-      if (r)
-        r->memberptr=y;
-      return r;
-    }
+//    template <class T, class G>
+//    bool asg(member_entry_base* me, const G& y)
+//    {
+//      // should really do this via a virtual function!
+//      member_entry<T>* r=*dynamic_cast<member_entry<T>*>(me);
+//      if (r)
+//        r->memberptr=y;
+//      return r;
+//    }
 
     template <class G> istream& insert_impl(istream& s, G& x)
     {
@@ -276,11 +276,11 @@ namespace ecolab
         parse_graphviz(s,x,false);
       else
         {
-          if (TCL_obj_properties().count(buf)==0)      
-            throw error("%s does not exist!",buf.c_str());
-          if (Graph* g=TCL_obj_properties()[buf]->memberPtrCasted<Graph>())
-            x=*g;
-          else
+//          if (TCL_obj_properties().count(buf)==0)      
+//            throw error("%s does not exist!",buf.c_str());
+//          if (Graph* g=TCL_obj_properties()[buf]->memberPtrCasted<Graph>())
+//            x=*g;
+//          else
             throw error("unable to assign variable %s, which is not a Graph, "
                         "to object of type %s", buf.c_str(), typeid(G).name());
         }

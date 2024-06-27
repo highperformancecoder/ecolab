@@ -18,7 +18,6 @@ using namespace std;
 
 #include "random.h"
 #include "pack_stream.h"
-#include "TCL_obj_templates.h"
 
 namespace ecolab
 {
@@ -26,20 +25,6 @@ namespace ecolab
   gaussrand array_grand;
 
   
-  //make_model(array_urand);
-  //make_model(array_grand);
-  // this is almost the same as the aforemented make_models, except
-  // without resetting ecolab_library
-  namespace 
-  {
-    int dummy=(
-               TCL_obj_init(array_urand),
-               TCL_obj(null_TCL_obj,"array_urand",array_urand),
-               TCL_obj_init(array_grand),
-               TCL_obj(null_TCL_obj,"array_grand",array_urand),
-               1);
-  }
-
 namespace array_ns
 {
   using ::log;

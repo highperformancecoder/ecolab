@@ -15,7 +15,6 @@
 #include <classdesc_access.h>
 #include "sparse_mat.h"
 #include "pack_stl.h"
-#include "TCL_obj_base.h"
 #include "arrays.h"
 #include "poly.h"
 
@@ -71,8 +70,8 @@ namespace ecolab
   /// To support back_insert_iterators for Graph, define a special
   /// version that converts from BoostGraph edges
   template <class Graph, class BG>
-  class Graph_back_insert_iterator: 
-    public std::iterator<std::output_iterator_tag, void, void, void, void>
+  class Graph_back_insert_iterator/*: 
+                                    public std::iterator<std::output_iterator_tag, void, void, void, void>*/
   {
     Graph& g;
     const BG& bg;
@@ -108,8 +107,8 @@ namespace ecolab
     };
 
     /// iterator over edges
-    class const_iterator: public classdesc::poly<const_iterator_base>,
-                          public std::iterator<std::forward_iterator_tag,Edge>
+    class const_iterator: public classdesc::poly<const_iterator_base>/*,
+                                                                       public std::iterator<std::forward_iterator_tag,Edge>*/
     {
       typedef classdesc::poly<Graph::const_iterator_base> super;
       Graph::const_iterator_base& base() {return super::operator*();}
@@ -146,11 +145,6 @@ namespace ecolab
     virtual bool directed() const=0;
     /// remove all edges from the graph and set the node count
     virtual void clear(unsigned nodes=0)=0;
-    void Clear(TCL_args args) {
-      unsigned nodes=0;
-      if (args.count) nodes=args;
-      clear(nodes);
-    }
     const Graph& operator=(const Graph& x) {
       clear(x.nodes());
       for (const_iterator e=x.begin(); e!=x.end(); ++e)
@@ -260,7 +254,7 @@ class ConcreteGraph: public GraphAdaptor<G>
   CLASSDESC_ACCESS(ConcreteGraph);
 public:
   ConcreteGraph(unsigned nodes=0): GraphAdaptor<G>(g), g(nodes) {}
-  template <class H> ConcreteGraph(const H& g1): GraphAdaptor<G>(g), g(g1) {}
+  template <class H> explicit ConcreteGraph(const H& g1): GraphAdaptor<G>(g), g(g1) {}
   bool operator==(const ConcreteGraph& x) {return x.g==g;}
   bool operator!=(const ConcreteGraph& x) {return x.g!=g;}
 };
@@ -286,30 +280,27 @@ public:
   //using Evec::const_iterator;
   using Evec::const_reference;
 
-#ifdef __APPLE_CC__
-  // bizarrely iterator equality is missing on Apple's compiler!
   struct const_iterator: public Evec::const_iterator
   {
     const_iterator() {}
     const_iterator(const Evec::const_iterator& x): Evec::const_iterator(x) {}
-    bool operator==(const const_iterator& x) const {return **this==*x;}
-  };
-#else
-    using Evec::const_iterator; 
+#ifdef __APPLE_CC__
+  // bizarrely iterator equality is missing on Apple's compiler!
+    bool operator==(const const_iterator& x) const {return &**this==&*x;}
 #endif
+  };
 
-  typedef const_iterator iterator; //disallow modification of edges
+  using iterator=const_iterator; //disallow modification of edges
     
   unsigned nodes() const {return num_nodes;}
   unsigned links() const {return size();}
   bool contains(const Edge& e) const {return count(e);}
   DiGraph(unsigned nodes=0): num_nodes(nodes) {}
   /// initialise Graph using Graph "duck-typed" object
-  template <class G> DiGraph(const G& g): num_nodes(0) {*this=g;}
-  template <class G> const DiGraph& operator=(const G& g) {
+  template <class G> explicit DiGraph(const G& g): num_nodes(0) {asg(g);}
+  template <class G> void asg(const G& g) {
     clear(g.nodes());
     for (typename G::const_iterator i=g.begin(); i!=g.end(); ++i) push_back(*i);
-    return *this;
   } 
   // use push_back for graph construction
   void push_back(const Edge& e) {
@@ -337,8 +328,8 @@ public:
 #pragma omit isa ecolab::BiDirectionalGraph_const_iterator
 #endif
 
-class BiDirectionalGraph_const_iterator:
-  public std::iterator<std::forward_iterator_tag,Edge>
+class BiDirectionalGraph_const_iterator/*:
+                                         public std::iterator<std::forward_iterator_tag,Edge>*/
 {
   bool first;
   DiGraph::const_iterator it;
@@ -391,11 +382,10 @@ public:
 
   BiDirectionalGraph(unsigned nodes=0): graph(nodes) {}
   /// initialise Graph using Graph "duck-typed" object
-  template <class G> BiDirectionalGraph(const G& g) {*this=g;}
-  template <class G> const BiDirectionalGraph& operator=(const G& g) {
+  template <class G> BiDirectionalGraph(const G& g) {asg(g);}
+  template <class G> void asg(const G& g) {
     clear(g.nodes());
     for (typename G::const_iterator i=g.begin(); i!=g.end(); ++i) push_back(*i);
-    return *this;
   } 
   unsigned nodes() const {return graph.nodes();}
   unsigned links() const {return 2*graph.links();}

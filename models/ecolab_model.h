@@ -55,7 +55,7 @@ public:
     xsize=xx; ysize=yy;
     for (unsigned x=0; x<xsize; x++)
       for (unsigned y=0; y<ysize; y++)
-	this->AddObject<ecolab_point>(x+y*xsize).proc=(x*nprocs)/xsize;
+	this->AddObject<ecolab_point>(x+y*xsize).proc=(x*nprocs())/xsize;
     for (int x=0; x<int(xsize); x++)
       for (int y=0; y<int(ysize); y++)
 	{
@@ -72,7 +72,7 @@ public:
   }
 };
 
-class ecolab_grid: public ecolab_point, public Grid2D
+class ecolab_grid: public ecolab_point, protected Grid2D
 {
 public:
   /* gain access to Grid2D iterators, not Pin's iterators */
@@ -83,9 +83,9 @@ public:
 
   urand uni;
 
-  void set_grid(TCL_args args);
-  void forall(TCL_args args);
-  std::string get(TCL_args args);
+  void set_grid(unsigned x, unsigned y);
+  //void forall(TCL_args args);
+  std::string get(unsigned x, unsigned y);
   ecolab_grid() {AddObject(*static_cast<object*>(this),0); rebuild_local_list(); xsize=ysize=1;}
   void gather();
 };
@@ -120,8 +120,9 @@ struct model_data
   sparse_mat_graph foodweb;
 };
 
-class ecolab_model: public ecolab_grid, public classdesc::TCL_obj_t, public model_data
+class ecolab_model: private ecolab_grid, public model_data
 {
+  void mutate_model(array<int>); 
 public:
   // for some reason, this using declaration does not work with g++,
   // so we need to explicitly qualify create on all usages. Bugger you
@@ -137,14 +138,14 @@ public:
 
   void make_consistent()
     {
-      if ((xsize*ysize)%nprocs!=0) throw error("number of grid cells must be a multiple of the number of execution threads");
+      if ((xsize*ysize)%nprocs()!=0) throw error("number of grid cells must be a multiple of the number of execution threads");
       if (!species.size())
 	if (size())
 	  {
 	    species=pcoord(cell(*begin()).density.size());
 	    for (iterator i=begin(); i!=end(); i++) 
 	      if (cell(*i).density.size()!=species.size())
-throw error("%d:grid needs to initialised with same no. of species at each cell",myid);
+                throw error("%d:grid needs to initialised with same no. of species at each cell",myid);
 	  }
       // bugger you, g++!
       if (!model_data::create.size()) model_data::create.resize(species.size(),0);
@@ -152,15 +153,15 @@ throw error("%d:grid needs to initialised with same no. of species at each cell"
       if (!migration.size()) migration.resize(species.size(),0);
     }
    
-  void distribute_cells(TCL_args);
-  void random_interaction(TCL_args);
+  void distribute_cells();
+  void random_interaction(unsigned conn, double sigma);
 
-  void generate(TCL_args);
-  void condense(TCL_args);
-  void mutate(TCL_args);
+  void generate(unsigned niter);
+  void generate() {generate(1);}
+  void condense();
+  void mutate();
   array<double> lifetimes();
-  void migrate(TCL_args);
-  void mutate_model(array<int>); 
+  void migrate();
 
   double complexity() {return ::complexity(foodweb);}
 };

@@ -13,7 +13,6 @@
 #define ANALYSIS_H
 #include "arrays.h"
 #include "graph.h"
-#include "TCL_obj_stl.h"
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -61,12 +60,6 @@ namespace ecolab
     Stats& operator<<=(const array_ns::array<double>& x)
     {operator<<=(array_ns::array<float>(x)); return *this;}
 
-    /// TCL access - append an array of data
-    void add_data(TCL_args args) {
-      array_ns::array<float> t;
-      args>>t;
-      operator<<=(t);
-    }
     bool operator<(const Stats& x) const 
     {return std::lexicographical_compare(begin(),end(),x.begin(),x.end());}
   };
@@ -90,13 +83,13 @@ namespace ecolab
         @param distribution2 eg powerlaw(-1.5)
         @param \f$x_\mathrm{min}\f$
     */
-    double loglikelihood(TCL_args args); 
+    //double loglikelihood(TCL_args args); 
     /** \brief fit \f$x^{-a}\$
 
         @returns \f$a\f$ and \f$x_\mathrm{min}\f$
         @param \f$x_\mathrm{min}\f$ (optional) 
     */
-    array_ns::array<double> fitPowerLaw(TCL_args); 
+    //array_ns::array<double> fitPowerLaw(TCL_args); 
 
     /// fit \f$\exp(-x/a)\f$ - return \f$a\f$ 
     double fitExponential() {return av();} 

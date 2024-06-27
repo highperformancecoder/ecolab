@@ -42,22 +42,22 @@ palette_class::palette_class()
 
   if (size==0)
    {
-     tclvar palette("palette");
-     CONST84 char **elem;
+//     tclvar palette("palette");
+//     CONST84 char **elem;
 
-     if (exists(palette))
-       {
-	 if (Tcl_SplitList(interp(),palette,&elemc,&elem)!=TCL_OK) 
-	   throw error("");
-	 size=elemc;
-	 table.resize(size);
-	 for (int j=0; j<elemc; j++)
-	     {
-	       table[j] = elem[j];
-	     }
-	 Tcl_Free((char*)elem);
-       }
-     else
+//     if (exists(palette))
+//       {
+//	 if (Tcl_SplitList(interp(),palette,&elemc,&elem)!=TCL_OK) 
+//	   throw error("");
+//	 size=elemc;
+//	 table.resize(size);
+//	 for (int j=0; j<elemc; j++)
+//	     {
+//	       table[j] = elem[j];
+//	     }
+//	 Tcl_Free((char*)elem);
+//       }
+//     else
        {
          table.resize(1);
 	 table[0]="black";
@@ -148,123 +148,123 @@ void display(std::string display, double tstep,
   cmd | timename |" append " | tstep | '\n';
 
 #elif defined(CAIRO) // Cairo version here
-  declare(plot, Plot, ("."+display+".plot").c_str());
+  //  declare(plot, Plot, ("."+display+".plot").c_str());
   if (density.size() != species.size()) 
     throw error("size mismatch between density(%ld) and species(%ld)",
                 long(density.size()),long(species.size()));
-  for (size_t i=0; i<density.size(); ++i)
-    plot.add(species[i], tstep, density[i]);
+//  for (size_t i=0; i<density.size(); ++i)
+//    plot.add(species[i], tstep, density[i]);
 #endif
  
-}  
-
-
-
-NEWCMD(eco_display,3)
-{ 
-  /* 
-     argv[1] = "tstep" - the independent variable
-     argv[2] = "density" array to be plotted, and 
-     argv[3] = "species" array used for colouring */
-  double tstep=atof(argv[1]);
-  declare( species, ecolab::array<int> , argv[3] );
-
-  
-  std::string displayN("display_"); displayN += argv[2];
-
-  // declare( density, iarray, argv[2] );
-  // density is either an array or iarray
-  if (TCL_obj_properties().count(argv[2])==0)
-    throw error("%s does not exist!",argv[2]);
-  if (ecolab::array<int>* density = TCL_obj_properties()[argv[2]]->
-      memberPtrCasted<ecolab::array<int> >())
-    display(displayN,tstep,*density,species);
-  else if (ecolab::array<double>* density = TCL_obj_properties()[argv[2]]->
-           memberPtrCasted<ecolab::array<double> >())
-    display(displayN,tstep,*density,species);
-  else 
-    throw error("%s is invalid type",argv[2]);
 }
 
-/* 
-   connect_plot
-Display a plot of the species' connectivities (i.e. the sparsity
-structure of interaction matrix
-*/
 
-NEWCMD(eco_connect_plot,4)
-{
 
-  tclcmd cmd;
-  int low_colour, high_colour;
-  palette_class palette;
-
-  /* 
-     argv[1] = "interaction" - the sparse matrix
-     argv[2] = "density" used for flagging extinctions 
-     argv[3] = toplevel window of this widget
-     argv[4] = scale
-*/
-  declare(interaction, sparse_mat, argv[1]);
-  declare(density, ecolab::array<int>, argv[2]);
-  const char *display=argv[3];
-  double scale=atof(argv[4]);
-  cmd|display|".graph delete all\n";
-  ecolab::array<int> enum_clusters(interaction.diag.size());
-  enum_clusters=1; 
-  enum_clusters=enumerate(enum_clusters);
-  for (unsigned i=0; i<interaction.row.size(); i++)
-    { 
-      if (enum_clusters[interaction.row[i]] > enum_clusters[interaction.col[i]])
-	{
-	  high_colour = enum_clusters[interaction.row[i]];
-	  low_colour =  enum_clusters[interaction.col[i]];
-	}
-      else
-	{
-	  high_colour = enum_clusters[interaction.col[i]];
-	  low_colour =  enum_clusters[interaction.row[i]];
-	}
-      enum_clusters = merge( enum_clusters==high_colour, 
-			     low_colour, enum_clusters);
-    }
-      
-  /* for grouping species into their ecologies */
-  
-  ecolab::array<int> map(interaction.diag.size()), mask;
-  map=-1;
-  
-  for (int i=0; i<=max(enum_clusters); i++)
-    {
-      mask = enum_clusters==i;
-      map = merge(  mask, enumerate(mask)+max(map)+1, map);
-    }
-      
-  /* create coloured rectangles displaying the plot */
-  for (unsigned i=0; i<interaction.row.size(); i++)
-    {
-      (cmd << display|".graph create rectangle") << 
-	(map[interaction.col[i]]) * scale << 
-	(map[interaction.row[i]]) * scale << 
-	(map[interaction.col[i]]+1) * scale << 
-	(map[interaction.row[i]]+1) * scale;
-      //(int) shouldn't be necessary!
-      if ((int)density[interaction.row[i]] == 0 ||   
-	  (int) density[interaction.col[i]] ==0) 
-	/* a species is extinct, connection is dead ! */
-	cmd << " -fill wheat\n";
-      else 
-	cmd << " -fill " << palette[enum_clusters[interaction.row[i]]] 
-	    << "\n";
-    }
-     
-  /* do diagonals */
-  for (size_t i=0; i<interaction.diag.size(); i++)
-    (cmd <<  display|".graph create rectangle") << 
-      (map[i])*scale << (map[i])*scale << 
-      (map[i]+1)*scale << (map[i]+1)*scale <<  " -fill " << 
-      (density[i]? palette[enum_clusters[i]]: "wheat") << "\n";
-}
+//NEWCMD(eco_display,3)
+//{ 
+//  /* 
+//     argv[1] = "tstep" - the independent variable
+//     argv[2] = "density" array to be plotted, and 
+//     argv[3] = "species" array used for colouring */
+//  double tstep=atof(argv[1]);
+//  declare( species, ecolab::array<int> , argv[3] );
+//
+//  
+//  std::string displayN("display_"); displayN += argv[2];
+//
+//  // declare( density, iarray, argv[2] );
+//  // density is either an array or iarray
+//  if (TCL_obj_properties().count(argv[2])==0)
+//    throw error("%s does not exist!",argv[2]);
+//  if (ecolab::array<int>* density = TCL_obj_properties()[argv[2]]->
+//      memberPtrCasted<ecolab::array<int> >())
+//    display(displayN,tstep,*density,species);
+//  else if (ecolab::array<double>* density = TCL_obj_properties()[argv[2]]->
+//           memberPtrCasted<ecolab::array<double> >())
+//    display(displayN,tstep,*density,species);
+//  else 
+//    throw error("%s is invalid type",argv[2]);
+//}
+//
+///* 
+//   connect_plot
+//Display a plot of the species' connectivities (i.e. the sparsity
+//structure of interaction matrix
+//*/
+//
+//NEWCMD(eco_connect_plot,4)
+//{
+//
+//  tclcmd cmd;
+//  int low_colour, high_colour;
+//  palette_class palette;
+//
+//  /* 
+//     argv[1] = "interaction" - the sparse matrix
+//     argv[2] = "density" used for flagging extinctions 
+//     argv[3] = toplevel window of this widget
+//     argv[4] = scale
+//*/
+//  declare(interaction, sparse_mat, argv[1]);
+//  declare(density, ecolab::array<int>, argv[2]);
+//  const char *display=argv[3];
+//  double scale=atof(argv[4]);
+//  cmd|display|".graph delete all\n";
+//  ecolab::array<int> enum_clusters(interaction.diag.size());
+//  enum_clusters=1; 
+//  enum_clusters=enumerate(enum_clusters);
+//  for (unsigned i=0; i<interaction.row.size(); i++)
+//    { 
+//      if (enum_clusters[interaction.row[i]] > enum_clusters[interaction.col[i]])
+//	{
+//	  high_colour = enum_clusters[interaction.row[i]];
+//	  low_colour =  enum_clusters[interaction.col[i]];
+//	}
+//      else
+//	{
+//	  high_colour = enum_clusters[interaction.col[i]];
+//	  low_colour =  enum_clusters[interaction.row[i]];
+//	}
+//      enum_clusters = merge( enum_clusters==high_colour, 
+//			     low_colour, enum_clusters);
+//    }
+//      
+//  /* for grouping species into their ecologies */
+//  
+//  ecolab::array<int> map(interaction.diag.size()), mask;
+//  map=-1;
+//  
+//  for (int i=0; i<=max(enum_clusters); i++)
+//    {
+//      mask = enum_clusters==i;
+//      map = merge(  mask, enumerate(mask)+max(map)+1, map);
+//    }
+//      
+//  /* create coloured rectangles displaying the plot */
+//  for (unsigned i=0; i<interaction.row.size(); i++)
+//    {
+//      (cmd << display|".graph create rectangle") << 
+//	(map[interaction.col[i]]) * scale << 
+//	(map[interaction.row[i]]) * scale << 
+//	(map[interaction.col[i]]+1) * scale << 
+//	(map[interaction.row[i]]+1) * scale;
+//      //(int) shouldn't be necessary!
+//      if ((int)density[interaction.row[i]] == 0 ||   
+//	  (int) density[interaction.col[i]] ==0) 
+//	/* a species is extinct, connection is dead ! */
+//	cmd << " -fill wheat\n";
+//      else 
+//	cmd << " -fill " << palette[enum_clusters[interaction.row[i]]] 
+//	    << "\n";
+//    }
+//     
+//  /* do diagonals */
+//  for (size_t i=0; i<interaction.diag.size(); i++)
+//    (cmd <<  display|".graph create rectangle") << 
+//      (map[i])*scale << (map[i])*scale << 
+//      (map[i]+1)*scale << (map[i]+1)*scale <<  " -fill " << 
+//      (density[i]? palette[enum_clusters[i]]: "wheat") << "\n";
+//}
 
   Stats& Stats::operator<<=(float x)
   {
@@ -437,38 +437,38 @@ public:
   }
 };
 
-array_ns::array<double> HistoStats::fitPowerLaw(TCL_args args)
-{
-  array_ns::array<double> ret(2);
-  double& slope=ret[0], &xmin=ret[1];
-  array<float>& data=*this;
-  // we must have positive numbers here
-  double m0=log(std::max(array_ns::min(data), std::numeric_limits<float>::min())); 
-  double m1=log(std::max(array_ns::max(data), std::numeric_limits<float>::min()));
-  sort(begin(),end());
-
-  if (args.count==0)
-    {
-      // Do binary search on the interval x_min in [e^m0,e^m1] for min of maxDiff
-      do
-        {
-          double left=maxDiff( exp((m1-m0)*0.25+m0), *this), 
-            right=maxDiff( exp((m1-m0)*0.75+m0), *this);
-          if (left < right)
-            m1 -= (m1-m0)/2;
-          else
-            m0 += (m1-m0)/2;
-        }
-      while (m1-m0 > 0.01);
-      xmin = exp((m1-m0)/2+m0);
-    }
-  else
-    xmin=args;  //xmin specified by user
-
-  unsigned start=mini(xmin,data);
-  slope=bestslope(xmin,size()-start,begin()+start);
-  return ret;
-}
+//array_ns::array<double> HistoStats::fitPowerLaw(TCL_args args)
+//{
+//  array_ns::array<double> ret(2);
+//  double& slope=ret[0], &xmin=ret[1];
+//  array<float>& data=*this;
+//  // we must have positive numbers here
+//  double m0=log(std::max(array_ns::min(data), std::numeric_limits<float>::min())); 
+//  double m1=log(std::max(array_ns::max(data), std::numeric_limits<float>::min()));
+//  sort(begin(),end());
+//
+//  if (args.count==0)
+//    {
+//      // Do binary search on the interval x_min in [e^m0,e^m1] for min of maxDiff
+//      do
+//        {
+//          double left=maxDiff( exp((m1-m0)*0.25+m0), *this), 
+//            right=maxDiff( exp((m1-m0)*0.75+m0), *this);
+//          if (left < right)
+//            m1 -= (m1-m0)/2;
+//          else
+//            m0 += (m1-m0)/2;
+//        }
+//      while (m1-m0 > 0.01);
+//      xmin = exp((m1-m0)/2+m0);
+//    }
+//  else
+//    xmin=args;  //xmin specified by user
+//
+//  unsigned start=mini(xmin,data);
+//  slope=bestslope(xmin,size()-start,begin()+start);
+//  return ret;
+//}
 
 array_ns::array<double> HistoStats::fitLogNormal()
 {
@@ -521,30 +521,22 @@ AUTOPTR<logdist> distribution(char *distrname, float xmin)
   
 //return the log likelihood ratio between two distributions over a range xmin-xmax
 //Convert to a p-value by applying fabs(erfc()) to the return value.
-double HistoStats::loglikelihood(TCL_args args)
-{
-  float xmin=args[2];
-  AUTOPTR<logdist> p1=distribution(args,xmin), p2=distribution(args,xmin);
-  sort(begin(),end());
-  // third arg is minimum cutoff
-  unsigned start=0;
-  if (args.count) start=mini(args,*this);
-  // fourth (optional) arg is maximum cutoff -- is this valid??
-  unsigned n=size()-start;
-  if (args.count) n=maxi(args,*this)-start;
-  return ::loglikelihood( *p1, *p2, n, begin()+start);
-  
+//double HistoStats::loglikelihood(TCL_args args)
+//{
+//  float xmin=args[2];
+//  AUTOPTR<logdist> p1=distribution(args,xmin), p2=distribution(args,xmin);
+//  sort(begin(),end());
+//  // third arg is minimum cutoff
+//  unsigned start=0;
+//  if (args.count) start=mini(args,*this);
+//  // fourth (optional) arg is maximum cutoff -- is this valid??
+//  unsigned n=size()-start;
+//  if (args.count) n=maxi(args,*this)-start;
+//  return ::loglikelihood( *p1, *p2, n, begin()+start);
+//  
+//
+//}
 
-}
-
-TCLTYPE(Stats);
-TCLTYPE(HistoStats);
-
-NEWCMD(erfc,1) //used for exposing erfc to TCL
-{
-  tclreturn r;
-  r<<erfc(atof(argv[1]));
-}
 
 #ifdef BLT
 /* 
@@ -651,19 +643,6 @@ void histogram_data::outputdat(TCL_args args)
 
 namespace ecolab 
 {
-
-#ifdef CAIRO
-  void HistoGram::outputdat(TCL_args args)
-  {
-    ofstream o((char*)args);
-    array_ns::array<double> h=histogram(), b=bins();
-    for (size_t i=0; i<h.size(); ++i)
-      o<<b[i]<<" "<<h[i]<<endl;
-  }
-
-  TCLTYPE(HistoGram);
-#endif
-
 
   namespace 
   {
@@ -773,7 +752,7 @@ namespace ecolab
       }        
   }
 
-  TCLTYPE(NetworkFromTimeSeries);
+  //  TCLTYPE(NetworkFromTimeSeries);
 
 }
 

@@ -77,25 +77,26 @@ namespace
     int createCI(Tcl_Interp* interp, CONST86 char* name, int objc, Tcl_Obj *const objv[],
                  CONST86 Tk_ImageType* typePtr, Tk_ImageMaster master, ClientData *masterData)
     {
-      try
-        {
-          TCL_args args(objc,objv);
-          string canvas=args; // arguments should be something like -surface minsky.canvas
-          if (TCL_obj_hash::mapped_type mb=TCL_obj_properties()[canvas])
-            if (CairoSurface* csurf=mb->memberPtrCasted<CairoSurface>())
-              {
-                *masterData=new CD(0,master,*csurf);
-                Tk_ImageChanged(master,-1000000,-1000000,2000000,2000000,2000000,2000000);
-                return TCL_OK;
-              }
-          Tcl_AppendResult(interp,"Not a CairoSurface",NULL);
-          return TCL_ERROR;
-        }
-      catch (const std::exception& e)
-        {
-          Tcl_AppendResult(interp,e.what(),NULL);
-          return TCL_ERROR;
-        }
+      return TCL_OK;
+//      try
+//        {
+//          TCL_args args(objc,objv);
+//          string canvas=args; // arguments should be something like -surface minsky.canvas
+//          if (TCL_obj_hash::mapped_type mb=TCL_obj_properties()[canvas])
+//            if (CairoSurface* csurf=mb->memberPtrCasted<CairoSurface>())
+//              {
+//                *masterData=new CD(0,master,*csurf);
+//                Tk_ImageChanged(master,-1000000,-1000000,2000000,2000000,2000000,2000000);
+//                return TCL_OK;
+//              }
+//          Tcl_AppendResult(interp,"Not a CairoSurface",NULL);
+//          return TCL_ERROR;
+//        }
+//      catch (const std::exception& e)
+//        {
+//          Tcl_AppendResult(interp,e.what(),NULL);
+//          return TCL_ERROR;
+//        }
     }
 
     ClientData getCI(Tk_Window win, ClientData masterData)

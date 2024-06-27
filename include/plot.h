@@ -11,7 +11,6 @@
 
 #include "classdesc.h"
 #include "classdesc_access.h"
-#include "TCL_obj_base.h"
 #include "arrays.h"
 
 #include <string>
@@ -70,7 +69,7 @@ namespace ecolab
     void extendPalette() {palette.push_back(LineStyle());}
 
   private:    
-    string m_image;
+    std::string m_image;
     std::vector<std::vector<double> > x;
     std::vector<std::vector<double> > y;
     cairo::SurfacePtr surface;
@@ -105,7 +104,7 @@ namespace ecolab
 
     bool displayRHSscale() const {return !penSide.empty() && miny1<maxy1;}
     bool displayLHSscale() const {return miny<maxy;}
-    string axisLabel(double x, double scale, bool percent=false) const;
+    std::string axisLabel(double x, double scale, bool percent=false) const;
     bool onlyMarkers() const; ///< return true if the only data is marker data
   public:
     Plot(): palette(paletteSz), msg(NULL), nxTicks(30), nyTicks(30), fontScale(1),
@@ -135,7 +134,7 @@ namespace ecolab
     const double legendOffset; ///< offset of legend text within legend box as fraction of width
     PlotType plotType;
     /// axis labels
-    string xlabel, ylabel, y1label;
+    std::string xlabel, ylabel, y1label;
     double xtickAngle; ///< angle (in degrees) at which xtick labels are drawn
     /// if |log_10 (x)| < exp_threshold, do not rescale tick value
     unsigned exp_threshold;
@@ -155,19 +154,19 @@ namespace ecolab
     void setMinMax();
 
     /// set/get the Tk image that this class writes to.
-    string Image() const {return m_image;}
-    string Image(const string& im, bool transparency=true);
-    string image(TCL_args args) {
-      if (args.count>0)
-        {
-          string imgName=args.str();
-          bool transparency=true;
-          if (args.count) transparency=args;
-          return Image(imgName,transparency);
-        }
-      else
-        return Image();
-    }
+    std::string Image() const {return m_image;}
+    std::string Image(const std::string& im, bool transparency=true);
+//    string image(TCL_args args) {
+//      if (args.count>0)
+//        {
+//          string imgName=args.str();
+//          bool transparency=true;
+//          if (args.count) transparency=args;
+//          return Image(imgName,transparency);
+//        }
+//      else
+//        return Image();
+//    }
     
     /// redraw the plot
     bool redraw();
@@ -187,7 +186,7 @@ namespace ecolab
 
     /// label a pen (for display in a legend). The string may contain
     /// pango markup.
-    void labelPen(unsigned pen, const string& label);
+    void labelPen(unsigned pen, const std::string& label);
     /// label a pen with an arbitrary graphic, given by \a label.
     void LabelPen(unsigned pen, const cairo::SurfacePtr& label);
 
@@ -204,7 +203,7 @@ namespace ecolab
     }
 
     /// TCL interface
-    void plot(TCL_args args); 
+    //void plot(TCL_args args); 
 
     //serialisation support (surface is not auto-serialisable)
     void pack(classdesc::pack_t& p) const {p<<m_image<<x<<y<<minx<<maxx<<miny<<maxy;}
@@ -218,7 +217,7 @@ namespace ecolab
     void addPt(unsigned pen, double x, double y);
 
     /// export plotting data as a CSV file. @throw if an I/O error occurs
-    void exportAsCSV(const std::string& filename, const string& separator) const;
+    void exportAsCSV(const std::string& filename, const std::string& separator) const;
     void exportAsCSV(const std::string& filename) const
     {exportAsCSV(filename,",");}
 
@@ -227,8 +226,8 @@ namespace ecolab
     /// @param label - pen label
     /// @param x x coordinate of point to be labelled
     /// @param y y coordinate of point to be labelled
-    static std::string defaultFormatter(const string& label,double x,double y);
-    using Formatter=std::function<std::string(const string&,double,double)>;
+    static std::string defaultFormatter(const std::string& label,double x,double y);
+    using Formatter=std::function<std::string(const std::string&,double,double)>;
     /// if \a (x,y) within ([0,1],[0,1]), then paint a value box corresponding to closest curve
     /// @param tolerance - how close in user relative coordinates the mouse needs to be to a data point
     /// @param formatter - produce text label given (x,y) values 
@@ -288,7 +287,7 @@ namespace ecolab
    
   private:
     std::vector<cairo::SurfacePtr> penLabel;
-    std::vector<string> penTextLabel;
+    std::vector<std::string> penTextLabel;
     // if this is empty, all pens are on the left, and no RHS scale is drawn
     std::vector<Side> penSide;
   };

@@ -20,7 +20,6 @@
 #include "pack_base.h"
 #include "pack_stl.h"
 #include "pack_graph.h"
-#include "TCL_obj_base.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -65,7 +64,6 @@ namespace ecolab
     void Set_gen(random_gen *g) {del_gen(); gen=g; allocated=false;}
     template <class T> void new_gen(const T& g) 
     {del_gen(); gen=new T; allocated=true;}
-    void set_gen(TCL_args);
     double rand();
   };
 

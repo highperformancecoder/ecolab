@@ -55,7 +55,6 @@
 #endif
 
 #include <pack_base.h>
-#include <TCL_obj_base.h>
 
 namespace ecolab
 {
@@ -2470,8 +2469,6 @@ namespace ecolab
   extern gaussrand array_grand;
 } // namespace ecolab
 
-using ecolab::TCL_obj;
-
 namespace classdesc_access
 {
   /* Definitions of pack, unpack and TCL_obj for array classes */
@@ -2501,17 +2498,6 @@ namespace classdesc_access
     }
   };
 
-  template <class T>
-  struct access_TCL_obj<ecolab::array_ns::array<T> >
-  {
-    template <class U>
-    void operator()(ecolab::TCL_obj_t& targ, const classdesc::string& desc, 
-      U& arg)
-    {
-      ecolab::TCL_obj_register(targ,desc,arg);
-      TCL_obj(targ,desc+".size", arg, &ecolab::array_ns::array<T>::size);
-    }
-  };
 }
 
 namespace classdesc

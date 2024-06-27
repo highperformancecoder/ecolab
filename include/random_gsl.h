@@ -11,6 +11,8 @@
 */
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
+#include <string>
+#include "error.h"
 
 namespace ecolab
 {
@@ -24,12 +26,10 @@ namespace ecolab
     urand(const gsl_rng_type *descr=gsl_rng_mt19937) {gen=gsl_rng_alloc(descr);}
     ~urand() {gsl_rng_free(gen);}
     void Seed(int s) {gsl_rng_set(gen,s);}
-    void seed(TCL_args args) {Seed(args);}
     double rand();
     /* select a different uniform random generator according the GSL's rng
        string interface */
-    void set_gen(TCL_args args); 
-    void Set_gen(const string& descr)
+    void Set_gen(const std::string& descr)
     {
       static const gsl_rng_type ** rngTypes=gsl_rng_types_setup();
       const gsl_rng_type **g=rngTypes;
