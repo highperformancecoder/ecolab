@@ -28,7 +28,7 @@ namespace ecolab
     virtual bool redraw(int x0, int y0, int width, int height)=0;
     virtual void redrawWithBounds() {redraw(-1e9,-1e9,2e9,2e9);} //TODO better name for this?
   };
-  
+
   struct CairoSurface: public classdesc::Exclude<CairoSurfaceRedraw>
   {
     virtual ~CairoSurface() {}

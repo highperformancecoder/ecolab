@@ -88,7 +88,7 @@ endif
 UTILS=utils/wrap utils/tac
 SCRIPTS=utils/mkmacapp models/macrun
 
-ELIBS=lib/libecolab$(ECOLIBS_EXT).a $(MODS:%=lib/%)
+ELIBS=lib/libecolab$(ECOLIBS_EXT).so $(MODS:%=lib/%)
 
 # toplevel version
 include Makefile.version
@@ -109,7 +109,7 @@ all: all-without-models
 	$(MAKE) models 
 	-$(CHMOD) a+x models/*.tcl
 
-all-without-models: ecolab-libs
+all-without-models: ecolab-libs lib/libecolab.so
 	-$(CHMOD) a+x $(SCRIPTS)
 # copy in the system built TCL library
 ifdef MXE
@@ -140,6 +140,9 @@ endif
 	echo NOGUI=$(NOGUI)>>$(MCFG)
 	echo AQUA=$(AQUA)>>$(MCFG)	
 	echo MAC_OSX_TK=$(MAC_OSX_TK)>>$(MCFG)
+
+lib/libecolab$(ECOLIBS_EXT).so: lib $(OBJS) ecolab.o
+	$(LINK) $(FLAGS) -shared $(OBJS) ecolab.o -o $@
 
 ecolab-libs: lib bin $(CLASSDESC) include/nauty_sizes.h
 	$(MAKE) $(UTILS) 
