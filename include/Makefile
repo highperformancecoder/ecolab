@@ -636,7 +636,7 @@ $(UTILS): %: %.cc tokeninput.h
 .h.cd:
 	$(CLASSDESC) -nodef -typeName -i $< >$@
 	$(CLASSDESC) -nodef -onbase -I $(CDINCLUDE) -I $(ECOLAB_HOME)/include -i $< $(ACTIONS) >>$@
-	$(CLASSDESC) -nodef -onbase -typeName -I $(CDINCLUDE) -I $(ECOLAB_HOME)/include -i $< \
-	  -respect_private  $(RPACTIONS) >>$@
+	$(CLASSDESC) -nodef -onbase -use_mbr_pointers -typeName -I $(CDINCLUDE) -I $(ECOLAB_HOME)/include -i $< \
+	  -respect_private  -overload  $(RPACTIONS) >>$@
 # command to remove standard built files
 BASIC_CLEAN=rm -f *.o  *~ \\\#* core *.exh *.exc *.d *,D *.exe *.cd

@@ -20,7 +20,7 @@ CXXFLAGS+=-std=c++11
 endif
 
 #MODELS=ecolab shadow newman jellyfish webworld netcomplexity
-MODELS=ecolab
+MODELS=ecolab_model
 
 #chmod command is to counteract AEGIS removing execute privelege from scripts
 all: $(MODELS:=.so)

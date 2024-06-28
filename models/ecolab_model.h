@@ -20,22 +20,23 @@ using GRAPHCODE_NS::Wrap;
 using classdesc::Object;
 
 /* ecolab cell  */
-class ecolab_point: public Object<ecolab_point,GRAPHCODE_NS::object>
+struct ecolab_point_data
 {
-protected:
+  double salt;  /* random no. used for migration */
+  array<int> density;
+  void generate_point(unsigned niter);
+  void condense_point(const array<bool>& mask, unsigned mask_true);
+  array<int> mutate_point(const array<double>&); 
+};
+
+class ecolab_point: public ecolab_point_data, public Object<ecolab_point,GRAPHCODE_NS::object>
+{
+public:
   using Object<ecolab_point,GRAPHCODE_NS::object>::pack;
   // override object::pack
   template <class A, class M> 
   A pack(const A& e, const M& mask, long ntrue=-1)
   {return array_ns::pack(e,mask,ntrue);} 
-
-public:
-
-  double salt;  /* random no. used for migration */
-  array<int> density;
-  void generate(unsigned niter);
-  void condense(const array<bool>& mask, unsigned mask_true);
-  array<int> mutate(const array<double>&); 
 };
 
 
@@ -72,13 +73,14 @@ public:
   }
 };
 
-class ecolab_grid: public ecolab_point, protected Grid2D
+class ecolab_grid: public ecolab_point_data, protected Grid2D
 {
-public:
+protected:
   /* gain access to Grid2D iterators, not Pin's iterators */
   typedef Grid2D::iterator iterator;
   iterator begin() {return Grid2D::begin();}
   iterator end() {return Grid2D::end();}
+public:
   unsigned size() {return Grid2D::size();}
 
   urand uni;
@@ -86,7 +88,7 @@ public:
   void set_grid(unsigned x, unsigned y);
   //void forall(TCL_args args);
   std::string get(unsigned x, unsigned y);
-  ecolab_grid() {AddObject(*static_cast<object*>(this),0); rebuild_local_list(); xsize=ysize=1;}
+  ecolab_grid() {/*AddObject(*static_cast<object*>(this),0); rebuild_local_list();*/ xsize=ysize=1;}
   void gather();
 };
 
@@ -120,7 +122,7 @@ struct model_data
   sparse_mat_graph foodweb;
 };
 
-class ecolab_model: private ecolab_grid, public model_data
+class ecolab_model: public ecolab_grid, public model_data
 {
   void mutate_model(array<int>); 
 public:

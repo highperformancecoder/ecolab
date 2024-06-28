@@ -43,7 +43,7 @@ namespace classdesc_access
 namespace model
 {
   ecolab_model ecolab;
-  CLASSDESC_PYTHON_MODULE(ecolab,ecolab);
+  CLASSDESC_PYTHON_MODULE(ecolab_model,ecolab);
 }
 
 void ecolab_grid::set_grid(unsigned x, unsigned y)
@@ -107,12 +107,13 @@ void ecolab_model::generate(unsigned niter)
 {
   //parallel(args);
   if (tstep==0) make_consistent();
-  for (iterator i=begin(); i!=end(); i++) 
-    cell(*i).generate(niter);
+//  for (iterator i=begin(); i!=end(); i++) 
+//    cell(*i).generate(niter);
+  generate_point(niter);
   tstep+=niter;
 } 
 
-void ecolab_point::generate(unsigned niter)
+void ecolab_point_data::generate_point(unsigned niter)
 { 
   array<double> n(density);
   for (unsigned i=0; i<niter; i++)
@@ -121,7 +122,7 @@ void ecolab_point::generate(unsigned niter)
 }
 
 
-void ecolab_point::condense(const array<bool>& mask, unsigned mask_true)
+void ecolab_point_data::condense_point(const array<bool>& mask, unsigned mask_true)
 {
   density = pack( density, mask, mask_true); 
 }
@@ -159,7 +160,7 @@ void ecolab_model::condense()   /* remove extinct species */
   migration = pack(migration, mask, mask_true);
   interaction.diag = pack(interaction.diag, mask, mask_true);
 
-  for (iterator i=begin(); i!=end(); i++) cell(*i).condense( mask, mask_true);
+  for (iterator i=begin(); i!=end(); i++) cell(*i).condense_point( mask, mask_true);
 
   mask_true=sum(mask_off);
 
@@ -183,7 +184,7 @@ void ecolab_model::mutate()
   array<unsigned> new_sp, cell_ids;
   for (iterator c=begin(); c!=end(); c++) 
     {
-      new_sp <<= cell(*c).mutate(mut_scale);
+      new_sp <<= cell(*c).mutate_point(mut_scale);
       cell_ids <<= array<int>(new_sp.size()-cell_ids.size(),c->ID);
     }
 #ifdef MPI_SUPPORT
@@ -208,7 +209,7 @@ void ecolab_model::mutate()
     cell(*c).density <<= cell_ids == c->ID;
 }
 
-array<int> ecolab_point::mutate(const array<double>& mut_scale)
+array<int> ecolab_point_data::mutate_point(const array<double>& mut_scale)
 {
   array<int> speciations;
   /* calculate the number of mutants each species produces */

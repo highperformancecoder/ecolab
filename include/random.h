@@ -90,8 +90,10 @@ namespace ecolab
     int width;  /* digits of precision (base 16) used from prob. distribution */
     double min, max;  /* distribution endpoints */
     distrand():base(10) {nsamp=10; width=3; min=0; max=1;}
-    void Init(int argc, char *argv[]);
-    void init(double (*f)(double));
+    //void Init(int argc, char *argv[]);
+    // fp syntax problematic
+    //void init(double (*f)(double));
+    void init(std::function<double(double)>);
     double rand();
   };
 

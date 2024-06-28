@@ -84,7 +84,7 @@ static eco_strstream tclfun;
    rather than base 10 */
 
 
-void distrand::init(double (*f)(double))
+void distrand::init(std::function<double(double)> f)
 {
   int i,j,k,l;
   double binsz=(max-min)/nsamp, sump;
