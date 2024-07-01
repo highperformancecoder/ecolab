@@ -63,7 +63,7 @@ OBJS=src/automorph.o src/auxil.o src/arrays.o src/sparse_mat.o \
 	src/findFirst.o src/graph.o src/netcomplexity.o src/naugraph.o \
 	src/nautil.o src/nauty.o src/nautinv.o src/cachedDBM.o src/igraph.o \
 	src/cairo_types.o src/cairo_base.o  src/cairoSurfaceImage.o src/plot.o \
-	src/analysis.o src/random.o
+	src/analysis.o src/random.o src/ecolab.o
 
 ifdef XDR
 OBJS+=src/xdr_pack.o
@@ -75,7 +75,7 @@ CXXFLAGS+=-DMAC_OSX_TK
 OBJS+=src/getContext.o
 endif
 
-CDHDRS=analysis.cd analysisBLT.cd analysisCairo.cd cachedDBM.cd cairoSurfaceImage.cd graph.cd graphcode.cd netcomplexity.cd object.cd plot.cd poly.cd polyRESTProcess.cd polyRESTProcessBase.cd ref.cd random.cd random_basic.cd RESTProcess_base.cd signature.cd sparse_mat.cd
+CDHDRS=analysis.cd analysisBLT.cd analysisCairo.cd cachedDBM.cd cairoSurfaceImage.cd graph.cd graphcode.cd netcomplexity.cd object.cd plot.cd poly.cd polyRESTProcess.cd polyRESTProcessBase.cd ref.cd random.cd random_basic.cd ref.cd RESTProcess_base.cd signature.cd sparse_mat.cd
 
 ifdef UNURAN
 CDHDRS+=random_unuran.cd
@@ -88,13 +88,18 @@ endif
 UTILS=utils/wrap utils/tac
 SCRIPTS=utils/mkmacapp models/macrun
 
-ELIBS=lib/libecolab$(ECOLIBS_EXT).so $(MODS:%=lib/%)
+ELIBS=lib/libecolab$(ECOLIBS_EXT).a $(MODS:%=lib/%)
 
 # toplevel version
 include Makefile.version
 
 # variant of $(VERSION) that has leading 0s stripped (for sonames)
 SOVERSION=$(subst D0,D,$(subst D00,D,$(VERSION)))
+
+ifneq ($(MAKECMDGOALS),clean)
+# make sure Classdesc is built first, even before starting to include Makefiles
+build_classdesc:=$(shell cd classdesc; $(MAKE) PREFIX=$(ECOLAB_HOME) XDR=$(XDR) install)
+endif
 
 #chmod command is to counteract AEGIS removing execute privelege from scripts
 ifdef AEGIS
@@ -109,7 +114,7 @@ all: all-without-models
 	$(MAKE) models 
 	-$(CHMOD) a+x models/*.tcl
 
-all-without-models: ecolab-libs lib/libecolab.so
+all-without-models: ecolab-libs lib/libecolab$(ECOLIBS_EXT).a
 	-$(CHMOD) a+x $(SCRIPTS)
 # copy in the system built TCL library
 ifdef MXE
@@ -141,16 +146,22 @@ endif
 	echo AQUA=$(AQUA)>>$(MCFG)	
 	echo MAC_OSX_TK=$(MAC_OSX_TK)>>$(MCFG)
 
-lib/libecolab$(ECOLIBS_EXT).so: lib $(OBJS) ecolab.o
-	$(LINK) $(FLAGS) -shared $(OBJS) ecolab.o -o $@
+#lib/libecolab$(ECOLIBS_EXT).so: lib $(OBJS)
+#	-cd graphcode; $(GRAPHCODE_MAKE) MAP=vmap libgraphcode.a
+#	-cd graphcode; $(GRAPHCODE_MAKE) MAP=hmap libgraphcode.a
+#	-cp -f graphcode/*.h graphcode/vmap graphcode/hmap include
+#	$(LINK) $(FLAGS) -shared $(OBJS) graphcode/*.hmap graphcode/*.vmap -o $@
 
-ecolab-libs: lib bin $(CLASSDESC) include/nauty_sizes.h
+#ecolab-libs: lib bin $(CLASSDESC) include/nauty_sizes.h
+ecolab-libs: lib bin 
 	$(MAKE) $(UTILS) 
 	$(MAKE) $(ELIBS) 
 
 .PHONY: models classdesc
 
 $(OBJS) $(MODS:%=src/%): $(CDHDRS:%=include/%)
+
+#$(CDHDRS:%=include/%): $(CLASSDESC)
 
 # newarrays needs to be preexpanded ...
 #include/newarrays.cd: include/newarrays.exh
@@ -185,10 +196,8 @@ lib/libecolab$(ECOLIBS_EXT).a: $(OBJS) $(LIBMODS)
 ifeq ($(OS),Darwin)
 	ranlib $@
 endif
-ifdef DYNAMIC
 	$(CPLUSPLUS) -shared -Wl,-soname,libecolab$(ECOLIBS_EXT).so.$(SOVERSION)  $^ graphcode/*.hmap graphcode/*.vmap -o lib/libecolab$(ECOLIBS_EXT).so.$(SOVERSION)
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) libecolab$(ECOLIBS_EXT).so
-endif
 
 $(MODS:%=lib/%): lib/%: src/%
 	cp $< $@
@@ -198,8 +207,8 @@ ifndef GCC
 endif
 endif
 
-$(CLASSDESC):
-	cd classdesc; $(MAKE) PREFIX=$(ECOLAB_HOME) XDR=$(XDR) install
+#$(CLASSDESC):
+#	cd classdesc; $(MAKE) PREFIX=$(ECOLAB_HOME) XDR=$(XDR) install
 
 src/xdr_pack.cc: classdesc/xdr_pack.cc
 	-cp $< $@
@@ -217,7 +226,8 @@ clean:
 	-$(BASIC_CLEAN) generate_nauty_sizes
 	-cd src; $(BASIC_CLEAN) 
 	-cd utils; $(BASIC_CLEAN)
-	-cd include; $(BASIC_CLEAN) nauty_sizes.h unpack_base.h hashmap.h vmap hmap
+#	-cd include; $(BASIC_CLEAN) nauty_sizes.h unpack_base.h hashmap.h vmap hmap
+	-cd include; $(BASIC_CLEAN) unpack_base.h hashmap.h vmap hmap
 	-cd include/Xecolab; $(BASIC_CLEAN)
 	-rm -f $(patsubst classdesc/%,include/%,$(wildcard classdesc/*.h))
 	-cd classdesc; $(MAKE) clean 
@@ -315,22 +325,22 @@ $(ECOLAB_HOME)/$(MCFG):
 	echo NOGUI=$(NOGUI)>>$(MCFG)
 	echo AQUA=$(AQUA)>>$(MCFG)
 
-generate_nauty_sizes: generate_nauty_sizes.c
-	$(CC) $(FLAGS) $(OPT) $< -o $@
+#generate_nauty_sizes: generate_nauty_sizes.c
+#	$(CC) $(FLAGS) $(OPT) $< -o $@
 
 src/getContext.o: src/getContext.cc
 	g++ -ObjC++ -DMAC_OSX_TK -I/opt/local/include -Iinclude -c $< -o $@
 
-include/nauty_sizes.h: generate_nauty_sizes
-ifdef MXE
-# MXE is a 32 bit environment
-	echo "#define SIZEOF_INT 4" >$@
-	echo "#define SIZEOF_LONG 4" >>$@
-	echo "#define SIZEOF_LONG_LONG 8" >>$@
-else
-	rm -f $@
-	./generate_nauty_sizes >$@
-endif
+#include/nauty_sizes.h: generate_nauty_sizes
+#ifdef MXE
+## MXE is a 32 bit environment
+#	echo "#define SIZEOF_INT 4" >$@
+#	echo "#define SIZEOF_LONG 4" >>$@
+#	echo "#define SIZEOF_LONG_LONG 8" >>$@
+#else
+#	rm -f $@
+#	./generate_nauty_sizes >$@
+#endif
 
 sure: all 
 	-$(MAKE) $(TESTS)

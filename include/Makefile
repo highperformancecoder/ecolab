@@ -20,7 +20,7 @@ BDB=
 TIMER=
 # use TkPhotoSurface for CairoItem, overriding platform specific optimisation
 TKPHOTOSURFACE=
-NOGUI=1
+NOGUI=
 
 # enables ecolab for the MXE environment 
 MXE=

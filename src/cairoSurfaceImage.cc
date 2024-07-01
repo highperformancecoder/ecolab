@@ -10,6 +10,7 @@
 #include "cairoSurfaceImage.h"
 #include "tcl++.h"
 #include "pango.h"
+#include "pythonBuffer.h"
 
 #include "ecolab_epilogue.h"
 #if defined(CAIRO_HAS_WIN32_SURFACE) && !defined(__CYGWIN__)
@@ -77,26 +78,27 @@ namespace
     int createCI(Tcl_Interp* interp, CONST86 char* name, int objc, Tcl_Obj *const objv[],
                  CONST86 Tk_ImageType* typePtr, Tk_ImageMaster master, ClientData *masterData)
     {
-      return TCL_OK;
-//      try
-//        {
-//          TCL_args args(objc,objv);
-//          string canvas=args; // arguments should be something like -surface minsky.canvas
-//          if (TCL_obj_hash::mapped_type mb=TCL_obj_properties()[canvas])
-//            if (CairoSurface* csurf=mb->memberPtrCasted<CairoSurface>())
-//              {
-//                *masterData=new CD(0,master,*csurf);
-//                Tk_ImageChanged(master,-1000000,-1000000,2000000,2000000,2000000,2000000);
-//                return TCL_OK;
-//              }
-//          Tcl_AppendResult(interp,"Not a CairoSurface",NULL);
-//          return TCL_ERROR;
-//        }
-//      catch (const std::exception& e)
-//        {
-//          Tcl_AppendResult(interp,e.what(),NULL);
-//          return TCL_ERROR;
-//        }
+      try
+        {
+          TCL_args args(objc, objv);
+          std::string module=args, object=args;
+          auto r=registries().find(module);
+          if (r==registries().end()) throw std::runtime_error("Module: "+module+" not found");
+          auto rp=r->second.find(object);
+          if (rp==r->second.end()) throw std::runtime_error("Object: "+object+" not found in "+module);
+          if (CairoSurface* csurf=rp->second->getObject<CairoSurface>())
+            {
+              *masterData=new CD(0,master,*csurf);
+              Tk_ImageChanged(master,-1000000,-1000000,2000000,2000000,2000000,2000000);
+              return TCL_OK;
+            }
+          throw std::runtime_error("Not a CairoSurface");
+        }
+      catch (const std::exception& e)
+        {
+          Tcl_AppendResult(interp,e.what(),NULL);
+          return TCL_ERROR;
+        }
     }
 
     ClientData getCI(Tk_Window win, ClientData masterData)

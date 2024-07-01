@@ -15,7 +15,7 @@
 
 #include <string>
 #include <vector>
-#include <cairo_base.h>
+#include "cairoSurfaceImage.h"
 
 namespace ecolab
 {
@@ -31,7 +31,7 @@ namespace ecolab
   extern cairo::Colour palette[];
   extern const int paletteSz;
 
-  class Plot
+  class Plot: public CairoSurface
   {
   public:
     // transform y coordinates (handles RHS being a different scale, as
@@ -72,7 +72,6 @@ namespace ecolab
     std::string m_image;
     std::vector<std::vector<double> > x;
     std::vector<std::vector<double> > y;
-    cairo::SurfacePtr surface;
 
     // record error message from setMinMax
     const char* msg;
