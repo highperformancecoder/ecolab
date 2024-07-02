@@ -22,6 +22,11 @@ PATH:=$(PATH):$(ECOLAB_HOME)/utils
 
 MCFG=include/Makefile.config
 
+ifneq ($(MAKECMDGOALS),clean)
+# make sure Classdesc is built first, even before starting to include Makefiles
+build_classdesc:=$(shell cd classdesc; $(MAKE) PREFIX=$(ECOLAB_HOME) XDR=$(XDR) install)
+endif
+
 include include/Makefile
 
 #undefine ECOLAB_LIB here so that ecolab_library is not set to the
@@ -75,7 +80,11 @@ CXXFLAGS+=-DMAC_OSX_TK
 OBJS+=src/getContext.o
 endif
 
-CDHDRS=analysis.cd analysisBLT.cd analysisCairo.cd cachedDBM.cd cairoSurfaceImage.cd graph.cd graphcode.cd netcomplexity.cd object.cd plot.cd poly.cd polyRESTProcess.cd polyRESTProcessBase.cd ref.cd random.cd random_basic.cd ref.cd RESTProcess_base.cd signature.cd sparse_mat.cd
+#CDHDRS=graph.cd graphcode.cd netcomplexity.cd object.cd plot.cd poly.cd polyRESTProcess.cd polyRESTProcessBase.cd ref.cd random.cd random_basic.cd ref.cd RESTProcess_base.cd signature.cd sparse_mat.cd
+CDHDRS=
+
+# Clunky, but this extracts all .cd files mentioned in header files,
+CDHDRS+=$(shell bash extractCDHeaders.sh)
 
 ifdef UNURAN
 CDHDRS+=random_unuran.cd
@@ -95,11 +104,6 @@ include Makefile.version
 
 # variant of $(VERSION) that has leading 0s stripped (for sonames)
 SOVERSION=$(subst D0,D,$(subst D00,D,$(VERSION)))
-
-ifneq ($(MAKECMDGOALS),clean)
-# make sure Classdesc is built first, even before starting to include Makefiles
-build_classdesc:=$(shell cd classdesc; $(MAKE) PREFIX=$(ECOLAB_HOME) XDR=$(XDR) install)
-endif
 
 #chmod command is to counteract AEGIS removing execute privelege from scripts
 ifdef AEGIS
@@ -159,7 +163,9 @@ ecolab-libs: lib bin
 
 .PHONY: models classdesc
 
-$(OBJS) $(MODS:%=src/%): $(CDHDRS:%=include/%)
+$(OBJS) $(MODS:%=src/%): $(CDHDRS:%=include/%) 
+
+$(OBJS:.o=.d) $(MODS:%.o=src/%.d):  $(ECOLAB_HOME)/$(MCFG)
 
 #$(CDHDRS:%=include/%): $(CLASSDESC)
 
@@ -217,7 +223,7 @@ src/xdr_pack.cc: classdesc/xdr_pack.cc
 # don't include dependencies is running libtest (t0008a)
 ifndef LIBTEST
 ifneq ($(MAKECMDGOALS),clean)
-include $(OBJS:.o=.d) $(MODS:%.o=src/%.d)
+include $(OBJS:%.o=%.d) $(MODS:%.o=src/%.d)
 endif
 endif
 

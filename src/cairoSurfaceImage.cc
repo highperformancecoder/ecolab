@@ -83,9 +83,9 @@ namespace
           TCL_args args(objc, objv);
           std::string module=args, object=args;
           auto r=registries().find(module);
-          if (r==registries().end()) throw std::runtime_error("Module: "+module+" not found");
-          auto rp=r->second.find(object);
-          if (rp==r->second.end()) throw std::runtime_error("Object: "+object+" not found in "+module);
+          if (r==registries().end() || !r->second) throw std::runtime_error("Module: "+module+" not found");
+          auto rp=r->second->find(object);
+          if (rp==r->second->end()) throw std::runtime_error("Object: "+object+" not found in "+module);
           if (CairoSurface* csurf=rp->second->getObject<CairoSurface>())
             {
               *masterData=new CD(0,master,*csurf);

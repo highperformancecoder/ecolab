@@ -80,6 +80,14 @@ namespace classdesc
   {
     static string name() {return "ecolab::CairoSurface";}
   };
+  template <> struct tn<_cairo_surface>
+  {
+    static string name() {return "_cairo_surface";}
+  };
+  template <> struct tn<_cairo>
+  {
+    static string name() {return "_cairo";}
+  };
 }
 
 #include "cairoSurfaceImage.cd"

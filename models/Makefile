@@ -38,7 +38,7 @@ $(MODELS:=.o): %.o: %.cc
 
 # how to build a model executable
 $(MODELS:=.so): %.so: %.o ../lib/libecolab.a
-	$(LINK) $(FLAGS) -shared $*.o $(LIBS) -o $@
+	$(LINK) $(FLAGS) -shared -Wl,-rpath $(ECOLAB_HOME)/lib $*.o $(LIBS) -o $@
 
 #make MacOS application bundles
 $(MODELS:=.app): %.app: %

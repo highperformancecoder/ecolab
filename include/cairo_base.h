@@ -272,11 +272,11 @@ namespace ecolab
       double m_scale, rotation;///< track setMatrix requests
 
     public:
-      
-      SurfacePtr cairoSurface;
       /// configSpecs for this type (itemconfigure options)
       static Tk_ConfigSpec configSpecs[];
-
+      
+      SurfacePtr cairoSurface;
+ 
       /// sets the transformation matrix so that user coordinates are
       /// centered on the bitmap, and scaled according to the current
       /// scale value
@@ -304,7 +304,7 @@ namespace ecolab
       double distanceFrom(double x, double y) const;
 
       /// bounding box (in device coordinates) of the clip region
-      virtual array_ns::array<double> boundingBox();
+      virtual ecolab::array_ns::array<double> boundingBox();
 
       /// return -1, 0, 1 if rectangle is outside, partially inside or
       /// completely inside the clip. Arguments are in device
@@ -419,5 +419,6 @@ namespace classdesc
   };
 }
 
+#include "cairo_base.cd"
 #endif
 #endif

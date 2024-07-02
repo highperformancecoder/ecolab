@@ -21,6 +21,7 @@ using array_ns::pcoord;
 
 #include "pythonBuffer.h"
 #include "ecolab_model.h"
+#include "plot.h"
 #include "ecolab_model.cd"
 #include "graphcode.cd"
 #include "object.cd"
@@ -43,7 +44,9 @@ namespace classdesc_access
 namespace model
 {
   ecolab_model ecolab;
-  CLASSDESC_PYTHON_MODULE(ecolab_model,ecolab);
+  CLASSDESC_ADD_GLOBAL(ecolab);
+  CLASSDESC_DECLARE_TYPE(Plot);
+  CLASSDESC_PYTHON_MODULE(ecolab_model);
 }
 
 void ecolab_grid::set_grid(unsigned x, unsigned y)

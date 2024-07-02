@@ -627,10 +627,10 @@ endif
 $(UTILS): %: %.cc tokeninput.h
 	$(CPLUSPLUS) -g $< -o $@
 
-.c.d: 
+.c.d:  $(ECOLAB_HOME)/include/Makefile.config
 	$(CC) $(FLAGS) -MM -MG  $< >$@
 
-.cc.d: 
+.cc.d:  $(ECOLAB_HOME)/include/Makefile.config
 	$(CPLUSPLUS) $(FLAGS)  $(CXXFLAGS) -MM -MG $< >$@
 
 .h.cd:
