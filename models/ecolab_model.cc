@@ -19,8 +19,9 @@ using array_ns::pcoord;
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
 
-#include "pythonBuffer.h"
 #include "ecolab_model.h"
+#include "ecolabSystem.h"
+#include "pythonBuffer.h"
 #include "plot.h"
 #include "ecolab_model.cd"
 #include "graphcode.cd"
@@ -41,11 +42,14 @@ namespace classdesc_access
     public classdesc::NullDescriptor<RESTProcess_t> {};
 }
 
+
 namespace model
 {
   ecolab_model ecolab;
   CLASSDESC_ADD_GLOBAL(ecolab);
   CLASSDESC_DECLARE_TYPE(Plot);
+  ecolab::System system;
+  CLASSDESC_ADD_GLOBAL(system);
   CLASSDESC_PYTHON_MODULE(ecolab_model);
 }
 

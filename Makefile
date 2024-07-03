@@ -24,7 +24,7 @@ MCFG=include/Makefile.config
 
 ifneq ($(MAKECMDGOALS),clean)
 # make sure Classdesc is built first, even before starting to include Makefiles
-build_classdesc:=$(shell cd classdesc; $(MAKE) PREFIX=$(ECOLAB_HOME) XDR=$(XDR) install)
+build_classdesc:=$(shell if [ ! -x bin/classdesc ]; then cd classdesc; $(MAKE) PREFIX=$(ECOLAB_HOME) XDR=$(XDR) install; fi)
 endif
 
 include include/Makefile
@@ -32,7 +32,7 @@ include include/Makefile
 #undefine ECOLAB_LIB here so that ecolab_library is not set to the
 #compiled location. INSTALLED_ECOLAB_LIB is for the generic ecolab
 #binary
-#FLAGS+=-UECOLAB_LIB -DINSTALLED_ECOLAB_LIB=\"$(PREFIX)/include\"
+FLAGS+=-UECOLAB_LIB -DINSTALLED_ECOLAB_LIB=\"$(PREFIX)/include\"
 
 ifdef AEGIS
 # must build and test against c++11 now, as TR1 has goone!
@@ -167,7 +167,7 @@ $(OBJS) $(MODS:%=src/%): $(CDHDRS:%=include/%)
 
 $(OBJS:.o=.d) $(MODS:%.o=src/%.d):  $(ECOLAB_HOME)/$(MCFG)
 
-#$(CDHDRS:%=include/%): $(CLASSDESC)
+$(CDHDRS:%=include/%): $(CLASSDESC)
 
 # newarrays needs to be preexpanded ...
 #include/newarrays.cd: include/newarrays.exh
@@ -213,8 +213,8 @@ ifndef GCC
 endif
 endif
 
-#$(CLASSDESC):
-#	cd classdesc; $(MAKE) PREFIX=$(ECOLAB_HOME) XDR=$(XDR) install
+$(CLASSDESC):
+	cd classdesc; $(MAKE) PREFIX=$(ECOLAB_HOME) XDR=$(XDR) install
 
 src/xdr_pack.cc: classdesc/xdr_pack.cc
 	-cp $< $@
