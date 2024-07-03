@@ -31,7 +31,7 @@ namespace ecolab
   extern cairo::Colour palette[];
   extern const int paletteSz;
 
-  class Plot: public CairoSurface
+  class Plot: public classdesc::Object<Plot, CairoSurface>
   {
   public:
     // transform y coordinates (handles RHS being a different scale, as
@@ -76,7 +76,6 @@ namespace ecolab
     // record error message from setMinMax
     const char* msg;
     
-
     CLASSDESC_ACCESS(Plot);
 
     // internal common routine for add()
@@ -143,7 +142,7 @@ namespace ecolab
     double labelheight() const {return lh(width(), height());}
     double lh(double width, double height) const;
 
-    cairo_surface_t* cairoSurface() const;
+    //cairo_surface_t* cairoSurface() const;
     int width() const;
     int height() const;
     /// plot bounding box. y1 refers to the right hand scale
@@ -170,6 +169,7 @@ namespace ecolab
     /// redraw the plot
     bool redraw();
     bool redraw(int x0, int y0, int width, int height) override {return redraw();}
+    void requestRedraw() const {if (surface) surface->requestRedraw();}
     /// draw the plot onto a given surface
     virtual void draw(cairo::Surface&);
     void draw(cairo_t*, double width, double height) const;

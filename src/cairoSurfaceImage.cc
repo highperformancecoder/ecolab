@@ -58,11 +58,13 @@ namespace
       CairoSurface& csurf;
       Tk_ImageMaster imageMaster;
       TkWinSurface(CairoSurface& csurf, Tk_ImageMaster imageMaster, cairo_surface_t* surf):
-        cairo::Surface(surf), csurf(csurf),  imageMaster(imageMaster) {}
+        cairo::Surface(surf), csurf(csurf),  imageMaster(imageMaster) {/*TkWinSurface::requestRedraw();*/}
       void requestRedraw() {
-        Tk_ImageChanged(imageMaster,-1000000,-1000000,2000000,2000000,2000000,2000000);
+        Tk_ImageChanged(imageMaster,left(),top(),width(),height(),width(),height());
       }
       void blit() {cairo_surface_flush(surface());}
+      double width() const override {return 500;}
+      double height() const override {return 500;}
     };
 
     struct CD
@@ -86,10 +88,12 @@ namespace
           if (r==registries().end() || !r->second) throw std::runtime_error("Module: "+module+" not found");
           auto rp=r->second->find(object);
           if (rp==r->second->end()) throw std::runtime_error("Object: "+object+" not found in "+module);
-          if (CairoSurface* csurf=rp->second->getObject<CairoSurface>())
+          if (CairoSurface* csurf=dynamic_cast<CairoSurface*>(rp->second->getClassdescObject()))
             {
               *masterData=new CD(0,master,*csurf);
-              Tk_ImageChanged(master,-1000000,-1000000,2000000,2000000,2000000,2000000);
+              //Tk_ImageChanged(master,-1000000,-1000000,2000000,2000000,2000000,2000000);
+              // TODO - pass in width/height 
+              Tk_ImageChanged(master,0,0,500,500,500,500);
               return TCL_OK;
             }
           throw std::runtime_error("Not a CairoSurface");

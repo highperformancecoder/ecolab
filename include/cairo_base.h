@@ -108,11 +108,11 @@ namespace ecolab
       }
       
       cairo_t* cairo() const {return m_cairo;}
-      double width() const {computeSizes(); return m_width;}
-      double height() const {computeSizes(); return m_height;}
+      virtual double width() const {computeSizes(); return m_width;}
+      virtual double height() const {computeSizes(); return m_height;}
       /// if the surface is a recording surface, return y coordinate
       /// of the top, otherwise 0
-      double top() const {
+      virtual double top() const {
 #if CAIRO_HAS_RECORDING_SURFACE
         if (m_surface && 
             cairo_surface_get_type(m_surface)==CAIRO_SURFACE_TYPE_RECORDING)
@@ -127,7 +127,7 @@ namespace ecolab
       }
       /// if the surface is a recording surface, return x coordinate
       /// of the left hand side, otherwise 0
-      double left() const {
+      virtual double left() const {
 #if CAIRO_HAS_RECORDING_SURFACE
         if (m_surface && 
             cairo_surface_get_type(m_surface)==CAIRO_SURFACE_TYPE_RECORDING)
@@ -196,8 +196,8 @@ namespace ecolab
       /// if true, then blits do not clear previous photo contents
       bool compositing;
 
-      int width() const {return imageBlock.width;}
-      int height() const {return imageBlock.height;}
+      double width() const override {return imageBlock.width;}
+      double height() const override {return imageBlock.height;}
       void clear() {
         if (imageBlock.transparency)
           // make it transparent

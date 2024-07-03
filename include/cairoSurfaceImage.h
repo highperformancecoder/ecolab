@@ -15,13 +15,14 @@ namespace ecolab
 {
   /** A base class used for creating a custom image object. To use,
       subclass from this, reimplementing the redraw method, then in
-      TCL, create an image with the type "cairoSurface", passing in
-      the TCL_obj name as the argument of -surface, eg
+      Python/tkinter, create an image with the type "cairoSurface", passing in
+      the python object name as the argument of -surface, eg
       
-      image create cairoSurface -surface minsky.canvas
+      tk.eval('image create cairoSurface -surface module object')
+
  */
 
-  struct CairoSurfaceRedraw
+  struct CairoSurfaceRedraw: public classdesc::object
   {
     cairo::SurfacePtr surface;
     /// @return true if something drawn

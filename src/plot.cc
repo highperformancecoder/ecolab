@@ -245,9 +245,9 @@ namespace
 
 namespace ecolab
 {
-  cairo_surface_t* Plot::cairoSurface() const {
-      return surface? surface->surface(): 0;
-  }
+//  cairo_surface_t* Plot::cairoSurface() const {
+//      return surface? surface->surface(): 0;
+//  }
   int Plot::width() const {return surface? surface->width():0;}
   int Plot::height() const {return surface? surface->height():0;}
 
@@ -621,7 +621,7 @@ namespace ecolab
   void Plot::draw(cairo::Surface& surface)
   {
     cairo_identity_matrix(surface.cairo());
-    cairo_translate(surface.cairo(),-0.5*surface.height(),-0.5*surface.width());
+    //cairo_translate(surface.cairo(),-0.5*surface.height(),-0.5*surface.width());
     if (autoscale) setMinMax();
     // if there is no size, set size to 1, so at least a bounding box is drawn
     if (maxx<=minx) maxx=minx+1;
@@ -636,6 +636,7 @@ namespace ecolab
           maxy=miny+1;
       }
     draw(surface.cairo(), surface.width(), surface.height());
+    cairo_surface_flush(surface.surface());
   }
 
   double Plot::lh(double width, double height) const

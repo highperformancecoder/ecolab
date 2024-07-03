@@ -31,8 +31,11 @@ namespace ecolab
 
 // place for initialising any EcoLab extensions to the TCL
 // interpreter, to be called by tkinter's Tk() object
-int Ecolab_Init(Tcl_Interp* interp)
+extern "C" int Ecolab_Init(Tcl_Interp* interp)
 {
   CairoSurface::registerImage();
   return TCL_OK;
 }
+
+// some linkers add an _
+extern "C" int _Ecolab_Init(Tcl_Interp* interp) {return Ecolab_Init(interp);}
