@@ -1,7 +1,3 @@
-import ecolab_model
-import ecolab as base
-from ecolab import Plot, ecolabHome
-
 from ecolab_model import ecolab
 ecolab.species([1,2])
 ecolab.density([100,100]) 
@@ -19,19 +15,7 @@ ecolab.odiag_min(-1e-3)
 ecolab.odiag_max(1e-3)
 ecolab.mut_max(.01)
 
-Plot('plot')
-from ecolab import plot
-
-from tkinter import Tk,ttk
-plotWindow=Tk()
-plotWindow.eval('load '+ecolabHome()+'/lib/ecolab.so')
-plotWindow.eval('image create cairoSurface plotCanvas -surface ecolab plot')
-frame=ttk.Frame(plotWindow, width=500, height=500)
-frame.pack()
-label=ttk.Label(frame, image="plotCanvas")
-label.pack()
-
-#set palette {black red}
+from plot import plot
 
 running=False
 def simulate():
@@ -41,10 +25,8 @@ def simulate():
 	#    .statusbar configure -text "t=[ecolab.tstep] n=[ecolab.density]"
         density=ecolab.density()._properties
         print(ecolab.tstep(), density)
-        plot.addPt(0,ecolab.tstep(),density[0])
-        plot.addPt(1,ecolab.tstep(),density[1])
-        plot.requestRedraw()
-        plotWindow.update()
+        plot('density1',ecolab.tstep(),density[0],density[1])
+        plot('density',ecolab.tstep(),density)
 
 simulate()
 
