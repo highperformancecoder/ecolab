@@ -1,5 +1,5 @@
 from ecolab import Plot, ecolabHome
-from tkinter import Tcl,Tk,ttk
+from tkinter import Tk,ttk
 import ecolab
 
 plotWindows={}
