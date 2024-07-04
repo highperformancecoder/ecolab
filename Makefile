@@ -81,7 +81,7 @@ OBJS+=src/getContext.o
 endif
 
 #CDHDRS=graph.cd graphcode.cd netcomplexity.cd object.cd plot.cd poly.cd polyRESTProcess.cd polyRESTProcessBase.cd ref.cd random.cd random_basic.cd ref.cd RESTProcess_base.cd signature.cd sparse_mat.cd
-CDHDRS=
+CDHDRS=object.cd
 
 # Clunky, but this extracts all .cd files mentioned in header files,
 CDHDRS+=$(shell bash extractCDHeaders.sh)
@@ -204,6 +204,7 @@ ifeq ($(OS),Darwin)
 endif
 	$(CPLUSPLUS) -shared -Wl,-soname,libecolab$(ECOLIBS_EXT).so.$(SOVERSION)  $^ graphcode/*.hmap graphcode/*.vmap -o lib/libecolab$(ECOLIBS_EXT).so.$(SOVERSION)
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) libecolab$(ECOLIBS_EXT).so
+	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) ecolab$(ECOLIBS_EXT).so
 
 $(MODS:%=lib/%): lib/%: src/%
 	cp $< $@

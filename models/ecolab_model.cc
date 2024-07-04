@@ -20,13 +20,11 @@ using array_ns::pcoord;
 #endif
 
 #include "ecolab_model.h"
-#include "ecolabSystem.h"
 #include "pythonBuffer.h"
 #include "plot.h"
 #include "ecolab_model.cd"
-#include "graphcode.cd"
-#include "object.cd"
-#include "poly.cd"
+//#include "graphcode.cd"
+//#include "poly.cd"
 #include "ecolab_epilogue.h"
 
 namespace classdesc
@@ -42,14 +40,22 @@ namespace classdesc_access
     public classdesc::NullDescriptor<RESTProcess_t> {};
 }
 
+namespace
+{
+  int addEcoLabPath()
+  {
+    if (auto path=PySys_GetObject("path"))
+      PyList_Append(path,PyUnicode_FromString(ECOLAB_HOME"/lib"));
+    return 0;
+  }
+  int setPath=addEcoLabPath();
+}
+
 
 namespace model
 {
   ecolab_model ecolab;
   CLASSDESC_ADD_GLOBAL(ecolab);
-  CLASSDESC_DECLARE_TYPE(Plot);
-  ecolab::System system;
-  CLASSDESC_ADD_GLOBAL(system);
   CLASSDESC_PYTHON_MODULE(ecolab_model);
 }
 

@@ -25,6 +25,8 @@ NOGUI=
 # enables ecolab for the MXE environment 
 MXE=
 
+FLAGS+=-DECOLAB_HOME=\"$(ECOLAB_HOME)\"
+
 # the long long data type is not part of the C++ standard, but is part of C99.
 # all our list of compilers support long long, but if yours doesn't, you can 
 # override long long support here.
