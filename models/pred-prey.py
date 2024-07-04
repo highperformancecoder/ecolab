@@ -25,7 +25,7 @@ def simulate():
 	#    .statusbar configure -text "t=[ecolab.tstep] n=[ecolab.density]"
         density=ecolab.density()._properties
         print(ecolab.tstep(), density)
-        plot('density1',ecolab.tstep(),density[0],density[1])
+        #plot('density1',ecolab.tstep(),density[0],density[1])
         plot('density',ecolab.tstep(),density)
 
 simulate()

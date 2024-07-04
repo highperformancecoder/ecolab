@@ -246,7 +246,7 @@ clean:
 	-cd test; $(MAKE) clean
 	-cd doc; $(BASIC_CLEAN) *.aux *.dvi *.log *.blg *.toc *.lof *.ps; rm -rf ecolab
 	-rm -f $(UTILS)
-	-rm -f lib/* bin/*
+	-rm -f lib/*.so lib/*.so.* bin/*
 	-rm -rf classdesc-lib cxx_repository
 	-rm -rf ii_files */ii_files
 	-rm $(MCFG)

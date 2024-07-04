@@ -202,8 +202,6 @@ namespace
 
 void CairoSurface::registerImage()
 {
-  // ensure Tk_Init is called.
-  if (!Tk_MainWindow(interp())) Tk_Init(interp());
   Tk_CreateImageType(&canvasImage);
 }
 
