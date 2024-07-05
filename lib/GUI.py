@@ -21,13 +21,16 @@ class Simulator:
 
     def stop(self):
         self.running=False
+    def exit(self):
+        self.stop()
+        exit()
 
 def gui(step):
     simulator=Simulator(step)
     windows.append(ref(runner))
     buttonBar=ttk.Frame(runner)
     buttonBar.pack()
-    ttk.Button(buttonBar,text="quit",command=exit).pack(side='left')
+    ttk.Button(buttonBar,text="quit",command=simulator.exit).pack(side='left')
     ttk.Button(buttonBar,text="run",command=simulator).pack(side='left')
     ttk.Button(buttonBar,text="step",command=step).pack(side='left')
     ttk.Button(buttonBar,text="stop",command=simulator.stop).pack(side='left')
