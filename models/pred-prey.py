@@ -16,12 +16,13 @@ ecolab.odiag_max(1e-3)
 ecolab.mut_max(.01)
 
 from plot import plot
-from GUI import gui
+from GUI import gui, statusBar
 
 def step():
     ecolab.generate()
     #    .statusbar configure -text "t=[ecolab.tstep] n=[ecolab.density]"
     density=ecolab.density()._properties
+    statusBar.configure(text=f't={ecolab.tstep()} n={density}')
     #print(ecolab.tstep(), density)
     #plot('density1',ecolab.tstep(),density[0],density[1])
     plot('density',ecolab.tstep(),density)

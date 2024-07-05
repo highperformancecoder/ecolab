@@ -3,6 +3,8 @@ from tkinter import Tk, ttk, Button
 # list of windows to update each simulation step
 windows=[]
 runner=Tk()
+statusBar=ttk.Label(runner,text='Not started')
+statusBar.pack()
 
 class Simulator:
     running=False
