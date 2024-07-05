@@ -20,7 +20,6 @@ from GUI import gui, statusBar
 
 def step():
     ecolab.generate()
-    #    .statusbar configure -text "t=[ecolab.tstep] n=[ecolab.density]"
     density=ecolab.density()._properties
     statusBar.configure(text=f't={ecolab.tstep()} n={density}')
     #print(ecolab.tstep(), density)
