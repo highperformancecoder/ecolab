@@ -7,7 +7,7 @@ ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
 ecolab.odiag_min(-1e-5)
 ecolab.odiag_max(1e-5)
-ecolab.mut_max(1e-4)
+ecolab.mut_max(1e-3)
 ecolab.sp_sep(0.1)
 
 def randomList(num, min, max):
@@ -25,17 +25,17 @@ ecolab.interaction.val(randomList(len(ecolab.interaction.val), ecolab.odiag_min(
 ecolab.mutation(nsp*[ecolab.mut_max()])
 ecolab.migration(nsp*[1e-5])
                   
-from plot import plot
+from plot import plot, penPlot
 from GUI import gui, statusBar
 
 def step():
     ecolab.generate()
     ecolab.mutate()
-    #ecolab.condense()
+    ecolab.condense()
     nsp=len(ecolab.species)
     statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
-    plot('No. species',ecolab.tstep(),nsp,0)
-    plot('Density',ecolab.tstep(),ecolab.density()._properties)
+    plot('No. species',ecolab.tstep(),nsp)
+    penPlot('Density',ecolab.tstep(),ecolab.density()._properties, ecolab.species()._properties)
 
 gui(step)
 

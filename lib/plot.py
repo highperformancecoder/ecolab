@@ -4,7 +4,7 @@ from tkinter import Tk,ttk
 from GUI import windows
 from weakref import ref
 
-def plot(name,x,*y):
+def getPlot(name):
     plotName='plot#'+name.replace(' ','')
     if not plotName in ecolab.__dict__:
         Plot(plotName)
@@ -15,11 +15,22 @@ def plot(name,x,*y):
         label=ttk.Label(plotWindow, image="plotCanvas")
         label.pack()
         windows.append(ref(plotWindow))
-    plot=ecolab.__dict__[plotName]
+    return ecolab.__dict__[plotName]
+
+def plot(name,x,*y):
+    plot=getPlot(name)
     if hasattr(y,'__len__') and len(y)==1: y=y[0] # deal with an single array of values being passed
     if hasattr(y,'__len__'):
         for i in range(len(y)):
             plot.addPt(i, x, y[i])
     else:
-        plot.addPt(i, x, y)
+        plot.addPt(0, x, y)
     plot.requestRedraw()
+
+def penPlot(name,x,y,pens):
+    assert len(y)==len(pens)
+    plot=getPlot(name)
+    for i in range(len(y)):
+        plot.addPt(pens[i], x, y[i])
+    plot.requestRedraw()
+    

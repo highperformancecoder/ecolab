@@ -7,7 +7,6 @@
 */
 
 #include "ecolab.h"
-#include "graphcode.h"
 #include "arrays.h"
 using namespace ecolab;
 using array_ns::array;
@@ -23,23 +22,10 @@ using array_ns::pcoord;
 #include "pythonBuffer.h"
 #include "plot.h"
 #include "ecolab_model.cd"
-//#include "graphcode.cd"
-//#include "poly.cd"
+
 #include "ecolab_epilogue.h"
 
-namespace classdesc
-{
-  template <> inline std::string typeName< ::GRAPHCODE_NS::hmap >()
-  {return "::GRAPHCODE_NS::hmap";}
-}
-
-namespace classdesc_access
-{
-  template <>
-  struct access_RESTProcess<::GRAPHCODE_NS::hmap>:
-    public classdesc::NullDescriptor<RESTProcess_t> {};
-}
-
+// TODO - move this into main library
 namespace
 {
   int addEcoLabPath()
@@ -59,57 +45,6 @@ namespace model
   CLASSDESC_PYTHON_MODULE(ecolab_model);
 }
 
-void ecolab_grid::set_grid(unsigned x, unsigned y)
-{
-  //parallel(args);
-  if (x*y>1)
-    {
-      Grid2D::clear();
-      objects.clear();
-      instantiate(x,y);
-      uni.Seed(myid()+1); /*ensure uni has distinct random seed on each processor*/
-    }
-}
-
-string ecolab_grid::get(unsigned x, unsigned y)
-{
-  //  std::string cmd((char*)args[-1]);
-  eco_strstream name;
-//  std::string::size_type dotpos=cmd.rfind('.');
-//  if (dotpos!=std::string::npos)
-//    name|cmd.substr(0,dotpos);
-//  else
-//    name|cmd;
-//  unsigned x=args, y=args;
-//  name|'('|x|','|y|')';
-//  ::TCL_obj(null_TCL_obj,name.str(),cell(objects[x+y*xsize]));
-  return name.str(); 
-}
-
-//void ecolab_grid::forall(TCL_args args)
-//{
-//  typedef void (ecolab_point::*epm_ptr)(TCL_args);
-//  declare(method, epm_ptr, (char*)args);
-//  for (iterator i=begin(); i!=end(); i++) (cell(*i).*method)(args);
-//}
-
-void ecolab_model::distribute_cells()
-{
-  //parallel(args);
-#ifdef MPI_SUPPORT
-  MPIbuf() << *this << bcast(0) >> *this;
-  rebuild_local_list();
-#endif
-}
-
-void ecolab_grid::gather()
-{
-#ifdef MPI_SUPPORT
-  if (myid()==0) parsend("ecolab.gather");
-#endif
-  Grid2D::gather();
-}
-
 void ecolab_model::random_interaction(unsigned conn, double sigma)
 {
   interaction.init_rand(conn,sigma);  
@@ -120,13 +55,11 @@ void ecolab_model::generate(unsigned niter)
 {
   //parallel(args);
   if (tstep==0) make_consistent();
-//  for (iterator i=begin(); i!=end(); i++) 
-//    cell(*i).generate(niter);
   generate_point(niter);
   tstep+=niter;
 } 
 
-void ecolab_point_data::generate_point(unsigned niter)
+void ecolab_point::generate_point(unsigned niter)
 { 
   array<double> n(density);
   for (unsigned i=0; i<niter; i++)
@@ -135,7 +68,7 @@ void ecolab_point_data::generate_point(unsigned niter)
 }
 
 
-void ecolab_point_data::condense_point(const array<bool>& mask, unsigned mask_true)
+void ecolab_point::condense_point(const array<bool>& mask, unsigned mask_true)
 {
   density = pack( density, mask, mask_true); 
 }
@@ -147,18 +80,7 @@ void ecolab_model::condense()   /* remove extinct species */
   array<bool> mask, mask_off;
   unsigned mask_true;
  
-  lmask=0;
-  for (iterator i=begin(); i!=end(); i++)
-    lmask |= cell(*i).density != 0;
-#ifdef MPI_SUPPORT
-  array<int> lmask1(lmask.size());
-  MPI_Reduce(lmask.data(),lmask1.data(),lmask.size(),MPI_INT,  MPI_LOR,
-	     0,MPI_COMM_WORLD);
-  MPI_Bcast(lmask1.data(),lmask1.size(),MPI_INT,0,MPI_COMM_WORLD);
-  mask=lmask1;
-#else
-  mask=lmask;
-#endif
+  mask=density != 0;
   mask_true=sum(mask);
   if (species.size()==mask_true) return; /* no change ! */
 
@@ -173,7 +95,7 @@ void ecolab_model::condense()   /* remove extinct species */
   migration = pack(migration, mask, mask_true);
   interaction.diag = pack(interaction.diag, mask, mask_true);
 
-  for (iterator i=begin(); i!=end(); i++) cell(*i).condense_point( mask, mask_true);
+  condense_point( mask, mask_true);
 
   mask_true=sum(mask_off);
 
@@ -194,35 +116,12 @@ void ecolab_model::mutate()
   //parallel(args);
   array<double> mut_scale(sp_sep * repro_rate * mutation * (tstep - last_mut_tstep));
   last_mut_tstep=tstep;
-  array<unsigned> new_sp, cell_ids;
-  for (iterator c=begin(); c!=end(); c++) 
-    {
-      new_sp <<= cell(*c).mutate_point(mut_scale);
-      cell_ids <<= array<int>(new_sp.size()-cell_ids.size(),c->ID);
-    }
-#ifdef MPI_SUPPORT
-  MPIbuf b; b<<new_sp<<cell_ids; b.gather(0);
-  if (myid()==0)
-    {
-      new_sp.resize(0); cell_ids.resize(0);
-      for (unsigned i=0; i<nprocs(); i++) 
-	{
-	  array<int> n,c;
-	  b>>n>>c;
-	  new_sp<<=n; cell_ids<<=c;
-	}
-      mutate_model(new_sp);
-    }
-  MPIbuf() << cell_ids << *(model_data*)this << bcast(0)
-	   >> cell_ids >> *(model_data*)this;
-#else
+  array<unsigned> new_sp;
+  new_sp <<= mutate_point(mut_scale);
   mutate_model(new_sp);
-#endif
-  for (iterator c=begin(); c!=end(); c++) 
-    cell(*c).density <<= cell_ids == c->ID;
 }
 
-array<int> ecolab_point_data::mutate_point(const array<double>& mut_scale)
+array<int> ecolab_point::mutate_point(const array<double>& mut_scale)
 {
   array<int> speciations;
   /* calculate the number of mutants each species produces */
@@ -377,6 +276,7 @@ void ecolab_model::mutate_model(array<int> new_sp)
 
   model_data::create <<=  array<double>(new_sp.size(),0);
   species <<= pcoord(new_sp.size())*nprocs() + sp_cntr;
+  density<<=array<int>(new_sp.size(),1);
   sp_cntr+=new_sp.size()*nprocs();
 
   assert(sum(mutation<0)==0);
@@ -389,17 +289,13 @@ void ecolab_model::mutate_model(array<int> new_sp)
 
 array<double> ecolab_model::lifetimes() 
 { 
-  gather();
   array<double> lifetimes; 
 
   for (size_t i=0; i<species.size(); i++) 
     {
-      unsigned d=0;
-      for (omap::iterator c=objects.begin(); c!=objects.end(); c++)
-	d+=cell(*c).density[i];
-      if (model_data::create[i]==0 && d>10) 
+      if (model_data::create[i]==0 && density[i]>10) 
 	model_data::create[i] = tstep;
-      else if (model_data::create[i]>0 && d==0) 
+      else if (model_data::create[i]>0 && density[i]==0) 
 	/* extinction */
 	{
 	  lifetimes <<= tstep - model_data::create[i];
@@ -409,69 +305,4 @@ array<double> ecolab_model::lifetimes()
   return lifetimes;
 }
 
-double which_salt(const ecolab_point& x, 
-		  const ecolab_point& y, unsigned npins)
-{
-  if (x[0].ID>y[0].ID)
-    if (x[0].ID-y[0].ID > 0.5*npins) return y.salt;
-    else return x.salt;
-  else
-    if (y[0].ID-x[0].ID > 0.5*npins) return x.salt;
-    else return y.salt;
-}    
-
-void ecolab_model::migrate()
-{
-  //parallel(args);
-  /* refer to the local cell list */
-  Ptrlist& cells=*static_cast<Graph*>(this); 
-
-  /* each cell gets a distinct random salt value */
-  for (iterator i=begin(); i!=end(); i++)
-    cell(*i).salt=uni.rand();
-  Prepare_Neighbours();
-
-  vector<array<int> > delta(cells.size(), array<int>(species.size(),0));
-
-  for (size_t i=0; i<cells.size(); i++)
-    { 
-      ecolab_point& cell=::cell(cells[i]);
-      Ptrlist& nbrs=cell;
-      unsigned nnbrs=nbrs.size();
-      /* loop over neighbours */ 
-      for (unsigned j=0; j<nnbrs; j++) 
-	{
-          ecolab_point& nbr=::cell(nbrs[j]);
-	  array<double> m( double(tstep-last_mig_tstep) * migration * 
-	    (nbr.density - cell.density) );
-	  //	  cout << m << endl;
-	  delta[i] += (array<int>) (m + (array<double>)((m!=0.0)*(2*(m>0.0)-1)) * 
-			      which_salt(cell, nbr, objects.size()) );
-	}
-    }
-  last_mig_tstep=tstep;
-
-  for (size_t i=0; i<cells.size(); i++)
-    cell(cells[i]).density+=delta[i];
-  
-  /* assertion testing that population numbers are conserved */
-#ifndef NDEBUG
-  array<int> ssum(species.size()), s(species.size()); 
-  unsigned mig=0, i;
-  for (ssum=0, i=0; i<size(); i++)
-    {
-      ssum+=delta[i];
-      for (size_t j=0; j<delta[i].size(); j++)
-	mig+=abs(delta[i][j]);
-    }
-#ifdef MPI_SUPPORT
-  MPI_Reduce(ssum.data(),s.data(),s.size(),MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
-  ssum=s;
-  int m;
-  MPI_Reduce(&mig,&m,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
-  mig=m;
-#endif
-  if (myid()==0) assert(sum(ssum==0)==int(ssum.size()));
-#endif
-}
 
