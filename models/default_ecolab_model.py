@@ -26,7 +26,16 @@ ecolab.mutation(nsp*[ecolab.mut_max()])
 ecolab.migration(nsp*[1e-5])
                   
 from plot import plot, penPlot
-from GUI import gui, statusBar
+from GUI import gui, statusBar, windows
+
+from tkinter import Tk,ttk
+from weakref import ref
+from ecolab import ecolabHome
+connectionPlot=Tk()
+connectionPlot.eval('load '+ecolabHome()+'/lib/ecolab.so')
+connectionPlot.eval('image create cairoSurface connectionCanvas -surface ecolab_model ecolab.connectionPlot')
+ttk.Label(connectionPlot, image='connectionCanvas').pack()
+windows.append(ref(connectionPlot))
 
 def step():
     ecolab.generate()
@@ -36,7 +45,8 @@ def step():
     statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
     plot('No. species',ecolab.tstep(),nsp)
     penPlot('Density',ecolab.tstep(),ecolab.density()._properties, ecolab.species()._properties)
-
+    ecolab.connectionPlot.requestRedraw()
+    
 gui(step)
 
 

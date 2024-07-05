@@ -21,6 +21,8 @@ using array_ns::pcoord;
 #include "ecolab_model.h"
 #include "pythonBuffer.h"
 #include "plot.h"
+
+#include "object.cd"
 #include "ecolab_model.cd"
 
 #include "ecolab_epilogue.h"
@@ -305,4 +307,65 @@ array<double> ecolab_model::lifetimes()
   return lifetimes;
 }
 
+
+bool ConnectionPlot::redraw(int x0, int y0, int width, int height)
+{
+  if (!surface) return false;
+  const double scale=4;
+  int low_colour, high_colour;
+  auto& row=connections.row;
+  auto& col=connections.col;
+  ecolab::array<int> enum_clusters(connections.diag.size());
+  enum_clusters=1; 
+  enum_clusters=enumerate(enum_clusters);
+  for (unsigned i=0; i<row.size(); i++)
+    {
+      high_colour = enum_clusters[col[i]];
+      low_colour =  enum_clusters[row[i]];
+      
+      if (high_colour<low_colour) std::swap(high_colour,low_colour);
+      enum_clusters = merge( enum_clusters==high_colour, 
+			     low_colour, enum_clusters);
+    }
+      
+  /* for grouping species into their ecologies */
+  
+  ecolab::array<int> map(density.size()), mask;
+  map=-1;
+  for (int i=0; i<=max(enum_clusters); i++)
+    {
+      mask = enum_clusters==i;
+      map = merge(  mask, enumerate(mask)+max(map)+1, map);
+    }
+
+  auto cairo=surface->cairo();
+  for (unsigned i=0; i<row.size(); i++)
+    {
+      cairo_rectangle(cairo, map[row[i]]*scale, map[col[i]]*scale, scale, scale);
+      //cairo_stroke_preserve(cairo);
+      if (density[row[i]]==0||density[col[i]]==0)
+        cairo_set_source_rgb(cairo, 0xf5/256.0, 0xde/256.0, 0xb3/256.0); // wheat
+      else
+        {
+          auto& colour=palette[enum_clusters[row[i]]%paletteSz];
+          cairo_set_source_rgb(cairo,colour.r,colour.g,colour.b);
+        }
+      cairo_fill(cairo);
+    }
+
+  // diagonals
+  for (size_t i=0; i<density.size(); i++)
+    {
+      cairo_rectangle(cairo, map[i]*scale, map[i]*scale, scale,scale);
+      if (density[i]==0)
+        cairo_set_source_rgb(cairo, 0xf5/256.0, 0xde/256.0, 0xb3/256.0); // wheat
+      else
+        {
+          auto& colour=palette[enum_clusters[i]%paletteSz];
+          cairo_set_source_rgb(cairo,colour.r,colour.g,colour.b);
+        }
+      cairo_fill(cairo);
+    }
+  return true;
+}
 

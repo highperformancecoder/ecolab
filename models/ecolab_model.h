@@ -7,7 +7,7 @@
 */
 
 #include <netcomplexity.h>
-
+#include <cairoSurfaceImage.h>
 using classdesc::Object;
 
 /* ecolab cell  */
@@ -53,6 +53,16 @@ struct model_data: public ecolab_point
   sparse_mat_graph foodweb;
 };
 
+struct ConnectionPlot: public Object<ConnectionPlot, CairoSurface>
+{
+  const array<int>& density;
+  const sparse_mat& connections;
+  ConnectionPlot(const array<int>& density, const sparse_mat& connections):
+    density(density), connections(connections) {}
+  bool redraw(int x0, int y0, int width, int height) override;
+  void requestRedraw() const {if (surface) surface->requestRedraw();}
+};
+
 class ecolab_model: public model_data
 {
   void mutate_model(array<int>); 
@@ -65,6 +75,8 @@ public:
   //mutation parameters
   float sp_sep, mut_max, repro_min, repro_max, odiag_min, odiag_max;
 
+  ConnectionPlot connectionPlot{density,interaction};
+  
   ecolab_model()     
   {repro_min=0; repro_max=1; mut_max=0; odiag_min=0; odiag_max=1;
   tstep=0; last_mut_tstep=0; last_mig_tstep=0;}
