@@ -36,7 +36,7 @@ namespace ecolab
     /*matrix multiplication*/
     template <class E> typename
     array_ns::enable_if< array_ns::is_expression<E>, array_ns::array<double> >::T
-    operator*(const E& x)  
+    operator*(const E& x) const
     {
       array_ns::array<double> r;
       assert(row.size()==col.size() && row.size()==val.size());      

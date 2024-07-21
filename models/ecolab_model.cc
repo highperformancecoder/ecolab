@@ -37,93 +37,116 @@ namespace
     return 0;
   }
   int setPath=addEcoLabPath();
+
+  /* Rounding function, randomly round up or down, in the range 0..INT_MAX */
+  inline int ROUND(double x) 
+  {
+    double dum;
+    if (x<0) x=0;
+    if (x>INT_MAX-1) x=INT_MAX-1;
+    return std::fabs(std::modf(x,&dum)) > array_urand.rand() ?
+      (int)x+1 : (int)x;
+  }
+
+  inline int ROUND(float x) {return ROUND(double(x));}
+  
+  template <class E>
+  inline array<int> ROUND(const E& x)
+  {
+    array<int> r(x.size());
+    for (size_t i=0; i<x.size(); i++)
+      r[i]=ROUND(x[i]);
+    return r;
+  }
+
 }
 
 
 namespace model
 {
-  ecolab_model ecolab;
-  CLASSDESC_ADD_GLOBAL(ecolab);
+  PanmicticModel panmictic_ecolab;
+  CLASSDESC_ADD_GLOBAL(panmictic_ecolab);
+  SpatialModel spatial_ecolab;
+  CLASSDESC_ADD_GLOBAL(spatial_ecolab);
   CLASSDESC_PYTHON_MODULE(ecolab_model);
 }
 
-void ecolab_model::random_interaction(unsigned conn, double sigma)
+void ModelData::random_interaction(unsigned conn, double sigma)
 {
   interaction.init_rand(conn,sigma);  
   foodweb = interaction;
 }
 
-void ecolab_model::generate(unsigned niter)
+void PanmicticModel::generate(unsigned niter)
 {
   //parallel(args);
-  if (tstep==0) make_consistent();
-  generate_point(niter);
+  if (tstep==0) makeConsistent();
+  EcolabPoint::generate(niter,*this);
   tstep+=niter;
 } 
 
-void ecolab_point::generate_point(unsigned niter)
+void EcolabPoint::generate(unsigned niter, const ModelData& model)
 { 
   array<double> n(density);
   for (unsigned i=0; i<niter; i++)
-    {n += (model::ecolab.repro_rate + model::ecolab.interaction*n) * n ;}
+    {n += (model.repro_rate + model.interaction*n) * n ;}
   density = ROUND(n);
 }
 
 
-void ecolab_point::condense_point(const array<bool>& mask, unsigned mask_true)
+void EcolabPoint::condense(const array<bool>& mask, size_t mask_true)
 {
   density = pack( density, mask, mask_true); 
 }
 
-void ecolab_model::condense()   /* remove extinct species */
+void ModelData::condense(const array<bool>& mask, size_t mask_true)   /* remove extinct species */
 {
-  //parallel(args);
-  array<int> lmask(species.size()), map /* extinctions*/;
-  array<bool> mask, mask_off;
-  unsigned mask_true;
- 
-  mask=density != 0;
-  mask_true=sum(mask);
-  if (species.size()==mask_true) return; /* no change ! */
+  auto map = enumerate( mask );
+  auto mask_off = mask[ interaction.row ] && mask[ interaction.col ];
 
-  map = enumerate( mask );
-  mask_off = mask[ interaction.row ] && mask[ interaction.col ];
-
-  // bugger you g++!
-  model_data::create = pack(model_data::create, mask, mask_true); 
+  create = pack(create, mask, mask_true); 
   species = pack(species, mask, mask_true); 
   repro_rate = pack(repro_rate, mask, mask_true); 
   mutation = pack(mutation, mask, mask_true); 
   migration = pack(migration, mask, mask_true);
   interaction.diag = pack(interaction.diag, mask, mask_true);
 
-  condense_point( mask, mask_true);
+  auto mask_off_true=sum(mask_off);
 
-  mask_true=sum(mask_off);
-
-  interaction.val = pack(interaction.val, mask_off, mask_true); 
-  interaction.row = map[pack(interaction.row, mask_off,mask_true)];
-  interaction.col = map[pack(interaction.col, mask_off,mask_true)];
+  interaction.val = pack(interaction.val, mask_off, mask_off_true); 
+  interaction.row = map[pack(interaction.row, mask_off,mask_off_true)];
+  interaction.col = map[pack(interaction.col, mask_off,mask_off_true)];
 
   foodweb = interaction;
 }
+
+void PanmicticModel::condense()
+{
+  auto mask=density != 0;
+  size_t mask_true=sum(mask);
+  if (species.size()==mask_true) return; /* no change ! */
+  EcolabPoint::condense(mask, mask_true);
+  ModelData::condense(mask,mask_true);
+}
+
+
 
 /* 
    Mutate operator 
 */
 
 
-void ecolab_model::mutate()
+void PanmicticModel::mutate()
 {
-  //parallel(args);
   array<double> mut_scale(sp_sep * repro_rate * mutation * (tstep - last_mut_tstep));
   last_mut_tstep=tstep;
   array<unsigned> new_sp;
-  new_sp <<= mutate_point(mut_scale);
-  mutate_model(new_sp);
+  new_sp <<= EcolabPoint::mutate(mut_scale);
+  ModelData::mutate(new_sp);
+  density<<=array<int>(new_sp.size(),1);
 }
 
-array<int> ecolab_point::mutate_point(const array<double>& mut_scale)
+array<int> EcolabPoint::mutate(const array<double>& mut_scale)
 {
   array<int> speciations;
   /* calculate the number of mutants each species produces */
@@ -178,7 +201,7 @@ void do_row_or_col(array<double>& tmp, double range, double minval, double gdist
 }  
 
 /* only run on processor 0 */
-void ecolab_model::mutate_model(array<int> new_sp)
+void ModelData::mutate(const array<int>& new_sp)
 {
 
 
@@ -276,9 +299,8 @@ void ecolab_model::mutate_model(array<int> new_sp)
       interaction.col <<= array<int>( ntrue, tmp2.size() );
     }
 
-  model_data::create <<=  array<double>(new_sp.size(),0);
+  create <<=  array<double>(new_sp.size(),0);
   species <<= pcoord(new_sp.size())*nprocs() + sp_cntr;
-  density<<=array<int>(new_sp.size(),1);
   sp_cntr+=new_sp.size()*nprocs();
 
   assert(sum(mutation<0)==0);
@@ -289,19 +311,19 @@ void ecolab_model::mutate_model(array<int> new_sp)
 
 
 
-array<double> ecolab_model::lifetimes() 
+array<double> PanmicticModel::lifetimes() 
 { 
   array<double> lifetimes; 
 
   for (size_t i=0; i<species.size(); i++) 
     {
-      if (model_data::create[i]==0 && density[i]>10) 
-	model_data::create[i] = tstep;
-      else if (model_data::create[i]>0 && density[i]==0) 
+      if (create[i]==0 && density[i]>10) 
+	create[i] = tstep;
+      else if (create[i]>0 && density[i]==0) 
 	/* extinction */
 	{
-	  lifetimes <<= tstep - model_data::create[i];
-	  model_data::create[i]=0;
+	  lifetimes <<= tstep - create[i];
+	  create[i]=0;
 	}
     }
   return lifetimes;

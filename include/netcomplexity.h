@@ -49,51 +49,39 @@ using std::max;
 /*
   bits needed from nauty.h, macros replaced with inline C++ functions 
 */
-#include "nauty_sizes.h"
-
 
 namespace ecolab
 {
-#if SIZEOF_LONG>4
-#define WORDSIZE 64
-#else
-#define WORDSIZE 32
+  // use WORDSIZE to select 32 or 64 bit sets, 16 bit sets are not to be supported.
+#ifdef WORDSIZE
+#define ECOLAB_WORDSIZE WORDSIZE
+#else // 64 bit sets are default.
+#define ECOLAB_WORDSIZE 64
 #endif
 
-#if WORDSIZE==32
-#if SIZEOF_INT>=4
-  typedef unsigned int setword;
-#define SETWORD_INT
-#else
+#if ECOLAB_WORDSIZE==64
+#if UINT_MAX>0xFFFFFFFF
+  typedef unsigned setword;
+#elif ULONG_MAX>  0xFFFFFFFF
   typedef unsigned long setword;
-#define SETWORD_LONG
-#endif
-#endif
-
-#if WORDSIZE==64
-#if SIZEOF_INT>=8
-  typedef unsigned int setword;
-#define SETWORD_INT
-#else
-#if SIZEOF_LONG>=8
-  typedef unsigned long setword;
-#define SETWORD_LONG
 #else
   typedef unsigned long long setword;
-#define SETWORD_LONGLONG
 #endif
-#endif
+#elif ECOLAB_WORDSIZE==32
+  typedef unsigned int setword;
+#else
+#error "No integer format matches WORDSIZE"
 #endif
 
-#if (WORDSIZE==64)
-  const setword MSK64=0xFFFFFFFFFFFFFFFFUL;
-  const setword MSK63C=0x7FFFFFFFFFFFFFFFUL;
+  
+#if ECOLAB_WORDSIZE==64
+  const setword MSK64=0xFFFFFFFFFFFFFFFFULL;
+  const setword MSK63C=0x7FFFFFFFFFFFFFFFULL;
   const setword ALLBITS=MSK64;
   inline unsigned SETWD(unsigned pos) {return pos>>6;}
   inline unsigned SETBT(unsigned pos) {return pos&0x3F;}
   inline setword BITMASK(unsigned x)  {return MSK63C >> x;}
 
-#ifdef SETWORD_LONGLONG
   const setword bitt[] = {01000000000000000000000LL,0400000000000000000000LL,
                           0200000000000000000000LL,0100000000000000000000LL,
                           040000000000000000000LL,020000000000000000000LL,
@@ -114,26 +102,7 @@ namespace ecolab
                           0200000LL,0100000LL,040000LL,020000LL,010000LL,04000LL,
                           02000LL,01000LL,0400LL,0200LL,0100LL,040LL,020LL,010LL,
                           04LL,02LL,01LL};
-#else
-  const setword bitt[] = {01000000000000000000000,0400000000000000000000,
-                          0200000000000000000000,0100000000000000000000,
-                          040000000000000000000,020000000000000000000,
-                          010000000000000000000,04000000000000000000,
-                          02000000000000000000,01000000000000000000,
-                          0400000000000000000,0200000000000000000,
-                          0100000000000000000,040000000000000000,020000000000000000,
-                          010000000000000000,04000000000000000,02000000000000000,
-                          01000000000000000,0400000000000000,0200000000000000,
-                          0100000000000000,040000000000000,020000000000000,
-                          010000000000000,04000000000000,02000000000000,
-                          01000000000000,0400000000000,0200000000000,0100000000000,
-                          040000000000,020000000000,010000000000,04000000000,
-                          02000000000,01000000000,0400000000,0200000000,0100000000,
-                          040000000,020000000,010000000,04000000,02000000,01000000,
-                          0400000,0200000,0100000,040000,020000,010000,04000,
-                          02000,01000,0400,0200,0100,040,020,010,04,02,01};
-#endif
-#else
+#elif ECOLAB_WORDSIZE==32
   const setword MSK32=0xFFFFFFFFUL;
   const setword MSK31C=0x7FFFFFFFUL;
   const setword ALLBITS=MSK32;
@@ -223,7 +192,7 @@ namespace ecolab
     std::vector<setword> data;
 
     unsigned nwords() const {return sz? div(sz-1)+1: 0;}
-    unsigned nbytes() const {return nwords()*(WORDSIZE>>3);}
+    unsigned nbytes() const {return nwords()*sizeof(setword);}
     unsigned div(unsigned i) const {return SETWD(i);}  /* i/WORDSIZE; */ 
     unsigned mod(unsigned i) const {return SETBT(i);} /* i%WORDSIZE; */
     unsigned mod(int i) const {return SETBT(i);} /* i%WORDSIZE; */
@@ -286,10 +255,10 @@ namespace ecolab
     bitvect operator>>(unsigned offs) const {
       bitvect r(sz+offs);
       for (unsigned i=0; i<nwords()-1; ++i) {
-        r.data[div(i*WORDSIZE+offs)+1] = data[i]>>mod(offs);
-        r.data[div(i*WORDSIZE+offs)]   = data[i]<<mod(-offs);
+        r.data[div(i*ECOLAB_WORDSIZE+offs)+1] = data[i]>>mod(offs);
+        r.data[div(i*ECOLAB_WORDSIZE+offs)]   = data[i]<<mod(-offs);
       }
-      r.data[div((nwords()-1)*WORDSIZE+offs)] = data[nwords()-1]<<mod(-offs);
+      r.data[div((nwords()-1)*ECOLAB_WORDSIZE+offs)] = data[nwords()-1]<<mod(-offs);
       return r;
     }
     bitvect num(unsigned start,unsigned nbits) const;
@@ -492,7 +461,7 @@ namespace ecolab
     const_iterator end() const {return const_iterator(*this,true);}
 
     unsigned m() const {return SETWD(nodecnt-1)+1;}
-    unsigned mw() const {return WORDSIZE*m();}
+    unsigned mw() const {return ECOLAB_WORDSIZE*m();}
     bitvect linklist;
 
     NautyRep(): nodecnt(0) {}
@@ -700,7 +669,7 @@ namespace ecolab
   inline bitvect bitvect::num(unsigned start,unsigned nbits) const
   {
     bitvect r(nbits);
-    if (start+nbits<WORDSIZE) 
+    if (start+nbits<ECOLAB_WORDSIZE) 
       r.data[0]= (data[0]<<start) & ~bitrange(nbits);
     else
       for (unsigned i=0; i<nbits; i++) 
@@ -720,14 +689,14 @@ namespace ecolab
   inline bool bitvect::equal(const bitvect& y, unsigned len, unsigned offs) const
   {
     bool r=true;
-    if (offs+len>WORDSIZE)
+    if (offs+len>ECOLAB_WORDSIZE)
       {
         unsigned i;
         for (i=0; r && i<div(len); i++)
           r&= data[i]==(y.data[div(offs)+i]<<mod(offs)|
-            y.data[div(offs)+i+1]>>(WORDSIZE-mod(offs)));
+            y.data[div(offs)+i+1]>>(ECOLAB_WORDSIZE-mod(offs)));
         unsigned lastword= (div(offs)+i+1<y.nwords())? 
-          y.data[div(offs)+i+1]>>(WORDSIZE-mod(offs)): 0;
+          y.data[div(offs)+i+1]>>(ECOLAB_WORDSIZE-mod(offs)): 0;
         r&= !(~bitrange(mod(len)) & 
               (data[i] ^ (y.data[div(offs)+i]<<mod(offs)| lastword)));
       }

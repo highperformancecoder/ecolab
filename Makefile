@@ -150,13 +150,6 @@ endif
 	echo AQUA=$(AQUA)>>$(MCFG)	
 	echo MAC_OSX_TK=$(MAC_OSX_TK)>>$(MCFG)
 
-#lib/libecolab$(ECOLIBS_EXT).so: lib $(OBJS)
-#	-cd graphcode; $(GRAPHCODE_MAKE) MAP=vmap libgraphcode.a
-#	-cd graphcode; $(GRAPHCODE_MAKE) MAP=hmap libgraphcode.a
-#	-cp -f graphcode/*.h graphcode/vmap graphcode/hmap include
-#	$(LINK) $(FLAGS) -shared $(OBJS) graphcode/*.hmap graphcode/*.vmap -o $@
-
-#ecolab-libs: lib bin $(CLASSDESC) include/nauty_sizes.h
 ecolab-libs: lib bin 
 	$(MAKE) $(UTILS) 
 	$(MAKE) $(ELIBS) 
@@ -195,14 +188,13 @@ bin:
 
 lib/libecolab$(ECOLIBS_EXT).a: $(OBJS) $(LIBMODS)
 # build graphcode objects
-	-cd graphcode; $(GRAPHCODE_MAKE) MAP=vmap libgraphcode.a
-	-cd graphcode; $(GRAPHCODE_MAKE) MAP=hmap libgraphcode.a
-	-cp -f graphcode/*.h graphcode/vmap graphcode/hmap include
-	ar r $@ graphcode/*.hmap graphcode/*.vmap $^
+	-cd graphcode; $(GRAPHCODE_MAKE) libgraphcode.a
+	-cp -f graphcode/*.h include
+	ar r $@ $^
 ifeq ($(OS),Darwin)
 	ranlib $@
 endif
-	$(CPLUSPLUS) -shared -Wl,-soname,libecolab$(ECOLIBS_EXT).so.$(SOVERSION)  $^ graphcode/*.hmap graphcode/*.vmap -o lib/libecolab$(ECOLIBS_EXT).so.$(SOVERSION)
+	$(CPLUSPLUS) -shared -Wl,-soname,libecolab$(ECOLIBS_EXT).so.$(SOVERSION)  $^ -o lib/libecolab$(ECOLIBS_EXT).so.$(SOVERSION)
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) libecolab$(ECOLIBS_EXT).so
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) ecolab$(ECOLIBS_EXT).so
 
@@ -233,10 +225,10 @@ clean:
 	-$(BASIC_CLEAN) generate_nauty_sizes
 	-cd src; $(BASIC_CLEAN) 
 	-cd utils; $(BASIC_CLEAN)
-#	-cd include; $(BASIC_CLEAN) nauty_sizes.h unpack_base.h hashmap.h vmap hmap
-	-cd include; $(BASIC_CLEAN) unpack_base.h hashmap.h vmap hmap
+	-cd include; $(BASIC_CLEAN) unpack_base.h
 	-cd include/Xecolab; $(BASIC_CLEAN)
 	-rm -f $(patsubst classdesc/%,include/%,$(wildcard classdesc/*.h))
+	-rm -f $(patsubst graphcode/%,include/%,$(wildcard graphcode/*.h))
 	-cd classdesc; $(MAKE) clean 
 	-cd models; $(MAKE) ECOLAB_HOME=.. clean
 	-cd models/Stupid_Project; $(MAKE) ECOLAB_HOME=../.. clean

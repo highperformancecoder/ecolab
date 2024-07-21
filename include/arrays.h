@@ -149,6 +149,13 @@ namespace ecolab
     template <class E1, class E2> struct is_expression_and_scalar
     {static const bool value=is_expression<E1>::value && is_scalar<E2>::value;};
 
+    /// true if both E1 and E2 are expressions, or one is and the other a scalar
+    template <class E1, class E2> struct is_expression_or_scalar:
+      public classdesc::Or<
+      both_are_expressions<E1,E2>,
+      is_expression_and_scalar<E1,E2>,
+      is_expression_and_scalar<E2,E1>
+      > {};
 
     template <bool, class type=void> struct enable_if_c {typedef type T;};
     template <class T> struct enable_if_c<false,T> {};
@@ -534,21 +541,21 @@ namespace ecolab
     operator!(const E& e) {return  unop<E,Not<typename E::value_type> >(e);}
 
     template <class E1, class E2>
-    typename enable_if< one_is_expression<E1,E2>, binop<E1,E2,Add<E1,E2> > >::T
+    typename enable_if<is_expression_or_scalar<E1,E2>, binop<E1,E2,Add<E1,E2> > >::T
     operator+(const E1& e1, const E2& e2) 
     {
       return binop<E1,E2,Add<E1,E2> >(e1,e2);
     }
 
     template <class E1, class E2>
-    typename enable_if< one_is_expression<E1,E2>, binop<E1,E2,Sub<E1,E2> > >::T
+    typename enable_if<is_expression_or_scalar<E1,E2>, binop<E1,E2,Sub<E1,E2> > >::T
     operator-(const E1& e1, const E2& e2) 
     {
       return binop<E1,E2,Sub<E1,E2> >(e1,e2);
     }
-      
+    
     template <class E1, class E2>
-    typename enable_if< one_is_expression<E1,E2>, binop<E1,E2,Mul<E1,E2> > >::T
+    typename enable_if<is_expression_or_scalar<E1,E2>, binop<E1,E2,Mul<E1,E2> > >::T
     operator*(const E1& e1, const E2& e2) 
     {
       return binop<E1,E2,Mul<E1,E2> >(e1,e2);
@@ -589,7 +596,7 @@ namespace ecolab
 #else
 
     template <class E1, class E2>
-    typename enable_if<one_is_expression<E1,E2>, binop<E1,E2,Div<E1,E2> > >::T
+    typename enable_if<is_expression_or_scalar<E1,E2>, binop<E1,E2,Div<E1,E2> > >::T
     operator/(const E1& e1, const E2& e2) 
     {
       return binop<E1,E2,Div<E1,E2> >(e1,e2);
@@ -598,7 +605,7 @@ namespace ecolab
 #endif
 
     template <class E1, class E2>
-    typename enable_if< one_is_expression<E1,E2>, binop<E1,E2,Mod<E1,E2> > >::T
+    typename enable_if<is_expression_or_scalar<E1,E2>, binop<E1,E2,Mod<E1,E2> > >::T
     operator%(const E1& e1, const E2& e2) 
     {
       return binop<E1,E2,Mod<E1,E2> >(e1,e2);
