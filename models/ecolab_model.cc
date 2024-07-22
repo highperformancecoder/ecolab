@@ -102,7 +102,7 @@ void EcolabPoint::condense(const array<bool>& mask, size_t mask_true)
 void ModelData::condense(const array<bool>& mask, size_t mask_true)   /* remove extinct species */
 {
   auto map = enumerate( mask );
-  auto mask_off = mask[ interaction.row ] && mask[ interaction.col ];
+  array<bool> mask_off = mask[ interaction.row ] && mask[ interaction.col ];
 
   create = pack(create, mask, mask_true); 
   species = pack(species, mask, mask_true); 
@@ -124,9 +124,9 @@ void PanmicticModel::condense()
 {
   auto mask=density != 0;
   size_t mask_true=sum(mask);
-  if (species.size()==mask_true) return; /* no change ! */
-  EcolabPoint::condense(mask, mask_true);
+  if (mask.size()==mask_true) return; /* no change ! */
   ModelData::condense(mask,mask_true);
+  EcolabPoint::condense(mask, mask_true);
 }
 
 

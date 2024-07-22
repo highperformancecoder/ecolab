@@ -1,4 +1,4 @@
-from ecolab_model import ecolab
+from ecolab_model import panmictic_ecolab as ecolab
 ecolab.species([1,2])
 ecolab.density([100,100]) 
 ecolab.create([0,0])

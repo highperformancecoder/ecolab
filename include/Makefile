@@ -180,6 +180,7 @@ endif
 # do it this way to help Makefile dependencies work
 ECOLIBS=$(ECOLAB_HOME)/lib/libecolab$(ECOLIBS_EXT).a
 
+# why is boost_thread required here?
 LIBS+=-L$(ECOLAB_HOME)/lib -lecolab$(ECOLIBS_EXT) -lboost_thread
 FLAGS+=-I. -I$(ECOLAB_HOME)/include -DHASH_TCL_hash
 

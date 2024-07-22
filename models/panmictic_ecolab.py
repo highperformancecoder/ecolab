@@ -1,4 +1,4 @@
-from ecolab_model import ecolab
+from ecolab_model import panmictic_ecolab as ecolab
 from random import random
 # initial number of species
 nsp=100
@@ -33,19 +33,20 @@ from weakref import ref
 from ecolab import ecolabHome
 connectionPlot=Tk()
 connectionPlot.eval('load '+ecolabHome()+'/lib/ecolab.so')
-connectionPlot.eval('image create cairoSurface connectionCanvas -surface ecolab_model ecolab.connectionPlot')
+connectionPlot.eval('image create cairoSurface connectionCanvas -surface ecolab_model panmictic_ecolab.connectionPlot')
 ttk.Label(connectionPlot, image='connectionCanvas').pack()
 windows.append(ref(connectionPlot))
+ecolab.updateConnectionPlot()
 
 def step():
     ecolab.generate()
     ecolab.mutate()
+    ecolab.updateConnectionPlot()
     ecolab.condense()
     nsp=len(ecolab.species)
     statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
     plot('No. species',ecolab.tstep(),nsp)
     penPlot('Density',ecolab.tstep(),ecolab.density()._properties, ecolab.species()._properties)
-    ecolab.connectionPlot.requestRedraw()
     
 gui(step)
 
