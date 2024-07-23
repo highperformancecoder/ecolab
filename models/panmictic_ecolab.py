@@ -7,7 +7,8 @@ ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
 ecolab.odiag_min(-1e-5)
 ecolab.odiag_max(1e-5)
-ecolab.mut_max(1e-4)
+#ecolab.mut_max(1e-4)
+ecolab.mut_max(1e-3)
 ecolab.sp_sep(0.1)
 
 def randomList(num, min, max):
@@ -25,16 +26,17 @@ ecolab.interaction.val(randomList(len(ecolab.interaction.val), ecolab.odiag_min(
 ecolab.mutation(nsp*[ecolab.mut_max()])
 ecolab.migration(nsp*[1e-5])
                   
-from plot import plot, penPlot
+from plot import plot
 from GUI import gui, statusBar, windows
 
 from tkinter import Tk,ttk
 from weakref import ref
 from ecolab import ecolabHome
 connectionPlot=Tk()
+connectionPlot.wm_title('Connections')
 connectionPlot.eval('load '+ecolabHome()+'/lib/ecolab.so')
 connectionPlot.eval('image create cairoSurface connectionCanvas -surface ecolab_model panmictic_ecolab.connectionPlot')
-ttk.Label(connectionPlot, image='connectionCanvas').pack()
+ttk.Label(connectionPlot, image='connectionCanvas').pack(fill='both',expand=True)
 windows.append(ref(connectionPlot))
 ecolab.updateConnectionPlot()
 
@@ -46,7 +48,7 @@ def step():
     nsp=len(ecolab.species)
     statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
     plot('No. species',ecolab.tstep(),nsp)
-    penPlot('Density',ecolab.tstep(),ecolab.density()._properties, ecolab.species()._properties)
+    plot('Density',ecolab.tstep(),ecolab.density()._properties, pens=ecolab.species()._properties)
     
 gui(step)
 

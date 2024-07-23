@@ -57,14 +57,15 @@ namespace
     {
       CairoSurface& csurf;
       Tk_ImageMaster imageMaster;
-      TkWinSurface(CairoSurface& csurf, Tk_ImageMaster imageMaster, cairo_surface_t* surf):
-        cairo::Surface(surf), csurf(csurf),  imageMaster(imageMaster) {/*TkWinSurface::requestRedraw();*/}
+      int m_width, m_height;
+      TkWinSurface(CairoSurface& csurf, Tk_ImageMaster imageMaster, cairo_surface_t* surf, int width, int height):
+        cairo::Surface(surf), csurf(csurf),  imageMaster(imageMaster), m_width(width), m_height(height) {}
       void requestRedraw() {
-        Tk_ImageChanged(imageMaster,left(),top(),width(),height(),width(),height());
+        Tk_ImageChanged(imageMaster,left(),top(),m_width,m_height,m_width,m_height);
       }
       void blit() {cairo_surface_flush(surface());}
-      double width() const override {return 500;}
-      double height() const override {return 500;}
+      double width() const override {return m_width;}
+      double height() const override {return m_height;}
     };
 
     struct CD
@@ -91,8 +92,6 @@ namespace
           if (CairoSurface* csurf=dynamic_cast<CairoSurface*>(rp->second->getClassdescObject()))
             {
               *masterData=new CD(0,master,*csurf);
-              //Tk_ImageChanged(master,-1000000,-1000000,2000000,2000000,2000000,2000000);
-              // TODO - pass in width/height 
               Tk_ImageChanged(master,0,0,500,500,500,500);
               return TCL_OK;
             }
@@ -118,6 +117,8 @@ namespace
     {
       clock_t t0=clock();
       CD& c=*(CD*)cd;
+      width=min(width,Tk_Width(c.tkWin));
+      height=min(height,Tk_Height(c.tkWin));
 #ifdef USE_WIN32_SURFACE
       // TkWinGetDrawableDC is an internal (ie undocumented) routine
       // for getting the DC. We need to declare something to take
@@ -130,7 +131,7 @@ namespace
       c.csurf.surface.reset
         (new TkWinSurface
          (c.csurf, c.master,
-          cairo_win32_surface_create(hdc)));
+          cairo_win32_surface_create(hdc),Tk_Width(c.tkWin)-2, Tk_Height(c.tkWin)-2)));
 #elif defined(MAC_OSX_TK)
       // calculate the offset of the window within it's toplevel
       int xoffs=0, yoffs=0;
@@ -144,18 +145,17 @@ namespace
       c.csurf.surface.reset
         (new TkWinSurface
          (c.csurf, c.master,
-          cairo_quartz_surface_create_for_cg_context(nctx.context, Tk_Width(c.tkWin), Tk_Height(c.tkWin))));
+          cairo_quartz_surface_create_for_cg_context(nctx.context, Tk_Width(c.tkWin), Tk_Height(c.tkWin)),Tk_Width(c.tkWin)-2, Tk_Height(c.tkWin)-2)));
 #else
       int depth;
       Visual *visual = Tk_GetVisual(interp(), c.tkWin, "default", &depth, NULL);
       c.csurf.surface.reset
          (new TkWinSurface
          (c.csurf, c.master,
-          cairo_xlib_surface_create(display, win, visual, Tk_Width(c.tkWin), Tk_Height(c.tkWin))));
+          cairo_xlib_surface_create(display, win, visual, Tk_Width(c.tkWin), Tk_Height(c.tkWin)),Tk_Width(c.tkWin)-2, Tk_Height(c.tkWin)-2));
+      // why subtract 2?
         
 #endif
-      width=min(width,Tk_Width(c.tkWin));
-      height=min(height,Tk_Height(c.tkWin));
       try
         {
           c.csurf.redraw(imageX,imageY,width,height);

@@ -1575,7 +1575,8 @@ namespace ecolab
       typedef T value_type;
       typedef size_t size_type; 
 
-      explicit array(size_t s=0) 
+      array() {set_size(0);}
+      explicit array(size_t s) 
       {
         set_size(s);
       }
