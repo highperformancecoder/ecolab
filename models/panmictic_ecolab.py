@@ -7,7 +7,7 @@ ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
 ecolab.odiag_min(-1e-5)
 ecolab.odiag_max(1e-5)
-ecolab.mut_max(1e-3)
+ecolab.mut_max(1e-4)
 ecolab.sp_sep(0.1)
 
 def randomList(num, min, max):

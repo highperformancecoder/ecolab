@@ -20,6 +20,11 @@ struct ConnectionPlot: public Object<ConnectionPlot, CairoSurface>
   sparse_mat connections;
   bool redraw(int x0, int y0, int width, int height) override;
   void requestRedraw() const {if (surface) surface->requestRedraw();}
+  void update(const array<int>& d, const sparse_mat& c) {
+    density=d;
+    connections=c;
+    requestRedraw();
+  }
 };
 
 struct ModelData
@@ -38,8 +43,7 @@ struct ModelData
       if (!species.size())
         species=pcoord(nsp);
 
-      // bugger you, g++!
-      if (!/*ModelData::*/create.size()) /*ModelData::*/create.resize(species.size(),0);
+      if (!create.size()) create.resize(species.size(),0);
       if (!mutation.size()) mutation.resize(species.size(),0);
       if (!migration.size()) migration.resize(species.size(),0);
     }
@@ -65,11 +69,7 @@ struct EcolabPoint
 struct PanmicticModel: public ModelData, public EcolabPoint
 {
   ConnectionPlot connectionPlot;
-  void updateConnectionPlot() {
-    connectionPlot.density=density;
-    connectionPlot.connections=interaction;
-    connectionPlot.requestRedraw();
-  }
+  void updateConnectionPlot() {connectionPlot.update(density,interaction);}
   void makeConsistent() {ModelData::makeConsistent(density.size());}
   void generate(unsigned niter);
   void generate() {generate(1);}
