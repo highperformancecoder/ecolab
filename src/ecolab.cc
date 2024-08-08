@@ -11,7 +11,6 @@
 #include "cairoSurfaceImage.h"
 #include "plot.h"
 #include "pythonBuffer.h"
-#include "object.cd"
 #include "ecolab_epilogue.h"
 using namespace ecolab;
 using namespace std;

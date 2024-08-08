@@ -22,7 +22,6 @@ using array_ns::pcoord;
 #include "pythonBuffer.h"
 #include "plot.h"
 
-#include "object.cd"
 #include "ecolab_model.cd"
 
 #include "ecolab_epilogue.h"

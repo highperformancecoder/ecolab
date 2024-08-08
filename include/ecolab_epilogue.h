@@ -12,6 +12,6 @@
 Put this after including all .cd files
 */
 #include "classdesc_epilogue.h"
-#ifdef TCL_OBJ_BASE_H
-#include "TCL_obj_templates.h"
+#ifdef GRAPHCODE_H
+#include "graphcode.cd"
 #endif
