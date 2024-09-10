@@ -6,9 +6,8 @@
   Open source licensed under the MIT license. See LICENSE for details.
 */
 
-#if defined(CAIRO) && defined(TK)
+#ifdef CAIRO
 #include "cairoSurfaceImage.h"
-#include "tcl++.h"
 #include "pango.h"
 
 #include "ecolab_epilogue.h"
@@ -20,12 +19,19 @@
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-svg.h>
 
+using namespace ecolab;
+using namespace std;
+
+#ifdef TK
+#include "tcl++.h"
+
 #ifdef _WIN32
 #undef Realloc
 #include <windows.h>
 #include <wingdi.h>
 #ifdef USE_WIN32_SURFACE
 #include <cairo/cairo-win32.h>
+
 // undocumented internal function for extracting the HDC from a Drawable
 extern "C" HDC TkWinGetDrawableDC(Display*, Drawable, void*);
 extern "C" HDC TkWinReleaseDrawableDC(Drawable, HDC, void*);
@@ -46,9 +52,6 @@ extern "C" HDC TkWinReleaseDrawableDC(Drawable, HDC, void*);
 #if TK_MAJOR_VERSION==8 && TK_MINOR_VERSION < 6
 #define CONST86
 #endif
-
-using namespace ecolab;
-using namespace std;
 
 namespace
 {
@@ -193,11 +196,14 @@ namespace
 
 }
 
+#endif // TK
 void CairoSurface::registerImage()
 {
+#ifdef TK
   // ensure Tk_Init is called.
   if (!Tk_MainWindow(interp())) Tk_Init(interp());
   Tk_CreateImageType(&canvasImage);
+#endif
 }
 
 cairo::SurfacePtr CairoSurface::vectorRender(const char* filename, cairo_surface_t* (*s)(const char *,double,double))
@@ -293,4 +299,4 @@ void CairoSurface::renderToEMF(const string& filename)
 
 #endif
 
-#endif
+#endif //CAIRO

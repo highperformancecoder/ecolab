@@ -73,6 +73,7 @@ endif
 ifdef MAC_OSX_TK
 CXXFLAGS+=-DMAC_OSX_TK 
 OBJS+=src/getContext.o
+LIBS+=-framework AppKit
 endif
 
 CDHDRS=ref.cd random.cd random_basic.cd TCL_obj_base.cd RESTProcess_base.cd signature.cd netcomplexity.cd graph.cd cachedDBM.cd sparse_mat.cd analysis.cd analysisBLT.cd analysisCairo.cd plot.cd cairoSurfaceImage.cd polyRESTProcess.cd
