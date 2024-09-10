@@ -190,11 +190,11 @@ lib/libecolab$(ECOLIBS_EXT).a: $(OBJS) $(LIBMODS)
 # build graphcode objects
 	-cd graphcode; $(GRAPHCODE_MAKE) libgraphcode.a
 	-cp -f graphcode/*.h include
-	ar r $@ $^
+	ar r $@ $^ graphcode/*.o
 ifeq ($(OS),Darwin)
 	ranlib $@
 endif
-	$(CPLUSPLUS) -shared -Wl,-soname,libecolab$(ECOLIBS_EXT).so.$(SOVERSION)  $^ -o lib/libecolab$(ECOLIBS_EXT).so.$(SOVERSION)
+	$(CPLUSPLUS) -shared -Wl,-soname,libecolab$(ECOLIBS_EXT).so.$(SOVERSION)  $^ graphcode/*.o $(LIBS) -o lib/libecolab$(ECOLIBS_EXT).so.$(SOVERSION)
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) libecolab$(ECOLIBS_EXT).so
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) ecolab$(ECOLIBS_EXT).so
 

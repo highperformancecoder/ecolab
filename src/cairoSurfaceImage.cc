@@ -89,7 +89,8 @@ namespace
           if (r==registries().end() || !r->second) throw std::runtime_error("Module: "+module+" not found");
           auto rp=r->second->find(object);
           if (rp==r->second->end()) throw std::runtime_error("Object: "+object+" not found in "+module);
-          if (CairoSurface* csurf=dynamic_cast<CairoSurface*>(rp->second->getClassdescObject()))
+          if (CairoSurface* csurf=
+              dynamic_cast<CairoSurface*>(const_cast<classdesc::object*>(rp->second->getClassdescObject())))
             {
               *masterData=new CD(0,master,*csurf);
               Tk_ImageChanged(master,0,0,500,500,500,500);

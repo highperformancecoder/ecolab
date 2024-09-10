@@ -26,6 +26,8 @@ using array_ns::pcoord;
 
 #include "ecolab_epilogue.h"
 
+using namespace classdesc;
+
 // TODO - move this into main library
 namespace
 {
@@ -78,7 +80,6 @@ void ModelData::random_interaction(unsigned conn, double sigma)
 
 void PanmicticModel::generate(unsigned niter)
 {
-  //parallel(args);
   if (tstep==0) makeConsistent();
   EcolabPoint::generate(niter,*this);
   tstep+=niter;
@@ -390,3 +391,30 @@ bool ConnectionPlot::redraw(int x0, int y0, int width, int height)
   return true;
 }
 
+void SpatialModel::setGrid(size_t nx, size_t ny)
+{
+  numX=nx; numY=ny;
+  for (size_t i=0; i<numX; ++i)
+    for (size_t j=0; j<numY; ++j)
+      insertObject(makeId(i,j));
+}
+
+void SpatialModel::generate(unsigned niter)
+{
+  if (tstep==0) makeConsistent();
+  for (auto& i: *this) i->as<EcoLabCell>()->generate(niter,*this);
+  tstep+=niter;
+}
+
+void SpatialModel::makeConsistent()
+{
+  // all cells must have same number of species. Pack out with zero density if necessary
+  unsigned long nsp=0;
+  for (auto& i: *this) nsp=max(nsp,i->as<EcoLabCell>()->density.size());
+#ifdef MPI_SUPPORT
+  MPI_AllReduce(MPI_IN_PLACE,&nsp,1,MPI_UNSIGNED_LONG,MPI_MAX,MPI_COMM_WORLD);
+#endif
+  for (auto& i: *this)
+    i->as<EcoLabCell>()->density<<=array<int>(nsp-i->as<EcoLabCell>()->density.size(),0);
+  ModelData::makeConsistent(nsp);
+}

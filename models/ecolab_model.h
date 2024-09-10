@@ -80,7 +80,20 @@ struct PanmicticModel: public ModelData, public EcolabPoint
 
 struct EcoLabCell: public EcolabPoint, public graphcode::Object<EcoLabCell> {};
 
-struct SpatialModel: public ModelData, public graphcode::Graph<EcoLabCell>
+class SpatialModel: public ModelData, public graphcode::Graph<EcoLabCell>
 {
+  size_t numX=1, numY=1;
+public:
+  size_t makeId(size_t x, size_t y) const {return x%numX + numX*(y%numY);}
+  void setGrid(size_t nx, size_t ny);
+  graphcode::ObjectPtr<EcoLabCell> cell(size_t x, size_t y) {
+    return objects[makeId(x,y)];
+  }
+  void makeConsistent();
+  void generate(unsigned niter);
+  void generate() {generate(1);}
+//  void condense();
+//  void mutate();
+//  void migrate();
 };
 
