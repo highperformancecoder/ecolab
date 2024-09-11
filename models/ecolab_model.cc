@@ -146,6 +146,33 @@ void PanmicticModel::mutate()
   density<<=array<int>(new_sp.size(),1);
 }
 
+void SpatialModel::mutate()
+{
+  array<double> mut_scale(sp_sep * repro_rate * mutation * (tstep - last_mut_tstep));
+  last_mut_tstep=tstep;
+  array<unsigned> new_sp;
+  array<unsigned> num_new_sp;
+  for (auto& i: *this)
+    {
+      auto new_species_in_cell=i->as<EcoLabCell>()->mutate(mut_scale);
+      num_new_sp<<=new_species_in_cell.size();
+      new_sp <<= new_species_in_cell;
+    }
+  unsigned offset=species.size(), offi=0;
+  // assign 1 for all new species created in this cell, 0 for the others
+  for (auto& i: *this)
+    {
+      auto& density=i->as<EcoLabCell>()->density;
+      density<<=array<int>(new_sp.size(),0);
+      for (size_t j=0; j<num_new_sp[offi]; ++j)
+        {
+          density[j+offset]=1;
+          offset+=num_new_sp[offi++];
+        }
+    }
+  ModelData::mutate(new_sp);
+}
+
 array<int> EcolabPoint::mutate(const array<double>& mut_scale)
 {
   array<int> speciations;

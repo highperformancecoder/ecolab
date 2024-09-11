@@ -93,7 +93,7 @@ public:
   void generate(unsigned niter);
   void generate() {generate(1);}
 //  void condense();
-//  void mutate();
+  void mutate();
 //  void migrate();
 };
 
