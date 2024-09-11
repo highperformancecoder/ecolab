@@ -7,7 +7,7 @@ from weakref import ref
 def getPlot(name):
     plotName='plot#'+name.replace(' ','')
     if not plotName in ecolab.__dict__:
-        Plot(plotName)
+        ecolab.register(Plot(),plotName)
         plotWindow=Tk()
         plotWindow.wm_title(name)
         plotWindow.eval('load '+ecolabHome()+'/lib/ecolab.so')

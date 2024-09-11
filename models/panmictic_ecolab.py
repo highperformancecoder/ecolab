@@ -48,7 +48,7 @@ def step():
     nsp=len(ecolab.species)
     statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
     plot('No. species',ecolab.tstep(),nsp)
-    plot('Density',ecolab.tstep(),ecolab.density()._properties, pens=ecolab.species()._properties)
+    plot('Density',ecolab.tstep(),ecolab.density(), pens=ecolab.species())
     
 gui(step)
 
