@@ -34,17 +34,18 @@ ecolab.mutation(nsp*[ecolab.mut_max()])
 ecolab.migration(nsp*[1e-5])
                   
 from plot import plot
+from GUI import gui, statusBar, windows
 
 def step():
     ecolab.generate()
-    #    ecolab.mutate()
-    #    ecolab.condense()
+    ecolab.mutate()
+    #ecolab.condense()
     nsp=len(ecolab.species)
     statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
-    #    plot('No. species',ecolab.tstep(),nsp)
+    plot('No. species',ecolab.tstep(),nsp)
     for i in range(numX):
         for j in range(numY):
-            plot(f'Density({i},{j}',ecolab.tstep(),ecolab.cell(i,j).density()._properties, pens=ecolab.species()._properties)
+            plot(f'Density({i},{j})',ecolab.tstep(),ecolab.cell(i,j).density(), pens=ecolab.species())
     
 gui(step)
 

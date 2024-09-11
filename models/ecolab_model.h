@@ -86,8 +86,8 @@ class SpatialModel: public ModelData, public graphcode::Graph<EcoLabCell>
 public:
   size_t makeId(size_t x, size_t y) const {return x%numX + numX*(y%numY);}
   void setGrid(size_t nx, size_t ny);
-  graphcode::ObjectPtr<EcoLabCell> cell(size_t x, size_t y) {
-    return objects[makeId(x,y)];
+  EcoLabCell& cell(size_t x, size_t y) {
+    return *objects[makeId(x,y)];
   }
   void makeConsistent();
   void generate(unsigned niter);

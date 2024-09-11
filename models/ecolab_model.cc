@@ -397,6 +397,7 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
   for (size_t i=0; i<numX; ++i)
     for (size_t j=0; j<numY; ++j)
       insertObject(makeId(i,j));
+  rebuildPtrLists();
 }
 
 void SpatialModel::generate(unsigned niter)
