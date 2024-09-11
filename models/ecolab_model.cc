@@ -93,6 +93,15 @@ void EcolabPoint::generate(unsigned niter, const ModelData& model)
   density = ROUND(n);
 }
 
+unsigned EcolabPoint::nsp() const
+{return sum(density!=0);}
+
+array<unsigned> SpatialModel::nsp() const
+{
+  array<unsigned> nsp;
+  for (auto& i: objects) nsp<<=i->nsp();
+  return nsp;
+}
 
 void EcolabPoint::condense(const array<bool>& mask, size_t mask_true)
 {
@@ -127,6 +136,17 @@ void PanmicticModel::condense()
   if (mask.size()==mask_true) return; /* no change ! */
   ModelData::condense(mask,mask_true);
   EcolabPoint::condense(mask, mask_true);
+}
+
+void SpatialModel::condense()
+{
+  array<int> total_density(species.size());
+  for (auto& i: *this) total_density+=i->as<EcoLabCell>()->density;
+  auto mask=total_density != 0;
+  size_t mask_true=sum(mask);
+  if (mask.size()==mask_true) return; /* no change ! */
+  ModelData::condense(mask,mask_true);
+  for (auto& i: *this) i->as<EcoLabCell>()->condense(mask, mask_true);
 }
 
 

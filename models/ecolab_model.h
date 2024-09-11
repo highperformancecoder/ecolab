@@ -63,7 +63,8 @@ struct EcolabPoint
   array<int> density;
   void generate(unsigned niter, const ModelData&);
   void condense(const array<bool>& mask, size_t mask_true);
-  array<int> mutate(const array<double>&); 
+  array<int> mutate(const array<double>&);
+  unsigned nsp() const; ///< number of living species in this cell
 };
 
 struct PanmicticModel: public ModelData, public EcolabPoint
@@ -89,10 +90,11 @@ public:
   EcoLabCell& cell(size_t x, size_t y) {
     return *objects[makeId(x,y)];
   }
+  array<unsigned> nsp() const;
   void makeConsistent();
   void generate(unsigned niter);
   void generate() {generate(1);}
-//  void condense();
+  void condense();
   void mutate();
 //  void migrate();
 };
