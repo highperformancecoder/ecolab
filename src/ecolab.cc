@@ -31,6 +31,8 @@ namespace ecolab
 
   std::string ecolabHome=ECOLAB_HOME;
   CLASSDESC_ADD_GLOBAL(ecolabHome);
+  CLASSDESC_ADD_GLOBAL(array_urand);
+  CLASSDESC_ADD_GLOBAL(array_grand);
   CLASSDESC_DECLARE_TYPE(Plot);
   CLASSDESC_PYTHON_MODULE(ecolab);
 }

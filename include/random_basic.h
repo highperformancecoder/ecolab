@@ -12,8 +12,7 @@ namespace ecolab
   {
   public:
     double rand();
-    void seed(TCL_args args) {Seed(args);}
-    void Seed(int s) {srand(s);}
+    void seed(int s) {srand(s);}
   };
 
   class gaussrand: public random_gen

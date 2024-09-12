@@ -47,7 +47,7 @@ include $(ECOLAB_HOME)/include/Makefile.config
 endif
 
 .SUFFIXES: .cd .d .rc $(SUFFIXES)
-VPATH=$(ECOLAB_HOME)/include
+VPATH=$(ECOLAB_HOME)/classdesc:$(ECOLAB_HOME)/classdesc/json5_parser/json5_parser:$(ECOLAB_HOME)/graphcode:$(ECOLAB_HOME)/include
 PATH:=$(ECOLAB_HOME)/bin:$(PATH):$(HOME)/usr/bin
 CLASSDESC=$(ECOLAB_HOME)/bin/classdesc
 PKG_CONFIG_PATH:=$(HOME)/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/local/lib/pkgconfig:$(PKG_CONFIG_PATH)
@@ -182,7 +182,7 @@ ECOLIBS=$(ECOLAB_HOME)/lib/libecolab$(ECOLIBS_EXT).a
 
 # why is boost_thread required here?
 LIBS+=-L$(ECOLAB_HOME)/lib -lecolab$(ECOLIBS_EXT) -lboost_thread
-FLAGS+=-I. -I$(ECOLAB_HOME)/classdesc -I$(ECOLAB_HOME)/include -DHASH_TCL_hash
+FLAGS+=-I. -I$(ECOLAB_HOME)/classdesc -I$(ECOLAB_HOME)/classdesc/json5_parser/json5_parser -I$(ECOLAB_HOME)/graphcode -I$(ECOLAB_HOME)/include -DHASH_TCL_hash
 
 # The following section uses GNU Make specific syntax. If not using
 # GNU Make, edit the  FLAGS, LIBS, CC,

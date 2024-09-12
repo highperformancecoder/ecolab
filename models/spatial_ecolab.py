@@ -1,5 +1,9 @@
 from ecolab_model import spatial_ecolab as ecolab
 from random import random
+
+from ecolab import array_urand
+array_urand.seed(10)
+
 # initial number of species
 nsp=100
 
@@ -39,6 +43,7 @@ from GUI import gui, statusBar, windows
 def step():
     ecolab.generate()
     ecolab.mutate()
+    ecolab.migrate()
     ecolab.condense()
     nsp=len(ecolab.species)
     statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')

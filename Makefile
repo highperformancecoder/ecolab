@@ -205,7 +205,8 @@ endif
 endif
 
 $(CLASSDESC):
-	cd classdesc; $(MAKE) PREFIX=$(ECOLAB_HOME) XDR=$(XDR) install
+	cd classdesc; $(MAKE) PREFIX=$(ECOLAB_HOME) XDR=$(XDR)
+	ln -sf `pwd`/classdesc/classdesc $(CLASSDESC)
 
 src/xdr_pack.cc: classdesc/xdr_pack.cc
 	-cp $< $@
@@ -264,9 +265,10 @@ install: all-without-models
 	$(MAKE) bin/ecolab$(ECOLIBS_EXT)
 # if installing on top of a different version, remove directory completely
 	if [ -f $(PREFIX)/include/version.h ] && ! diff -q $(PREFIX)/include/version.h include/version.h; then rm -rf $(PREFIX); fi
-	mkdir -p $(PREFIX)
+	mkdir -p $(PREFIX)/bin
 	cp -r include $(PREFIX)
 	cp classdesc/*.{h,cd} $(PREFIX)/include
+	cp classdesc/classdesc $(PREFIX)/bin
 	cp graphcode/*.{h,cd} $(PREFIX)/include
 # ensure cd files are more up-to-date than their sources.
 	touch $(PREFIX)/include/*.cd

@@ -19,17 +19,18 @@ namespace ecolab
 
   class urand: public random_gen
   {
-    void operator=(urand&);
+    void operator=(const urand&)=delete;
+    urand(const urand&)=delete;
     CLASSDESC_ACCESS(urand);
   public:
     gsl_rng *gen;
     urand(const gsl_rng_type *descr=gsl_rng_mt19937) {gen=gsl_rng_alloc(descr);}
     ~urand() {gsl_rng_free(gen);}
-    void Seed(int s) {gsl_rng_set(gen,s);}
+    void seed(int s) {gsl_rng_set(gen,s);}
     double rand();
     /* select a different uniform random generator according the GSL's rng
        string interface */
-    void Set_gen(const std::string& descr)
+    void setGen(const std::string& descr)
     {
       static const gsl_rng_type ** rngTypes=gsl_rng_types_setup();
       const gsl_rng_type **g=rngTypes;
@@ -46,7 +47,6 @@ namespace ecolab
 
   class gaussrand: public random_gen
   {
-    void operator=(gaussrand&);
     CLASSDESC_ACCESS(gaussrand);
   public:
     urand uni;

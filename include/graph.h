@@ -107,8 +107,8 @@ namespace ecolab
     };
 
     /// iterator over edges
-    class const_iterator: public classdesc::poly<const_iterator_base>/*,
-                                                                       public std::iterator<std::forward_iterator_tag,Edge>*/
+    class const_iterator: public classdesc::poly<const_iterator_base> /*,
+                          public std::iterator<std::forward_iterator_tag,Edge>*/
     {
       typedef classdesc::poly<Graph::const_iterator_base> super;
       Graph::const_iterator_base& base() {return super::operator*();}

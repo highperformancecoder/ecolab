@@ -24,34 +24,31 @@ namespace ecolab
     UNUR_URNG *gen;
     friend class gaussrand;
     friend class unuran;
-    void operator=(const urand&);
-    urand(const urand&);
+    operator=(const urand&)=delete;
+    urand(const urand&)=delete;
     CLASSDESC_ACCESS(urand);
   public:
     urand();
     ~urand();
     void seed(int s) {unur_urng_seed(gen,s);}
-    void Seed(int s) {seed(s);} // for backwards compatibility
     double rand() {return unur_urng_sample(gen);};
-    // for backwards compatibility
-    void Set_gen(const char* descr) {set_gen(descr);} 
     /** select a different uniform random generator according the prng's
         string interface. If PRNG not avail, this routine is a nop. */
-    void set_gen(const char* descr);
+    void setGen(const char* descr);
   };
 
   /// universal non-uniform random generator
   class unuran: public random_gen
   {
     UNUR_GEN   *gen;
-    void operator=(unuran&);
+    void operator=(const unuran&)=delete;
+    unuran(const unuran&)=delete;
     CLASSDESC_ACCESS(unuran);
   public:
     urand uni;
     /* specify a random generator according to unuran's string interface */
-    void set_gen(TCL_args args) {Set_gen(args);}
     UNUR_GEN *get_gen() {return gen;}
-    void Set_gen(const char *descr)
+    void setGen(const char *descr)
     {
       if (gen) unur_free(gen);
       gen=unur_str2gen(descr); 

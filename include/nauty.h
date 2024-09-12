@@ -35,7 +35,7 @@ it is necessary to check they are correct.
 #define SIZEOF_LONG 4
 #define SIZEOF_LONG_LONG 8   /* 0 if nonexistent */
 #endif
-#include <nauty_sizes.h>  /* auto generate these macros */
+//#include <nauty_sizes.h>  /* auto generate these macros */
 
 #define HAVE_CONST 1    /* compiler properly supports const */
 

@@ -141,12 +141,12 @@ void PanmicticModel::condense()
 void SpatialModel::condense()
 {
   array<int> total_density(species.size());
-  for (auto& i: *this) total_density+=i->as<EcoLabCell>()->density;
+  for (auto& i: *this) total_density+=i->as<EcolabCell>()->density;
   auto mask=total_density != 0;
   size_t mask_true=sum(mask);
   if (mask.size()==mask_true) return; /* no change ! */
   ModelData::condense(mask,mask_true);
-  for (auto& i: *this) i->as<EcoLabCell>()->condense(mask, mask_true);
+  for (auto& i: *this) i->as<EcolabCell>()->condense(mask, mask_true);
 }
 
 
@@ -174,7 +174,7 @@ void SpatialModel::mutate()
   array<unsigned> num_new_sp;
   for (auto& i: *this)
     {
-      auto new_species_in_cell=i->as<EcoLabCell>()->mutate(mut_scale);
+      auto new_species_in_cell=i->as<EcolabCell>()->mutate(mut_scale);
       num_new_sp<<=new_species_in_cell.size();
       new_sp <<= new_species_in_cell;
     }
@@ -182,7 +182,7 @@ void SpatialModel::mutate()
   // assign 1 for all new species created in this cell, 0 for the others
   for (auto& i: *this)
     {
-      auto& density=i->as<EcoLabCell>()->density;
+      auto& density=i->as<EcolabCell>()->density;
       density<<=array<int>(new_sp.size(),0);
       for (size_t j=0; j<num_new_sp[offi]; ++j)
         {
@@ -450,19 +450,69 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
 void SpatialModel::generate(unsigned niter)
 {
   if (tstep==0) makeConsistent();
-  for (auto& i: *this) i->as<EcoLabCell>()->generate(niter,*this);
+  for (auto& i: *this) i->as<EcolabCell>()->generate(niter,*this);
   tstep+=niter;
 }
+
+void SpatialModel::migrate()
+{
+  /* each cell gets a distinct random salt value */
+  for (auto& i: *this)
+    (*this)[i]->as<EcolabCell>()->salt=array_urand.rand();
+
+  // prepareNeighbours
+  
+  vector<array<int> > delta(size(), array<int>(species.size(),0));
+
+  for (size_t i=0; i<size(); i++)
+    { 
+      auto& cell=*(*this)[i]->as<EcolabCell>();
+      /* loop over neighbours */ 
+      for (auto& n: *(*this)[i]) 
+	{
+          auto& nbr=*n->as<EcolabCell>();
+	  array<double> m( double(tstep-last_mig_tstep) * migration * 
+                           (nbr.density - cell.density) );
+          double salt=(*this)[i].id()<n.id()? cell.salt: nbr.salt;
+          delta[i] += array<int>(m + array<double>(m!=0.0)*(2*(m>0.0)-1)) * salt;
+	}
+    }
+  last_mig_tstep=tstep;
+  for (size_t i=0; i<size(); i++)
+    (*this)[i]->as<EcolabCell>()->density+=delta[i];
+
+  /* assertion testing that population numbers are conserved */
+#ifndef NDEBUG
+  array<int> ssum(species.size()), s(species.size()); 
+  unsigned mig=0, i;
+  for (ssum=0, i=0; i<size(); i++)
+    {
+      ssum+=delta[i];
+      for (size_t j=0; j<delta[i].size(); j++)
+	mig+=abs(delta[i][j]);
+    }
+#ifdef MPI_SUPPORT
+  MPI_Reduce(ssum.data(),s.data(),s.size(),MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
+  ssum=s;
+  int m;
+  MPI_Reduce(&mig,&m,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
+  mig=m;
+#endif
+  if (myid==0) assert(sum(ssum==0)==int(ssum.size()));
+#endif
+
+}
+
 
 void SpatialModel::makeConsistent()
 {
   // all cells must have same number of species. Pack out with zero density if necessary
   unsigned long nsp=0;
-  for (auto& i: *this) nsp=max(nsp,i->as<EcoLabCell>()->density.size());
+  for (auto& i: *this) nsp=max(nsp,i->as<EcolabCell>()->density.size());
 #ifdef MPI_SUPPORT
   MPI_AllReduce(MPI_IN_PLACE,&nsp,1,MPI_UNSIGNED_LONG,MPI_MAX,MPI_COMM_WORLD);
 #endif
   for (auto& i: *this)
-    i->as<EcoLabCell>()->density<<=array<int>(nsp-i->as<EcoLabCell>()->density.size(),0);
+    i->as<EcolabCell>()->density<<=array<int>(nsp-i->as<EcolabCell>()->density.size(),0);
   ModelData::makeConsistent(nsp);
 }
