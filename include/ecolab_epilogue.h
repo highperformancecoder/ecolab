@@ -13,4 +13,5 @@ Put this after including all .cd files
 */
 #include "classdesc_epilogue.h"
 #ifdef GRAPHCODE_H
+#include "graphcode.cd"
 #endif

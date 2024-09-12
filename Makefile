@@ -24,7 +24,7 @@ MCFG=include/Makefile.config
 
 ifneq ($(MAKECMDGOALS),clean)
 # make sure Classdesc is built first, even before starting to include Makefiles
-build_classdesc:=$(shell if [ ! -x bin/classdesc ]; then cd classdesc; $(MAKE) PREFIX=$(ECOLAB_HOME) XDR=$(XDR) install; fi)
+build_classdesc:=$(shell if [ ! -x bin/classdesc ]; then cd classdesc; $(MAKE) XDR=$(XDR); fi)
 endif
 
 include include/Makefile
@@ -185,16 +185,14 @@ lib:
 bin: 
 	-mkdir -p bin
 
-
-lib/libecolab$(ECOLIBS_EXT).a: $(OBJS) $(LIBMODS)
+lib/libecolab$(ECOLIBS_EXT).a: $(OBJS) $(LIBMODS) graphcode
 # build graphcode objects
 	-cd graphcode; $(GRAPHCODE_MAKE) libgraphcode.a
-	-cp -f graphcode/*.h include
-	ar r $@ $^ graphcode/*.o
+	ar r $@ $(OBJS) $(LIBMODS) graphcode/*.o
 ifeq ($(OS),Darwin)
 	ranlib $@
 endif
-	$(CPLUSPLUS) -shared -Wl,-soname,libecolab$(ECOLIBS_EXT).so.$(SOVERSION)  $^ graphcode/*.o $(LIBS) -o lib/libecolab$(ECOLIBS_EXT).so.$(SOVERSION)
+	$(CPLUSPLUS) -shared -Wl,-soname,libecolab$(ECOLIBS_EXT).so.$(SOVERSION)  $(OBJS) $(LIBMODS) graphcode/*.o $(LIBS) -o lib/libecolab$(ECOLIBS_EXT).so.$(SOVERSION)
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) libecolab$(ECOLIBS_EXT).so
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) ecolab$(ECOLIBS_EXT).so
 
@@ -268,6 +266,8 @@ install: all-without-models
 	if [ -f $(PREFIX)/include/version.h ] && ! diff -q $(PREFIX)/include/version.h include/version.h; then rm -rf $(PREFIX); fi
 	mkdir -p $(PREFIX)
 	cp -r include $(PREFIX)
+	cp classdesc/*.{h,cd} $(PREFIX)/include
+	cp graphcode/*.{h,cd} $(PREFIX)/include
 # ensure cd files are more up-to-date than their sources.
 	touch $(PREFIX)/include/*.cd
 # fix up unpack_base.h
