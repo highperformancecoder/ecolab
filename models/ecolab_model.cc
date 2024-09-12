@@ -443,7 +443,14 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
   numX=nx; numY=ny;
   for (size_t i=0; i<numX; ++i)
     for (size_t j=0; j<numY; ++j)
-      insertObject(makeId(i,j));
+      {
+        auto o=insertObject(makeId(i,j));
+        // wire up von Neumann neighborhood
+        o->neighbours.push_back(makeId(i-1,j));
+        o->neighbours.push_back(makeId(i+1,j)); 
+        o->neighbours.push_back(makeId(i,j-1)); 
+        o->neighbours.push_back(makeId(i,j+1)); 
+      }
   rebuildPtrLists();
 }
 
@@ -457,9 +464,12 @@ void SpatialModel::generate(unsigned niter)
 void SpatialModel::migrate()
 {
   /* each cell gets a distinct random salt value */
-  for (auto& i: *this)
-    (*this)[i]->as<EcolabCell>()->salt=array_urand.rand();
+  // TODO why doesn't this loop work?
+//  for (auto& i: *this)
+//    (*this)[i]->as<EcolabCell>()->salt=array_urand.rand();
 
+  for (auto& o: objects) o->salt=array_urand.rand();
+  
   // prepareNeighbours
   
   vector<array<int> > delta(size(), array<int>(species.size(),0));

@@ -3,6 +3,7 @@ from tkinter import Tk, ttk, Button
 # list of windows to update each simulation step
 windows=[]
 runner=Tk()
+runner.title('EcoLab')
 statusBar=ttk.Label(runner,text='Not started')
 statusBar.pack()
 

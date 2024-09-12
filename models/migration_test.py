@@ -15,11 +15,12 @@ ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 ecolab.cell(4,4).density(nsp*[100])
 
-ecolab.migration(nsp*[1e-5])
+ecolab.migration(nsp*[0.5])
                   
 from plot import plot
 from GUI import gui, statusBar, windows
 
+ecolab.makeConsistent()
 def step():
     ecolab.migrate()
     ecolab.tstep(ecolab.tstep()+1)
