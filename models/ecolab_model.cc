@@ -187,8 +187,8 @@ void SpatialModel::mutate()
       for (size_t j=0; j<num_new_sp[offi]; ++j)
         {
           density[j+offset]=1;
-          offset+=num_new_sp[offi++];
         }
+      offset+=num_new_sp[offi++];
     }
   ModelData::mutate(new_sp);
 }
