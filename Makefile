@@ -24,7 +24,7 @@ MCFG=include/Makefile.config
 
 ifneq ($(MAKECMDGOALS),clean)
 # make sure Classdesc is built first, even before starting to include Makefiles
-build_classdesc:=$(shell if [ ! -x bin/classdesc ]; then cd classdesc; $(MAKE) XDR=$(XDR); fi)
+build_classdesc:=$(shell if [ ! -x bin/classdesc ]; then pushd classdesc; $(MAKE) XDR=$(XDR); popd; ln -sf `pwd`/classdesc/classdesc bin/classdesc; fi)
 endif
 
 include include/Makefile
@@ -118,7 +118,7 @@ all: all-without-models
 	$(MAKE) models 
 	-$(CHMOD) a+x models/*.tcl
 
-all-without-models: ecolab-libs lib/libecolab$(ECOLIBS_EXT).a
+all-without-models: ecolab-libs lib/libecolab$(ECOLIBS_EXT).a bin/ecolab$(ECOLIBS_EXT)
 	-$(CHMOD) a+x $(SCRIPTS)
 # copy in the system built TCL library
 ifdef MXE
@@ -194,7 +194,7 @@ ifeq ($(OS),Darwin)
 endif
 	$(CPLUSPLUS) -shared -Wl,-soname,libecolab$(ECOLIBS_EXT).so.$(SOVERSION)  $(OBJS) $(LIBMODS) graphcode/*.o $(LIBS) -o lib/libecolab$(ECOLIBS_EXT).so.$(SOVERSION)
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) libecolab$(ECOLIBS_EXT).so
-	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) ecolab$(ECOLIBS_EXT).so
+	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) ecolab.so
 
 $(MODS:%=lib/%): lib/%: src/%
 	cp $< $@
@@ -253,10 +253,10 @@ distrib: doc/ecolab/ecolab.html
 latex-docs:
 	if which latex; then cd doc; rm -f *.aux *.dvi *.log *.blg *.toc *.lof *.out; latex -interaction=batchmode ecolab; fi
 
-# bin/ecolab is a no model ecolab binary that only works from installed location
-#bin/ecolab$(ECOLIBS_EXT): src/ecolab.o src/tclmain.o lib/libecolab$(ECOLIBS_EXT).a
-#	$(LINK) $(FLAGS) src/ecolab.o src/tclmain.o  $(LIBS) -o $@
-#	-find . \( -name "*.cc" -o -name "*.h" \) -print |etags -
+#bin/ecolab is a python interpreter supporting MPI
+bin/ecolab$(ECOLIBS_EXT): src/ecolab.o src/pythonMain.o lib/libecolab$(ECOLIBS_EXT).a
+	$(LINK) $(FLAGS) src/ecolab.o src/pythonMain.o -Wl,-rpath $(ECOLAB_HOME)/lib $(LIBS) $(shell pkg-config --libs python3) -o $@
+	-find . \( -name "*.cc" -o -name "*.h" \) -print |etags -
 
 .PHONY: install
 install: all-without-models

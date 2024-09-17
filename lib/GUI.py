@@ -35,4 +35,7 @@ def gui(step):
     ttk.Button(buttonBar,text="run",command=simulator).pack(side='left')
     ttk.Button(buttonBar,text="step",command=step).pack(side='left')
     ttk.Button(buttonBar,text="stop",command=simulator.stop).pack(side='left')
-    runner.mainloop()
+    try:
+        runner.mainloop()
+    except SystemExit:
+        pass

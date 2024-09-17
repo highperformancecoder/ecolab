@@ -142,7 +142,13 @@ void SpatialModel::condense()
 {
   array<int> total_density(species.size());
   for (auto& i: *this) total_density+=i->as<EcolabCell>()->density;
+#ifdef MPI_SUPPORT
+  array<int> recv(total_density.size());
+  MPI_Allreduce(total_density.data(),recv.data(),total_density.size(),MPI_INT,MPI_SUM,MPI_COMM_WORLD);
+  total_density.swap(recv);
+#endif
   auto mask=total_density != 0;
+  
   size_t mask_true=sum(mask);
   if (mask.size()==mask_true) return; /* no change ! */
   ModelData::condense(mask,mask_true);
@@ -170,27 +176,46 @@ void SpatialModel::mutate()
 {
   array<double> mut_scale(sp_sep * repro_rate * mutation * (tstep - last_mut_tstep));
   last_mut_tstep=tstep;
-  array<unsigned> new_sp;
+  array<unsigned> new_sp, cell_ids;
   array<unsigned> num_new_sp;
   for (auto& i: *this)
     {
-      auto new_species_in_cell=i->as<EcolabCell>()->mutate(mut_scale);
-      num_new_sp<<=new_species_in_cell.size();
-      new_sp <<= new_species_in_cell;
+      new_sp <<= i->as<EcolabCell>()->mutate(mut_scale);
+      cell_ids <<= array<int>(new_sp.size()-cell_ids.size(),i.id());
     }
-  unsigned offset=species.size(), offi=0;
-  // assign 1 for all new species created in this cell, 0 for the others
-  for (auto& i: *this)
+//  unsigned offset=species.size(), offi=0;
+//  // assign 1 for all new species created in this cell, 0 for the others
+//  for (auto& i: *this)
+//    {
+//      auto& density=i->as<EcolabCell>()->density;
+//      density<<=array<int>(new_sp.size(),0);
+//      for (size_t j=0; j<num_new_sp[offi]; ++j)
+//        {
+//          density[j+offset]=1;
+//        }
+//      offset+=num_new_sp[offi++];
+//    }
+#ifdef MPI_SUPPORT
+  MPIbuf b; b<<new_sp<<cell_ids; b.gather(0);
+  if (myid()==0)
     {
-      auto& density=i->as<EcolabCell>()->density;
-      density<<=array<int>(new_sp.size(),0);
-      for (size_t j=0; j<num_new_sp[offi]; ++j)
-        {
-          density[j+offset]=1;
-        }
-      offset+=num_new_sp[offi++];
+      new_sp.resize(0); cell_ids.resize(0);
+      for (unsigned i=0; i<nprocs(); i++) 
+	{
+	  array<int> n,c;
+	  b>>n>>c;
+	  new_sp<<=n; cell_ids<<=c;
+	}
+      ModelData::mutate(new_sp);
     }
+  MPIbuf() << cell_ids << *(ModelData*)this << bcast(0)
+           >> cell_ids >> *(ModelData*)this;
+#else
   ModelData::mutate(new_sp);
+#endif
+  // set the new species density to 1 for those created on this cell
+  for (auto& i: *this)
+    i->as<EcolabCell>()->density <<= cell_ids==i.id();
 }
 
 array<int> EcolabPoint::mutate(const array<double>& mut_scale)
@@ -451,7 +476,7 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
         o->neighbours.push_back(makeId(i,j-1)); 
         o->neighbours.push_back(makeId(i,j+1)); 
       }
-  rebuildPtrLists();
+  partitionObjects();
 }
 
 void SpatialModel::generate(unsigned niter)
@@ -470,8 +495,7 @@ void SpatialModel::migrate()
 
   for (auto& o: objects) o->salt=array_urand.rand();
   
-  // prepareNeighbours
-  
+  prepareNeighbours();
   vector<array<int> > delta(size(), array<int>(species.size(),0));
 
   for (size_t i=0; i<size(); i++)
@@ -520,7 +544,7 @@ void SpatialModel::makeConsistent()
   unsigned long nsp=0;
   for (auto& i: *this) nsp=max(nsp,i->as<EcolabCell>()->density.size());
 #ifdef MPI_SUPPORT
-  MPI_AllReduce(MPI_IN_PLACE,&nsp,1,MPI_UNSIGNED_LONG,MPI_MAX,MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE,&nsp,1,MPI_UNSIGNED_LONG,MPI_MAX,MPI_COMM_WORLD);
 #endif
   for (auto& i: *this)
     i->as<EcolabCell>()->density<<=array<int>(nsp-i->as<EcolabCell>()->density.size(),0);
