@@ -10,26 +10,66 @@
 #include <boost/locale.hpp>
 #ifdef MPI_SUPPORT
 #include "classdescMP.h"
+
+void throw_MPI_errors(MPI_Comm * c, int *code, ...)
+{
+  char *errstr=new char[MPI_MAX_ERROR_STRING+1];
+  int length;
+  MPI_Error_string(*code,errstr,&length);
+  errstr[length]='\0';
+  std::runtime_error MPI_err(errstr);
+  delete [] errstr;
+  throw MPI_err;
+}
+
+
+
 #endif
 #include "ecolab_epilogue.h"
 
+#include <iostream>
 #include <string>
 #include <vector>
 using namespace std;
 using boost::locale::conv::utf_to_utf;
 
+struct Python
+{
+  Python() {Py_Initialize();}
+  ~Python() {Py_FinalizeEx();}
+};
+
 int main(int argc, char* argv[])
 {
 #ifdef MPI_SUPPORT
   classdesc::MPISPMD spmd(argc, argv);
+  MPI_Errhandler errhandler;
+#if MPI_VERSION>=2
+  MPI_Comm_create_errhandler((MPI_Comm_errhandler_function*)throw_MPI_errors,&errhandler);
+  MPI_Comm_set_errhandler(MPI_COMM_WORLD,errhandler);
+#else
+  MPI_Errhandler_create((MPI_Handler_function*)throw_MPI_errors,&errhandler);
+  MPI_Errhandler_set(MPI_COMM_WORLD,errhandler);
 #endif
-  // convert arguments to UTF-16 equivalents
-  // Python 3.8 and later have Py_BytesMain, which obviates this code
-  vector<wstring> wargs;
-  for (int i=0; i<argc; ++i)
-    wargs.push_back(utf_to_utf<wchar_t>(argv[i]));
-  wchar_t* wargsData[argc];
-  for (int i=0; i<argc; ++i)
-    wargsData[i]=const_cast<wchar_t*>(wargs[i].c_str());
-  return Py_Main(argc,wargsData);
+#endif
+  if (argc<2) return 0; // nothing to do
+  // this assumes that all processes see the same filesystem, and
+  // potentially the same CWD if the argument is a relative filename
+  FILE* script=fopen(argv[1],"rb");
+  if (!script) {
+    cerr<<"Failed to open: "<<argv[1]<<endl;
+    return 1; // invalid file
+  }
+  Python python;
+  if (auto path=PySys_GetObject("path"))
+    {
+      PyList_Append(path,PyUnicode_FromString("."));
+      PyList_Append(path,PyUnicode_FromString(ECOLAB_HOME"/lib"));
+    }
+  auto pyArgv=PyList_New(0);
+  for (int i=1; i<argc; ++i)
+    PyList_Append(pyArgv, PyUnicode_FromString(argv[i]));
+  PySys_SetObject("argv",pyArgv);
+    
+  return PyRun_SimpleFile(script,argv[1]);
 }

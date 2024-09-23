@@ -36,7 +36,7 @@ endif
 # This rule uses a header file of object descriptors
 $(MODELS:=.o): %.o: %.cc 
 
-# how to build a model executable
+# how to build a model
 $(MODELS:=.so): %.so: %.o ../lib/libecolab.a
 	$(LINK) $(FLAGS) -shared -Wl,-rpath $(ECOLAB_HOME)/lib $*.o $(LIBS) -o $@
 

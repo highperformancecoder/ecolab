@@ -233,7 +233,7 @@ namespace ecolab
 
   /* these are defined to default values, even if MPI is false */
   /// MPI process ID and number of processes
-  extern unsigned myid, nprocs;
+  //extern unsigned myid, nprocs;
 
   /// semaphore controlling background event process during command
   /// execution. When zero, background events are processed

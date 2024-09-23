@@ -47,7 +47,7 @@ include $(ECOLAB_HOME)/include/Makefile.config
 endif
 
 .SUFFIXES: .cd .d .rc $(SUFFIXES)
-VPATH=$(ECOLAB_HOME)/classdesc:$(ECOLAB_HOME)/classdesc/json5_parser/json5_parser:$(ECOLAB_HOME)/graphcode:$(ECOLAB_HOME)/include
+VPATH=$(ECOLAB_HOME)/classdesc $(ECOLAB_HOME)/classdesc/json5_parser/json5_parser $(ECOLAB_HOME)/graphcode $(ECOLAB_HOME)/include
 PATH:=$(ECOLAB_HOME)/bin:$(PATH):$(HOME)/usr/bin
 CLASSDESC=$(ECOLAB_HOME)/bin/classdesc
 PKG_CONFIG_PATH:=$(HOME)/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/local/lib/pkgconfig:$(PKG_CONFIG_PATH)

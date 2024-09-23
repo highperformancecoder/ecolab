@@ -52,14 +52,12 @@ typedef classdesc::string eco_string;
 
 #include "eco_strstream.h"
 
-
 namespace ecolab
 {
   /* these are defined to default values, even if MPI is false */
   /// MPI process ID and number of processes
-  // for now - need to figure out how to launch python interpreters in MPI later.
-  inline unsigned myid() {return 0;}
-  inline unsigned nprocs() {return 1;}
+  unsigned myid();
+  unsigned nprocs();
 
   using classdesc::pack_t;
   using classdesc::unpack_t;

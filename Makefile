@@ -61,7 +61,7 @@ ifeq ($(OS),Darwin)
 CXXFLAGS+=-std=c++11
 endif
 
-VPATH=include src models
+VPATH+=src
 
 # objects to build ecolab.a
 OBJS=src/automorph.o src/auxil.o src/arrays.o src/sparse_mat.o \
@@ -81,7 +81,7 @@ OBJS+=src/getContext.o
 endif
 
 #CDHDRS=graph.cd graphcode.cd netcomplexity.cd object.cd plot.cd poly.cd polyRESTProcess.cd polyRESTProcessBase.cd ref.cd random.cd random_basic.cd ref.cd RESTProcess_base.cd signature.cd sparse_mat.cd
-CDHDRS=object.cd
+CDHDRS=
 
 # Clunky, but this extracts all .cd files mentioned in header files,
 CDHDRS+=$(shell bash extractCDHeaders.sh)
@@ -156,7 +156,7 @@ ecolab-libs: lib bin
 
 .PHONY: models classdesc
 
-$(OBJS) $(MODS:%=src/%): $(CDHDRS:%=include/%) 
+$(OBJS) $(MODS:%=src/%): $(CDHDRS:%=include/%) graphcode.cd
 
 $(OBJS:.o=.d) $(MODS:%.o=src/%.d):  $(ECOLAB_HOME)/$(MCFG)
 
@@ -254,8 +254,8 @@ latex-docs:
 	if which latex; then cd doc; rm -f *.aux *.dvi *.log *.blg *.toc *.lof *.out; latex -interaction=batchmode ecolab; fi
 
 #bin/ecolab is a python interpreter supporting MPI
-bin/ecolab$(ECOLIBS_EXT): src/ecolab.o src/pythonMain.o lib/libecolab$(ECOLIBS_EXT).a
-	$(LINK) $(FLAGS) src/ecolab.o src/pythonMain.o -Wl,-rpath $(ECOLAB_HOME)/lib $(LIBS) $(shell pkg-config --libs python3) -o $@
+bin/ecolab$(ECOLIBS_EXT): src/pythonMain.o lib/libecolab$(ECOLIBS_EXT).a
+	$(LINK) $(FLAGS) src/pythonMain.o -Wl,-rpath $(ECOLAB_HOME)/lib $(LIBS) $(shell pkg-config --libs python3) -o $@
 	-find . \( -name "*.cc" -o -name "*.h" \) -print |etags -
 
 .PHONY: install
