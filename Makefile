@@ -35,13 +35,13 @@ include include/Makefile
 FLAGS+=-UECOLAB_LIB -DINSTALLED_ECOLAB_LIB=\"$(PREFIX)/include\"
 
 ifdef AEGIS
-# must build and test against c++11 now, as TR1 has goone!
-CXXFLAGS+=-std=c++11
+# must build and test against c++20 now
+CXXFLAGS+=-std=c++20
 endif
 
 # when upgrading MXE, this will need to be removed 
 ifdef MXE
-CXXFLAGS+=-std=c++11
+CXXFLAGS+=-std=c++20
 endif
 
 
@@ -75,7 +75,7 @@ OBJS+=src/xdr_pack.o
 endif
 
 # build for Mac Aqua interface, requires special static build of Tk.
-ifdef MAC_OSX_TK
+ifdef AQUA
 CXXFLAGS+=-DMAC_OSX_TK 
 OBJS+=src/getContext.o
 endif
@@ -85,6 +85,8 @@ CDHDRS=
 
 # Clunky, but this extracts all .cd files mentioned in header files,
 CDHDRS+=$(shell bash extractCDHeaders.sh)
+
+cdhdrs: $(CDHDRS:%=include/%) graphcode.cd
 
 ifdef UNURAN
 CDHDRS+=random_unuran.cd
@@ -101,6 +103,8 @@ ELIBS=lib/libecolab$(ECOLIBS_EXT).a $(MODS:%=lib/%)
 
 # toplevel version
 include Makefile.version
+# run build CD headers before anything else
+include cdhdrs
 
 # variant of $(VERSION) that has leading 0s stripped (for sonames)
 SOVERSION=$(subst D0,D,$(subst D00,D,$(VERSION)))
@@ -116,7 +120,6 @@ endif
 
 all: all-without-models
 	$(MAKE) models 
-	-$(CHMOD) a+x models/*.tcl
 
 all-without-models: ecolab-libs lib/libecolab$(ECOLIBS_EXT).a bin/ecolab$(ECOLIBS_EXT)
 	-$(CHMOD) a+x $(SCRIPTS)
@@ -125,30 +128,6 @@ ifdef MXE
 	cp -r $(call search,lib*/tcl$(TCLVERSION)) include/tcl
 	cp -r $(call search,lib*/tk$(TCLVERSION)) include/tk
 endif
-# update Makefile.config with the configuration parameters used to build this
-	echo TK=$(TK)>$(MCFG)
-	echo ZLIB=$(ZLIB)>>$(MCFG)
-	echo READLINE=$(READLINE)>>$(MCFG)
-	echo XDR=$(XDR)>>$(MCFG)
-	echo UNURAN=$(UNURAN)>>$(MCFG)
-	echo PRNG=$(PRNG)>>$(MCFG)
-	echo GNUSL=$(GNUSL)>>$(MCFG)
-	echo PARMETIS=$(PARMETIS)>>$(MCFG)
-	echo IGRAPH=$(IGRAPH)>>$(MCFG)
-	echo SAUCY=$(SAUCY)>>$(MCFG)
-	echo CAIRO=$(CAIRO)>>$(MCFG)
-	echo PANGO=$(PANGO)>>$(MCFG)
-	echo BLT=$(BLT)>>$(MCFG)
-	echo BDB=$(BDB)>>$(MCFG)
-	echo GDBM=$(GDBM) >>$(MCFG)
-	echo GDBM_COMPAT=$(GDBM_COMPAT) >>$(MCFG)
-	echo MPI=$(MPI)>>$(MCFG)
-	echo PARALLEL=$(PARALLEL)>>$(MCFG)
-	echo OPENMP=$(OPENMP)>>$(MCFG)
-	echo GCC=$(GCC)>>$(MCFG)
-	echo NOGUI=$(NOGUI)>>$(MCFG)
-	echo AQUA=$(AQUA)>>$(MCFG)	
-	echo MAC_OSX_TK=$(MAC_OSX_TK)>>$(MCFG)
 
 ecolab-libs: lib bin 
 	$(MAKE) $(UTILS) 
@@ -156,9 +135,11 @@ ecolab-libs: lib bin
 
 .PHONY: models classdesc
 
-$(OBJS) $(MODS:%=src/%): $(CDHDRS:%=include/%) graphcode.cd
+#$(OBJS) $(MODS:%=src/%): $(CDHDRS:%=include/%) graphcode.cd
 
-$(OBJS:.o=.d) $(MODS:%.o=src/%.d):  $(ECOLAB_HOME)/$(MCFG)
+ifneq ($(MAKECMDGOALS),clean)
+$(OBJS:.o=.d) $(MODS:%.o=src/%.d): $(ECOLAB_HOME)/$(MCFG)
+endif
 
 $(CDHDRS:%=include/%): $(CLASSDESC)
 
@@ -221,6 +202,7 @@ endif
 
 .PHONY: clean
 clean: 
+	-rm $(MCFG)
 	-$(BASIC_CLEAN) generate_nauty_sizes
 	-cd src; $(BASIC_CLEAN) 
 	-cd utils; $(BASIC_CLEAN)
@@ -240,7 +222,6 @@ clean:
 	-rm -f lib/*.so lib/*.so.* bin/*
 	-rm -rf classdesc-lib cxx_repository
 	-rm -rf ii_files */ii_files
-	-rm $(MCFG)
 
 doc/ecolab/ecolab.html: doc/*.tex
 	(cd doc; ./Makedoc)
@@ -255,7 +236,7 @@ latex-docs:
 
 #bin/ecolab is a python interpreter supporting MPI
 bin/ecolab$(ECOLIBS_EXT): src/pythonMain.o lib/libecolab$(ECOLIBS_EXT).a
-	$(LINK) $(FLAGS) src/pythonMain.o -Wl,-rpath $(ECOLAB_HOME)/lib $(LIBS) $(shell pkg-config --libs python3) -o $@
+	$(LINK) $(FLAGS) src/pythonMain.o -Wl,-rpath $(ECOLAB_HOME)/lib $(LIBS) -o $@
 	-find . \( -name "*.cc" -o -name "*.h" \) -print |etags -
 
 .PHONY: install
@@ -287,10 +268,13 @@ UNURAN_LIB=$(firstword $(call search,lib*/libunuran.a))
 
 $(ECOLAB_HOME)/$(MCFG):
 	@rm -f $(MCFG)
-# absolute dependecies
-	@if [ -z "$(call search,lib*/tclConfig.sh)" ]; then \
-	   echo "Error: Cannot find TCL - please install TCL"; fi
-# optionals
+# absolute dependencies
+	@if ! $(PKG_CONFIG) --exists python3; then \
+	   echo "Error: Cannot find Python libs - please install python3-dev"; \
+	   exit 1; \
+	fi
+# optional dependecies
+	@if [ -n "$(call search,lib*/tclConfig.sh)" ]; then echo TCL=1>>$(MCFG); fi
 	@if [ -n "$(call search,lib*/tkConfig.sh)" ]; then echo TK=1>>$(MCFG); fi
 	@if [ -n "$(call search,include/zlib.h)" ]; then echo ZLIB=1>>$(MCFG); fi
 	@if [ -n "$(call search,include/readline/readline.h)" ]; then echo READLINE=1>>$(MCFG); fi
@@ -303,8 +287,7 @@ $(ECOLAB_HOME)/$(MCFG):
 	@if [ -n "$(call search,include/parmetis.h)" ]; then echo PARMETIS=1>>$(MCFG); fi
 	@if [ -n "$(call search,include/igraph/igraph.h)" ]; then echo IGRAPH=1>>$(MCFG); fi
 	@if [ -n "$(call search,include/saucy.h)" ]; then echo SAUCY=1>>$(MCFG); fi
-	@if $(PKG_CONFIG) --exists cairo; then echo CAIRO=1>>$(MCFG); \
-	elif [ -n "$(call search,include/blt.h)" ]; then echo BLT=1>>$(MCFG); fi
+	@if $(PKG_CONFIG) --exists cairo; then echo CAIRO=1>>$(MCFG); fi
 # select Berkley DB by default, 
 	@if [ -n "$(call search,include/db4/db.h)" -o -n "$(call search,include/db.h)" ]; then \
 	  echo BDB=1>>$(MCFG); \
@@ -325,6 +308,9 @@ $(ECOLAB_HOME)/$(MCFG):
 	echo GCC=$(GCC)>>$(MCFG)
 	echo NOGUI=$(NOGUI)>>$(MCFG)
 	echo AQUA=$(AQUA)>>$(MCFG)
+ifeq ($(origin XDR),"command line")
+	echo XDR=$(XDR)>>$(MCFG)
+endif
 
 #generate_nauty_sizes: generate_nauty_sizes.c
 #	$(CC) $(FLAGS) $(OPT) $< -o $@
@@ -343,12 +329,10 @@ src/getContext.o: src/getContext.cc
 #	./generate_nauty_sizes >$@
 #endif
 
-sure: all 
-	-$(MAKE) $(TESTS)
+tests:
 	-cd test; $(MAKE)
-	-cd test/test_tcl_stl; $(MAKE) 
-	-cd test/tcl-arrays; $(MAKE) 
-	-cd test/complex_tcl_args; $(MAKE) 
+
+sure: all tests
 	sh runtests test/00/*.sh
 
 # install documentation on SourceForge

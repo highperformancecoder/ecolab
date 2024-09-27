@@ -12,6 +12,7 @@
 #ifndef ECOLAB_H
 #define ECOLAB_H
 #include <stdlib.h>
+#include "pythonBuffer.h"
 
 // mpi.h must appear before any standard library stuff
 #ifdef MPI_SUPPORT
@@ -54,6 +55,8 @@ typedef classdesc::string eco_string;
 
 namespace ecolab
 {
+  using namespace classdesc;
+  
   /* these are defined to default values, even if MPI is false */
   /// MPI process ID and number of processes
   unsigned myid();

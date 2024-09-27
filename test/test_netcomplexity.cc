@@ -29,8 +29,6 @@ bool nearly_equal(double x,double y)
   return fabs(x-y) < 1e-10*(fabs(x)+fabs(y));
 }
 
-Tcl_Interp *interp;
-
 template <class B>
 void test_iterator()
 {

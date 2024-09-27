@@ -37,7 +37,7 @@ endif
 $(MODELS:=.o): %.o: %.cc 
 
 # how to build a model
-$(MODELS:=.so): %.so: %.o ../lib/libecolab.a
+$(MODELS:=.so): %.so: %.o ../lib/libecolab$(ECOLIBS_EXT).a
 	$(LINK) $(FLAGS) -shared -Wl,-rpath $(ECOLAB_HOME)/lib $*.o $(LIBS) -o $@
 
 #make MacOS application bundles

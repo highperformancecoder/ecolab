@@ -11,6 +11,7 @@
 #include "cairoSurfaceImage.h"
 #include "plot.h"
 #include "pythonBuffer.h"
+#include "ecolab.h"
 #ifdef MPI_SUPPORT
 #include "graphcode.h"
 #endif
@@ -50,6 +51,18 @@ namespace ecolab
       Parallel();
     };
 
+    static PyObject* exit(Parallel* self, PyObject*)
+    {
+      if (self->target)
+        {
+#ifdef MPI_SUPPORT
+          MPIbuf b; b<<string("return")<<bcast(0);
+#endif
+          self->target=nullptr;
+        }
+      return Py_None; 
+    }
+
     PyMethodDef parallelMethods[]={
       {"exit",(PyCFunction)exit,METH_NOARGS,"Signal workers to knock off"},
       {nullptr, nullptr, 0, nullptr}
@@ -83,21 +96,9 @@ namespace ecolab
 #ifdef MPI_SUPPORT
         std::string method=PyUnicode_AsUTF8(PySequence_GetItem(args,0));
         // we need to pickle the arguments and kwargs, so leave argument support until later
-        MPIBuf b; b<<method<<bcast(0);
+        MPIbuf b; b<<method<<bcast(0);
 #endif
         return PyObject_Call(PyObject_GetAttr(target,PySequence_GetItem(args,0)),PyTuple_New(0),nullptr);
-      }
-
-      static PyObject* exit(Parallel* self, PyObject*)
-      {
-        if (self->target)
-          {
-#ifdef MPI_SUPPORT
-            MPIBuf b; b<<"return"<<bcast(0);
-#endif
-            self->target=nullptr;
-          }
-        return Py_None; 
       }
 
       static int init(PyObject* self, PyObject* args, PyObject*)
@@ -138,11 +139,11 @@ namespace ecolab
 #ifdef MPI_SUPPORT
        for (;myid()>0;)
         {
-          MPIBuf b; b.bcast(0);
+          MPIbuf b; b.bcast(0);
           std::string method; b>>method;
           if (method=="return") break;
           // we need to pickle the arguments and kwargs, so leave argument support until later
-          PyObject_Call(PyObject_GetAttrString(target,method.c_str()),Py_Tuple_new(0),nullptr);
+          PyObject_Call(PyObject_GetAttrString(target,method.c_str()),PyTuple_New(0),nullptr);
         }
 #endif
     }

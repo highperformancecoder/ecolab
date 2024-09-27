@@ -1,10 +1,23 @@
 #include "ecolab.h"
+#include <set>
 struct Test
 {
-  void runTest()
+  std::set<unsigned> runTest()
   {
+    std::set<unsigned> procs;
 #ifdef MPI_SUPPORT
-    MPIBuf()<<ecolab::myid()<<send(0);
+    classdesc::MPIbuf buf;
+    buf<<ecolab::myid();
+    buf.gather(0);
+    while (buf.pos()<buf.size())
+      {
+        unsigned p; buf>>p;
+        procs.insert(p);
+      }
+    assert(procs.size()==ecolab::nprocs());
+#else
+    procs.insert(0);
 #endif
+    return procs;
   }
 };

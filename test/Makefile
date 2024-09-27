@@ -23,7 +23,8 @@ GDBM+=-lgdbm
 MODELS=testParallel
 # vector-pair - doesn't currently compile - see ticket #161
 #EXTRAMODELS=test_tcl_stl.exe tcl-arrays.exe complex_tcl_args.exe
-EXES=test_omp_rw_lock testCheckpointableFile test_netcomplexity test_boostgraph test_ecostrstream posTest testarrays  callTclArgsMethod pangoTest
+#EXES=test_omp_rw_lock testCheckpointableFile test_netcomplexity test_boostgraph test_ecostrstream posTest testarrays pangoTest testParallel
+EXES=test_omp_rw_lock testCheckpointableFile test_netcomplexity test_ecostrstream posTest testarrays pangoTest 
 SPECIALS=testNDBM testBDB
 
 ifeq ($(CC),gcc)
@@ -38,7 +39,7 @@ CXXFLAGS+=-std=c++11
 endif
 
 #chmod command is to counteract AEGIS removing execute privelege from scripts
-all: $(MODELS) $(EXES) $(SPECIALS)
+all: $(MODELS:=.so) $(EXES) $(SPECIALS)
 	-$(CHMOD) a+x *.tcl
 
 ifeq ($(OS),Darwin)
@@ -50,7 +51,7 @@ $(MODELS:=.o): %.o: %.cc
 	$(CPLUSPLUS) -c -g $(FLAGS) $(CXXFLAGS) $<
 
 # how to build a model 
-$(MODELS:=.so): %.so: %.o ../lib/libecolab.a
+$(MODELS:=.so): %.so: %.o
 	$(LINK) $(FLAGS) -shared -Wl,-rpath $(ECOLAB_HOME)/lib $*.o $(LIBS) -o $@
 
 # temporary workaround until directories of same name go

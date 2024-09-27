@@ -70,6 +70,9 @@ int main(int argc, char* argv[])
   for (int i=1; i<argc; ++i)
     PyList_Append(pyArgv, PyUnicode_FromString(argv[i]));
   PySys_SetObject("argv",pyArgv);
-    
-  return PyRun_SimpleFile(script,argv[1]);
+
+  int err=0;
+  if (err=PyRun_SimpleFile(script,argv[1]))
+    PyErr_Print();
+  return err;
 }
