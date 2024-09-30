@@ -86,8 +86,6 @@ CDHDRS=
 # Clunky, but this extracts all .cd files mentioned in header files,
 CDHDRS+=$(shell bash extractCDHeaders.sh)
 
-cdhdrs: $(CDHDRS:%=include/%) graphcode.cd
-
 ifdef UNURAN
 CDHDRS+=random_unuran.cd
 endif
@@ -141,7 +139,10 @@ ifneq ($(MAKECMDGOALS),clean)
 $(OBJS:.o=.d) $(MODS:%.o=src/%.d): $(ECOLAB_HOME)/$(MCFG)
 endif
 
-$(CDHDRS:%=include/%): $(CLASSDESC)
+$(warning $(CDHDRS))
+cdhdrs: $(CDHDRS:%=include/%) graphcode.cd $(CLASSDESC)
+
+include/graphcode.cd: graphcode/graphcode.h
 
 # newarrays needs to be preexpanded ...
 #include/newarrays.cd: include/newarrays.exh

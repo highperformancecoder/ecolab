@@ -27,6 +27,12 @@ MXE=
 
 FLAGS+=-DECOLAB_HOME=\"$(ECOLAB_HOME)\"
 
+ifdef MPI_DEBUG
+MPI=1
+DEBUGGING=1
+FLAGS+=-DMPI_DEBUG
+endif
+
 # the long long data type is not part of the C++ standard, but is part of C99.
 # all our list of compilers support long long, but if yours doesn't, you can 
 # override long long support here.
@@ -289,10 +295,6 @@ endif
 
 ifdef MEMDEBUG
 FLAGS+=-DMEMDEBUG
-endif
-
-ifdef MPI_DEBUG
-FLAGS+=-DMPI_DEBUG
 endif
 
 ifdef GCOV
