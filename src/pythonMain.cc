@@ -8,6 +8,8 @@
 
 #include <Python.h>
 #include <boost/locale.hpp>
+#include "ecolab.h"
+
 #ifdef MPI_SUPPORT
 #include "classdescMP.h"
 
@@ -31,6 +33,7 @@ void throw_MPI_errors(MPI_Comm * c, int *code, ...)
 #include <string>
 #include <vector>
 using namespace std;
+using namespace ecolab;
 using boost::locale::conv::utf_to_utf;
 
 struct Python
@@ -61,6 +64,9 @@ int main(int argc, char* argv[])
     return 1; // invalid file
   }
   Python python;
+  addEcoLabPath();
+  PyImport_ImportModule("ecolab");
+  registerParallel();
   if (auto path=PySys_GetObject("path"))
     {
       PyList_Append(path,PyUnicode_FromString("."));
@@ -74,5 +80,9 @@ int main(int argc, char* argv[])
   int err=0;
   if (err=PyRun_SimpleFile(script,argv[1]))
     PyErr_Print();
+#ifdef MPI_SUPPORT
+  // terminate any parallel region
+  if (myid()==0) MPIbuf()<<string("return")<<bcast(0);
+#endif
   return err;
 }

@@ -9,12 +9,15 @@ struct Test
     classdesc::MPIbuf buf;
     buf<<ecolab::myid();
     buf.gather(0);
-    while (buf.pos()<buf.size())
+    if (ecolab::myid()==0)
       {
-        unsigned p; buf>>p;
-        procs.insert(p);
+        while (buf.pos()<buf.size())
+          {
+            unsigned p; buf>>p;
+            procs.insert(p);
+          }
+        assert(procs.size()==ecolab::nprocs());
       }
-    assert(procs.size()==ecolab::nprocs());
 #else
     procs.insert(0);
 #endif

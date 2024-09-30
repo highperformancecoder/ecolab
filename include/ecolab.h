@@ -62,6 +62,11 @@ namespace ecolab
   unsigned myid();
   unsigned nprocs();
 
+  /// adds the EcoLab module path to the python interpreter
+  int addEcoLabPath();
+  /// initialisation of the parallel type object
+  void registerParallel();
+
   using classdesc::pack_t;
   using classdesc::unpack_t;
   using classdesc::xdr_pack;

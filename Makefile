@@ -330,10 +330,10 @@ src/getContext.o: src/getContext.cc
 #	./generate_nauty_sizes >$@
 #endif
 
-tests:
+tests: all
 	-cd test; $(MAKE)
 
-sure: all tests
+sure: tests
 	sh runtests test/00/*.sh
 
 # install documentation on SourceForge

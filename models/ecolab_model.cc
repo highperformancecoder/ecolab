@@ -31,14 +31,6 @@ using namespace classdesc;
 // TODO - move this into main library
 namespace
 {
-  int addEcoLabPath()
-  {
-    if (auto path=PySys_GetObject("path"))
-      PyList_Append(path,PyUnicode_FromString(ECOLAB_HOME"/lib"));
-    return 0;
-  }
-  int setPath=addEcoLabPath();
-
   /* Rounding function, randomly round up or down, in the range 0..INT_MAX */
   inline int ROUND(double x) 
   {

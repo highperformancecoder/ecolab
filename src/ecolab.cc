@@ -42,24 +42,31 @@ namespace ecolab
     {return Tcl_GetString(pop_arg());}
 #endif
 
+  int addEcoLabPath()
+  {
+    if (Py_IsInitialized())
+      if (auto path=PySys_GetObject("path"))
+        PyList_Append(path,PyUnicode_FromString(ECOLAB_HOME"/lib"));
+    return 0;
+  }
+
   namespace
   {
+    int setPath=addEcoLabPath();
+
     /// Python object to implement MPI process control from Python
     struct Parallel: public CppPyObject
     {
       PyObject* target=nullptr;
-      Parallel();
     };
 
     static PyObject* exit(Parallel* self, PyObject*)
     {
-      if (self->target)
-        {
 #ifdef MPI_SUPPORT
-          MPIbuf b; b<<string("return")<<bcast(0);
+      if (myid()==0)
+        MPIbuf()<<string("return")<<bcast(0);
 #endif
-          self->target=nullptr;
-        }
+      self->target=nullptr;
       return Py_None; 
     }
 
@@ -82,7 +89,7 @@ namespace ecolab
             PyErr_SetString(PyExc_RuntimeError, "No target object supplied");
             return nullptr;
           }
-        if (!PySequence_Check(args) || PySequence_Size(args)<2)
+        if (!PySequence_Check(args) || PySequence_Size(args)<1)
           {
             PyErr_SetString(PyExc_RuntimeError, "Incorrect arguments");
             return nullptr;
@@ -108,12 +115,22 @@ namespace ecolab
             PyErr_SetString(PyExc_RuntimeError, "Incorrect arguments");
             return -1;
           }
-        static_cast<Parallel*>(self)->target=PySequence_GetItem(args,0);
+        auto target=static_cast<Parallel*>(self)->target=PySequence_GetItem(args,0);
+#ifdef MPI_SUPPORT
+        for (;myid()>0;)
+          {
+            MPIbuf b; b.bcast(0);
+            std::string method; b>>method;
+            if (method=="return") break;
+            // we need to pickle the arguments and kwargs, so leave argument support until later
+            PyObject_Call(PyObject_GetAttrString(target,method.c_str()),PyTuple_New(0),nullptr);
+          }
+#endif
         return 0;
       }
 
       static void finalize(PyObject* self) {exit(static_cast<Parallel*>(self),nullptr);}
-    
+
       ParallelType()
       {
         memset(this,0,sizeof(PyTypeObject));
@@ -122,42 +139,25 @@ namespace ecolab
         tp_methods=parallelMethods;
         tp_call=call;
         tp_init=init;
+        tp_alloc=PyType_GenericAlloc;
+        tp_new=PyType_GenericNew;
         tp_finalize=finalize;
         tp_basicsize=sizeof(Parallel);
         PyType_Ready(this);
       }
 
     };
-
-    ParallelType parallelType;
-    
-    Parallel::Parallel()
-    {
-      ob_refcnt=1;
-      ob_type=&parallelType;
-
-#ifdef MPI_SUPPORT
-       for (;myid()>0;)
-        {
-          MPIbuf b; b.bcast(0);
-          std::string method; b>>method;
-          if (method=="return") break;
-          // we need to pickle the arguments and kwargs, so leave argument support until later
-          PyObject_Call(PyObject_GetAttrString(target,method.c_str()),PyTuple_New(0),nullptr);
-        }
-#endif
-    }
-
-    void registerParallel()
-    {
-      PyModule_AddObject(pythonModule,"Parallel",reinterpret_cast<PyObject*>(&parallelType));
-    }
-
-    CLASSDESC_ADD_FUNCTION(registerParallel);
-
   }
 
+  void registerParallel()
+  {
+    static ParallelType parallelType;
+    PyModule_AddObject(pythonModule,"Parallel",reinterpret_cast<PyObject*>(&parallelType));
+  }
   
+  CLASSDESC_ADD_FUNCTION(registerParallel);
+
+ 
   std::string ecolabHome=ECOLAB_HOME;
   CLASSDESC_ADD_GLOBAL(ecolabHome);
   CLASSDESC_ADD_GLOBAL(array_urand);
@@ -166,14 +166,6 @@ namespace ecolab
   CLASSDESC_ADD_FUNCTION(nprocs);
   CLASSDESC_DECLARE_TYPE(Plot);
 }
-
-//namespace
-//{
-//  unsigned (*myid)()=ecolab::myid;
-//  unsigned (*nprocs)()=ecolab::nprocs;
-//  CLASSDESC_ADD_GLOBAL(myid);
-//  CLASSDESC_ADD_GLOBAL(nprocs);
-//}
 
 CLASSDESC_PYTHON_MODULE(ecolab);
 
