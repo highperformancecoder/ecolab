@@ -15,13 +15,12 @@
 
 void throw_MPI_errors(MPI_Comm * c, int *code, ...)
 {
-  char *errstr=new char[MPI_MAX_ERROR_STRING+1];
+  char errstr[MPI_MAX_ERROR_STRING+1];
   int length;
   MPI_Error_string(*code,errstr,&length);
   errstr[length]='\0';
-  std::runtime_error MPI_err(errstr);
-  delete [] errstr;
-  throw MPI_err;
+  puts(errstr);
+  PyErr_SetString(PyExc_RuntimeError, errstr);
 }
 
 

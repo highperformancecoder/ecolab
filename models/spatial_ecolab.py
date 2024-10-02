@@ -1,8 +1,13 @@
 from ecolab_model import spatial_ecolab as ecolab
-from random import random
+from random import random, seed as randomSeed
 
-from ecolab import array_urand
-array_urand.seed(10)
+from ecolab import array_urand, myid
+
+# we want initialisation to be identical across all processes
+randomSeed(1)
+
+# we want the array operations to have a different seed across processes
+array_urand.seed(10+myid())
 
 # initial number of species
 nsp=100
@@ -31,7 +36,7 @@ for i in range(numX):
 ecolab.repro_rate(randomList(nsp, ecolab.repro_min(), ecolab.repro_max()))
 ecolab.interaction.diag(randomList(nsp, -1e-3, -1e-3))
 ecolab.random_interaction(3,0)
-                  
+              
 ecolab.interaction.val(randomList(len(ecolab.interaction.val), ecolab.odiag_min(), ecolab.odiag_max()))
 
 ecolab.mutation(nsp*[ecolab.mut_max()])
@@ -45,13 +50,15 @@ def step():
     ecolab.mutate()
     ecolab.migrate()
     ecolab.condense()
-    nsp=len(ecolab.species)
-    statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
-    plot('No. species',ecolab.tstep(),nsp)
-    plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())
-    for i in range(numX):
-        for j in range(numY):
-            plot(f'Density({i},{j})',ecolab.tstep(),ecolab.cell(i,j).density(), pens=ecolab.species())
+    ecolab.gather()
+    if myid()==0:
+        nsp=len(ecolab.species)
+        statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
+        plot('No. species',ecolab.tstep(),nsp)
+        plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())
+        for i in range(numX):
+            for j in range(numY):
+                plot(f'Density({i},{j})',ecolab.tstep(),ecolab.cell(i,j).density(), pens=ecolab.species())
     
 gui(step)
 

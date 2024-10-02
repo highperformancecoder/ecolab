@@ -2479,7 +2479,7 @@ namespace ecolab
 
 namespace classdesc_access
 {
-  /* Definitions of pack, unpack and TCL_obj for array classes */
+  /* Definitions of pack, unpack for array classes */
   template <class T>
   struct access_pack<ecolab::array_ns::array<T> >
   {
@@ -2505,8 +2505,15 @@ namespace classdesc_access
       unpack(targ,desc,classdesc::is_array(),*arg.data(),1,size);
     }
   };
-
 }
+
+// standard is_sequence pack/unpack methods do not work here
+template <class T> void pack(classdesc::pack_t& targ, const classdesc::string& desc, const ecolab::array_ns::array<T>& arg)
+{classdesc_access::access_pack<ecolab::array_ns::array<T>>()(targ,desc,arg);}
+template <class T> void unpack(classdesc::pack_t& targ, const classdesc::string& desc, ecolab::array_ns::array<T>& arg)
+{classdesc_access::access_unpack<ecolab::array_ns::array<T>>()(targ,desc,arg);}
+
+
 
 namespace classdesc
 {

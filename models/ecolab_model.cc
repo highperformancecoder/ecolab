@@ -175,18 +175,6 @@ void SpatialModel::mutate()
       new_sp <<= i->as<EcolabCell>()->mutate(mut_scale);
       cell_ids <<= array<int>(new_sp.size()-cell_ids.size(),i.id());
     }
-//  unsigned offset=species.size(), offi=0;
-//  // assign 1 for all new species created in this cell, 0 for the others
-//  for (auto& i: *this)
-//    {
-//      auto& density=i->as<EcolabCell>()->density;
-//      density<<=array<int>(new_sp.size(),0);
-//      for (size_t j=0; j<num_new_sp[offi]; ++j)
-//        {
-//          density[j+offset]=1;
-//        }
-//      offset+=num_new_sp[offi++];
-//    }
 #ifdef MPI_SUPPORT
   MPIbuf b; b<<new_sp<<cell_ids; b.gather(0);
   if (myid()==0)
@@ -469,8 +457,6 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
         o->neighbours.push_back(makeId(i,j-1)); 
         o->neighbours.push_back(makeId(i,j+1)); 
       }
-  //distributeObjects();
-  partitionObjects();
 }
 
 void SpatialModel::generate(unsigned niter)
