@@ -50,10 +50,7 @@ def step():
     plot('No. species',ecolab.tstep(),nsp)
     plot('Density',ecolab.tstep(),ecolab.density(), pens=ecolab.species())
 
-from objectBrowser import Browser
-browser=Browser(ecolab,'ecolab')
-    
-gui(step)
+gui(step,ecolab)
 
 
 

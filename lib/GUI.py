@@ -3,6 +3,7 @@ from tkinter import Tk, ttk, Button
 from ecolab import registerParallel
 registerParallel()
 from ecolab import Parallel, myid
+from objectBrowser import Browser
 
 # list of windows to update each simulation step
 windows=[]
@@ -34,7 +35,7 @@ class Simulator:
         self.parallel.exit()
         exit()
 
-def gui(step):
+def gui(step,model=None):
     simulator=Simulator(step)
     if myid()>0: return
     windows.append(ref(runner))
@@ -44,6 +45,8 @@ def gui(step):
     ttk.Button(buttonBar,text="run",command=simulator).pack(side='left')
     ttk.Button(buttonBar,text="step",command=simulator.doStep).pack(side='left')
     ttk.Button(buttonBar,text="stop",command=simulator.stop).pack(side='left')
+    if model!=None:
+        ttk.Button(buttonBar,text="browse",command=lambda: Browser(model)).pack(side='left')
     try:
         runner.mainloop()
     except SystemExit:

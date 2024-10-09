@@ -15,13 +15,43 @@ def doMethod(event):
         Browser(member,selection[:-1])
     else:
         selection=selection.split('=')[0]
-        
         args=json.loads('['+listbox.args.get('1.0','end')+']')
-        val=getattr(listbox.object,selection)(*args)
+        member=getattr(listbox.object,selection)
+        val=member(*args)
         listbox.delete(index)
         listbox.insert(index,selection+'='+str(val))
         listbox.itemconfigure(index,foreground='blue')
+        if len(member)>0:
+            containerBrowser=Tk()
+            containerBrowser.wm_title(selection)
+            elements=Listbox(containerBrowser)
+            elements.pack(fill='both',expand=True)
+            if '.@keys' in member._list():
+                elements.insert('end',member.keys())
+            else:
+                for i in range(len(member)):
+                    elements.insert('end',str(i))
+            elements.bind('<Double-Button-1>',doElement)
+            elements.object=member
+            elements.title=selection
 
+def doElement(event):
+    listbox=event.widget
+    selectedItems=listbox.curselection()
+    if len(selectedItems)==0: return
+    index=selectedItems[0]
+    selection=listbox.get(index)
+    selection=selection.split('=')[0]
+    element=listbox.object[selection] if '.@keys' in listbox.object._list() \
+        else listbox.object[int(selection)]
+    if len(element._list())>0:
+        Browser(element,f'{listbox.title}[{selection}]')
+    else:
+        val=element()
+        listbox.delete(index)
+        listbox.insert(index,selection+'='+str(val))
+
+        
 class Browser:
     def __init__(self, object, title=''):
         if str(type(object))!="<class 'CppWrapperType'>":
