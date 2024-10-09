@@ -1,5 +1,6 @@
 import ecolab
-from tkinter import Tk,ttk,Listbox
+from tkinter import Tk,ttk,Frame,Label,Listbox,Text
+import json
 
 # executed when mouse clicked
 def doMethod(event):
@@ -14,7 +15,9 @@ def doMethod(event):
         Browser(member,selection[:-1])
     else:
         selection=selection.split('=')[0]
-        val=getattr(listbox.object,selection)()
+        
+        args=json.loads('['+listbox.args.get('1.0','end')+']')
+        val=getattr(listbox.object,selection)(*args)
         listbox.delete(index)
         listbox.insert(index,selection+'='+str(val))
         listbox.itemconfigure(index,foreground='blue')
@@ -36,6 +39,12 @@ class Browser:
 
         self.browser=Tk()
         self.browser.wm_title(title)
+        argFrame=Frame(self.browser)
+        argLabel=Label(argFrame,text="Args")
+        argLabel.pack(side='left')
+        args=Text(argFrame,height=1,width=15)
+        args.pack(side='left')
+        argFrame.pack()
         listbox=Listbox(self.browser)
         listbox.insert('end',*sorted(members))
         listbox.insert('end',*sorted(methods))
@@ -44,6 +53,7 @@ class Browser:
         listbox.pack(fill='both',expand=True)
 
         listbox.object=object
+        listbox.args=args
         listbox.bind('<Double-Button-1>',doMethod)
 
     
