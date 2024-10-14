@@ -76,7 +76,7 @@ OBJS+=src/getContext.o
 LIBS+=-framework AppKit
 endif
 
-CDHDRS=ref.cd random.cd random_basic.cd TCL_obj_base.cd RESTProcess_base.cd signature.cd netcomplexity.cd graph.cd cachedDBM.cd sparse_mat.cd analysis.cd analysisBLT.cd analysisCairo.cd plot.cd cairoSurfaceImage.cd polyRESTProcess.cd
+CDHDRS=ref.cd random.cd random_basic.cd TCL_obj_base.cd RESTProcess_base.cd signature.cd netcomplexity.cd graph.cd cachedDBM.cd sparse_mat.cd analysis.cd analysisBLT.cd analysisCairo.cd plot.cd cairoSurfaceImage.cd poly.cd polyRESTProcess.cd
 
 ifdef UNURAN
 CDHDRS+=random_unuran.cd
