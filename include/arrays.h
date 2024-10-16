@@ -1566,7 +1566,7 @@ namespace ecolab
             array_data<T>* oldData=dt;
             bool freeMem = ref()-- == 0;
             dt=alloc(size()); 
-            memcpy(data(),oldData->dt,size()*sizeof(T));
+            memcpy(dt->dt,oldData->dt,size()*sizeof(T));
             if (freeMem) free(oldData);
           }
       }
@@ -2033,7 +2033,7 @@ namespace ecolab
     {
       array<double> r(x.size());
       vdCosh(static_cast<int>(x.size()),x.data(),r.data());
-      return r;
+ r;
     }
 
     inline array<float> sinh(const array<float>& x)

@@ -8,7 +8,7 @@
 
 #include <netcomplexity.h>
 #include <cairoSurfaceImage.h>
-#include <graphcode.h>
+#include <ecolab.h>
 using classdesc::Object;
 
 #include <vector>
@@ -67,7 +67,7 @@ struct EcolabPoint
   unsigned nsp() const; ///< number of living species in this cell
 };
 
-struct PanmicticModel: public ModelData, public EcolabPoint
+struct PanmicticModel: public ModelData, public EcolabPoint, public ecolab::Model<PanmicticModel>
 {
   ConnectionPlot connectionPlot;
   void updateConnectionPlot() {connectionPlot.update(density,interaction);}
@@ -81,9 +81,10 @@ struct PanmicticModel: public ModelData, public EcolabPoint
 
 struct EcolabCell: public EcolabPoint, public graphcode::Object<EcolabCell> {};
 
-class SpatialModel: public ModelData, public graphcode::Graph<EcolabCell>
+class SpatialModel: public ModelData, public EcolabGraph<EcolabCell>, public ecolab::Model<SpatialModel>
 {
   size_t numX=1, numY=1;
+  CLASSDESC_ACCESS(SpatialModel);
 public:
   size_t makeId(size_t x, size_t y) const {return x%numX + numX*(y%numY);}
   void setGrid(size_t nx, size_t ny);

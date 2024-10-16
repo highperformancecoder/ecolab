@@ -26,6 +26,7 @@ using array_ns::pcoord;
 
 #include "ecolab_epilogue.h"
 
+
 using namespace classdesc;
 
 // TODO - move this into main library
@@ -51,7 +52,6 @@ namespace
       r[i]=ROUND(x[i]);
     return r;
   }
-
 }
 
 
@@ -462,7 +462,7 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
 void SpatialModel::generate(unsigned niter)
 {
   if (tstep==0) makeConsistent();
-  for (auto& i: *this) i->as<EcolabCell>()->generate(niter,*this);
+  forAll([=,this](EcolabCell& c) {c.generate(niter,*this);});
   tstep+=niter;
 }
 

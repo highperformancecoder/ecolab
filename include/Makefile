@@ -21,6 +21,7 @@ TIMER=
 # use TkPhotoSurface for CairoItem, overriding platform specific optimisation
 TKPHOTOSURFACE=
 NOGUI=
+DPCPP=
 
 # enables ecolab for the MXE environment 
 MXE=
@@ -103,9 +104,15 @@ CPP=$(CPLUSPLUS) -E
 # disable inclusion of mpi++.h in the MPICH case (don't know what the problem is here)
 FLAGS+=-UHAVE_MPI_CPP
 else
-CC=gcc
+# Engage Intel OneAPI compiler
+ifdef DPCPP
+CPLUSPLUS=icpx
+SYCL+=-fsycl
+else
 CPLUSPLUS=g++
-LINK=$(CPLUSPLUS)
+endif
+CC=gcc
+LINK=$(CPLUSPLUS) $(SYCL)
 CPP=g++ -E
 endif
 
@@ -622,7 +629,7 @@ DCXX=distcc
 endif
 
 .cc.o: 
-	$(DCXX) -c $(FLAGS) $(CXXFLAGS) $(OPT) -o $@ $<
+	$(DCXX) -c $(FLAGS) $(SYCL) $(CXXFLAGS) $(OPT) -o $@ $<
 
 .c.o: 
 	$(CC) -c $(FLAGS) $(OPT) -o $@ $<

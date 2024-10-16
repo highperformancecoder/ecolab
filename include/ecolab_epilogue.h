@@ -11,7 +11,28 @@
 
 Put this after including all .cd files
 */
-#include "classdesc_epilogue.h"
 #ifdef GRAPHCODE_H
 #include "graphcode.cd"
+#endif
+#include "classdesc_epilogue.h"
+
+#ifdef ECOLAB_H
+#include "pack_base.h"
+
+namespace ecolab
+{
+  template <class M>
+  void Model<M>::checkpoint(const char* fileName)
+  {
+    pack_t b(fileName,"w");
+    b<<static_cast<M&>(*this);
+  }
+
+  template <class M>
+  void Model<M>::restart(const char* fileName)
+  {
+    pack_t b(fileName,"r");
+    b>>static_cast<M&>(*this);
+  }
+}
 #endif

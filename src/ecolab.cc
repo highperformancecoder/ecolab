@@ -8,18 +8,38 @@
 
 #include "tcl++.h"
 #define TK 1
+#undef None
 #include "cairoSurfaceImage.h"
+#undef None
 #include "plot.h"
 #include "pythonBuffer.h"
 #include "ecolab.h"
 #ifdef MPI_SUPPORT
 #include "graphcode.h"
 #endif
+#include "classdesc.h"
 #include "ecolab_epilogue.h"
 using namespace ecolab;
 using namespace std;
 
 #include <dlfcn.h>
+
+#ifdef SYCL_LANGUAGE_VERSION
+using namespace sycl;
+queue& ecolab::syclQ() {
+  static queue q{default_selector_v};
+  return q;
+}
+void* operator new(size_t s) {
+  cout<<s<<" bytes allocated shared"<<std::endl;
+  if (auto r=malloc_shared(s,syclQ()))
+    return r;
+  throw std::bad_alloc();
+}
+void operator delete(void* p) {return free(p,syclQ());}
+void* operator new[](size_t s) {return operator new(s);}
+void operator delete[](void* p) {return free(p,syclQ());}
+#endif  
 
 namespace ecolab
 {

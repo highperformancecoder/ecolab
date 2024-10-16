@@ -13,6 +13,7 @@
 #define ECOLAB_H
 #include <stdlib.h>
 #include "pythonBuffer.h"
+#include "graphcode.h"
 
 // mpi.h must appear before any standard library stuff
 #ifdef MPI_SUPPORT
@@ -52,6 +53,11 @@ typedef classdesc::string eco_string;
 #include <isa_base.h>
 
 #include "eco_strstream.h"
+#include "random.h"
+
+#ifdef SYCL_LANGUAGE_VERSION
+#include <sycl/sycl.hpp>
+#endif
 
 namespace ecolab
 {
@@ -72,9 +78,37 @@ namespace ecolab
   using classdesc::xdr_pack;
   using classdesc::isa_t;
   using classdesc::is_array;
-}
 
-#include "random.h"
+  template <class M> struct Model
+  {
+    /// checkpoint the model to \a fileName
+    void checkpoint(const char* fileName);
+    /// restart the model from checkpoint saved in \a fileName
+    void restart(const char* fileName);
+  };
+
+#ifdef SYCL_LANGUAGE_VERSION
+  sycl::queue& syclQ();
+#endif
+  
+  template <class Cell> struct EcolabGraph: public graphcode::Graph<Cell>
+  {
+    /// apply a functional to all local cells of this processor in parallel
+    /// @param f 
+    template <class F>
+    void forAll(F f) {
+#ifdef SYCL_LANGUAGE_VERSION
+      syclQ().submit([&](sycl::handler& h) {
+        h.parallel_for(this->size(), [=,this](auto i) {
+          f(*(*this)[i]->template as<Cell>());
+        });
+      });
+#else
+      for (auto& i: *this) f(*i->template as<Cell>());
+#endif
+    }
+  };
+}
 
 #ifdef MPI_SUPPORT
 #include <classdescMP.h>
@@ -88,4 +122,5 @@ namespace ecolab
 }
 #endif
 
+#include "ecolab.cd"
 #endif  /* ECOLAB_H */

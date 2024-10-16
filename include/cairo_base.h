@@ -10,6 +10,8 @@
 #define CAIRO_BASE_H
 #if defined(CAIRO)
 #include "classdesc.h"
+#undef None
+#undef Success
 #include "arrays.h"
 
 #include <cairo/cairo.h>
