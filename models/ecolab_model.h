@@ -11,6 +11,7 @@
 #include <ecolab.h>
 using classdesc::Object;
 
+#include <random>
 #include <vector>
 #include <pack_stl.h>
 
@@ -65,6 +66,10 @@ struct EcolabPoint
   void condense(const array<bool>& mask, size_t mask_true);
   array<int> mutate(const array<double>&);
   unsigned nsp() const; ///< number of living species in this cell
+  /// Rounding function, randomly round up or down, in the range 0..INT_MAX
+  int ROUND(double x); 
+  template <class E> array<int> ROUND(const E& x);
+  Exclude<std::mt19937> rand; // random number generator
 };
 
 struct PanmicticModel: public ModelData, public EcolabPoint, public ecolab::Model<PanmicticModel>
@@ -72,6 +77,7 @@ struct PanmicticModel: public ModelData, public EcolabPoint, public ecolab::Mode
   ConnectionPlot connectionPlot;
   void updateConnectionPlot() {connectionPlot.update(density,interaction);}
   void makeConsistent() {ModelData::makeConsistent(density.size());}
+  void seed(double x) {rand.seed(x);}
   void generate(unsigned niter);
   void generate() {generate(1);}
   void condense();
@@ -93,6 +99,7 @@ public:
   }
   array<unsigned> nsp() const;
   void makeConsistent();
+  void seed(double x) {forAll([=](EcolabCell& cell){cell.rand.seed(x);});}
   void generate(unsigned niter);
   void generate() {generate(1);}
   void condense();

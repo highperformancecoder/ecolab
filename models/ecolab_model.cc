@@ -32,26 +32,6 @@ using namespace classdesc;
 // TODO - move this into main library
 namespace
 {
-  /* Rounding function, randomly round up or down, in the range 0..INT_MAX */
-  inline int ROUND(double x) 
-  {
-    double dum;
-    if (x<0) x=0;
-    if (x>INT_MAX-1) x=INT_MAX-1;
-    return std::fabs(std::modf(x,&dum)) > array_urand.rand() ?
-      (int)x+1 : (int)x;
-  }
-
-  inline int ROUND(float x) {return ROUND(double(x));}
-  
-  template <class E>
-  inline array<int> ROUND(const E& x)
-  {
-    array<int> r(x.size());
-    for (size_t i=0; i<x.size(); i++)
-      r[i]=ROUND(x[i]);
-    return r;
-  }
 }
 
 
@@ -76,6 +56,27 @@ void PanmicticModel::generate(unsigned niter)
   EcolabPoint::generate(niter,*this);
   tstep+=niter;
 } 
+
+  /* Rounding function, randomly round up or down, in the range 0..INT_MAX */
+  int EcolabPoint::ROUND(double x) 
+  {
+    double dum;
+    if (x<0) x=0;
+    if (x>std::numeric_limits<int>::max()-1) x=std::numeric_limits<int>::max()-1;
+    return std::fabs(std::modf(x,&dum))*(rand.max()-rand.min()) > (rand()-rand.min()) ?
+      (int)x+1 : (int)x;
+  }
+
+//inline int ROUND(float x) {return ROUND(double(x));}
+  
+  template <class E>
+  inline array<int> EcolabPoint::ROUND(const E& x)
+  {
+    array<int> r(x.size());
+    for (size_t i=0; i<x.size(); i++)
+      r[i]=ROUND(x[i]);
+    return r;
+  }
 
 void EcolabPoint::generate(unsigned niter, const ModelData& model)
 { 
