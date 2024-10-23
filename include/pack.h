@@ -13,5 +13,8 @@
 #include "pack_base.h"
 //#include "ref.h"
 #include "pack_stl.h"
+#ifndef SYCL_LANGUAGE_VERSION
+// SYCL cannot call recursive functions, so serialisation of graph structures is impossible
 #include "pack_graph.h"
+#endif
 #endif

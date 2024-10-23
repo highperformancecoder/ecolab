@@ -174,16 +174,16 @@ namespace ecolab
   {
     GraphAdaptor_const_iterator_base(const typename G::const_iterator& i): 
       G::const_iterator(i) {}
-    Edge operator*() const {return G::const_iterator::operator*();}
-    const Graph::const_iterator_base& operator++() {
+    Edge operator*() const override {return G::const_iterator::operator*();}
+    const Graph::const_iterator_base& operator++() override {
       G::const_iterator::operator++(); return *this;}
     bool operator==(const GraphAdaptor_const_iterator_base& x) const {
       return static_cast<const typename G::const_iterator&>(*this)==x;
     }
-    bool operator==(const Graph::const_iterator_base& x) const {
+    bool operator==(const Graph::const_iterator_base& x) const override {
       const GraphAdaptor_const_iterator_base* xp=
         dynamic_cast<const GraphAdaptor_const_iterator_base*>(&x);
-      return xp && operator==(*xp);
+      return xp && static_cast<const typename G::const_iterator&>(*this)==static_cast<const typename G::const_iterator&>(*xp);
     }
   };
 

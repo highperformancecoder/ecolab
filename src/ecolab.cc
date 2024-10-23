@@ -30,15 +30,34 @@ queue& ecolab::syclQ() {
   static queue q{default_selector_v};
   return q;
 }
-void* operator new(size_t s) {
-  cout<<s<<" bytes allocated shared"<<std::endl;
-  if (auto r=malloc_shared(s,syclQ()))
-    return r;
-  throw std::bad_alloc();
+
+void* ecolab::reallocSycl(void* pp,size_t s)
+{
+  size_t* p=reinterpret_cast<size_t*>(pp);
+  size_t prevSz=0;
+  if (p)
+    prevSz=*--p;
+
+  if (!s && p)
+    {
+      free(p);
+      return nullptr;
+    }
+
+  if (prevSz>=s) return pp; // nothing further to do
+  auto r=reinterpret_cast<size_t*>(malloc_shared(s+sizeof(size_t),syclQ()));
+  if (r)
+    {
+      // stash allocation size at beginning of allocated region
+      *r++=s;
+      if (p)
+        {
+          memcpy(r,pp,prevSz);
+          free(p,syclQ());
+        }
+    }
+  return r;
 }
-void operator delete(void* p) {return free(p,syclQ());}
-void* operator new[](size_t s) {return operator new(s);}
-void operator delete[](void* p) {return free(p,syclQ());}
 #endif  
 
 namespace ecolab
@@ -174,7 +193,6 @@ namespace ecolab
     static ParallelType parallelType;
     PyModule_AddObject(pythonModule,"Parallel",reinterpret_cast<PyObject*>(&parallelType));
   }
-  
   CLASSDESC_ADD_FUNCTION(registerParallel);
 
  
@@ -185,6 +203,17 @@ namespace ecolab
   CLASSDESC_ADD_FUNCTION(myid);
   CLASSDESC_ADD_FUNCTION(nprocs);
   CLASSDESC_DECLARE_TYPE(Plot);
+
+  // device SYCL kernels are running on
+  std::string device() {
+#ifdef SYCL_LANGUAGE_VERSION
+    return syclQ().get_device().get_info<info::device::name>();
+#else
+    return "CPU";
+#endif
+  }
+  CLASSDESC_ADD_FUNCTION(device);
+  
 }
 
 CLASSDESC_PYTHON_MODULE(ecolab);

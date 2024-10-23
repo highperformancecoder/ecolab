@@ -11,6 +11,11 @@
 */
 #ifndef ECOLAB_H
 #define ECOLAB_H
+
+#ifdef SYCL_LANGUAGE_VERSION
+#define REALLOC reallocSycl
+#endif
+
 #include <stdlib.h>
 #include "pythonBuffer.h"
 #include "graphcode.h"
@@ -89,9 +94,37 @@ namespace ecolab
 
 #ifdef SYCL_LANGUAGE_VERSION
   sycl::queue& syclQ();
+  void* reallocSycl(void*,size_t);
 #endif
   
-  template <class Cell> struct EcolabGraph: public graphcode::Graph<Cell>
+  template <class T>
+  struct SyclType: public T
+  {
+#ifdef SYCL_LANGUAGE_VERSION
+    void* operator new(size_t s) {return reallocSycl(nullptr,s);}
+    void operator delete(void* p) {reallocSycl(p,0);}
+    void* operator new[](size_t s) {return reallocSycl(nullptr,s);}
+    void operator delete[](void* p) {reallocSycl(p,0);}
+#endif
+  };
+
+  template <class M>
+  struct DeviceType
+  {
+    using element_type=M;
+    SyclType<M>* const model=new SyclType<M>;
+    DeviceType()=default;
+    DeviceType(const DeviceType& x) {*this=x;}
+    DeviceType& operator=(const DeviceType& x) {*model=x.*model; return *this;}
+    ~DeviceType() {delete model;}
+    M& operator*() {return *model;}
+    const M& operator*() const {return *model;}
+    M* operator->() {return model;}
+    const M* operator->() const {return model;}
+    operator bool() const {return true;} // always defined
+  };
+
+  template <class Model, class Cell> struct EcolabGraph: public graphcode::Graph<Cell>
   {
     /// apply a functional to all local cells of this processor in parallel
     /// @param f 
@@ -108,6 +141,11 @@ namespace ecolab
 #endif
     }
   };
+}
+
+namespace classdesc
+{
+  template <class M> struct is_smart_ptr<ecolab::DeviceType<M>>: public true_type {}; 
 }
 
 #ifdef MPI_SUPPORT

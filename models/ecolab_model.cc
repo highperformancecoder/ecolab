@@ -39,7 +39,7 @@ namespace model
 {
   PanmicticModel panmictic_ecolab;
   CLASSDESC_ADD_GLOBAL(panmictic_ecolab);
-  SpatialModel spatial_ecolab;
+  DeviceType<SpatialModel> spatial_ecolab;
   CLASSDESC_ADD_GLOBAL(spatial_ecolab);
   CLASSDESC_PYTHON_MODULE(ecolab_model);
 }
@@ -236,14 +236,14 @@ void do_row_or_col(array<double>& tmp, double range, double minval, double gdist
   if (r>0)
     for (unsigned j=0; j<ntrue; j++)
       {
-	pos = (int)((tmp.size()-1) * ((float) rand()/RAND_MAX) +.5);
+	pos = (int)((tmp.size()-1) * ((double) rand()/RAND_MAX) +.5);
 	if (tmp[pos]==0.0)
-	  tmp[pos] = range *((float) rand()/RAND_MAX) + minval;
+	  tmp[pos] = range *((double) rand()/RAND_MAX) + minval;
       }
   else
     for (unsigned j=0; j<ntrue; j++)
       {
-	pos = (int)((tmp.size()-1) * ((float) rand()/RAND_MAX) +.5);
+	pos = (int)((tmp.size()-1) * ((double) rand()/RAND_MAX) +.5);
 	tmp[pos]=0;
       }
 
@@ -513,7 +513,7 @@ void SpatialModel::migrate()
   MPI_Reduce(&mig,&m,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
   mig=m;
 #endif
-  if (myid==0) assert(sum(ssum==0)==int(ssum.size()));
+  if (myid()==0) assert(sum(ssum==0)==int(ssum.size()));
 #endif
 
 }

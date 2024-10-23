@@ -1,7 +1,10 @@
-from ecolab_model import spatial_ecolab as ecolab
+from ecolab_model import spatial_ecolab
+# spatial_ecolab is a smart ptr to possible Device accessible memery, so must be dereferenced
+ecolab=spatial_ecolab()
+
 from random import random, seed as randomSeed
 
-from ecolab import array_urand, myid
+from ecolab import array_urand, myid, device
 
 # we want initialisation to be identical across all processes
 randomSeed(1)
@@ -45,8 +48,10 @@ ecolab.migration(nsp*[1e-5])
 from plot import plot
 from GUI import gui, statusBar, windows
 
+print(device())
+
 def step():
-    ecolab.generate()
+    ecolab.generate(100)
     ecolab.mutate()
     ecolab.migrate()
     ecolab.condense()

@@ -87,7 +87,8 @@ struct PanmicticModel: public ModelData, public EcolabPoint, public ecolab::Mode
 
 struct EcolabCell: public EcolabPoint, public graphcode::Object<EcolabCell> {};
 
-class SpatialModel: public ModelData, public EcolabGraph<EcolabCell>, public ecolab::Model<SpatialModel>
+class SpatialModel: public ModelData, public EcolabGraph<SpatialModel, EcolabCell>,
+                    public ecolab::Model<SpatialModel>
 {
   size_t numX=1, numY=1;
   CLASSDESC_ACCESS(SpatialModel);

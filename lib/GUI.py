@@ -4,13 +4,19 @@ from ecolab import registerParallel
 registerParallel()
 from ecolab import Parallel, myid
 from objectBrowser import Browser
+from math import inf
+from time import perf_counter
 
 # list of windows to update each simulation step
 windows=[]
 runner=Tk()
 runner.title('EcoLab')
-statusBar=ttk.Label(runner,text='Not started')
-statusBar.pack()
+statusFrame=ttk.Frame(runner)
+statusFrame.pack()
+statusBar=ttk.Label(statusFrame,text='Not started')
+statusBar.pack(side='left')
+performance=ttk.Label(statusFrame,text='perf: 0')
+performance.pack(side='left')
 
 class Simulator:
     running=False
@@ -21,7 +27,10 @@ class Simulator:
     def __call__(self):
         self.running=True
         while self.running:
+            start=perf_counter()
             self.doStep()
+            timePerStep=perf_counter()-start
+            performance.configure(text='perf: %f'%(1.0/timePerStep))
             for i in windows:
                 win=i()
                 if win: win.update()

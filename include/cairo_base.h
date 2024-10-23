@@ -51,6 +51,7 @@ namespace ecolab
     /// Container object for managing cairo_surface_t lifetimes
     class Surface
     {
+      CLASSDESC_ACCESS(Surface);
     private:
       cairo_surface_t* m_surface;
       cairo_t* m_cairo;
@@ -200,7 +201,7 @@ namespace ecolab
 
       double width() const override {return imageBlock.width;}
       double height() const override {return imageBlock.height;}
-      void clear() {
+      void clear() override {
         if (imageBlock.transparency)
           // make it transparent
           memset(imageData.data(),0,imageData.size());
@@ -228,7 +229,7 @@ namespace ecolab
                   width, height, imageBlock.pitch));
       }
 
-      void resize(size_t width, size_t height)
+      void resize(size_t width, size_t height) override
       {
 //#if TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 5
 //        Tk_PhotoSetSize(photo, width, height);
@@ -239,7 +240,7 @@ namespace ecolab
       }
 
       /// copy the cairo output into the TkPhoto
-      void blit(unsigned x, unsigned y, unsigned width, unsigned height) 
+      void blit(unsigned x, unsigned y, unsigned width, unsigned height) override
       {
 //        imageBlock.pixelPtr=&imageData[x*imageBlock.pixelSize + y*imageBlock.pitch];
 //        if (width != unsigned(imageBlock.width) || 
@@ -255,13 +256,13 @@ namespace ecolab
 //          compositing? TK_PHOTO_COMPOSITE_OVERLAY:TK_PHOTO_COMPOSITE_SET);
 //#endif
       }
-      void blit() {blit(0,0,imageBlock.width, imageBlock.height);}
-      void requestRedraw() {blit();}
+      void blit() override {blit(0,0,imageBlock.width, imageBlock.height);}
+      void requestRedraw() override {blit();}
     };
       
     class CairoImage
     {
-
+      CLASSDESC_ACCESS(CairoImage);
     protected:
       void resize(size_t width, size_t height);
 

@@ -108,6 +108,8 @@ else
 ifdef DPCPP
 CPLUSPLUS=icpx
 SYCL+=-fsycl
+# -std=c++20 used to suppress warning messages
+FLAGS+=-std=c++20
 else
 CPLUSPLUS=g++
 endif

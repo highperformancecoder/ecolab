@@ -206,9 +206,9 @@ namespace ecolab
     //void plot(TCL_args args); 
 
     //serialisation support (surface is not auto-serialisable)
-    void pack(classdesc::pack_t& p) const {p<<m_image<<x<<y<<minx<<maxx<<miny<<maxy;}
+    void pack(classdesc::pack_t& p) const override {p<<m_image<<x<<y<<minx<<maxx<<miny<<maxy;}
 
-    void unpack(classdesc::pack_t& p) {
+    void unpack(classdesc::pack_t& p) override {
         p>>m_image>>x>>y>>minx>>maxx>>miny>>maxy;
         Image(m_image);
     }
