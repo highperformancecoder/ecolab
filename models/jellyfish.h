@@ -155,7 +155,7 @@ public:
     return j? j->size()+1: 1;
   }
   jlist(): etime(1) {}
-  jlist(const jlist& x): object(x), vector<classdesc::ref<jellyfish> >(x), etime(x.etime) {}
+  jlist(const jlist& x): classdesc::Object<jlist, GRAPHCODE_NS::object>(x), vector<classdesc::ref<jellyfish> >(x), etime(x.etime) {}
 
   /* utility access routines  */
   typedef vector<classdesc::ref<jellyfish> >::iterator iterator;
