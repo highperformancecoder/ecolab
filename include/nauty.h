@@ -377,13 +377,8 @@ typedef unsigned long setword;
 typedef unsigned int setword;
 #define SETWORD_INT
 #else
-#if SIZEOF_LONG>=8
-typedef unsigned long setword;
-#define SETWORD_LONG
-#else
 typedef unsigned long long setword;
 #define SETWORD_LONGLONG
-#endif
 #endif
 #endif
 

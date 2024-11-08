@@ -75,19 +75,14 @@ namespace ecolab
   typedef unsigned int setword;
 #define SETWORD_INT
 #else
-#if SIZEOF_LONG>=8
-  typedef unsigned long setword;
-#define SETWORD_LONG
-#else
   typedef unsigned long long setword;
 #define SETWORD_LONGLONG
 #endif
 #endif
-#endif
 
 #if (WORDSIZE==64)
-  const setword MSK64=0xFFFFFFFFFFFFFFFFUL;
-  const setword MSK63C=0x7FFFFFFFFFFFFFFFUL;
+  const setword MSK64=0xFFFFFFFFFFFFFFFFULL;
+  const setword MSK63C=0x7FFFFFFFFFFFFFFFULL;
   const setword ALLBITS=MSK64;
   inline unsigned SETWD(unsigned pos) {return pos>>6;}
   inline unsigned SETBT(unsigned pos) {return pos&0x3F;}
