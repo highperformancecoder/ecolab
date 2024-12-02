@@ -169,7 +169,11 @@ namespace ecolab
     template <class U, class=void> struct Allocator {using type=void; using T=type;};
     template <class E> struct Allocator<E, classdesc::void_t<typename E::Allocator>>
     {using type=typename E::Allocator; using T=type;};
-      
+
+    // return an allocator type for type T, based on an allocator for a different type
+    template <class T, template<class> class A, class U>
+    A<T> makeAllocator(const A<U>& a) {return A<T>(a);}
+    
     /*
       \c type_traits<T>::value_type return \c T::value_type is \a T is an 
       \em expression, or \c T if \a T is scalar

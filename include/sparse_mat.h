@@ -42,7 +42,8 @@ namespace ecolab
     array_ns::enable_if< array_ns::is_expression<E>, array_ns::array<double> >::T
     operator*(const E& x) const
     {
-      array_ns::array<F,A<F>> r(0,diag.allocator());
+      auto alloc=array_ns::makeAllocator<F>(x.allocator());
+      array_ns::array<F,decltype(alloc)> r(0,alloc);
       assert(row.size()==col.size() && row.size()==val.size());      
       if (diag.size()>0)
 	{
