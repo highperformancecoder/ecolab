@@ -15,13 +15,19 @@ using classdesc::Object;
 #include <vector>
 #include <pack_stl.h>
 
+#ifdef USE_FLOAT
+using Float=float;
+#else
+using Float=double;
+#endif
+
 struct ConnectionPlot: public Object<ConnectionPlot, CairoSurface>
 {
   array<int> density;
-  sparse_mat connections;
+  sparse_mat<Float> connections;
   bool redraw(int x0, int y0, int width, int height) override;
   void requestRedraw() const {if (surface) surface->requestRedraw();}
-  void update(const array<int>& d, const sparse_mat& c) {
+  void update(const array<int>& d, const sparse_mat<Float>& c) {
     density=d;
     connections=c;
     requestRedraw();
@@ -31,9 +37,9 @@ struct ConnectionPlot: public Object<ConnectionPlot, CairoSurface>
 struct ModelData
 {
   array<int> species;
-  array<double> create;
-  array<double> repro_rate, mutation, migration;
-  sparse_mat interaction;
+  array<Float> create;
+  array<Float> repro_rate, mutation, migration;
+  sparse_mat<Float> interaction;
   sparse_mat_graph foodweb;
   unsigned long long tstep=0, last_mut_tstep=0, last_mig_tstep=0;
   //mutation parameters
@@ -58,17 +64,17 @@ struct ModelData
 };
 
 /* ecolab cell  */
-struct EcolabPoint
+struct EcolabPoint: public ecolab::CellBase
 {
-  double salt;  /* random no. used for migration */
+  Float salt;  /* random no. used for migration */
   array<int> density;
   void generate(unsigned niter, const ModelData&);
   void condense(const array<bool>& mask, size_t mask_true);
   array<int> mutate(const array<double>&);
   unsigned nsp() const; ///< number of living species in this cell
   /// Rounding function, randomly round up or down, in the range 0..INT_MAX
-  int ROUND(double x); 
-  template <class E> array<int> ROUND(const E& x);
+  int ROUND(Float x); 
+  template <class E> array<int> RoundArray(const E& x);
   Exclude<std::mt19937> rand; // random number generator
 };
 
@@ -77,7 +83,7 @@ struct PanmicticModel: public ModelData, public EcolabPoint, public ecolab::Mode
   ConnectionPlot connectionPlot;
   void updateConnectionPlot() {connectionPlot.update(density,interaction);}
   void makeConsistent() {ModelData::makeConsistent(density.size());}
-  void seed(double x) {rand.seed(x);}
+  void seed(unsigned x) {rand.seed(x);}
   void generate(unsigned niter);
   void generate() {generate(1);}
   void condense();
@@ -100,7 +106,7 @@ public:
   }
   array<unsigned> nsp() const;
   void makeConsistent();
-  void seed(double x) {forAll([=](EcolabCell& cell){cell.rand.seed(x);});}
+  void seed(unsigned x) {forAll([=](EcolabCell& cell){cell.rand.seed(x);});}
   void generate(unsigned niter);
   void generate() {generate(1);}
   void condense();

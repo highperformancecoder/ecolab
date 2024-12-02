@@ -28,23 +28,30 @@ namespace ecolab
 namespace array_ns
 {
   using ::log;
-  void fillrand(array<double>& x)
+  template <class F> void fillrand(array<F>& x)
   {
     for (size_t i=0; i<x.size(); i++)
       x[i]=array_urand.rand();
   }
-
-  void fillgrand(array<double>& x)
+  template void fillrand(array<float>& x);
+  template void fillrand(array<double>& x);
+  
+  template <class F> void fillgrand(array<F>& x)
   {
     for (size_t i=0; i<x.size(); i++)
       x[i]=array_grand.rand();
   }
+  template void fillgrand(array<float>& x);
+  template void fillgrand(array<double>& x);
+ 
 
-  void fillprand(array<double>& x)
+  template <class F> void fillprand(array<F>& x)
   {
     for (size_t i=0; i<x.size(); i++)
       x[i]=-log(array_urand.rand());
   }
+  template void fillprand(array<float>& x);
+  template void fillprand(array<double>& x);
 
   void fill_unique_rand(array<int>& x, unsigned max)
   {
@@ -75,20 +82,24 @@ namespace array_ns
       }
   }
 
-  void lgspread( array<double>& a, const array<double>& s )
+  template <class F> void lgspread( array<F>& a, const array<F>& s )
   {
     array<double> gran(a.size());
     fillgrand(gran);
     //  a *= 1.0 + s*gran;
     a = sign(a)*exp(log(abs(a))+s*gran);
   }
+  template void lgspread( array<float>& a, const array<float>& s );
+  template void lgspread( array<double>& a, const array<double>& s );
 
-  void gspread( array<double>& a, const array<double>& s )
+  template <class F> void gspread( array<F>& a, const array<F>& s )
   {
     array<double> gran(a.size());
     fillgrand(gran);
     a += s*gran;
   }
+  template void gspread( array<float>& a, const array<float>& s );
+  template void gspread( array<double>& a, const array<double>& s );
 }
 
 }

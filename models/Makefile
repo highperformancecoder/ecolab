@@ -19,6 +19,11 @@ ifdef AEGIS
 CXXFLAGS+=-std=c++11
 endif
 
+ifdef DPCPP
+# GPU may not have double precision support
+FLAGS+=-DUSE_FLOAT
+endif
+
 #MODELS=ecolab shadow newman jellyfish webworld netcomplexity
 MODELS=ecolab_model
 

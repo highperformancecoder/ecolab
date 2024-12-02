@@ -57,33 +57,53 @@ void PanmicticModel::generate(unsigned niter)
   tstep+=niter;
 } 
 
-  /* Rounding function, randomly round up or down, in the range 0..INT_MAX */
-  int EcolabPoint::ROUND(double x) 
-  {
-    double dum;
-    if (x<0) x=0;
-    if (x>std::numeric_limits<int>::max()-1) x=std::numeric_limits<int>::max()-1;
-    return std::fabs(std::modf(x,&dum))*(rand.max()-rand.min()) > (rand()-rand.min()) ?
-      (int)x+1 : (int)x;
-  }
+/* Rounding function, randomly round up or down, in the range 0..INT_MAX */
+int EcolabPoint::ROUND(Float x) 
+{
+  Float dum;
+  if (x<0) x=0;
+  if (x>std::numeric_limits<int>::max()-1) x=std::numeric_limits<int>::max()-1;
+  return std::fabs(std::modf(x,&dum))*(rand.max()-rand.min()) > (rand()-rand.min()) ?
+    (int)x+1 : (int)x;
+}
 
 //inline int ROUND(float x) {return ROUND(double(x));}
   
-  template <class E>
-  inline array<int> EcolabPoint::ROUND(const E& x)
-  {
-    array<int> r(x.size());
-    for (size_t i=0; i<x.size(); i++)
-      r[i]=ROUND(x[i]);
-    return r;
-  }
+//  template <class E>
+//  inline array<int> EcolabPoint::RoundArray(const E& x)
+//  {
+//    array<int> r(x.size());
+//    for (size_t i=0; i<x.size(); i++)
+//      r[i]=ROUND(x[i]);
+//    return r;
+//  }
+
+template <class E>
+struct RoundArray
+{
+  const E& expr;
+  EcolabPoint& point;
+  RoundArray(EcolabPoint& point, const E& expr): expr(expr), point(point) {}
+  using value_type=int;
+  size_t size() const {return expr.size();}
+  int operator[](size_t i) const {return point.ROUND(expr[i]);}
+};
+
+namespace ecolab::array_ns
+{template <class E> struct is_expression<RoundArray<E>>: public true_type {};}
+
+template <class E>
+RoundArray<E> roundArray(EcolabPoint& point, const E& expr)
+{return RoundArray<E>(point,expr);}
 
 void EcolabPoint::generate(unsigned niter, const ModelData& model)
 { 
-  array<double> n(density);
   for (unsigned i=0; i<niter; i++)
-    {n += (model.repro_rate + model.interaction*n) * n ;}
-  density = ROUND(n);
+    {density += roundArray(*this, (model.repro_rate + model.interaction*density) * density);}
+//    array_ns::asg_plus_v(density.dataNoCow(), density.size(), 
+//                         /*roundArray(*this,*/ (model.repro_rate + model.interaction*density) * density);//);
+//    for (unsigned j=0; j<density.size(); ++j)
+//      density.dataNoCow()[j]+= (model.repro_rate[j] + model.interaction[j]*density[j]) * density[j]
 }
 
 unsigned EcolabPoint::nsp() const
@@ -203,7 +223,7 @@ array<int> EcolabPoint::mutate(const array<double>& mut_scale)
 {
   array<int> speciations;
   /* calculate the number of mutants each species produces */
-  speciations = ROUND(mut_scale * density); 
+  speciations = roundArray(*this, mut_scale * density); 
 
   /* generate index list of old species that mutate to the new */
   array<int> new_sp = gen_index(speciations); 

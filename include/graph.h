@@ -408,7 +408,8 @@ bool GraphAdaptor<BiDirectionalGraph>::directed() const {return false;}
 class sparse_mat_graph: public ConcreteGraph<DiGraph>
 {
 public:
-  const sparse_mat_graph& operator=(const sparse_mat& mat) {
+  template <class F>
+  const sparse_mat_graph& operator=(const sparse_mat<F>& mat) {
     clear();
     std::map<std::pair<size_t, size_t>, double > weights;
     for (size_t i=0; i<mat.row.size(); ++i) {
@@ -425,21 +426,22 @@ public:
 };
 
 //An adaptor for sparse_mats. Uses absolute values for weights
+template <class F>
 class sparse_mat_graph_adaptor
 {
-  const sparse_mat& mat;
+  const sparse_mat<F>& mat;
   CLASSDESC_ACCESS(sparse_mat_graph_adaptor);
 public:
-  sparse_mat_graph_adaptor(const sparse_mat& mat): mat(mat) {}
+  sparse_mat_graph_adaptor(const sparse_mat<F>& mat): mat(mat) {}
   
   class const_iterator
   {
     size_t it;
-    const sparse_mat& mat;
+    const sparse_mat<F>& mat;
     CLASSDESC_ACCESS(const_iterator);
     mutable Edge link;
   public:
-    const_iterator(const sparse_mat& mat, size_t it): it(it), mat(mat)  {}
+    const_iterator(const sparse_mat<F>& mat, size_t it): it(it), mat(mat)  {}
     const Edge& operator*() const 
     {
       // we're using abs here, as networks need to have positive

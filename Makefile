@@ -64,7 +64,7 @@ endif
 VPATH+=src
 
 # objects to build ecolab.a
-OBJS=src/automorph.o src/auxil.o src/arrays.o src/sparse_mat.o \
+OBJS=src/automorph.o src/auxil.o src/arrays.o  \
 	src/findFirst.o src/graph.o src/netcomplexity.o src/naugraph.o \
 	src/nautil.o src/nauty.o src/nautinv.o src/cachedDBM.o src/igraph.o \
 	src/cairo_types.o src/cairo_base.o  src/cairoSurfaceImage.o src/plot.o \

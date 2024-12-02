@@ -40,7 +40,7 @@ void* ecolab::reallocSycl(void* pp,size_t s)
 
   if (!s && p)
     {
-      free(p);
+      free(p,syclQ());
       return nullptr;
     }
 

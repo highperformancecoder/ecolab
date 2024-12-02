@@ -75,7 +75,7 @@ namespace ecolab
         automatically exported when needed.
     */
 
-    template <class T> class array;
+    template <class T, class A> class array;
     template <class E, class Op> class unop;
     template <class E1, class E2, class Op>  class binop;
     template <class E, class I> class RVindex;
@@ -90,7 +90,7 @@ namespace ecolab
     template <class T> struct is_expression
     {static const bool value=false;};
 
-    template <class T> struct is_expression<array<T> >
+    template <class T,class A> struct is_expression<array<T,A> >
     {static const bool value=true;};
   
     template <class T, class Op> struct is_expression<unop<T,Op> >
@@ -166,6 +166,9 @@ namespace ecolab
     // to help distinguish functions templates on old compilers (eg gcc 3.2)
     template <int> struct dummy {dummy(int) {} };
 
+    template <class U, class=void> struct Allocator {using type=void; using T=type;};
+    template <class E> struct Allocator<E, classdesc::void_t<typename E::Allocator>>
+    {using type=typename E::Allocator; using T=type;};
       
     /*
       \c type_traits<T>::value_type return \c T::value_type is \a T is an 
@@ -621,17 +624,19 @@ namespace ecolab
           typename result<
             typename E1::value_type,
             typename E2::value_type
-            >::value_type 
+            >::value_type,
+          typename E1::Allocator
           >
         >::T
       operator<<(const E1& e1, const E2& e2) 
       {
         array<
           typename result<
-          typename E1::value_type,
-          typename E2::value_type
-          >::value_type 
-          >  ret(e1.size()+e2.size());
+            typename E1::value_type,
+            typename E2::value_type
+            >::value_type,
+          typename E1::Allocator
+          >  ret(e1.size()+e2.size(),e1.allocator());
         for (size_t i=0; i<e1.size(); i++)
           ret[i]=e1[i];
         for (size_t i=0; i<e2.size(); i++)
@@ -648,15 +653,15 @@ namespace ecolab
         is_expression<E1>, 
         typename enable_if< is_scalar<E2>,
                             array<
-                              typename result<typename E1::value_type,E2>::value_type 
-                              >
+                              typename result<typename E1::value_type,E2>::value_type,
+                              typename E1::Allocator>
                             >::T
         >::T
       operator<<(const E1& e1, const E2& e2) 
       {
         array<
-          typename result<typename E1::value_type,E2>::value_type 
-          > ret(e1.size()+1);
+          typename result<typename E1::value_type,E2>::value_type,
+          typename E1::Allocator> ret(e1.size()+1,e1.allocator());
         for (size_t i=0; i<e1.size(); i++)
           ret[i]=e1[i];
         ret[e1.size()]=e2;
@@ -671,13 +676,19 @@ namespace ecolab
       typename enable_if< 
         is_scalar<E1>, 
         typename enable_if< is_expression<E2>, 
-                            array<typename result<E1,typename E2::value_type>::value_type >
+                            array<
+                              typename result<E1,typename E2::value_type>::value_type,
+                              typename E2::Allocator
+                              >
                             >::T
         >::T
       operator<<(const E1& e1, const E2& e2) 
       {
-        array<typename result<E1,typename E2::value_type>::value_type >
-          ret(e2.size()+1);
+        array<
+          typename result<E1,typename E2::value_type>::value_type,
+          typename E2::Allocator
+          >
+          ret(e2.size()+1,e2.allocator());
         ret[0]=e1;
         for (size_t i=0; i<e2.size(); i++)
           ret[i+1]=e2[i];
@@ -1119,6 +1130,8 @@ namespace ecolab
     public:
       typedef typename E::value_type value_type;
       size_t size() const {return idx.size();}
+      using Allocator=typename E::Allocator;
+      const Allocator& allocator() const {return expr.allocator();}
       value_type operator[](size_t i) const {return expr[idx[i]];}
       RVindex(const E& e,const I& i): expr(e), idx(i) {}
     };
@@ -1132,6 +1145,8 @@ namespace ecolab
     public:
       typedef typename E::value_type value_type;
       size_t size() const {return idx.size();}
+      using Allocator=typename E::Allocator;
+      const Allocator& allocator() const {return expr.allocator();}
       value_type& operator[](size_t i) {return expr[idx[i]];}
       value_type operator[](size_t i) const {return expr[idx[i]];}
       LVindex(E& e,const I& i): expr(e), idx(i) {}
@@ -1232,7 +1247,9 @@ namespace ecolab
       template <class I> typename 
       enable_if< is_expression<I>, RVindex<unop,I> >::T
       operator[](const I& i) const {return RVindex<unop,I>(*this,i);}
-    
+
+      using Allocator=typename E::Allocator;
+      const Allocator& allocator() const {return e.allocator();}
     };
 
     /* binary operator adaptor */
@@ -1259,6 +1276,18 @@ namespace ecolab
       enable_if< is_expression<I>, RVindex<binop,I> >::T
       operator[](const I& i) const {return RVindex<binop,I>(*this,i);}
 
+      using Allocator=typename classdesc::conditional<
+        is_expression<E1>::value,
+        typename Allocator<E1>::type,
+        typename Allocator<E2>::type
+        >::T;
+      template <class U>
+      typename enable_if<is_expression<U>, const Allocator&>::T
+      allocator_(const E1& e1, const E2& e2) const {return e1.allocator();}
+      template <class U>
+      typename enable_if<classdesc::Not<is_expression<U>>, const Allocator&>::T
+      allocator_(const E1& e1, const E2& e2) const {return e2.allocator();}
+      const Allocator& allocator() const {return allocator_<E1>(e1,e2);}
     };
 
     /*
@@ -1490,33 +1519,37 @@ namespace ecolab
 
     /* layout of array data, including fixed fields */
     template <class T>
-    class array_data
+    struct array_data
     {
-      void *allocated_pointer; //actual pointer allocated (for alignment purposes)
+      T *allocated_pointer; //actual pointer allocated (for alignment purposes)
       std::size_t sz; //array size
+      std::size_t allocation; // actual allocation
       unsigned cnt;   //reference count
       static const unsigned debug_display=10; //allows debuggers to see first debug_display elem
       T dt[debug_display];       //data 
-      friend class array<T>;
     };
 
     /**
        array is the base template class for array types to follow
     */
 
-    template <class T>
+    template <class T, class A=std::allocator<T>>
     class array
     {
       array_data<T> *dt;
-
+      A m_allocator;
+      
       friend class WhereContext;
 
       ///allocate \a n variables of type \a T 
-      array_data<T> *alloc(std::size_t n) const
+      array_data<T> *alloc(std::size_t n)
       {
-        char *p; 
+        T *p; 
         array_data<T> *r;
-        p = (char*)std::malloc((n-array_data<T>::debug_display) * sizeof(T) + sizeof(array_data<T>) + 16);
+        //p = (char*)std::malloc((n-array_data<T>::debug_display) * sizeof(T) + sizeof(array_data<T>) + 16);
+        // over allocate to allow for alignment and metadata
+        auto allocation=n-array_data<T>::debug_display + (sizeof(array_data<T>) + 16)/sizeof(T)+1;
+        p = m_allocator.allocate(allocation);
 #ifdef __ICC
         // we need to align data onto 16 byte boundaries
         size_t d = (size_t)(reinterpret_cast<array_data<T>*>(p)->dt);
@@ -1526,16 +1559,18 @@ namespace ecolab
         r=reinterpret_cast<array_data<T>*>(p);
 #endif
         r->allocated_pointer=p;
+        r->allocation=allocation;
         r->sz=n;
         r->cnt=1;
         return r;
       }
 
       ///free memory pointed to by \a p 
-      void free(array_data<T> *p) const
+      void free(array_data<T> *p)
       {
         assert(p);
-        std::free(p->allocated_pointer);
+        //std::free(p->allocated_pointer);
+        m_allocator.deallocate(p->allocated_pointer,p->allocation);
       }
 
       void set_size(size_t s) {dt = alloc(s);}
@@ -1574,28 +1609,29 @@ namespace ecolab
     public:
       typedef T value_type;
       typedef size_t size_type; 
+      using Allocator=A;
 
-      array() {set_size(0);}
-      explicit array(size_t s) 
+      array(const Allocator& alloc=Allocator()): m_allocator(alloc) {set_size(0);}
+      explicit array(size_t s, const Allocator& alloc=Allocator()): m_allocator(alloc)
       {
         set_size(s);
       }
 
-      array(size_t s, T val) 
+      array(size_t s, T val, const Allocator& alloc=Allocator()): m_allocator(alloc)
       {
         set_size(s);
         array_ns::asg(data(),size(),val);
       }
 
-      array(const array& x) 
+      array(const array& x): m_allocator(x.m_allocator) 
       {
         dt=x.dt;
         ref()++;
       }
 
       template <class expr>
-      array(const expr& e, 
-            typename enable_if< is_expression<expr>, void*>::T dummy=0)
+      array(const expr& e, const Allocator& alloc=Allocator(),
+            typename enable_if< is_expression<expr>, void*>::T dummy=0): m_allocator(alloc)
       {
         set_size(e.size());
         operator=(e);
@@ -1603,6 +1639,8 @@ namespace ecolab
 
       ~array() {release();}
 
+      const Allocator& allocator() const {return m_allocator;}
+      
       /// resize array to \a s elements
       void resize(size_t s) {
         if (!dt || s>dt->sz || ref()>1)
@@ -1636,10 +1674,15 @@ namespace ecolab
 
       array& operator=(const array& x) {
         if (x.dt==dt) return *this;
-        release();
-        dt=x.dt;
-        ref()++;
-        return *this;
+        if (m_allocator==x.m_allocator) { // shared data optimisation
+          release();
+          dt=x.dt;
+          ref()++;
+          return *this;
+        } 
+        array tmp(x.size(),m_allocator);
+        array_ns::asg_v(tmp.data(),tmp.size(),x);
+        return (*this)=tmp;
       }
 
       template <class expr> typename
@@ -1779,6 +1822,10 @@ namespace ecolab
       /// obtain raw pointer to data
       const T* data() const {return dt? dt->dt: 0;}
 
+      /// returns a writeable pointer to data without copy-on-write semantics
+      /// dangerous, but needed to run array expressions on GPU
+      T* dataNoCow() {return dt? dt->dt: 0;}
+      
       typedef T *iterator;
       typedef const T *const_iterator;
     
@@ -2318,12 +2365,12 @@ namespace ecolab
     /// pack vector (remove elements where mask[i] is false
     template <class E1, class E2> typename
     enable_if<both_are_expressions<E1,E2>,
-              array<typename E1::value_type>
+              array<typename E1::value_type,typename E1::Allocator>
               >::T
     pack(const E1& e, const E2& mask, long ntrue=-1)
               {
                 assert(mask.size()==e.size());
-                array<typename E1::value_type> r( (ntrue==-1)? sum(mask): ntrue);
+                array<typename E1::value_type,typename E1::Allocator> r( (ntrue==-1)? sum(mask): ntrue, e.allocator());
                 for (size_t i=0, j=0; i<mask.size(); i++)
                   if (mask[i]) r[j++]=e[i];
                 return r;
@@ -2414,26 +2461,26 @@ namespace ecolab
     }
 
 
+  
+    /// fill array with uniformly random numbers from [0,1)
+    template <class F> void fillrand(array<F>& x);
+    /// fill array with gaussian random numbers from \f$N(0,1)\propto\exp(-x^2/2)\f$
+    template <class F> void fillgrand(array<F>& x);
+    /// fill array with exponential random numbers \f$x\leftarrow-\ln\xi,\,\xi\in [0,1)\f$
+    template <class F> void fillprand(array<F>& x);
+    /// fill with uniform numbers drawn from [0...\a max] without replacement
+    void fill_unique_rand(array<int>& x, unsigned max);
 
-  /// fill array with uniformly random numbers from [0,1)
-  void fillrand(array<double>& x);
-  /// fill array with gaussian random numbers from \f$N(0,1)\propto\exp(-x^2/2)\f$
-  void fillgrand(array<double>& x);
-  /// fill array with exponential random numbers \f$x\leftarrow-\ln\xi,\,\xi\in [0,1)\f$
-  void fillprand(array<double>& x);
-  /// fill with uniform numbers drawn from [0...\a max] without replacement
-  void fill_unique_rand(array<int>& x, unsigned max);
-
-  /// Multiplicative process \f$ a\leftarrow a(1+\xi s),\, \xi\in N(0,1)\f$
-  void lgspread( array<double>& a, const array<double>& s );
-  /// Additive process \f$ a\leftarrow a+s\xi,\, \xi\in N(0,1)\f$
-  void gspread( array<double>& a, const array<double>& s );
-  /// Multiplicative process \f$ a\leftarrow a(1+\xi s),\, \xi\in N(0,1)\f$
-  template <class E>
-  void lgspread( array<double>& a, const E& s ) {lgspread(a,array<double>(s));}
-  /// Additive process \f$ a\leftarrow a+\xi s,\, \xi\in N(0,1)\f$
-  template <class E>
-  void gspread( array<double>& a, const E& s ) {gspread(a,array<double>(s));}
+    /// Multiplicative process \f$ a\leftarrow a(1+\xi s),\, \xi\in N(0,1)\f$
+    template <class F> void lgspread( array<F>& a, const array<F>& s );
+    /// Additive process \f$ a\leftarrow a+s\xi,\, \xi\in N(0,1)\f$
+    template <class F> void gspread( array<F>& a, const array<F>& s );
+    /// Multiplicative process \f$ a\leftarrow a(1+\xi s),\, \xi\in N(0,1)\f$
+    template <class E, class F>
+    void lgspread( array<F>& a, const E& s ) {lgspread(a,array<F>(s));}
+    /// Additive process \f$ a\leftarrow a+\xi s,\, \xi\in N(0,1)\f$
+    template <class E,class F>
+    void gspread( array<F>& a, const E& s ) {gspread(a,array<F>(s));}
 
   /* ranking (sort) function */
   enum array_dir_t {upwards, downwards};

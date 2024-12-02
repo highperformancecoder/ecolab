@@ -141,6 +141,15 @@ namespace ecolab
 #endif
     }
   };
+
+  struct CellBase
+  {
+#ifdef SYCL_LANGUAGE_VERSION
+    Ouro::SyclDesc<1>* desc=nullptr;
+#else
+    int desc=0;
+#endif
+  };
 }
 
 namespace classdesc
