@@ -213,7 +213,6 @@ namespace ecolab
 #endif
   }
   CLASSDESC_ADD_FUNCTION(device);
-  
 }
 
 CLASSDESC_PYTHON_MODULE(ecolab);

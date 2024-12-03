@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
   PySys_SetObject("argv",pyArgv);
 
   int err=0;
-  if (err=PyRun_SimpleFile(script,argv[1]))
+  if ((err=PyRun_SimpleFile(script,argv[1])))
     PyErr_Print();
 #ifdef MPI_SUPPORT
   // terminate any parallel region

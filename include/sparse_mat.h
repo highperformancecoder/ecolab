@@ -39,11 +39,19 @@ namespace ecolab
     }
     /*matrix multiplication*/
     template <class E> typename
-    array_ns::enable_if< array_ns::is_expression<E>, array_ns::array<double> >::T
+    array_ns::enable_if
+    <
+      array_ns::is_expression<E>,
+      array_ns::array
+      <
+        double,
+        typename array_ns::MakeAllocator<double,typename E::Allocator>::type
+        >
+      >::T
     operator*(const E& x) const
     {
       auto alloc=array_ns::makeAllocator<F>(x.allocator());
-      array_ns::array<F,decltype(alloc)> r(0,alloc);
+      array_ns::array<F,decltype(alloc)> r(alloc);
       assert(row.size()==col.size() && row.size()==val.size());      
       if (diag.size()>0)
 	{

@@ -64,10 +64,11 @@ struct ModelData
 };
 
 /* ecolab cell  */
-struct EcolabPoint: public ecolab::CellBase
+template <class CellBase>
+struct EcolabPoint: public Exclude<CellBase>
 {
   Float salt;  /* random no. used for migration */
-  array<int> density;
+  array<int,typename CellBase::template Allocator<int>> density{this->template allocator<int>()};
   void generate(unsigned niter, const ModelData&);
   void condense(const array<bool>& mask, size_t mask_true);
   array<int> mutate(const array<double>&);
@@ -78,7 +79,14 @@ struct EcolabPoint: public ecolab::CellBase
   Exclude<std::mt19937> rand; // random number generator
 };
 
-struct PanmicticModel: public ModelData, public EcolabPoint, public ecolab::Model<PanmicticModel>
+// for the panmictic model, we need to use std::allocator
+struct AllocatorBase
+{
+  template <class T> using Allocator=std::allocator<T>;
+  template <class T> Allocator<T> allocator() const {return Allocator<T>();}
+};
+
+struct PanmicticModel: public ModelData, public EcolabPoint<AllocatorBase>, public ecolab::Model<PanmicticModel>
 {
   ConnectionPlot connectionPlot;
   void updateConnectionPlot() {connectionPlot.update(density,interaction);}
@@ -91,7 +99,7 @@ struct PanmicticModel: public ModelData, public EcolabPoint, public ecolab::Mode
   array<double> lifetimes();
 };
 
-struct EcolabCell: public EcolabPoint, public graphcode::Object<EcolabCell> {};
+struct EcolabCell: public EcolabPoint<ecolab::CellBase>, public graphcode::Object<EcolabCell> {};
 
 class SpatialModel: public ModelData, public EcolabGraph<SpatialModel, EcolabCell>,
                     public ecolab::Model<SpatialModel>

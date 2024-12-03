@@ -4,3 +4,6 @@
 [submodule "graphcode"]
 	path = graphcode
 	url = https://github.com/highperformancecoder/graphcode.git
+[submodule "Ouroboros-SYCL"]
+	path = Ouroboros-SYCL
+	url = https://github.com/highperformancecoder/Ouroboros-SYCL.git

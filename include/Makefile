@@ -197,7 +197,7 @@ ECOLIBS=$(ECOLAB_HOME)/lib/libecolab$(ECOLIBS_EXT).a
 
 # why is boost_thread required here?
 LIBS+=-L$(ECOLAB_HOME)/lib -lecolab$(ECOLIBS_EXT) -lboost_thread
-FLAGS+=-I. -I$(ECOLAB_HOME)/classdesc -I$(ECOLAB_HOME)/classdesc/json5_parser/json5_parser -I$(ECOLAB_HOME)/graphcode -I$(ECOLAB_HOME)/include -DHASH_TCL_hash
+FLAGS+=-I. -I$(ECOLAB_HOME)/classdesc -I$(ECOLAB_HOME)/classdesc/json5_parser/json5_parser -I$(ECOLAB_HOME)/graphcode -I$(ECOLAB_HOME)/include -I$(ECOLAB_HOME)/Ouroboros-SYCL/include -DHASH_TCL_hash
 
 # The following section uses GNU Make specific syntax. If not using
 # GNU Make, edit the  FLAGS, LIBS, CC,

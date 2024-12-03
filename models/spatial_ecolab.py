@@ -28,8 +28,8 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=2
-numY=2
+numX=8
+numY=8
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 for i in range(numX):

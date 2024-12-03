@@ -60,10 +60,10 @@ namespace
       int m_width, m_height;
       TkWinSurface(CairoSurface& csurf, Tk_ImageMaster imageMaster, cairo_surface_t* surf, int width, int height):
         cairo::Surface(surf), csurf(csurf),  imageMaster(imageMaster), m_width(width), m_height(height) {}
-      void requestRedraw() {
+      void requestRedraw() override {
         Tk_ImageChanged(imageMaster,left(),top(),m_width,m_height,m_width,m_height);
       }
-      void blit() {cairo_surface_flush(surface());}
+      void blit() override {cairo_surface_flush(surface());}
       double width() const override {return m_width;}
       double height() const override {return m_height;}
     };

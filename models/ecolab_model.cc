@@ -58,7 +58,8 @@ void PanmicticModel::generate(unsigned niter)
 } 
 
 /* Rounding function, randomly round up or down, in the range 0..INT_MAX */
-int EcolabPoint::ROUND(Float x) 
+template <class B>
+int EcolabPoint<B>::ROUND(Float x) 
 {
   Float dum;
   if (x<0) x=0;
@@ -78,35 +79,33 @@ int EcolabPoint::ROUND(Float x)
 //    return r;
 //  }
 
-template <class E>
+template <class E, class P>
 struct RoundArray
 {
   const E& expr;
-  EcolabPoint& point;
-  RoundArray(EcolabPoint& point, const E& expr): expr(expr), point(point) {}
+  P& point;
+  RoundArray(P& point, const E& expr): expr(expr), point(point) {}
   using value_type=int;
   size_t size() const {return expr.size();}
   int operator[](size_t i) const {return point.ROUND(expr[i]);}
 };
 
 namespace ecolab::array_ns
-{template <class E> struct is_expression<RoundArray<E>>: public true_type {};}
+{template <class E, class P> struct is_expression<RoundArray<E,P>>: public true_type {};}
 
-template <class E>
-RoundArray<E> roundArray(EcolabPoint& point, const E& expr)
-{return RoundArray<E>(point,expr);}
+template <class E, class P>
+RoundArray<E,P> roundArray(P& point, const E& expr)
+{return RoundArray<E,P>(point,expr);}
 
-void EcolabPoint::generate(unsigned niter, const ModelData& model)
+template <class B>
+void EcolabPoint<B>::generate(unsigned niter, const ModelData& model)
 { 
   for (unsigned i=0; i<niter; i++)
-    {density += roundArray(*this, (model.repro_rate + model.interaction*density) * density);}
-//    array_ns::asg_plus_v(density.dataNoCow(), density.size(), 
-//                         /*roundArray(*this,*/ (model.repro_rate + model.interaction*density) * density);//);
-//    for (unsigned j=0; j<density.size(); ++j)
-//      density.dataNoCow()[j]+= (model.repro_rate[j] + model.interaction[j]*density[j]) * density[j]
+    {density += roundArray(*this, density * (model.repro_rate + model.interaction*density));}
 }
 
-unsigned EcolabPoint::nsp() const
+template <class B>
+unsigned EcolabPoint<B>::nsp() const
 {return sum(density!=0);}
 
 array<unsigned> SpatialModel::nsp() const
@@ -116,7 +115,8 @@ array<unsigned> SpatialModel::nsp() const
   return nsp;
 }
 
-void EcolabPoint::condense(const array<bool>& mask, size_t mask_true)
+template <class B>
+void EcolabPoint<B>::condense(const array<bool>& mask, size_t mask_true)
 {
   density = pack( density, mask, mask_true); 
 }
@@ -219,7 +219,8 @@ void SpatialModel::mutate()
     i->as<EcolabCell>()->density <<= cell_ids==i.id();
 }
 
-array<int> EcolabPoint::mutate(const array<double>& mut_scale)
+template <class B>
+array<int> EcolabPoint<B>::mutate(const array<double>& mut_scale)
 {
   array<int> speciations;
   /* calculate the number of mutants each species produces */

@@ -173,6 +173,13 @@ namespace ecolab
     // return an allocator type for type T, based on an allocator for a different type
     template <class T, template<class> class A, class U>
     A<T> makeAllocator(const A<U>& a) {return A<T>(a);}
+
+    template <class T, class U> struct MakeAllocator;
+    template <class T, template<class> class A, class U>
+    struct MakeAllocator<T,A<U>>
+    {
+      using type=A<T>;
+    };
     
     /*
       \c type_traits<T>::value_type return \c T::value_type is \a T is an 
@@ -1552,7 +1559,7 @@ namespace ecolab
         array_data<T> *r;
         //p = (char*)std::malloc((n-array_data<T>::debug_display) * sizeof(T) + sizeof(array_data<T>) + 16);
         // over allocate to allow for alignment and metadata
-        auto allocation=n-array_data<T>::debug_display + (sizeof(array_data<T>) + 16)/sizeof(T)+1;
+        auto allocation=n + (sizeof(array_data<T>) + 16)/sizeof(T)+1-array_data<T>::debug_display;
         p = m_allocator.allocate(allocation);
 #ifdef __ICC
         // we need to align data onto 16 byte boundaries
@@ -1615,13 +1622,13 @@ namespace ecolab
       typedef size_t size_type; 
       using Allocator=A;
 
-      array(const Allocator& alloc=Allocator()): m_allocator(alloc) {set_size(0);}
+      array(const Allocator& alloc={}): m_allocator(alloc) {set_size(0);}
       explicit array(size_t s, const Allocator& alloc=Allocator()): m_allocator(alloc)
       {
         set_size(s);
       }
 
-      array(size_t s, T val, const Allocator& alloc=Allocator()): m_allocator(alloc)
+      array(size_t s, T val, const Allocator& alloc={}): m_allocator(alloc)
       {
         set_size(s);
         array_ns::asg(data(),size(),val);
@@ -1634,7 +1641,7 @@ namespace ecolab
       }
 
       template <class expr>
-      array(const expr& e, const Allocator& alloc=Allocator(),
+      array(const expr& e, const Allocator& alloc={},
             typename enable_if< is_expression<expr>, void*>::T dummy=0): m_allocator(alloc)
       {
         set_size(e.size());
@@ -1694,9 +1701,9 @@ namespace ecolab
       operator=(const expr& x) {
         if ((void*)(&x)==(void*)(this)) return *this;
         // since expression x may contain a reference to this, assign to a temporary
-        array tmp(x.size());
-        array_ns::asg_v(tmp.data(),tmp.size(),x);
-        return (*this)=tmp;
+        resize(x.size());
+        array_ns::asg_v(data(),size(),x);
+        return *this;
       }
       template <class expr> typename
       enable_if<is_expression<expr>, array&>::T 
@@ -2531,8 +2538,8 @@ namespace ecolab
 namespace classdesc_access
 {
   /* Definitions of pack, unpack for array classes */
-  template <class T>
-  struct access_pack<ecolab::array_ns::array<T> >
+  template <class T,class A>
+  struct access_pack<ecolab::array_ns::array<T,A> >
   {
     template <class U>
     void operator()(classdesc::pack_t& targ, const classdesc::string& desc, 
@@ -2543,8 +2550,8 @@ namespace classdesc_access
     }
   };
 
-  template <class T>
-  struct access_unpack<ecolab::array_ns::array<T> >
+  template <class T,class A>
+  struct access_unpack<ecolab::array_ns::array<T,A> >
   {
     template <class U>
     void operator()(classdesc::unpack_t& targ, const classdesc::string& desc, 
@@ -2559,23 +2566,23 @@ namespace classdesc_access
 }
 
 // standard is_sequence pack/unpack methods do not work here
-template <class T> void pack(classdesc::pack_t& targ, const classdesc::string& desc, const ecolab::array_ns::array<T>& arg)
+template <class T,class A> void pack(classdesc::pack_t& targ, const classdesc::string& desc, const ecolab::array_ns::array<T,A>& arg)
 {classdesc_access::access_pack<ecolab::array_ns::array<T>>()(targ,desc,arg);}
-template <class T> void unpack(classdesc::pack_t& targ, const classdesc::string& desc, ecolab::array_ns::array<T>& arg)
+template <class T,class A> void unpack(classdesc::pack_t& targ, const classdesc::string& desc, ecolab::array_ns::array<T,A>& arg)
 {classdesc_access::access_unpack<ecolab::array_ns::array<T>>()(targ,desc,arg);}
 
 
 
 namespace classdesc
 {
-  template <class T> 
-  struct tn<ecolab::array<T> >
+  template <class T,class A> 
+  struct tn<ecolab::array<T,A> >
   {
     static std::string name()
     {return "ecolab::array<"+typeName<T>()+">";}
   };
 
-  template <class T> struct is_sequence<ecolab::array<T> >: public true_type {};
+  template <class T, class A> struct is_sequence<ecolab::array<T, A> >: public true_type {};
 }
 
 #endif
