@@ -44,8 +44,8 @@ namespace ecolab
       array_ns::is_expression<E>,
       array_ns::array
       <
-        double,
-        typename array_ns::MakeAllocator<double,typename E::Allocator>::type
+        F,
+        typename array_ns::MakeAllocator<F,typename E::Allocator>::type
         >
       >::T
     operator*(const E& x) const

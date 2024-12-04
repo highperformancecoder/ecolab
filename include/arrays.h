@@ -1561,6 +1561,7 @@ namespace ecolab
         // over allocate to allow for alignment and metadata
         auto allocation=n + (sizeof(array_data<T>) + 16)/sizeof(T)+1-array_data<T>::debug_display;
         p = m_allocator.allocate(allocation);
+        if (!p) return nullptr; // SYCL allocator returns nullptr if not initialised
 #ifdef __ICC
         // we need to align data onto 16 byte boundaries
         size_t d = (size_t)(reinterpret_cast<array_data<T>*>(p)->dt);
@@ -1637,7 +1638,7 @@ namespace ecolab
       array(const array& x): m_allocator(x.m_allocator) 
       {
         dt=x.dt;
-        ref()++;
+        if (dt) ref()++;
       }
 
       template <class expr>
@@ -1659,7 +1660,7 @@ namespace ecolab
             release();
             dt = alloc(s);
           } 
-        dt->sz=s;
+        if (dt) dt->sz=s; // in case s is smaller
       } 
 
       void clear() {resize(0);}
@@ -1688,7 +1689,7 @@ namespace ecolab
         if (m_allocator==x.m_allocator) { // shared data optimisation
           release();
           dt=x.dt;
-          ref()++;
+          if (dt) ref()++;
           return *this;
         } 
         array tmp(x.size(),m_allocator);
@@ -1835,7 +1836,7 @@ namespace ecolab
 
       /// returns a writeable pointer to data without copy-on-write semantics
       /// dangerous, but needed to run array expressions on GPU
-      T* dataNoCow() {return dt? dt->dt: 0;}
+      //      T* dataNoCow() {return dt? dt->dt: 0;}
       
       typedef T *iterator;
       typedef const T *const_iterator;

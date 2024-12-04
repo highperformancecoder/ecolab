@@ -195,7 +195,7 @@ namespace ecolab
       static size_t workGroupSize=syclQ().get_device().get_info<sycl::info::device::max_work_group_size>();
       size_t range=this->size()/workGroupSize;
       if (range*workGroupSize < this->size()) ++range;
-      syclQ().parallel_for(sycl::nd_range<1>(range, workGroupSize), [=,this](auto i) {
+      syclQ().parallel_for(sycl::nd_range<1>(range*workGroupSize, workGroupSize), [=,this](auto i) {
         auto idx=i.get_global_linear_id();
         if (idx<this->size()) {
           auto& cell=*(*this)[idx]->template as<Cell>();

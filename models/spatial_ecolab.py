@@ -1,6 +1,6 @@
-from ecolab_model import spatial_ecolab
+from ecolab_model import spatial_ecolab as ecolab
 # spatial_ecolab is a smart ptr to possible Device accessible memery, so must be dereferenced
-ecolab=spatial_ecolab()
+#ecolab=spatial_ecolab()
 
 from random import random, seed as randomSeed
 
@@ -52,10 +52,10 @@ print(device())
 
 def step():
     ecolab.generate(100)
-    ecolab.mutate()
-    ecolab.migrate()
-    ecolab.condense()
-    ecolab.gather()
+#    ecolab.mutate()
+#    ecolab.migrate()
+#    ecolab.condense()
+#    ecolab.gather()
     if myid()==0:
         nsp=len(ecolab.species)
         statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')

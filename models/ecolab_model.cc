@@ -543,12 +543,13 @@ void SpatialModel::migrate()
 void SpatialModel::makeConsistent()
 {
   // all cells must have same number of species. Pack out with zero density if necessary
-  unsigned long nsp=0;
+  unsigned long nsp=species.size();
   for (auto& i: *this) nsp=max(nsp,i->as<EcolabCell>()->density.size());
 #ifdef MPI_SUPPORT
   MPI_Allreduce(MPI_IN_PLACE,&nsp,1,MPI_UNSIGNED_LONG,MPI_MAX,MPI_COMM_WORLD);
 #endif
-  for (auto& i: *this)
-    i->as<EcolabCell>()->density<<=array<int>(nsp-i->as<EcolabCell>()->density.size(),0);
+  forAll([=,this](EcolabCell& c) {
+    c.density<<=array<int,EcolabCell::Allocator<int>>(nsp-c.density.size(),0,c.density.allocator());
+  });
   ModelData::makeConsistent(nsp);
 }
