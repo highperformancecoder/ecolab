@@ -6,29 +6,6 @@
   Open source licensed under the MIT license. See LICENSE for details.
 */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**\file
 \brief dynamic array class
 */

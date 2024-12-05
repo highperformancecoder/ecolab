@@ -28,13 +28,19 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=8
-numY=8
+numX=2
+numY=2
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
+
+# initialises allocators and space on GPU, so that density arrays can be set
+ecolab.makeConsistent()
+
 for i in range(numX):
     for j in range(numY):
+        print(i,j,ecolab.cell(i,j).density())
         ecolab.cell(i,j).density(nsp*[100])
+#        print(i,j,ecolab.cell(i,j).density())
 
 ecolab.repro_rate(randomList(nsp, ecolab.repro_min(), ecolab.repro_max()))
 ecolab.interaction.diag(randomList(nsp, -1e-3, -1e-3))

@@ -101,7 +101,7 @@ struct PanmicticModel: public ModelData, public EcolabPoint<AllocatorBase>, publ
 
 struct EcolabCell: public EcolabPoint<ecolab::CellBase>, public graphcode::Object<EcolabCell> {};
 
-class SpatialModel: public ModelData, public EcolabGraph<SpatialModel, EcolabCell>,
+class SpatialModel: public ModelData, public EcolabGraph<EcolabCell>,
                     public ecolab::Model<SpatialModel>
 {
   size_t numX=1, numY=1;
