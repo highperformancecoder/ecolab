@@ -68,7 +68,7 @@ template <class CellBase>
 struct EcolabPoint: public Exclude<CellBase>
 {
   Float salt;  /* random no. used for migration */
-  array<int,typename CellBase::template Allocator<int>> density{this->template allocator<int>()};
+  array<int,typename CellBase::template CellAllocator<int>> density{this->template allocator<int>()};
   void generate(unsigned niter, const ModelData&);
   void condense(const array<bool>& mask, size_t mask_true);
   array<int> mutate(const array<double>&);
@@ -82,8 +82,8 @@ struct EcolabPoint: public Exclude<CellBase>
 // for the panmictic model, we need to use std::allocator
 struct AllocatorBase
 {
-  template <class T> using Allocator=std::allocator<T>;
-  template <class T> Allocator<T> allocator() const {return Allocator<T>();}
+  template <class T> using CellAllocator=std::allocator<T>;
+  template <class T> CellAllocator<T> allocator() const {return CellAllocator<T>();}
 };
 
 struct PanmicticModel: public ModelData, public EcolabPoint<AllocatorBase>, public ecolab::Model<PanmicticModel>

@@ -479,6 +479,7 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
         o->neighbours.push_back(makeId(i,j-1)); 
         o->neighbours.push_back(makeId(i,j+1)); 
       }
+  rebuildPtrLists();
 }
 
 void SpatialModel::generate(unsigned niter)
@@ -552,12 +553,19 @@ void SpatialModel::makeConsistent()
   forAll([=,this](EcolabCell& c) {
     if (nsp>c.density.size())
       {
-        array<int,EcolabCell::Allocator<int>> tmp(nsp,0,c.allocator<int>());
+        array<int,EcolabCell::CellAllocator<int>> tmp(nsp,0,c.allocator<int>());
         asg_v(tmp.data(),c.density.size(),c.density);
+        //(*c.out)<<"tmp.size:"<<tmp.size()<<" "<<tmp.data()<<sycl::endl;
         c.density.swap(tmp);
-        //(*c.out)<<"c.density.size:"<<c.density.size()<<" "<<c.density.data()<<sycl::endl;
+        //(*c.out)<<"c.density.size:"<<c.density.size()<<" "<<&c<<sycl::endl;
       }
   });
-  for (auto& i: *this) cout<<i.id()<<" "<<i->as<EcolabCell>()->density.size()<<endl;
+  for (auto& i: *this)
+    {
+      auto& c=*i->as<EcolabCell>();
+      //cout<<i.id()<<" "<<c.density.size()<<" "<<&c<<" usm type:"<<
+      //  sycl::get_pointer_type(&c,syclQ().get_context())<<" "<<sycl::get_pointer_type(i.payload,syclQ().get_context())<<endl;
+      
+    }
   ModelData::makeConsistent(nsp);
 }

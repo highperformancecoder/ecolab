@@ -133,36 +133,40 @@ namespace ecolab
     using MemAllocator=Ouro::MultiOuroPQ;
     MemAllocator* memAlloc=nullptr;
     const sycl::stream* out=nullptr;
-    template <class T> class Allocator
+    template <class T> class CellAllocator
     {
     public:
       Ouro::SyclDesc<1>*const* desc=nullptr;
       MemAllocator*const* memAlloc;
+      const sycl::stream* out=nullptr;
       template <class U> friend class Allocator;
-      Allocator()=default;
-      Allocator(Ouro::SyclDesc<1>* const& desc, MemAllocator*const& memAlloc):
-        desc(&desc), memAlloc(&memAlloc) {
+      CellAllocator()=default;
+      CellAllocator(Ouro::SyclDesc<1>* const& desc, MemAllocator*const& memAlloc, const sycl::stream* out):
+        desc(&desc), memAlloc(&memAlloc), out(out) {
       }
-      template <class U> Allocator(const Allocator<U>& x):
+      template <class U> CellAllocator(const CellAllocator<U>& x):
         desc(x.desc) {}
       T* allocate(size_t sz) {
-        if (memAlloc && *memAlloc && desc && *desc) 
-          return reinterpret_cast<T*>((*memAlloc)->malloc(**desc,sz*sizeof(T)));
-        else
-          return nullptr; // TODO raise an error??
+        if (memAlloc && *memAlloc && desc && *desc)  {
+          auto r=reinterpret_cast<T*>((*memAlloc)->malloc(**desc,sz*sizeof(T)));
+          if (out) (*out)<<"allocated "<<sz*sizeof(T)<<" bytes, "<<r<<sycl::endl;
+          return r;
+        }
+        if (out) (*out)<<"failed allocation "<<sz*sizeof(T)<<sycl::endl;
+        return nullptr; // TODO raise an error??
       }
       void deallocate(T* p,size_t) {
         if (memAlloc && *memAlloc && desc && *desc)
           (*memAlloc)->free(**desc,p);
       }
-      bool operator==(const Allocator& x) const {return desc==x.desc && memAlloc==x.memAlloc;}
+      bool operator==(const CellAllocator& x) const {return desc==x.desc && memAlloc==x.memAlloc;}
     };
-    template <class T> Allocator<T> allocator() const {
-      return Allocator<T>(desc,memAlloc);
+    template <class T> CellAllocator<T> allocator() const {
+      return CellAllocator<T>(desc,memAlloc,out);
     }
 #else
-    template <class T> using Allocator=std::allocator<T>;
-    template <class T> Allocator<T> allocator() const {return Allocator<T>();}
+    template <class T> using CellAllocator=std::allocator<T>;
+    template <class T> CellAllocator<T> allocator() const {return CellAllocator<T>();}
 #endif
   };
 
@@ -187,31 +191,15 @@ namespace ecolab
 #endif      
   };
 
-  // This class exists, because we need a default constructor, and
-  // usm_allocator needs to be initialised with a device context
-#ifdef SYCL_LANGUAGE_VERSION
-  template <class T>
-  struct CellAllocator: public sycl::usm_allocator<T,sycl::usm::alloc::shared>
-  {
-    CellAllocator(): sycl::usm_allocator<T,sycl::usm::alloc::shared>(syclQ()) {}
-    template<class U> constexpr CellAllocator(const CellAllocator<U>& x) noexcept:
-      sycl::usm_allocator<T,sycl::usm::alloc::shared>(x) {}
-    template<class U> struct rebind {using other=CellAllocator<U>;};
-  };
-#else
-  template <class T> struct CellAllocator: std::allocator<T>
-  {
-    CellAllocator()=default;
-    template<class U> constexpr CellAllocator(const CellAllocator<U>& x) noexcept:
-      std::allocator<T>(x) {}
-    template<class U> struct rebind {using other=CellAllocator<U>;};
-  };
-#endif
-  
-  
   template <class Cell> struct EcolabGraph:
-    public Exclude<SyclGraphBase>, public graphcode::Graph<Cell, CellAllocator>
+    public Exclude<SyclGraphBase>, public graphcode::Graph<Cell>
   {
+#ifdef SYCL_LANGUAGE_VERSION
+    EcolabGraph(): graphcode::Graph<Cell>
+      (graphcode::Allocator<Cell>(syclQ(),sycl::usm::alloc::shared),
+       graphcode::Allocator<graphcode::ObjRef>(syclQ(),sycl::usm::alloc::shared),
+       graphcode::Allocator<graphcode::ObjectPtr<Cell>>(syclQ(),sycl::usm::alloc::shared)) {}
+#endif
     /// apply a functional to all local cells of this processor in parallel
     /// @param f 
     template <class F>
@@ -227,6 +215,7 @@ namespace ecolab
         h.parallel_for(sycl::nd_range<1>(range*workGroupSize, workGroupSize), [=,this](auto i) {
           auto idx=i.get_global_linear_id();
           if (idx<this->size()) {
+            out<<"idx="<<idx<<"(*this)[idx]"<<(*this)[idx].payload->get()<<" as "<<(*this)[idx]->template as<Cell>()<<sycl::endl;
             auto& cell=*(*this)[idx]->template as<Cell>();
             Ouro::SyclDesc<> desc(i,{});
             cell.desc=&desc;
@@ -251,15 +240,37 @@ namespace ecolab
 
 namespace classdesc
 {
-  template <class M> struct is_smart_ptr<ecolab::DeviceType<M>>: public true_type {}; 
+  template <class M> struct is_smart_ptr<ecolab::DeviceType<M>>: public true_type {};
+  template <class T> struct is_char: public false_type {};
+  template <> struct is_char<char>: public true_type {};
+  template <> struct is_char<wchar_t>: public true_type {};
+
+#ifdef SYCL_LANGUAGE_VERSION
+  /// classdesc support for stringifying usm_alloc
+  namespace   {
+    template <> EnumKey enum_keysData< ::sycl::usm::alloc >::keysData[]=
+      {
+        {"host",int(::sycl::usm::alloc::host)},
+        {"device",int(::sycl::usm::alloc::device)},
+        {"shared",int(::sycl::usm::alloc::shared)},
+        {"unknown",int(::sycl::usm::alloc::unknown)}
+      };
+    template <> EnumKeys< ::sycl::usm::alloc > enum_keysData< ::sycl::usm::alloc >::keys(enum_keysData< ::sycl::usm::alloc >::keysData,sizeof(enum_keysData< ::sycl::usm::alloc >::keysData)/sizeof(enum_keysData< ::sycl::usm::alloc >::keysData[0]));
+    template <> int enumKey< ::sycl::usm::alloc >(const std::string& x){return int(enum_keysData< ::sycl::usm::alloc >::keys(x));}
+    template <> std::string enumKey< ::sycl::usm::alloc >(int x){return enum_keysData< ::sycl::usm::alloc >::keys(x);}
+  }
+#endif
+
 }
 
-namespace classdesc_access
+namespace std
 {
   template <class T>
-  struct access_pack<ecolab::CellAllocator<T>>: public classdesc::NullDescriptor<classdesc::pack_t> {};
-  template <class T>
-  struct access_unpack<ecolab::CellAllocator<T>>: public classdesc::NullDescriptor<classdesc::pack_t> {};
+  typename classdesc::enable_if<
+    classdesc::Not<classdesc::is_char<typename std::remove_cv<T>::type>>,
+    std::ostream&>::T
+  operator<<(std::ostream& o, T* p)
+  {return o<<std::hex<<std::size_t(p);}
 }
 
 #ifdef MPI_SUPPORT
@@ -279,19 +290,14 @@ namespace ecolab
 #define CLASSDESC_unpack___ecolab__CellBase
 #define CLASSDESC_pack___ecolab__SyclGraphBase
 #define CLASSDESC_unpack___ecolab__SyclGraphBase
-#define CLASSDESC_pack___ecolab__CellBase__Allocator_T_
-#define CLASSDESC_unpack___ecolab__CellBase__Allocator_T_
-#define CLASSDESC_pack___ecolab__CellAllocator_T_
-#define CLASSDESC_unpack___ecolab__CellAllocator_T_
+#define CLASSDESC_pack___ecolab__CellBase__CellAllocator_T_
+#define CLASSDESC_unpack___ecolab__CellBase__CellAllocator_T_
 #define CLASSDESC_json_pack___ecolab__CellBase
 #define CLASSDESC_json_unpack___ecolab__CellBase
-#define CLASSDESC_json_pack___ecolab__CellBase__Allocator_T_
-#define CLASSDESC_json_unpack___ecolab__CellBase__Allocator_T_
-#define CLASSDESC_json_pack___ecolab__CellAllocator_T_
-#define CLASSDESC_json_unpack___ecolab__CellAllocator_T_
+#define CLASSDESC_json_pack___ecolab__CellBase__CellAllocator_T_
+#define CLASSDESC_json_unpack___ecolab__CellBase__CellAllocator_T_
 #define CLASSDESC_RESTProcess___ecolab__CellBase
-#define CLASSDESC_RESTProcess___ecolab__CellBase__Allocator_T_
-#define CLASSDESC_RESTProcess___ecolab__CellAllocator_T_
+#define CLASSDESC_RESTProcess___ecolab__CellBase__CellAllocator_T_
 
 #include "ecolab.cd"
 #endif  /* ECOLAB_H */
