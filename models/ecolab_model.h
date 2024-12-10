@@ -68,7 +68,6 @@ struct EcolabPoint: public Exclude<CellBase>
   /// Rounding function, randomly round up or down, in the range 0..INT_MAX
   int ROUND(Float x);
   template <class E> RoundArray<E,EcolabPoint> roundArray(const E& expr);
-  //template <class E> array<int> RoundArray(const E& x);
   Exclude<std::mt19937> rand; // random number generator
 };
 

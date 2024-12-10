@@ -468,6 +468,7 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
     for (size_t j=0; j<numY; ++j)
       {
         auto o=insertObject(makeId(i,j));
+        o->as<EcolabCell>()->rand.seed(o.id());
         o.proc(o.id() % nprocs()); // TODO can we get this to work without this.
         // wire up von Neumann neighborhood
         o->neighbours.push_back(makeId(i-1,j));
