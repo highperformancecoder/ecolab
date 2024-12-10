@@ -23,11 +23,11 @@ using Float=double;
 
 struct ConnectionPlot: public Object<ConnectionPlot, CairoSurface>
 {
-  array<int> density;
-  sparse_mat<Float> connections;
+  array<int,graphcode::Allocator<int>> density;
+  sparse_mat<Float, graphcode::Allocator> connections;
   bool redraw(int x0, int y0, int width, int height) override;
   void requestRedraw() const {if (surface) surface->requestRedraw();}
-  void update(const array<int>& d, const sparse_mat<Float>& c) {
+  void update(const array<int,graphcode::Allocator<int>>& d, const sparse_mat<Float, graphcode::Allocator>& c) {
     density=d;
     connections=c;
     requestRedraw();
@@ -36,32 +36,24 @@ struct ConnectionPlot: public Object<ConnectionPlot, CairoSurface>
 
 struct ModelData
 {
-  array<int> species;
-  array<Float> create;
-  array<Float> repro_rate, mutation, migration;
-  sparse_mat<Float> interaction;
+  using FAlloc=graphcode::Allocator<Float>;
+  array<int,graphcode::Allocator<int>> species;
+  array<Float,FAlloc> create;
+  array<Float,FAlloc> repro_rate, mutation, migration;
+  sparse_mat<Float,graphcode::Allocator> interaction;
   sparse_mat_graph foodweb;
   unsigned long long tstep=0, last_mut_tstep=0, last_mig_tstep=0;
   //mutation parameters
   float sp_sep=0.1, mut_max=0, repro_min=0, repro_max=1, odiag_min=0, odiag_max=1;
 
-  void makeConsistent(size_t nsp)
-    {
-      if (!species.size())
-        species=pcoord(nsp);
-
-      if (!create.size()) create.resize(species.size(),0);
-      if (!mutation.size()) mutation.resize(species.size(),0);
-      if (!migration.size()) migration.resize(species.size(),0);
-    }
-   
+  void makeConsistent(size_t nsp);
   void random_interaction(unsigned conn, double sigma);
-
   void condense(const array<bool>& mask, size_t mask_true);
   void mutate(const array<int>&); 
-
   double complexity() {return ::complexity(foodweb);}
 };
+
+template <class E, class P> struct RoundArray; 
 
 /* ecolab cell  */
 template <class CellBase>
@@ -74,8 +66,9 @@ struct EcolabPoint: public Exclude<CellBase>
   array<int> mutate(const array<double>&);
   unsigned nsp() const; ///< number of living species in this cell
   /// Rounding function, randomly round up or down, in the range 0..INT_MAX
-  int ROUND(Float x); 
-  template <class E> array<int> RoundArray(const E& x);
+  int ROUND(Float x);
+  template <class E> RoundArray<E,EcolabPoint> roundArray(const E& expr);
+  //template <class E> array<int> RoundArray(const E& x);
   Exclude<std::mt19937> rand; // random number generator
 };
 

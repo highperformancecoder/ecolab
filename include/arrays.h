@@ -1629,6 +1629,12 @@ namespace ecolab
       ~array() {release();}
 
       const Allocator& allocator() const {return m_allocator;}
+      const Allocator& allocator(const Allocator& alloc) {
+        array tmp(size(),alloc);
+        asg_v(tmp.data(),size(),data());
+        swap(tmp);
+        return m_allocator;
+      }
       
       /// resize array to \a s elements
       void resize(size_t s) {
@@ -1648,6 +1654,7 @@ namespace ecolab
 
       void swap(array& x) {
         std::swap(dt, x.dt);
+        std::swap(m_allocator,x.m_allocator);
       }
 
       T& operator[](size_t i) {assert(i<size()); copy(); return data()[i];}
@@ -1679,8 +1686,9 @@ namespace ecolab
       operator=(const expr& x) {
         if ((void*)(&x)==(void*)(this)) return *this;
         // since expression x may contain a reference to this, assign to a temporary
-        resize(x.size());
-        array_ns::asg_v(data(),size(),x);
+        array tmp(x.size(),m_allocator);
+        array_ns::asg_v(tmp.data(),tmp.size(),x);
+        swap(tmp);
         return *this;
       }
       template <class expr> typename
@@ -2453,10 +2461,17 @@ namespace ecolab
   
     /// fill array with uniformly random numbers from [0,1)
     template <class F> void fillrand(array<F>& x);
+    template <class F, class A> void fillrand(array<F, A>& x)
+    {array<F> tmp(x.size()); fillrand(tmp); x=tmp;}
     /// fill array with gaussian random numbers from \f$N(0,1)\propto\exp(-x^2/2)\f$
     template <class F> void fillgrand(array<F>& x);
+    template <class F, class A> void fillgrand(array<F,A>& x)
+    {array<F> tmp(x.size()); fillgrand(tmp); x=tmp;}
     /// fill array with exponential random numbers \f$x\leftarrow-\ln\xi,\,\xi\in [0,1)\f$
     template <class F> void fillprand(array<F>& x);
+    template <class F, class A> void fillprand(array<F,A>& x)
+    {array<F> tmp(x.size()); fillprand(tmp); x=tmp;}
+    
     /// fill with uniform numbers drawn from [0...\a max] without replacement
     void fill_unique_rand(array<int>& x, unsigned max);
 

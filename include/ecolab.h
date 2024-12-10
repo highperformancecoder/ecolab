@@ -20,6 +20,14 @@
 #include "device/Ouroboros_impl.dp.hpp"
 #include "InstanceDefinitions.dp.hpp"
 #include "device/MemoryInitialization.dp.hpp"
+#if 1 //def __INTEL_LLVM_COMPLER
+#warning "Engaging experimental printf"
+template <typename... Args>
+void syclPrintf(Args... args) {sycl::ext::oneapi::experimental::printf(args...);}
+sycl::nd_item<1> syclItem() {return sycl::ext::oneapi::this_work_item::get_nd_item<1>();}
+#else
+#define syclPrintf(...)
+#endif
 #endif
 
 #include <stdlib.h>
@@ -137,22 +145,19 @@ namespace ecolab
     {
     public:
       Ouro::SyclDesc<1>*const* desc=nullptr;
-      MemAllocator*const* memAlloc;
-      const sycl::stream* out=nullptr;
+      MemAllocator*const* memAlloc=nullptr;
       template <class U> friend class Allocator;
       CellAllocator()=default;
-      CellAllocator(Ouro::SyclDesc<1>* const& desc, MemAllocator*const& memAlloc, const sycl::stream* out):
-        desc(&desc), memAlloc(&memAlloc), out(out) {
+      CellAllocator(Ouro::SyclDesc<1>* const& desc, MemAllocator*const& memAlloc):
+        desc(&desc), memAlloc(&memAlloc) {
       }
       template <class U> CellAllocator(const CellAllocator<U>& x):
-        desc(x.desc) {}
+        desc(x.desc), memAlloc(x.memAlloc) {}
       T* allocate(size_t sz) {
         if (memAlloc && *memAlloc && desc && *desc)  {
           auto r=reinterpret_cast<T*>((*memAlloc)->malloc(**desc,sz*sizeof(T)));
-          if (out) (*out)<<"allocated "<<sz*sizeof(T)<<" bytes, "<<r<<sycl::endl;
           return r;
         }
-        if (out) (*out)<<"failed allocation "<<sz*sizeof(T)<<sycl::endl;
         return nullptr; // TODO raise an error??
       }
       void deallocate(T* p,size_t) {
@@ -162,7 +167,7 @@ namespace ecolab
       bool operator==(const CellAllocator& x) const {return desc==x.desc && memAlloc==x.memAlloc;}
     };
     template <class T> CellAllocator<T> allocator() const {
-      return CellAllocator<T>(desc,memAlloc,out);
+      return CellAllocator<T>(desc,memAlloc);
     }
 #else
     template <class T> using CellAllocator=std::allocator<T>;
@@ -170,6 +175,14 @@ namespace ecolab
 #endif
   };
 
+  template <class T>
+  void printAllocator(const char* prefix, const T&) {}
+  
+  template <class T>
+  void printAllocator(const char* prefix, const CellBase::CellAllocator<T>& x)
+  {syclPrintf("%s: allocator.desc=%p memAlloc=%p\n",prefix,x.desc,x.memAlloc);}
+  
+  
   class SyclGraphBase
   {
   protected:
@@ -215,7 +228,6 @@ namespace ecolab
         h.parallel_for(sycl::nd_range<1>(range*workGroupSize, workGroupSize), [=,this](auto i) {
           auto idx=i.get_global_linear_id();
           if (idx<this->size()) {
-            out<<"idx="<<idx<<"(*this)[idx]"<<(*this)[idx].payload->get()<<" as "<<(*this)[idx]->template as<Cell>()<<sycl::endl;
             auto& cell=*(*this)[idx]->template as<Cell>();
             Ouro::SyclDesc<> desc(i,{});
             cell.desc=&desc;

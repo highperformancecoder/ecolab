@@ -408,8 +408,8 @@ bool GraphAdaptor<BiDirectionalGraph>::directed() const {return false;}
 class sparse_mat_graph: public ConcreteGraph<DiGraph>
 {
 public:
-  template <class F>
-  const sparse_mat_graph& operator=(const sparse_mat<F>& mat) {
+  template <class F, template<class T> class A>
+  const sparse_mat_graph& operator=(const sparse_mat<F,A>& mat) {
     clear();
     std::map<std::pair<size_t, size_t>, double > weights;
     for (size_t i=0; i<mat.row.size(); ++i) {

@@ -14,6 +14,8 @@
 
 #include <arrays.h>
 
+using sycl::ext::oneapi::experimental::printf;
+
 namespace ecolab
 {
   /// sparse matrix class
@@ -37,6 +39,13 @@ namespace ecolab
       diag=x.diag; val=x.val; 
       row=x.row; col=x.col;
     }
+    void setAllocators(const A<unsigned>& ialloc, const A<F>& falloc) {
+      diag.allocator(falloc);
+      val.allocator(falloc);
+      row.allocator(ialloc);
+      col.allocator(ialloc);
+    }
+
     /*matrix multiplication*/
     template <class E> typename
     array_ns::enable_if
@@ -52,15 +61,18 @@ namespace ecolab
     {
       auto alloc=array_ns::makeAllocator<F>(x.allocator());
       array_ns::array<F,decltype(alloc)> r(alloc);
-      assert(row.size()==col.size() && row.size()==val.size());      
+      assert(row.size()==col.size() && row.size()==val.size());
       if (diag.size()>0)
 	{
 	  assert(diag.size()==x.size());
-	  r = diag*x; 
+	  r = diag*x;
+          assert(r.size()==x.size());
 	}
       else
 	r.resize(rowsz,0);
+      assert(r.size()>max(row) && x.size()>max(col));
       r[row]+=val*x[col];
+      
       return r;
     }
     /* initialise sparse mat in a random configuration */

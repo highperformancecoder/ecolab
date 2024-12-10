@@ -64,7 +64,7 @@ namespace ecolab
 {
   bool interpExiting=false;
   void interpExitProc(ClientData cd) {}
-
+  
 #ifdef MPI_SUPPORT
   unsigned myid() {return graphcode::myid();}
   unsigned nprocs() {return graphcode::nprocs();}

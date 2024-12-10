@@ -64,20 +64,10 @@ int EcolabPoint<B>::ROUND(Float x)
   Float dum;
   if (x<0) x=0;
   if (x>std::numeric_limits<int>::max()-1) x=std::numeric_limits<int>::max()-1;
+  //syclPrintf("ROUND inner x=%g, modf=%g, rand()=%g, rand.max=%g, rand.min=%g\n",x,std::fabs(std::modf(x,&dum)),rand(),rand.max(),rand.min());
   return std::fabs(std::modf(x,&dum))*(rand.max()-rand.min()) > (rand()-rand.min()) ?
     (int)x+1 : (int)x;
 }
-
-//inline int ROUND(float x) {return ROUND(double(x));}
-  
-//  template <class E>
-//  inline array<int> EcolabPoint::RoundArray(const E& x)
-//  {
-//    array<int> r(x.size());
-//    for (size_t i=0; i<x.size(); i++)
-//      r[i]=ROUND(x[i]);
-//    return r;
-//  }
 
 template <class E, class P>
 struct RoundArray
@@ -87,21 +77,27 @@ struct RoundArray
   RoundArray(P& point, const E& expr): expr(expr), point(point) {}
   using value_type=int;
   size_t size() const {return expr.size();}
-  int operator[](size_t i) const {return point.ROUND(expr[i]);}
+  int operator[](size_t i) const //{return point.ROUND(expr[i]);}
+  {
+    auto r=point.ROUND(expr[i]);
+    //syclPrintf("ROUND: %d, %g=%d\n",i,expr[i],r);
+    return r;
+  }
 };
 
 namespace ecolab::array_ns
 {template <class E, class P> struct is_expression<RoundArray<E,P>>: public true_type {};}
 
-template <class E, class P>
-RoundArray<E,P> roundArray(P& point, const E& expr)
-{return RoundArray<E,P>(point,expr);}
+template <class B>
+template <class E>
+RoundArray<E,EcolabPoint<B>> EcolabPoint<B>::roundArray(const E& expr)
+{return RoundArray<E,EcolabPoint<B>>(*this,expr);}
 
 template <class B>
 void EcolabPoint<B>::generate(unsigned niter, const ModelData& model)
-{ 
+{
   for (unsigned i=0; i<niter; i++)
-    {density += roundArray(*this, density * (model.repro_rate + model.interaction*density));}
+    {density = roundArray(density + density * (model.repro_rate + model.interaction*density));}
 }
 
 template <class B>
@@ -224,7 +220,7 @@ array<int> EcolabPoint<B>::mutate(const array<double>& mut_scale)
 {
   array<int> speciations;
   /* calculate the number of mutants each species produces */
-  speciations = roundArray(*this, mut_scale * density); 
+  speciations = roundArray(mut_scale * density); 
 
   /* generate index list of old species that mutate to the new */
   array<int> new_sp = gen_index(speciations); 
@@ -485,7 +481,9 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
 void SpatialModel::generate(unsigned niter)
 {
   if (tstep==0) makeConsistent();
-  forAll([=,this](EcolabCell& c) {c.generate(niter,*this);});
+  forAll([=,this](EcolabCell& c) {
+    c.generate(niter,*this);
+  });
   tstep+=niter;
 }
 
@@ -540,6 +538,27 @@ void SpatialModel::migrate()
 
 }
 
+void ModelData::makeConsistent(size_t nsp)
+{
+#ifdef SYCL_LANGUAGE_VERSION
+  FAlloc falloc(syclQ(),sycl::usm::alloc::shared);
+  species.allocator(graphcode::Allocator<int>(syclQ(),sycl::usm::alloc::shared));
+  create.allocator(falloc);
+  repro_rate.allocator(falloc);
+  mutation.allocator(falloc);
+  migration.allocator(falloc);
+  interaction.setAllocators
+    (graphcode::Allocator<unsigned>(syclQ(),sycl::usm::alloc::shared),falloc);
+#endif
+  
+  if (!species.size())
+    species=pcoord(nsp);
+  
+  if (!create.size()) create.resize(species.size(),0);
+  if (!mutation.size()) mutation.resize(species.size(),0);
+  if (!migration.size()) migration.resize(species.size(),0);
+}
+
 
 void SpatialModel::makeConsistent()
 {
@@ -549,23 +568,13 @@ void SpatialModel::makeConsistent()
 #ifdef MPI_SUPPORT
   MPI_Allreduce(MPI_IN_PLACE,&nsp,1,MPI_UNSIGNED_LONG,MPI_MAX,MPI_COMM_WORLD);
 #endif
-  cout<<nsp<<endl;
   forAll([=,this](EcolabCell& c) {
     if (nsp>c.density.size())
       {
         array<int,EcolabCell::CellAllocator<int>> tmp(nsp,0,c.allocator<int>());
         asg_v(tmp.data(),c.density.size(),c.density);
-        //(*c.out)<<"tmp.size:"<<tmp.size()<<" "<<tmp.data()<<sycl::endl;
         c.density.swap(tmp);
-        //(*c.out)<<"c.density.size:"<<c.density.size()<<" "<<&c<<sycl::endl;
       }
   });
-  for (auto& i: *this)
-    {
-      auto& c=*i->as<EcolabCell>();
-      //cout<<i.id()<<" "<<c.density.size()<<" "<<&c<<" usm type:"<<
-      //  sycl::get_pointer_type(&c,syclQ().get_context())<<" "<<sycl::get_pointer_type(i.payload,syclQ().get_context())<<endl;
-      
-    }
   ModelData::makeConsistent(nsp);
 }

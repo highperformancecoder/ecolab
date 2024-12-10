@@ -1,6 +1,4 @@
 from ecolab_model import spatial_ecolab as ecolab
-# spatial_ecolab is a smart ptr to possible Device accessible memery, so must be dereferenced
-#ecolab=spatial_ecolab()
 
 from random import random, seed as randomSeed
 
@@ -28,8 +26,8 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=2
-numY=2
+numX=8
+numY=8
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
@@ -38,9 +36,7 @@ ecolab.makeConsistent()
 
 for i in range(numX):
     for j in range(numY):
-        print(i,j,ecolab.cell(i,j).density())
         ecolab.cell(i,j).density(nsp*[100])
-#        print(i,j,ecolab.cell(i,j).density())
 
 ecolab.repro_rate(randomList(nsp, ecolab.repro_min(), ecolab.repro_max()))
 ecolab.interaction.diag(randomList(nsp, -1e-3, -1e-3))
