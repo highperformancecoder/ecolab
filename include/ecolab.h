@@ -246,7 +246,6 @@ namespace ecolab
           }
         });
       });
-      syclQ().wait();
 #else
       auto sz=this->size();
 #ifdef _OPENMP
@@ -257,6 +256,13 @@ namespace ecolab
         cell.m_idx=idx;
         f(cell);
       }
+#endif
+    }
+
+    /// synchronise GPU threads
+    void syncThreads() {
+#ifdef SYCL_LANGUAGE_VERSION
+      syclQ().wait();
 #endif
     }
   };

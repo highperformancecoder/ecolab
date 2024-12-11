@@ -26,8 +26,8 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=32
-numY=32
+numX=64
+numY=64
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
@@ -54,15 +54,17 @@ print(device())
 
 def stepImpl():
     ecolab.generate(100)
-    ecolab.mutate()
-#    ecolab.migrate()
-#    ecolab.condense()
+    #    ecolab.mutate()
+    #    ecolab.migrate()
+    #    ecolab.condense()
+    ecolab.syncThreads()
     ecolab.gather()
 
 from timeit import timeit
 print(timeit('stepImpl()', globals=globals(), number=10))
                 
 def step():
+    stepImpl()
     if myid()==0:
         nsp=len(ecolab.species)
         statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')

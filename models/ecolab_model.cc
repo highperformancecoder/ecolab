@@ -205,7 +205,7 @@ void SpatialModel::mutate()
   DeviceType<array<unsigned,graphcode::Allocator<unsigned>>> cell_ids;
 #ifdef SYCL_LANGUAGE_VERSION
   cell_ids->allocator(graphcode::Allocator<unsigned>(syclQ(),sycl::usm::alloc::shared));
-  syclQ().wait();
+  syncThreads();
 #endif
 
   // TODO - this is a kind of scan - can it be done on device?
@@ -618,4 +618,5 @@ void SpatialModel::makeConsistent()
       }
   });
   ModelData::makeConsistent(nsp);
+  syncThreads();
 }
