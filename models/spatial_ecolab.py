@@ -26,8 +26,8 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=8
-numY=8
+numX=32
+numY=32
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
@@ -52,12 +52,17 @@ from GUI import gui, statusBar, windows
 
 print(device())
 
-def step():
+def stepImpl():
     ecolab.generate(100)
     ecolab.mutate()
 #    ecolab.migrate()
 #    ecolab.condense()
     ecolab.gather()
+
+from timeit import timeit
+print(timeit('stepImpl()', globals=globals(), number=10))
+                
+def step():
     if myid()==0:
         nsp=len(ecolab.species)
         statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
@@ -66,8 +71,8 @@ def step():
         for i in range(numX):
             for j in range(numY):
                 plot(f'Density({i},{j})',ecolab.tstep(),ecolab.cell(i,j).density(), pens=ecolab.species())
-    
-gui(step)
+
+#gui(step)
 
 
 

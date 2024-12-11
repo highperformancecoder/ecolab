@@ -20,11 +20,10 @@
 #include "device/Ouroboros_impl.dp.hpp"
 #include "InstanceDefinitions.dp.hpp"
 #include "device/MemoryInitialization.dp.hpp"
-#if 1 //def __INTEL_LLVM_COMPLER
-#warning "Engaging experimental printf"
+#ifdef __INTEL_LLVM_COMPILER
 template <typename... Args>
 void syclPrintf(Args... args) {sycl::ext::oneapi::experimental::printf(args...);}
-sycl::nd_item<1> syclItem() {return sycl::ext::oneapi::this_work_item::get_nd_item<1>();}
+inline sycl::nd_item<1> syclItem() {return sycl::ext::oneapi::this_work_item::get_nd_item<1>();}
 #else
 #define syclPrintf(...)
 #endif
@@ -176,6 +175,8 @@ namespace ecolab
 #else
     template <class T> using CellAllocator=std::allocator<T>;
     template <class T> CellAllocator<T> allocator() const {return CellAllocator<T>();}
+    size_t m_idx=0; // stash the position within the local node vector here
+    size_t idx() const {return m_idx;}
 #endif
   };
 
@@ -247,7 +248,15 @@ namespace ecolab
       });
       syclQ().wait();
 #else
-      for (auto& i: *this) f(*i->template as<Cell>());
+      auto sz=this->size();
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+      for (size_t idx=0; idx<sz; ++idx) {
+        auto& cell=*(*this)[idx]->template as<Cell>();
+        cell.m_idx=idx;
+        f(cell);
+      }
 #endif
     }
   };

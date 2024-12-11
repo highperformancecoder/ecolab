@@ -185,19 +185,20 @@ void SpatialModel::mutate()
 {
   last_mut_tstep=tstep;
 
+  DeviceType<array<Float,graphcode::Allocator<Float>>> mut_scale;
 #ifdef SYCL_LANGUAGE_VERSION
   using ArrayAlloc=CellBase::CellAllocator<unsigned>;
   using NewSpAlloc=graphcode::Allocator<array<unsigned,ArrayAlloc>>;
-  vector<array<unsigned,ArrayAlloc>,NewSpAlloc> newSpV
+  vector<array<unsigned,ArrayAlloc>,NewSpAlloc> newSp
     (size(),NewSpAlloc(syclQ(),sycl::usm::alloc::shared));
-  auto newSp=newSpV.data();
+  mut_scale->allocator(graphcode::Allocator<Float>(syclQ(),sycl::usm::alloc::shared));
 #else
   vector<array<unsigned>> newSp(size());
 #endif
+  *mut_scale=sp_sep * repro_rate * mutation * int(tstep - last_mut_tstep);
   
-  forAll([=,this](EcolabCell& c) {
-    auto mut_scale=sp_sep * repro_rate * mutation * int(tstep - last_mut_tstep);
-    newSp[c.idx()] = c.mutate(mut_scale);
+  forAll([=,newSp=newSp.data(),mut_scale=&*mut_scale,this](EcolabCell& c) {
+    newSp[c.idx()] = c.mutate(*mut_scale);
   });
 
   array<unsigned> new_sp;
@@ -233,9 +234,8 @@ void SpatialModel::mutate()
   ModelData::mutate(new_sp);
 #endif
   // set the new species density to 1 for those created on this cell
-  auto cell_ids_p=&*cell_ids;
-  forAll([=,this](EcolabCell& c) {
-    c.density <<= (*cell_ids_p)==(*this)[c.idx()].id();
+  forAll([=,cell_ids=&*cell_ids,this](EcolabCell& c) {
+    c.density <<= (*cell_ids)==(*this)[c.idx()].id();
   });
 }
 
@@ -494,7 +494,9 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
     for (size_t j=0; j<numY; ++j)
       {
         auto o=insertObject(makeId(i,j));
-        o->as<EcolabCell>()->rand.seed(o.id());
+        auto& c=*o->as<EcolabCell>();
+        c.id=o.id();
+        c.rand.seed(o.id());
         o.proc(o.id() % nprocs()); // TODO can we get this to work without this.
         // wire up von Neumann neighborhood
         o->neighbours.push_back(makeId(i-1,j));
@@ -526,13 +528,12 @@ void SpatialModel::migrate()
   using Array=vector<int,ArrayAlloc>;
   using DeltaAlloc=graphcode::Allocator<Array>;
   Array init(species.size(),0,ArrayAlloc(syclQ(),sycl::usm::alloc::device));
-  vector<Array,DeltaAlloc> deltaV(size(), init, DeltaAlloc(syclQ(),sycl::usm::alloc::device));
-  auto delta=deltaV.data();
+  vector<Array,DeltaAlloc> delta(size(), init, DeltaAlloc(syclQ(),sycl::usm::alloc::device));
 #else
   vector<array<int>> delta(size(), array<int>(species.size(),0));
 #endif
 
-  forAll([=,this](EcolabCell& c) {
+  forAll([=,delta=delta.data(),this](EcolabCell& c) {
     using FArray=array<Float,EcolabCell::CellAllocator<Float>>;
     /* loop over neighbours */
     for (auto& n: c) 
@@ -540,7 +541,7 @@ void SpatialModel::migrate()
         auto& nbr=*n->as<EcolabCell>();
         FArray m( Float(tstep-last_mig_tstep) * migration * 
                   (nbr.density - c.density), c.allocator<Float>());
-        Float salt=(*this)[c.idx()].id()<n.id()? c.salt: nbr.salt;
+        Float salt=c.id<nbr.id? c.salt: nbr.salt;
         // array::operator+= cannot be used in kernels
         // delta[c.idx()]+=m + (m!=0.0)*(2*(m>0.0)-1)) * salt;
         FArray tmp=(m + (m!=0.0)*(2*(m>0.0)-1)) * salt;
@@ -548,8 +549,10 @@ void SpatialModel::migrate()
       }
   });
   last_mig_tstep=tstep;
+#ifdef SYCL_LANGUAGE_VERSION
   syclQ().wait();
-  forAll([=,this](EcolabCell& c) {
+#endif
+  forAll([=,delta=delta.data(),this](EcolabCell& c) {
     // array::operator+= cannot be used in kernels
     //c.density+=delta[c.idx()];
     array_ns::asg_plus_v(c.density.data(), c.density.size(), delta[c.idx()]);

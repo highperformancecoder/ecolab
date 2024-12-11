@@ -60,7 +60,7 @@ template <class CellBase>
 struct EcolabPoint: public Exclude<CellBase>
 {
   Float salt;  /* random no. used for migration */
-  template <class T> using Allocator=CellBase::template CellAllocator<T>;
+  template <class T> using Allocator=typename CellBase::template CellAllocator<T>;
   array<int,Allocator<int>> density{this->template allocator<int>()};
   void generate(unsigned niter, const ModelData&);
   void condense(const array<bool>& mask, size_t mask_true);
@@ -93,7 +93,10 @@ struct PanmicticModel: public ModelData, public EcolabPoint<AllocatorBase>, publ
   array<double> lifetimes();
 };
 
-struct EcolabCell: public EcolabPoint<ecolab::CellBase>, public graphcode::Object<EcolabCell> {};
+struct EcolabCell: public EcolabPoint<ecolab::CellBase>, public graphcode::Object<EcolabCell>
+{
+  unsigned id=0; // stash the graphcode node id here
+};
 
 class SpatialModel: public ModelData, public EcolabGraph<EcolabCell>,
                     public ecolab::Model<SpatialModel>

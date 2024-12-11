@@ -14,8 +14,6 @@
 
 #include <arrays.h>
 
-using sycl::ext::oneapi::experimental::printf;
-
 namespace ecolab
 {
   /// sparse matrix class
