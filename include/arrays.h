@@ -1678,7 +1678,8 @@ namespace ecolab
         } 
         array tmp(x.size(),m_allocator);
         array_ns::asg_v(tmp.data(),tmp.size(),x);
-        return (*this)=tmp;
+        swap(tmp);
+        return *this;
       }
 
       template <class expr> typename
@@ -2447,10 +2448,11 @@ namespace ecolab
 
        For instance, if x=(1,2,3,1), the running sum is (1,3,6,7), the
        inverse of which is (0,1,1,2,2,2,3).
-    */ 
-    inline array<int> gen_index(const array<int>& x)
+    */
+    template<class T, class A>
+    inline array<T,A> gen_index(const array<T,A>& x)
     {
-      array<int> r(sum(x));
+      array<T,A> r(sum(x),x.allocator());
       for (size_t i=0,p=0; i<x.size(); i++)
         for (int j=0; j<x[i]; j++,p++)
           r[p]=i;

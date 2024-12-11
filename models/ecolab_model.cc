@@ -183,47 +183,73 @@ void PanmicticModel::mutate()
 
 void SpatialModel::mutate()
 {
-  array<double> mut_scale(sp_sep * repro_rate * mutation * (tstep - last_mut_tstep));
   last_mut_tstep=tstep;
-  array<unsigned> new_sp, cell_ids;
-  array<unsigned> num_new_sp;
+
+#ifdef SYCL_LANGUAGE_VERSION
+  using ArrayAlloc=CellBase::CellAllocator<unsigned>;
+  using NewSpAlloc=graphcode::Allocator<array<unsigned,ArrayAlloc>>;
+  vector<array<unsigned,ArrayAlloc>,NewSpAlloc> newSpV
+    (size(),NewSpAlloc(syclQ(),sycl::usm::alloc::shared));
+  auto newSp=newSpV.data();
+#else
+  vector<array<unsigned>> newSp(size());
+#endif
+  
+  forAll([=,this](EcolabCell& c) {
+    auto mut_scale=sp_sep * repro_rate * mutation * int(tstep - last_mut_tstep);
+    newSp[c.idx()] = c.mutate(mut_scale);
+  });
+
+  array<unsigned> new_sp;
+  DeviceType<array<unsigned,graphcode::Allocator<unsigned>>> cell_ids;
+#ifdef SYCL_LANGUAGE_VERSION
+  cell_ids->allocator(graphcode::Allocator<unsigned>(syclQ(),sycl::usm::alloc::shared));
+  syclQ().wait();
+#endif
+
+  // TODO - this is a kind of scan - can it be done on device?
   for (auto& i: *this)
     {
-      new_sp <<= i->as<EcolabCell>()->mutate(mut_scale);
-      cell_ids <<= array<int>(new_sp.size()-cell_ids.size(),i.id());
+      new_sp<<=newSp[i];
+      (*cell_ids)<<= array<unsigned>(new_sp.size()-cell_ids->size(),i.id());
     }
+  
 #ifdef MPI_SUPPORT
-  MPIbuf b; b<<new_sp<<cell_ids; b.gather(0);
+  MPIbuf b; b<<new_sp<<(*cell_ids); b.gather(0);
   if (myid()==0)
     {
-      new_sp.resize(0); cell_ids.resize(0);
+      new_sp.resize(0); cell_ids->resize(0);
       for (unsigned i=0; i<nprocs(); i++) 
 	{
 	  array<int> n,c;
 	  b>>n>>c;
-	  new_sp<<=n; cell_ids<<=c;
+	  new_sp<<=n; (*cell_ids)<<=c;
 	}
       ModelData::mutate(new_sp);
     }
-  MPIbuf() << cell_ids << *(ModelData*)this << bcast(0)
-           >> cell_ids >> *(ModelData*)this;
+  MPIbuf() << (*cell_ids) << *(ModelData*)this << bcast(0)
+           >> (*cell_ids) >> *(ModelData*)this;
 #else
   ModelData::mutate(new_sp);
 #endif
   // set the new species density to 1 for those created on this cell
-  for (auto& i: *this)
-    i->as<EcolabCell>()->density <<= cell_ids==i.id();
+  auto cell_ids_p=&*cell_ids;
+  forAll([=,this](EcolabCell& c) {
+    c.density <<= (*cell_ids_p)==(*this)[c.idx()].id();
+  });
 }
 
 template <class B>
-array<int> EcolabPoint<B>::mutate(const array<double>& mut_scale)
+template <class E>
+array<unsigned,typename EcolabPoint<B>::template Allocator<unsigned>>
+EcolabPoint<B>::mutate(const E& mut_scale)
 {
-  array<int> speciations;
   /* calculate the number of mutants each species produces */
-  speciations = roundArray(mut_scale * density); 
+  array<unsigned,Allocator<unsigned>> speciations
+    ( roundArray(mut_scale * density), this->template allocator<unsigned>()); 
 
   /* generate index list of old species that mutate to the new */
-  array<int> new_sp = gen_index(speciations); 
+  array<unsigned,Allocator<unsigned>> new_sp = gen_index(speciations); 
 
   if (new_sp.size()>0) 
     /* adjust density by mutant values i.e. consider that some organisms
@@ -491,34 +517,46 @@ void SpatialModel::generate(unsigned niter)
 void SpatialModel::migrate()
 {
   /* each cell gets a distinct random salt value */
-  // TODO why doesn't this loop work?
-//  for (auto& i: *this)
-//    (*this)[i]->as<EcolabCell>()->salt=array_urand.rand();
-
-  for (auto& o: objects) o->salt=array_urand.rand();
+  forAll([=,this](EcolabCell& c) {c.salt=c.rand();});
   
   prepareNeighbours();
-  vector<array<int> > delta(size(), array<int>(species.size(),0));
 
-  for (size_t i=0; i<size(); i++)
-    { 
-      auto& cell=*(*this)[i]->as<EcolabCell>();
-      /* loop over neighbours */ 
-      for (auto& n: *(*this)[i]) 
-	{
-          auto& nbr=*n->as<EcolabCell>();
-	  array<double> m( double(tstep-last_mig_tstep) * migration * 
-                           (nbr.density - cell.density) );
-          double salt=(*this)[i].id()<n.id()? cell.salt: nbr.salt;
-          delta[i] += array<int>(m + array<double>(m!=0.0)*(2*(m>0.0)-1)) * salt;
-	}
-    }
+#ifdef SYCL_LANGUAGE_VERSION
+  using ArrayAlloc=graphcode::Allocator<int>;
+  using Array=vector<int,ArrayAlloc>;
+  using DeltaAlloc=graphcode::Allocator<Array>;
+  Array init(species.size(),0,ArrayAlloc(syclQ(),sycl::usm::alloc::device));
+  vector<Array,DeltaAlloc> deltaV(size(), init, DeltaAlloc(syclQ(),sycl::usm::alloc::device));
+  auto delta=deltaV.data();
+#else
+  vector<array<int>> delta(size(), array<int>(species.size(),0));
+#endif
+
+  forAll([=,this](EcolabCell& c) {
+    using FArray=array<Float,EcolabCell::CellAllocator<Float>>;
+    /* loop over neighbours */
+    for (auto& n: c) 
+      {
+        auto& nbr=*n->as<EcolabCell>();
+        FArray m( Float(tstep-last_mig_tstep) * migration * 
+                  (nbr.density - c.density), c.allocator<Float>());
+        Float salt=(*this)[c.idx()].id()<n.id()? c.salt: nbr.salt;
+        // array::operator+= cannot be used in kernels
+        // delta[c.idx()]+=m + (m!=0.0)*(2*(m>0.0)-1)) * salt;
+        FArray tmp=(m + (m!=0.0)*(2*(m>0.0)-1)) * salt;
+        array_ns::asg_plus_v(delta[c.idx()].data(),m.size(), tmp);
+      }
+  });
   last_mig_tstep=tstep;
-  for (size_t i=0; i<size(); i++)
-    (*this)[i]->as<EcolabCell>()->density+=delta[i];
+  syclQ().wait();
+  forAll([=,this](EcolabCell& c) {
+    // array::operator+= cannot be used in kernels
+    //c.density+=delta[c.idx()];
+    array_ns::asg_plus_v(c.density.data(), c.density.size(), delta[c.idx()]);
+  });
 
   /* assertion testing that population numbers are conserved */
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(SYCL_LANGUAGE_VERSION)
   array<int> ssum(species.size()), s(species.size()); 
   unsigned mig=0, i;
   for (ssum=0, i=0; i<size(); i++)
@@ -536,7 +574,6 @@ void SpatialModel::migrate()
 #endif
   if (myid()==0) assert(sum(ssum==0)==int(ssum.size()));
 #endif
-
 }
 
 void ModelData::makeConsistent(size_t nsp)

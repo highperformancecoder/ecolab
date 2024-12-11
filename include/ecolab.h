@@ -141,6 +141,10 @@ namespace ecolab
     using MemAllocator=Ouro::MultiOuroPQ;
     MemAllocator* memAlloc=nullptr;
     const sycl::stream* out=nullptr;
+    size_t idx() const {
+      if (desc) return desc->item.get_global_linear_id();
+      else return 0;
+    }
     template <class T> class CellAllocator
     {
     public:

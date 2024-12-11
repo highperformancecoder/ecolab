@@ -54,10 +54,10 @@ print(device())
 
 def step():
     ecolab.generate(100)
-#    ecolab.mutate()
+    ecolab.mutate()
 #    ecolab.migrate()
 #    ecolab.condense()
-#    ecolab.gather()
+    ecolab.gather()
     if myid()==0:
         nsp=len(ecolab.species)
         statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')

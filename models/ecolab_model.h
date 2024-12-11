@@ -60,10 +60,12 @@ template <class CellBase>
 struct EcolabPoint: public Exclude<CellBase>
 {
   Float salt;  /* random no. used for migration */
-  array<int,typename CellBase::template CellAllocator<int>> density{this->template allocator<int>()};
+  template <class T> using Allocator=CellBase::template CellAllocator<T>;
+  array<int,Allocator<int>> density{this->template allocator<int>()};
   void generate(unsigned niter, const ModelData&);
   void condense(const array<bool>& mask, size_t mask_true);
-  array<int> mutate(const array<double>&);
+  template <class E>
+  array<unsigned,Allocator<unsigned>> mutate(const E&);
   unsigned nsp() const; ///< number of living species in this cell
   /// Rounding function, randomly round up or down, in the range 0..INT_MAX
   int ROUND(Float x);
