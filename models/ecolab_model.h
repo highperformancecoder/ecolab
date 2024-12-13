@@ -55,13 +55,18 @@ struct ModelData
 
 template <class E, class P> struct RoundArray; 
 
+template <class T,class A> void setArray(array<T,A>&, const array<T>&);
+template <class T,class A> array<T> getArray(const array<T,A>&);
+
 /* ecolab cell  */
 template <class CellBase>
-struct EcolabPoint: public Exclude<CellBase>
+class EcolabPoint: public Exclude<CellBase>
 {
+public:
   Float salt;  /* random no. used for migration */
   template <class T> using Allocator=typename CellBase::template CellAllocator<T>;
   array<int,Allocator<int>> density{this->template allocator<int>()};
+  
   void generate(unsigned niter, const ModelData&);
   void condense(const array<bool>& mask, size_t mask_true);
   template <class E>
@@ -109,6 +114,9 @@ public:
   EcolabCell& cell(size_t x, size_t y) {
     return *objects[makeId(x,y)];
   }
+  /// on GPUs, set the 
+  void setDensitiesShared();
+  void setDensitiesDevice();
   array<unsigned> nsp() const;
   void makeConsistent();
   void seed(unsigned x) {forAll([=](EcolabCell& cell){cell.rand.seed(x);});}

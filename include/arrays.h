@@ -33,6 +33,8 @@
 
 #include <pack_base.h>
 
+#include "ecolab.h"
+
 namespace ecolab
 {
 
@@ -1564,16 +1566,35 @@ namespace ecolab
 
       void set_size(size_t s) {dt = alloc(s);}
 
-      unsigned& ref() // access reference counter
+#if defined(SYCL_LANGUAGE_VERSION)
+      using AtomicUnsignedRef=sycl::atomic_ref
+        <unsigned,sycl::memory_order::relaxed,sycl::memory_scope::device>;
+#else
+      using AtomicUnsignedRef=unsigned&;
+#endif
+      
+      AtomicUnsignedRef ref() // access reference counter
       {
         assert(dt);
-        return dt->cnt;
+        return AtomicUnsignedRef(dt->cnt);
       }
 
       void release()
       {
         if (dt)
           {
+#if defined(SYCL_LANGUAGE_VERSION) && !defined(__SYCL_DEVICE_ONLY__)
+            // dt pointer may be allocated on device, or in device
+            // memory, and we may be running on the host, in which
+            // case just leak the memory, otherwise we'll have a crash
+            // TODO - call release on device in a single_task for the
+            // first situation
+            // TODO in second situation, update ref
+            // count in a single_task, and pass back value of
+            // allocated pointer for deallocation on host
+            if (is_same<A,typename CellBase::CellAllocator<T>>::value ||
+                sycl::get_pointer_type(dt,syclQ().get_context())==sycl::usm::alloc::device) return;
+#endif
             if (ref()==1)
               free(dt);
             else
@@ -1822,7 +1843,7 @@ namespace ecolab
 
       /// returns a writeable pointer to data without copy-on-write semantics
       /// dangerous, but needed to run array expressions on GPU
-      //      T* dataNoCow() {return dt? dt->dt: 0;}
+      //T* dataNoCow() {return dt? dt->dt: 0;}
       
       typedef T *iterator;
       typedef const T *const_iterator;
@@ -2578,6 +2599,14 @@ namespace classdesc
   };
 
   template <class T, class A> struct is_sequence<ecolab::array<T, A> >: public true_type {};
+
+  template <class T, class A> struct Exclude<ecolab::array<T, A> >: public ExcludeClass<ecolab::array<T, A> >
+  {
+    template <class E>
+    bool operator==(E x) const {return static_cast<const ecolab::array<T, A>&>(*this)==x;}
+    template <class E>
+    bool operator!=(E x) const {return !operator==(x);}
+  };
 }
 
 #endif

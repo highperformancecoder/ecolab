@@ -26,8 +26,18 @@ using namespace std;
 
 #ifdef SYCL_LANGUAGE_VERSION
 using namespace sycl;
+bool ecolab::syclQDestroyed=false;
+namespace
+{
+  struct SyclQ: public queue
+  {
+    SyclQ(): queue(default_selector_v) {}
+    ~SyclQ() {syclQDestroyed=true;}
+  };
+}
+
 queue& ecolab::syclQ() {
-  static queue q{default_selector_v};
+  static SyclQ q;
   return q;
 }
 

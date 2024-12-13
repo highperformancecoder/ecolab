@@ -62,8 +62,9 @@ template <class B>
 int EcolabPoint<B>::ROUND(Float x) 
 {
   Float dum;
+  const Float maxInt=Float(std::numeric_limits<int>::max()-1);
   if (x<0) x=0;
-  if (x>std::numeric_limits<int>::max()-1) x=std::numeric_limits<int>::max()-1;
+  if (x>maxInt) x=maxInt;
   //syclPrintf("ROUND inner x=%g, modf=%g, rand()=%g, rand.max=%g, rand.min=%g\n",x,std::fabs(std::modf(x,&dum)),rand(),rand.max(),rand.min());
   return std::fabs(std::modf(x,&dum))*(rand.max()-rand.min()) > (rand()-rand.min()) ?
     (int)x+1 : (int)x;
@@ -92,6 +93,41 @@ template <class B>
 template <class E>
 RoundArray<E,EcolabPoint<B>> EcolabPoint<B>::roundArray(const E& expr)
 {return RoundArray<E,EcolabPoint<B>>(*this,expr);}
+
+template <> void setArray(array<int,std::allocator<int>>& x, const array<int>& y)
+{x=y;}
+template <> array<int> getArray(const array<int,std::allocator<int>>& x) {return x;}
+
+#ifdef SYCL_LANGUAGE_VERSION
+template <>
+array<int> getArray(const array<int,ecolab::CellBase::CellAllocator<int>>& x) 
+{
+  DeviceType<size_t> size;
+  DeviceType<const int*> xData;
+  syclQ().single_task([size=&*size,xData=&*xData,x=&x](){
+    *size=x->size();
+    *xData=x->data();
+  }).wait();
+  array<int> r(*size);
+  syclQ().copy(*xData,r.data(),*size);
+  return r;
+}
+
+template <>
+void setArray(array<int,ecolab::CellBase::CellAllocator<int>>& x, const array<int>& y)
+{
+  auto size=y.size();
+  DeviceType<int*> xData;
+  syclQ().single_task([size,x=&x,xData=&*xData](){
+    //array<int,typename B::template CellAllocator<int>> tmp(size,this->template allocator<int>());
+    //m_density.swap(tmp);
+    x->resize(size);
+    *xData=x->data(); //return allocated data pointer to host
+  }).wait();
+  syclQ().copy(y.data(),*xData,size);
+}
+#endif
+
 
 template <class B>
 void EcolabPoint<B>::generate(unsigned niter, const ModelData& model)
@@ -150,7 +186,7 @@ void PanmicticModel::condense()
 void SpatialModel::condense()
 {
   array<int> total_density(species.size());
-  for (auto& i: *this) total_density+=i->as<EcolabCell>()->density;
+  for (auto& i: *this) total_density+=i->as<EcolabCell>()->density; // TODO
 #ifdef MPI_SUPPORT
   array<int> recv(total_density.size());
   MPI_Allreduce(total_density.data(),recv.data(),total_density.size(),MPI_INT,MPI_SUM,MPI_COMM_WORLD);
@@ -600,18 +636,40 @@ void ModelData::makeConsistent(size_t nsp)
   if (!migration.size()) migration.resize(species.size(),0);
 }
 
+void SpatialModel::setDensitiesShared()
+{
+#ifdef SYCL_LANGUAGE_VERSION
+  forAll([=,this](EcolabCell& c) {
+    c.memAlloc=sharedMemAlloc;
+    c.density.allocator(c.allocator<int>());
+  });
+#endif
+}
+    
+void SpatialModel::setDensitiesDevice()
+{
+#ifdef SYCL_LANGUAGE_VERSION
+  forAll([=,this](EcolabCell& c) {
+    c.memAlloc=deviceMemAlloc;
+    c.density.allocator(c.allocator<int>());
+  });
+#endif
+}
 
 void SpatialModel::makeConsistent()
 {
   // all cells must have same number of species. Pack out with zero density if necessary
   size_t nsp=species.size();
-  for (auto& i: *this) nsp=max(nsp,i->as<EcolabCell>()->density.size());
+  nsp=max(nsp, [](EcolabCell& c) {return c.density.size();});
 #ifdef MPI_SUPPORT
   MPI_Allreduce(MPI_IN_PLACE,&nsp,1,MPI_UNSIGNED_LONG,MPI_MAX,MPI_COMM_WORLD);
 #endif
   forAll([=,this](EcolabCell& c) {
     if (nsp>c.density.size())
       {
+#ifdef SYCL_LANGUAGE_VERSION
+        if (!c.memAlloc) c.memAlloc=sharedMemAlloc;
+#endif
         array<int,EcolabCell::CellAllocator<int>> tmp(nsp,0,c.allocator<int>());
         asg_v(tmp.data(),c.density.size(),c.density);
         c.density.swap(tmp);

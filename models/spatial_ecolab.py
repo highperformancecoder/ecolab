@@ -26,18 +26,20 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=64
-numY=64
+numX=8
+numY=8
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
 # initialises allocators and space on GPU, so that density arrays can be set
-ecolab.makeConsistent()
+#ecolab.makeConsistent()
 
+print("initialising density")
 for i in range(numX):
     for j in range(numY):
         ecolab.cell(i,j).density(nsp*[100])
-
+print("density initialised")
+        
 ecolab.repro_rate(randomList(nsp, ecolab.repro_min(), ecolab.repro_max()))
 ecolab.interaction.diag(randomList(nsp, -1e-3, -1e-3))
 ecolab.random_interaction(3,0)
@@ -51,6 +53,9 @@ from plot import plot
 from GUI import gui, statusBar, windows
 
 print(device())
+ecolab.setDensitiesDevice()
+print("Densities moved to device allocator")
+#ecolab.setDensitiesShared()
 
 def stepImpl():
     ecolab.generate(100)
@@ -61,6 +66,7 @@ def stepImpl():
     ecolab.gather()
 
 from timeit import timeit
+ecolab.syncThreads()
 print(timeit('stepImpl()', globals=globals(), number=10))
                 
 def step():

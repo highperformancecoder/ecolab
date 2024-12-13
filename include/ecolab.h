@@ -102,6 +102,7 @@ namespace ecolab
   };
 
 #ifdef SYCL_LANGUAGE_VERSION
+  extern bool syclQDestroyed;
   sycl::queue& syclQ();
   void* reallocSycl(void*,size_t);
 #endif
@@ -117,12 +118,45 @@ namespace ecolab
 #endif
   };
 
+  template <>
+  struct SyclType<size_t>
+  {
+    size_t data;
+    operator size_t() const {return data;}
+    operator size_t&() {return data;}
+    size_t operator=(size_t x) {return data=x;}
+#ifdef SYCL_LANGUAGE_VERSION
+    void* operator new(size_t s) {return reallocSycl(nullptr,s);}
+    void operator delete(void* p) {reallocSycl(p,0);}
+    void* operator new[](size_t s) {return reallocSycl(nullptr,s);}
+    void operator delete[](void* p) {reallocSycl(p,0);}
+#endif
+  };
+
+  template <class T>
+  struct SyclType<T*>
+  {
+    T* data;
+    operator T*() const {return data;}
+    operator T*&() {return data;}
+    T* operator=(T* x) {return data=x;}
+#ifdef SYCL_LANGUAGE_VERSION
+    void* operator new(size_t s) {return reallocSycl(nullptr,s);}
+    void operator delete(void* p) {reallocSycl(p,0);}
+    void* operator new[](size_t s) {return reallocSycl(nullptr,s);}
+    void operator delete[](void* p) {reallocSycl(p,0);}
+#endif
+  };
+
+
+  
   template <class M>
   struct DeviceType
   {
     using element_type=M;
-    SyclType<M>* const model=new SyclType<M>;
-    DeviceType()=default;
+    SyclType<M>* const model;
+    template <class... A>
+    DeviceType(A... args): model(new SyclType<M>(std::forward<A>(args)...)) {}
     DeviceType(const DeviceType& x) {*this=x;}
     DeviceType& operator=(const DeviceType& x) {*model=x.*model; return *this;}
     ~DeviceType() {delete model;}
@@ -157,15 +191,23 @@ namespace ecolab
       template <class U> CellAllocator(const CellAllocator<U>& x):
         desc(x.desc), memAlloc(x.memAlloc) {}
       T* allocate(size_t sz) {
+#ifdef  __SYCL_DEVICE_ONLY__
         if (memAlloc && *memAlloc && desc && *desc)  {
           auto r=reinterpret_cast<T*>((*memAlloc)->malloc(**desc,sz*sizeof(T)));
           return r;
         }
         return nullptr; // TODO raise an error??
+#else
+        return sycl::malloc_shared<T>(sz,syclQ());
+#endif
       }
       void deallocate(T* p,size_t) {
+#ifdef  __SYCL_DEVICE_ONLY__
         if (memAlloc && *memAlloc && desc && *desc)
           (*memAlloc)->free(**desc,p);
+#else
+        sycl::free(p,syclQ());
+#endif
       }
       bool operator==(const CellAllocator& x) const {return desc==x.desc && memAlloc==x.memAlloc;}
     };
@@ -193,15 +235,20 @@ namespace ecolab
   protected:
 #ifdef SYCL_LANGUAGE_VERSION
     using MemAllocator=CellBase::MemAllocator;
-    MemAllocator* memAlloc;
+    MemAllocator *sharedMemAlloc, *deviceMemAlloc;
     SyclGraphBase() {
-      memAlloc=sycl::malloc_shared<MemAllocator>(1, syclQ());
-      new(memAlloc) MemAllocator;
-      memAlloc->initialize(syclQ(), sycl::usm::alloc::shared, 512ULL * 1024ULL * 1024ULL); // TODO - expose this Python?
+      sharedMemAlloc=sycl::malloc_shared<MemAllocator>(1, syclQ());
+      new(sharedMemAlloc) MemAllocator;
+      deviceMemAlloc=sycl::malloc_shared<MemAllocator>(1, syclQ());
+      new(deviceMemAlloc) MemAllocator;
+      sharedMemAlloc->initialize(syclQ(), sycl::usm::alloc::shared, 512ULL * 1024ULL * 1024ULL); // TODO - expose this Python?
+      deviceMemAlloc->initialize(syclQ(), sycl::usm::alloc::device, 512ULL * 1024ULL * 1024ULL); // TODO - expose this Python?
     }
     ~SyclGraphBase() {
-      memAlloc->~MemAllocator();
-      sycl::free(memAlloc,syclQ());
+      sharedMemAlloc->~MemAllocator();
+      sycl::free(sharedMemAlloc,syclQ());
+      deviceMemAlloc->~MemAllocator();
+      sycl::free(deviceMemAlloc,syclQ());
     }
     // deleted because we're managing a resource here
     SyclGraphBase(const SyclGraphBase&)=delete;
@@ -236,7 +283,6 @@ namespace ecolab
             auto& cell=*(*this)[idx]->template as<Cell>();
             Ouro::SyclDesc<> desc(i,{});
             cell.desc=&desc;
-            cell.memAlloc=this->memAlloc;
 #ifndef NDEBUG
             cell.out=&out;
 #endif
@@ -263,6 +309,25 @@ namespace ecolab
     void syncThreads() {
 #ifdef SYCL_LANGUAGE_VERSION
       syclQ().wait();
+#endif
+    }
+
+    template <class F, class R> R max(R r, F f) {
+#ifdef SYCL_LANGUAGE_VERSION
+      DeviceType<R> rs(r);
+      syclQ().parallel_for(this->size(),[=,rs=&*rs,this](auto i){
+        sycl::atomic_ref<R,sycl::memory_order::relaxed,sycl::memory_scope::device> ar(*rs);
+        ar.fetch_max(f(*(*this)[i]->template as<Cell>()));
+      }).wait();
+      return *rs;
+#else
+      auto sz=this->size();
+#ifdef _OPENMP
+#pragma omp parallel for reduction(max:r)
+#endif
+      for (size_t i=0; i<sz; ++i)
+        r=std::max(r,f(*(*this)[i]->template as<Cell>()));
+      return r;
 #endif
     }
   };
