@@ -24,6 +24,8 @@
 template <typename... Args>
 void syclPrintf(Args... args) {sycl::ext::oneapi::experimental::printf(args...);}
 inline sycl::nd_item<1> syclItem() {return sycl::ext::oneapi::this_work_item::get_nd_item<1>();}
+inline sycl::group<1> syclGroup() {return sycl::ext::oneapi::this_work_item::get_work_group<1>();}
+inline sycl::sub_group syclSubGroup() {return sycl::ext::oneapi::this_work_item::get_sub_group();}
 #else
 #define syclPrintf(...)
 #endif
@@ -304,30 +306,67 @@ namespace ecolab
       }
 #endif
     }
+    
+    /// apply a functional to all local cells of this processor in
+    /// parallel, where each cell is allocated SIMD parallel computer
+    /// (known as a Group in SYCL, or Block in CUDA
+    /// @param f - functional that takes a \a Cell or \a const \a Cell argument
+    template <class F>
+    void groupedForAll(F f) {
+#ifdef SYCL_LANGUAGE_VERSION
+      static size_t workGroupSize=syclQ().get_device().get_info<sycl::info::device::max_work_group_size>();
+      size_t range=this->size()/workGroupSize;
+      if (range*workGroupSize < this->size()) ++range;
+      syclQ().submit([&](auto& h) {
+#ifndef NDEBUG
+        sycl::stream out(1000000,1000,h);
+#endif
+        h.parallel_for(sycl::nd_range<1>(range*workGroupSize, workGroupSize), [=,this](auto i) {
+          auto idx=i.get_group_linear_id();
+          if (idx<this->size()) {
+            auto& cell=*(*this)[idx]->template as<Cell>();
+            Ouro::SyclDesc<> desc(i,{});
+            cell.desc=&desc;
+#ifndef NDEBUG
+            cell.out=&out;
+#endif
+            f(cell);
+            cell.desc=nullptr;
+            cell.out=nullptr;
+          }
+        });
+      });
+#else
+      forAll(f);
+#endif
+    }
 
-    /// synchronise GPU threads
     void syncThreads() {
 #ifdef SYCL_LANGUAGE_VERSION
       syclQ().wait();
 #endif
     }
-
-    template <class F, class R> R max(R r, F f) {
+    
+    template <class T, class F> T max(T x, F f) {
 #ifdef SYCL_LANGUAGE_VERSION
-      DeviceType<R> rs(r);
-      syclQ().parallel_for(this->size(),[=,rs=&*rs,this](auto i){
-        sycl::atomic_ref<R,sycl::memory_order::relaxed,sycl::memory_scope::device> ar(*rs);
-        ar.fetch_max(f(*(*this)[i]->template as<Cell>()));
-      }).wait();
-      return *rs;
+      DeviceType<T> r(x);
+      syclQ().parallel_for(this->size(),[=,x=&*r,this](auto i) {
+          sycl::atomic_ref<T,sycl::memory_order::relaxed,sycl::memory_scope::device> ax(*x);
+          auto& cell=*(*this)[i]->template as<Cell>();
+          ax.fetch_max(f(cell));
+        }).wait();
+      return *r;
 #else
       auto sz=this->size();
 #ifdef _OPENMP
-#pragma omp parallel for reduction(max:r)
+#pragma omp parallel for reduction(max:x)
 #endif
-      for (size_t i=0; i<sz; ++i)
-        r=std::max(r,f(*(*this)[i]->template as<Cell>()));
-      return r;
+      for (size_t idx=0; idx<sz; ++idx) {
+        auto& cell=*(*this)[idx]->template as<Cell>();
+        cell.m_idx=idx;
+        x=std::max(x,f(cell));
+      }
+      return x;
 #endif
     }
   };

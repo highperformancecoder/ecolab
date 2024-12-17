@@ -76,6 +76,7 @@ public:
   int ROUND(Float x);
   template <class E> RoundArray<E,EcolabPoint> roundArray(const E& expr);
   Exclude<std::mt19937> rand; // random number generator
+  array<Float,Allocator<Float>> interactionResult{this->template allocator<Float>()};
 };
 
 // for the panmictic model, we need to use std::allocator
@@ -88,8 +89,8 @@ struct AllocatorBase
 struct PanmicticModel: public ModelData, public EcolabPoint<AllocatorBase>, public ecolab::Model<PanmicticModel>
 {
   ConnectionPlot connectionPlot;
-  void updateConnectionPlot() {connectionPlot.update(density,interaction);}
-  void makeConsistent() {ModelData::makeConsistent(density.size());}
+  void updateConnectionPlot() {connectionPlot.update(this->density,interaction);}
+  void makeConsistent() {ModelData::makeConsistent(this->density.size());}
   void seed(unsigned x) {rand.seed(x);}
   void generate(unsigned niter);
   void generate() {generate(1);}

@@ -11,7 +11,7 @@ randomSeed(1)
 array_urand.seed(10+myid())
 
 # initial number of species
-nsp=100
+nsp=1000
 
 ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
@@ -26,8 +26,8 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=8
-numY=8
+numX=64
+numY=64
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
