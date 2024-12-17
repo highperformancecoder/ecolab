@@ -132,33 +132,37 @@ void setArray(array<int,ecolab::CellBase::CellAllocator<int>>& x, const array<in
 template <class B>
 void EcolabPoint<B>::generate(unsigned niter, const ModelData& model)
 {
-#ifndef SYCL_LANGUAGE_VERSION
-  for (unsigned i=0; i<niter; i++)
-    {density = roundArray(density + density * (model.repro_rate + model.interaction*density));}
-#else
-  auto group=this->desc->item.get_group();
-  auto idx=group.get_local_linear_id();
-  auto groupSz=group.get_local_linear_range();
-
-  // intialise temporary data array
-  if (group.leader()) interactionResult.resize(density.size());
-  sycl::group_barrier(group);
-
-  for (unsigned step=0; step<niter; step++)
+#ifdef SYCL_LANGUAGE_VERSION
+  if constexpr (is_base_of<CellBase, B>::value)
     {
-      for (auto i=idx; i<density.size(); i+=groupSz)
-        interactionResult[i]=model.interaction.diag[i]*density[i];
-      for (auto i=idx; i<model.interaction.row.size(); i+=groupSz)
-        {
-          sycl::atomic_ref<Float, sycl::memory_order::relaxed, sycl::memory_scope::work_group> tmp
-            (interactionResult[model.interaction.row[i]]);
-          tmp+=model.interaction.val[i]*density[model.interaction.col[i]];
-        }
+      auto group=this->desc->item.get_group();
+      auto idx=group.get_local_linear_id();
+      auto groupSz=group.get_local_linear_range();
+
+      // intialise temporary data array
+      if (group.leader()) interactionResult.resize(density.size());
       sycl::group_barrier(group);
-      for (auto i=idx; i<density.size(); i+=groupSz)
-        density[i] = ROUND(density[i] + density[i] * (model.repro_rate[i] + interactionResult[i]));
+
+      for (unsigned step=0; step<niter; step++)
+        {
+          for (auto i=idx; i<density.size(); i+=groupSz)
+            interactionResult[i]=model.interaction.diag[i]*density[i];
+          for (auto i=idx; i<model.interaction.row.size(); i+=groupSz)
+            {
+              sycl::atomic_ref<Float, sycl::memory_order::relaxed, sycl::memory_scope::work_group> tmp
+                (interactionResult[model.interaction.row[i]]);
+              tmp+=model.interaction.val[i]*density[model.interaction.col[i]];
+            }
+          sycl::group_barrier(group);
+          for (auto i=idx; i<density.size(); i+=groupSz)
+            density[i] = ROUND(density[i] + density[i] * (model.repro_rate[i] + interactionResult[i]));
+        }
+      return;
     }
 #endif
+  // sequential/non-GPU version
+  for (unsigned i=0; i<niter; i++)
+    {density = roundArray(density + density * (model.repro_rate + model.interaction*density));}
 }
 
 template <class B>
