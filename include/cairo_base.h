@@ -381,7 +381,7 @@ namespace ecolab
       /// generic configure function, given a particular \a configSpecs
       int configureCairoItem(Tcl_Interp *interp, Tk_Canvas canvas, 
                              Tk_Item *itemPtr,	int objc, 
-                             Tcl_Obj *CONST objv[],
+                             Tcl_Obj *const objv[],
                              int flags, Tk_ConfigSpec configSpecs[]);
       void  ComputeImageBbox(Tk_Canvas canvas, ImageItem *imgPtr);
     }
@@ -390,7 +390,7 @@ namespace ecolab
     /// creating Tk canvas itemTypes
     template <class C>
     int createImage(Tcl_Interp *interp,	Tk_Canvas canvas, Tk_Item *itemPtr, 
-                    int objc,Tcl_Obj *CONST objv[])
+                    int objc,Tcl_Obj *CONST84 objv[])
     {
       if (TkImageCode::CreateImage(interp,canvas,itemPtr,objc,objv,C::configSpecs)==TCL_OK)
         {

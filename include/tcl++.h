@@ -43,7 +43,10 @@ into a simple I/O stream and tclindex, a simple iterator through a TCL array */
 
 /* for Tcl 8.4 compatibility */
 #ifndef CONST84
-#define CONST84
+#define CONST84 const
+#endif
+#ifndef CONST
+#define CONST const
 #endif
 
 #ifdef TK
