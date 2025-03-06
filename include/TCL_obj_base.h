@@ -926,7 +926,7 @@ namespace ecolab
       newTCL_obj_functor_proc(bm, TCL_args(argc, argv));
       if (thook) thook(argc, argv);
     }
-    void proc(int, const char **) {}  
+    void proc(int, CONST84 char **) {}
   };
 
   template<class C, class M>
