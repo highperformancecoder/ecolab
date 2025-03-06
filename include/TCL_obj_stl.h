@@ -424,7 +424,7 @@ namespace ecolab
                            (ClientData)new ResizeFunctor<S>(x),
                            TCL_cmd_data_delete);
     }
-    void proc(int, const char **) {}  
+    void proc(int, CONST84 char **) {}  
   };
 
   template <class V>

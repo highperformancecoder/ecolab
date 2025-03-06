@@ -61,7 +61,7 @@ namespace ecolab
       else
         r << f(TCL_args(argc, argv));
     }
-    void proc(int, const char **) {}  
+    void proc(int, CONST84 char **) {}  
   };
 
   /// const version - only getter is called
@@ -73,7 +73,7 @@ namespace ecolab
     void proc(int argc, Tcl_Obj *const argv[]) {
       tclreturn() << f();
     }
-    void proc(int, const char **) {}  
+    void proc(int, CONST84 char **) {}  
   };
 
   /**
@@ -127,7 +127,7 @@ namespace ecolab
     void proc(int argc, Tcl_Obj *const argv[]) const {
       tclreturn()<<(_self.*g)();
     }
-    void proc(int, const char **) {}  
+    void proc(int, CONST84 char **) {}  
     std::string name; ///< name of accessor seen by TCL
   private:
     T& _self; ///< reference to the outer object accessor are working on
