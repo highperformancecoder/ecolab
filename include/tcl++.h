@@ -49,6 +49,10 @@ into a simple I/O stream and tclindex, a simple iterator through a TCL array */
 #define CONST const
 #endif
 
+#if TCL_MAJOR_VERSION < 9
+using Tcl_Size=int;
+#endif
+
 #ifdef TK
 #include <tk.h>
 /* undefine all those spurious macros X11 defines - we don't need 'em! */

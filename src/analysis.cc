@@ -38,11 +38,7 @@ int palette_class::size=0;
 
 palette_class::palette_class()
 {
-#if TCL_MAJOR_VERSION >= 9
   Tcl_Size  elemc;
-#else
-  int elemc;
-#endif
 
   if (size==0)
    {

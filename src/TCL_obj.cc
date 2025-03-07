@@ -167,7 +167,9 @@ namespace ecolab
   {
     /* delete all member commands associated with this */ 
     tclcmd c;
-    int i, elemc; CONST84 char **elem;
+    int i;
+    Tcl_Size elemc;
+    CONST84 char **elem;
     c | "info commands "|desc|".*\n";
     if (Tcl_SplitList(interp(),c.result.c_str(),&elemc,&elem)!=TCL_OK) 
       throw error("");

@@ -503,7 +503,7 @@ NEWCMD(cli,0)
 
 NEWCMD(string_map,2)
 {
-  int elemc;
+  Tcl_Size elemc;
   CONST84 char **elem;
   Tcl_SplitList(interp(),const_cast<char*>(argv[1]),&elemc,&elem);
   tclreturn retval;

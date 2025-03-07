@@ -77,7 +77,7 @@ namespace
     };
     
     // Define a new image type that renders a minsky::Canvas
-    int createCI(Tcl_Interp* interp, CONST86 char* name, int objc, Tcl_Obj *const objv[],
+    int createCI(Tcl_Interp* interp, CONST86 char* name, Tcl_Size objc, Tcl_Obj *const objv[],
                  CONST86 Tk_ImageType* typePtr, Tk_ImageMaster master, ClientData *masterData)
     {
       try
