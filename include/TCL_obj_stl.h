@@ -82,7 +82,7 @@ namespace ecolab
     char c1;
     std::string arg;
     while (i.get(c1)) arg+=c1;
-    int  elemc;
+    Tcl_Size  elemc;
     // exception safe resource handling
     struct CleanUp
     {
