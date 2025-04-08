@@ -32,7 +32,7 @@ include include/Makefile
 #undefine ECOLAB_LIB here so that ecolab_library is not set to the
 #compiled location. INSTALLED_ECOLAB_LIB is for the generic ecolab
 #binary
-FLAGS+=-UECOLAB_LIB -DINSTALLED_ECOLAB_LIB=\"$(PREFIX)/include\"
+FLAGS+=-UECOLAB_LIB -DINSTALLED_ECOLAB_LIB=\"$(PREFIX)/include\" -DWORDSIZE=64
 
 ifdef AEGIS
 # must build and test against c++20 now

@@ -11,7 +11,7 @@ struct StarComplexityGen
   std::vector<linkRep> elemStars;
   void generateElementaryStars(unsigned nodes);
   // fills starMap with graphs of \a numStars
-  void fillStarMap(unsigned numStars);
-  void canonicaliseStarMap() {}
+  void fillStarMap(unsigned maxStars);
+  void canonicaliseStarMap();
 };
 
