@@ -25,7 +25,7 @@ FLAGS+=-DUSE_FLOAT
 endif
 
 #MODELS=ecolab shadow newman jellyfish webworld netcomplexity
-MODELS=ecolab_model
+MODELS=ecolab_model starComplexity
 
 #chmod command is to counteract AEGIS removing execute privelege from scripts
 all: $(MODELS:=.so)
