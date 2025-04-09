@@ -169,9 +169,9 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
   do
     {
       // assume we're filling starMap in numStar order
-      for (auto i: recipe)
-        cout<<i<<",";
-      cout<<endl;
+//      for (auto i: recipe)
+//        cout<<i<<",";
+//      cout<<endl;
       auto& starC=starMap[evalRecipe(recipe,elemStars)];
       starC = starC? min(starC, countStars(recipe)): countStars(recipe);
     }
