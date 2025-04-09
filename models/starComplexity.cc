@@ -68,10 +68,11 @@ bool next(Recipe& recipe, int nodes, int maxNumStars)
   //const unsigned maxNumStars=7; //nodes*(nodes-1)-1;
   if (recipe.size()<3)
     return false;
+
+ tryAgain:
   int nodeCtr=2;
   int numStars=2, numOps=0;
   auto i=recipe.begin()+2;
- tryAgain:
   for (; i!=recipe.end(); ++i)
     {
       ++*i;
@@ -88,19 +89,18 @@ bool next(Recipe& recipe, int nodes, int maxNumStars)
       else
         ++numStars;
 
-      if (numStars>maxNumStars)
-        return false;
+      if (numStars>maxNumStars) return false;
 
       if (!wrappedAround)
         {
           // count remaining ops and stars, and balance with ops
-          for (; i!=recipe.end(); ++i)
+          for (++i; i!=recipe.end(); ++i)
             if (*i<0)
               ++numOps;
             else
               ++numStars;
           if (numStars>maxNumStars) goto tryAgain;
-          for (int i=0; i<numStars-numOps-1; ++i)
+          for (int i=0; i<numStars-numOps-1 || recipe.back()>=0; ++i)
             recipe.push_back(setUnion);
           return true;
         }
