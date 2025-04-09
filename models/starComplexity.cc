@@ -34,28 +34,20 @@ void StarComplexityGen::generateElementaryStars(unsigned nodes)
 }
 
 constexpr int setUnion=-2, setIntersection=-1;
-using Recipe=vector<int>;
-
-void adjustToNumStars(Recipe& recipe, unsigned numStars)
+struct Recipe: public vector<int>
 {
-  unsigned starsPresent=0;
-  int finalOp=setUnion;
-  for (auto i=recipe.begin(); i!=recipe.end(); ++i)
-    {
-      starsPresent += *i>=0;
-      if (starsPresent>numStars)
-        {
-          recipe.erase(i, recipe.end());
-          break;
-        }
-    }
-  int extraStars=0;
-  for (; starsPresent<numStars; ++starsPresent)
-    recipe.push_back(0);
-  // ensure recipe ends with an op
-  if (recipe.back()>=0)
-    recipe.push_back(setUnion);
-}
+  // maintained within next, and when first initialised.
+  int numStars=0, numOps=0;
+  Recipe()=default;
+  Recipe(const initializer_list<int>& args): vector<int>(args)
+  {
+    for (auto& i: *this)
+      if (i<0)
+        ++numOps;
+      else
+        ++numStars;
+  }
+};
 
 inline unsigned countStars(const Recipe& recipe)
 {
@@ -63,7 +55,8 @@ inline unsigned countStars(const Recipe& recipe)
                     [](unsigned a, int i) {return a+(i>=0);});
 }
 
-bool next(Recipe& recipe, int nodes, int maxNumStars)
+// @return number of stars in result, 0 if finished
+int next(Recipe& recipe, int nodes, int maxNumStars)
 {
   //const unsigned maxNumStars=7; //nodes*(nodes-1)-1;
   if (recipe.size()<3)
@@ -80,7 +73,11 @@ bool next(Recipe& recipe, int nodes, int maxNumStars)
       bool wrappedAround=*i>=nodeCtr;
       if (wrappedAround)
         if (numStars>numOps+1)
-          *i=setUnion;
+          {
+            *i=setUnion;
+            --recipe.numStars;
+            ++recipe.numOps;
+          }
         else
           *i=0; // no point putting a set operation here, it would be nop
       
@@ -89,30 +86,20 @@ bool next(Recipe& recipe, int nodes, int maxNumStars)
       else
         ++numStars;
 
-      if (numStars>maxNumStars) return false;
-
       if (!wrappedAround)
         {
-          // count remaining ops and stars, and balance with ops
-          for (++i; i!=recipe.end(); ++i)
-            if (*i<0)
-              ++numOps;
-            else
-              ++numStars;
-          if (numStars>maxNumStars) goto tryAgain;
-          for (int i=0; i<numStars-numOps-1 || recipe.back()>=0; ++i)
+          if (*i==0) // gone from op to star
+            {
+              ++recipe.numStars;
+              --recipe.numOps;
+            }
+          if (recipe.numStars>maxNumStars) goto tryAgain;
+          for (; recipe.numStars>recipe.numOps+1 || recipe.back()>=0; ++recipe.numOps)
             recipe.push_back(setUnion);
-          return true;
+          return numStars;
         }
     }
-  // if we've reached the end, then we need to add operations to balance the stack
-  if (numStars<=maxNumStars)
-    {
-      for (int i=0; i<numStars-numOps-1; ++i)
-        recipe.push_back(setUnion);
-      return true;
-    }
-  return false;
+  return 0;
 }
 
 linkRep evalRecipe(const Recipe& recipe, const std::vector<linkRep>& elemStars)
@@ -175,7 +162,7 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
 //        cout<<i<<",";
 //      cout<<endl;
       auto& starC=starMap[evalRecipe(recipe,elemStars)];
-      starC = starC? min(starC, countStars(recipe)): countStars(recipe);
+      starC = starC? min(starC, unsigned(recipe.numStars)): recipe.numStars;
     }
   while (next(recipe,elemStars.size(),maxStars));
 }
