@@ -310,6 +310,19 @@ ifdef GCOV
 FLAGS+=-fprofile-arcs -ftest-coverage
 endif
 
+# assorted performance profiling stuff using gperftools, or Russell's custom
+# timer calipers
+ifdef MEMPROFILE
+LIBS+=-ltcmalloc
+endif
+ifdef CPUPROFILE
+OPT+=-g
+LIBS+=-lprofiler
+endif
+ifdef TIMERS
+FLAGS+=-DTIMERS
+endif
+
 ifdef PROFILING
 FLAGS+=-DTIMECMDS 
 endif
@@ -530,9 +543,9 @@ OPT+=-g
 else
 FLAGS+= -DNDEBUG
 ifeq ($(OS),OSF1)
-OPT=-O4
+OPT+=-O4
 else
-OPT=-O3
+OPT+=-O3
 endif
 endif
 

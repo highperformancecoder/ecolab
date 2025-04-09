@@ -8,7 +8,7 @@ for l in range(L):
     maxStars=max(maxStars,v)
 
 print('maxStars=',maxStars)
-maxStars=8
+maxStars=7
 
 starC.generateElementaryStars(nodes)
 starC.fillStarMap(maxStars)
