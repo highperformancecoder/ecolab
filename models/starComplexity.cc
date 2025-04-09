@@ -71,6 +71,7 @@ bool next(Recipe& recipe, int nodes, int maxNumStars)
   int nodeCtr=2;
   int numStars=2, numOps=0;
   auto i=recipe.begin()+2;
+ tryAgain:
   for (; i!=recipe.end(); ++i)
     {
       ++*i;
@@ -98,6 +99,7 @@ bool next(Recipe& recipe, int nodes, int maxNumStars)
               ++numOps;
             else
               ++numStars;
+          if (numStars>maxNumStars) goto tryAgain;
           for (int i=0; i<numStars-numOps-1; ++i)
             recipe.push_back(setUnion);
           return true;
