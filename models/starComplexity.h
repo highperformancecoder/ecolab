@@ -1,6 +1,7 @@
 using linkRep=unsigned;
 
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 struct StarComplexityGen

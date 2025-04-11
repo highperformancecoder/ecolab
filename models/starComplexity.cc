@@ -34,20 +34,7 @@ void StarComplexityGen::generateElementaryStars(unsigned nodes)
 }
 
 constexpr int setUnion=-2, setIntersection=-1;
-struct Recipe: public vector<int>
-{
-  // maintained within next, and when first initialised.
-  int numStars=0, numOps=0;
-  Recipe()=default;
-  Recipe(const initializer_list<int>& args): vector<int>(args)
-  {
-    for (auto& i: *this)
-      if (i<0)
-        ++numOps;
-      else
-        ++numStars;
-  }
-};
+using Recipe=vector<int>;
 
 inline unsigned countStars(const Recipe& recipe)
 {
@@ -55,56 +42,59 @@ inline unsigned countStars(const Recipe& recipe)
                     [](unsigned a, int i) {return a+(i>=0);});
 }
 
-// @return number of stars in result, 0 if finished
-int next(Recipe& recipe, int nodes, int maxNumStars)
-{
-  //const unsigned maxNumStars=7; //nodes*(nodes-1)-1;
-  if (recipe.size()<3)
-    return false;
-
- tryAgain:
-  int nodeCtr=2;
-  int numStars=2, numOps=0;
-  auto i=recipe.begin()+2;
-  for (; i!=recipe.end(); ++i)
-    {
-      ++*i;
-      if (*i<nodes && *i>=nodeCtr) ++nodeCtr;
-      bool wrappedAround=*i>=nodeCtr;
-      if (wrappedAround)
-        if (numStars>numOps+1)
-          {
-            *i=setUnion;
-            --recipe.numStars;
-            ++recipe.numOps;
-          }
-        else
-          *i=0; // no point putting a set operation here, it would be nop
-      
-      if (*i<0)
-        ++numOps;
-      else
-        ++numStars;
-
-      if (!wrappedAround)
-        {
-          if (*i==0) // gone from op to star
-            {
-              ++recipe.numStars;
-              --recipe.numOps;
-            }
-          if (recipe.numStars>maxNumStars) goto tryAgain;
-          for (; recipe.numStars>recipe.numOps+1 || recipe.back()>=0; ++recipe.numOps)
-            recipe.push_back(setUnion);
-          return numStars;
-        }
-    }
-  return 0;
-}
+//// @return number of stars in result, 0 if finished
+//int next(Recipe& recipe, int nodes, int maxNumStars)
+//{
+//  //const unsigned maxNumStars=7; //nodes*(nodes-1)-1;
+//  if (recipe.size()<3)
+//    return false;
+//
+// tryAgain:
+//  //int nodeCtr=2;
+//  int numStars=2, numOps=0;
+//  auto i=recipe.begin()+2;
+//  for (; i!=recipe.end(); ++i)
+//    {
+//      if (*i>=0)
+//        {
+//        }
+//      ++*i;
+//      bool wrappedAround=*i>0;
+//      if (wrappedAround)
+//        if (numStars>numOps+1)
+//          {
+//            *i=setUnion;
+//            --recipe.numStars;
+//            ++recipe.numOps;
+//          }
+//        else
+//          *i=0; // no point putting a set operation here, it would be nop
+//      //if (*i>=0) *i=nodeCtr++;
+//      
+//      if (*i<0)
+//        ++numOps;
+//      else
+//        ++numStars;
+//
+//      if (!wrappedAround)
+//        {
+//          if (*i>=0) // gone from op to star
+//            {
+//              ++recipe.numStars;
+//              --recipe.numOps;
+//            }
+//          if (recipe.numStars>maxNumStars) goto tryAgain;
+//          for (; recipe.numStars>recipe.numOps+1 || recipe.back()>=0; ++recipe.numOps)
+//            recipe.push_back(setUnion);
+//          return numStars;
+//        }
+//    }
+//  return 0;
+//}
 
 linkRep evalRecipe(const Recipe& recipe, const std::vector<linkRep>& elemStars)
 {
-  vector<linkRep> stack;
+  vector<linkRep> stack; stack.reserve(recipe.size());
   for (auto op: recipe)
     switch (op)
       {
@@ -148,23 +138,80 @@ linkRep evalRecipe(const Recipe& recipe, const std::vector<linkRep>& elemStars)
   return stack.back();
 }
 
+// structure holding position vector of stars within a recipe
+struct Pos: public vector<int>
+{
+  Pos(int numStars) {
+    assert(numStars>1);
+    for (int i=0; i<numStars; ++i) push_back(i);
+  }
+  bool next() {return next(size()-1);}
+  bool next(int starIdx) {
+    if (starIdx==1) return false;
+    auto& p=operator[](starIdx);
+    if (++p>2*starIdx-1) // exhausted positions, move next star down
+      {
+        p=operator[](starIdx-1)+1;
+        return next(starIdx-1);
+      }
+    return true;
+  }
+};
+
 void StarComplexityGen::fillStarMap(unsigned maxStars)
 {
   if (elemStars.empty()) return;
   // insert the single star graph
   starMap.emplace(evalRecipe({0,setUnion},elemStars),1);
 
-  Recipe recipe{0,1,setUnion};
-  do
+
+
+  for (unsigned numStars=2; numStars<maxStars; ++numStars)
     {
-      // assume we're filling starMap in numStar order
-//      for (auto i: recipe)
-//        cout<<i<<",";
-//      cout<<endl;
-      auto& starC=starMap[evalRecipe(recipe,elemStars)];
-      starC = starC? min(starC, unsigned(recipe.numStars)): recipe.numStars;
+      // compute number of star combinations in a formula
+      unsigned numGraphs=1;
+      for (unsigned i=2; i<numStars; ++i) numGraphs*=(i+1);
+
+      Pos pos(numStars);
+      do
+        {
+          for (unsigned op=0; op<(1<<(numStars-1)); ++op)
+            {
+              Recipe recipe{0,1}; recipe.reserve(2*numStars-1);
+              for (int i=2, opIdx=0, starIdx=2; i<2*numStars-1; ++i)
+                if (pos[starIdx]==i)
+                  {
+                    recipe.push_back(0);
+                    ++starIdx;
+                  }
+                else
+                  {
+                    if (op&(1<<opIdx))
+                      recipe.push_back(setIntersection);
+                    else
+                      recipe.push_back(setUnion);
+                    ++opIdx;
+                  }
+              // now fill in star details. Parallelise this loop.
+              for (unsigned i=0; i<numGraphs; ++i)
+                {
+//                  for (auto i: recipe)
+//                    cout<<i<<",";
+//                  cout<<endl;
+                  starMap.emplace(evalRecipe(recipe,elemStars), numStars);
+                  unsigned s=2;
+                  for (auto p=recipe.begin()+2; p!=recipe.end(); ++p)
+                    if (*p >= 0) 
+                      {
+                        ++*p;
+                        if (*p<=s) break;
+                        *p=0; // overflow to next
+                        if (s<elemStars.size()-1) ++s;
+                      }
+                }
+            }
+        } while (pos.next());
     }
-  while (next(recipe,elemStars.size(),maxStars));
 }
 
 NautyRep toNautyRep(linkRep g, unsigned nodes)
