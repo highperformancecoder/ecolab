@@ -237,7 +237,7 @@ latex-docs:
 
 #bin/ecolab is a python interpreter supporting MPI
 bin/ecolab$(ECOLIBS_EXT): src/pythonMain.o lib/libecolab$(ECOLIBS_EXT).a
-	$(LINK) $(FLAGS) src/pythonMain.o -Wl,-rpath $(ECOLAB_HOME)/lib $(LIBS) -o $@
+	$(LINK) $(FLAGS) src/pythonMain.o -Wl,-rpath $(ECOLAB_HOME)/lib $(LIBS) -lboost_system -o $@
 	-find . \( -name "*.cc" -o -name "*.h" \) -print |etags -
 
 .PHONY: install
