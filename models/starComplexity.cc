@@ -160,14 +160,18 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
   // insert the single star graph
   starMap.emplace(EvalStack({0,setUnion},elemStars,2).stack.front(),1);
 
-
-
   for (unsigned numStars=2; numStars<maxStars; ++numStars)
     {
       // compute number of star combinations in a formula
       unsigned numGraphs=1;
-      for (unsigned i=2; i<numStars; ++i) numGraphs*=(i+1);
-
+      vector<unsigned> range, stride;
+      for (unsigned i=2; i<numStars; ++i)
+        {
+          range.push_back(min(unsigned(elemStars.size()),(i+1)));
+          stride.push_back(numGraphs);
+          numGraphs*=range.back();
+        }
+      
       Pos pos(numStars);
       do
         {
@@ -191,20 +195,23 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
               // now fill in star details. Parallelise this loop.
               for (unsigned i=0; i<numGraphs; ++i)
                 {
+                  for (unsigned j=2; j<numStars; ++j)
+                    recipe[pos[j]]=(i/stride[j-2])%range[j-2];
+                    
 //                  for (auto i: recipe)
 //                    cout<<i<<",";
 //                  cout<<endl;
-                  unsigned s=2;
+//                  unsigned s=2;
                   EvalStack stack(recipe, elemStars, recipe.size());
-                  starMap.emplace(stack.evalRecipe(recipe.end(),recipe.end()), numStars);
-                  for (auto p=recipe.begin()+2; p!=recipe.end(); ++p)
-                    if (*p >= 0) 
-                      {
-                        ++*p;
-                        if (*p<=s) break;
-                        *p=0; // overflow to next
-                        if (s<elemStars.size()-1) ++s;
-                      }
+                  starMap.emplace(stack.stack[0], numStars);
+//                  for (auto p=recipe.begin()+2; p!=recipe.end(); ++p)
+//                    if (*p >= 0) 
+//                      {
+//                        ++*p;
+//                        if (*p<=s) break;
+//                        *p=0; // overflow to next
+//                        if (s<elemStars.size()-1) ++s;
+//                      }
                 }
             }
         } while (pos.next());
