@@ -92,36 +92,48 @@ inline unsigned countStars(const Recipe& recipe)
 //  return 0;
 //}
 
-linkRep evalRecipe(const Recipe& recipe, const std::vector<linkRep>& elemStars)
+struct EvalStack
 {
-  linkRep stack[recipe.size()];
+  vector<linkRep> stack;
   size_t stackTop=0;
-  for (auto op: recipe)
-    switch (op)
-      {
+  const std::vector<linkRep>& elemStars;
+  /// initialises the stack with the tresults of evaluating the first \a pre elements of \a recipe
+  EvalStack(const Recipe& recipe, const std::vector<linkRep>& elemStars, size_t pre):
+    stack(recipe.size()), elemStars(elemStars)
+  {
+    if (pre>recipe.size()) pre=recipe.size();
+    evalRecipe(recipe.begin(), recipe.begin()+pre);
+  }
+
+  linkRep evalRecipe(Recipe::const_iterator op, const Recipe::const_iterator& end)
+  {
+    for (; op!=end; ++op)
+      switch (*op)
+        {
       default:
-        assert(op<elemStars.size());
-        stack[stackTop++]=elemStars[op];
+        assert(*op<elemStars.size());
+        stack[stackTop++]=elemStars[*op];
         break;
-      case setUnion:
-        if (stackTop>1)
-          {
+        case setUnion:
+          if (stackTop>1)
+            {
             auto v=stack[--stackTop];
             stack[stackTop-1]|=v;
-          }
-        break;
-      case setIntersection:
+            }
+          break;
+        case setIntersection:
         if (stackTop>1)
           {
             auto v=stack[--stackTop];
             stack[stackTop-1]&=v;
           }
         break;
-      }
-  assert(stackTop==1);
-  return stack[0];
-}
-
+        }
+    assert(stackTop>=1);
+    return stack[0];
+  }
+};
+  
 // structure holding position vector of stars within a recipe
 struct Pos: public vector<int>
 {
@@ -146,7 +158,7 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
 {
   if (elemStars.empty()) return;
   // insert the single star graph
-  starMap.emplace(evalRecipe({0,setUnion},elemStars),1);
+  starMap.emplace(EvalStack({0,setUnion},elemStars,2).stack.front(),1);
 
 
 
@@ -182,8 +194,9 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
 //                  for (auto i: recipe)
 //                    cout<<i<<",";
 //                  cout<<endl;
-                  starMap.emplace(evalRecipe(recipe,elemStars), numStars);
                   unsigned s=2;
+                  EvalStack stack(recipe, elemStars, recipe.size());
+                  starMap.emplace(stack.evalRecipe(recipe.end(),recipe.end()), numStars);
                   for (auto p=recipe.begin()+2; p!=recipe.end(); ++p)
                     if (*p >= 0) 
                       {
