@@ -94,48 +94,32 @@ inline unsigned countStars(const Recipe& recipe)
 
 linkRep evalRecipe(const Recipe& recipe, const std::vector<linkRep>& elemStars)
 {
-  vector<linkRep> stack; stack.reserve(recipe.size());
+  linkRep stack[recipe.size()];
+  size_t stackTop=0;
   for (auto op: recipe)
     switch (op)
       {
       default:
         assert(op<elemStars.size());
-        stack.push_back(elemStars[op]);
+        stack[stackTop++]=elemStars[op];
         break;
       case setUnion:
-        if (stack.size()>1)
+        if (stackTop>1)
           {
-            auto v=stack.back();
-            stack.pop_back();
-            stack.back()|=v;
+            auto v=stack[--stackTop];
+            stack[stackTop-1]|=v;
           }
         break;
       case setIntersection:
-        if (stack.size()>1)
+        if (stackTop>1)
           {
-            auto v=stack.back();
-            stack.pop_back();
-            stack.back()&=v;
+            auto v=stack[--stackTop];
+            stack[stackTop-1]&=v;
           }
         break;
       }
-  assert(recipe.back()<0);
-  // apply last operation to rest of the stack
-  if (stack.size()>1)
-    switch (recipe.back())
-      {
-      case setUnion:
-        for (auto& i: stack)
-          stack.back()|=i;
-        break;
-      case setIntersection:
-        for (auto& i: stack)
-          stack.back()&=i;
-        break;
-      default:
-        assert(false);
-      }
-  return stack.back();
+  assert(stackTop==1);
+  return stack[0];
 }
 
 // structure holding position vector of stars within a recipe
