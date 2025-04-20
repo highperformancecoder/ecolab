@@ -164,6 +164,7 @@ struct BlockEvaluator
   vector<linkRep> result;
   unsigned numGraphs=1;
   vector<unsigned> range, stride;
+  vector<linkRep> alreadySeen; // sorted list of graphs already visited
   Pos pos;
   BlockEvaluator(unsigned blockSize, unsigned numStars, const EvalStack& eval):
     block(blockSize,eval), result(blockSize,noGraph), pos(numStars) {
@@ -179,6 +180,10 @@ struct BlockEvaluator
       recipe[pos[j]]=(i/stride[j-2])%range[j-2];
     block[i].stackTop=0;
     result[i]=block[i].evalRecipe(recipe.begin(),recipe.end());
+#ifdef SYCL_LANGUAGE_VERSION
+    if (binary_search(alreadySeen.begin(),alreadySeen.end(),result[i]))
+      result[i]=noGraph;
+#endif
   }
   void evalBlock(const Recipe& recipe, size_t start) {
     // this loop to be parallelised
@@ -221,9 +226,13 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
               // now fill in star details.
               for (unsigned i=0; i<block.numGraphs; i+=block.size())
                 {
+#ifdef SYCL_LANGUAGE_VERSION
+                  block.alreadySeen.clear();
+                  for (auto& k: starMap) block.alreadySeen.push_back(k.first);
+#endif
                   block.evalBlock(recipe,i);
                   for (unsigned j=0; j<block.result.size(); ++j)
-                    if (i+j<block.numGraphs)
+                    if (i+j<block.numGraphs && block.result[j]!=noGraph)
                       starMap.emplace(block.result[j], numStars);
 //                  for (auto i: recipe)
 //                    cout<<i<<",";
