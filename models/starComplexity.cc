@@ -102,7 +102,7 @@ struct EvalStack
     stack(recipe.size()), elemStars(elemStars)
   {
     if (pre>recipe.size()) pre=recipe.size();
-    evalRecipe(recipe.begin(), recipe.begin()+pre);
+    if (pre) evalRecipe(recipe.begin(), recipe.begin()+pre);
   }
 
   linkRep evalRecipe(Recipe::const_iterator op, const Recipe::const_iterator& end)
@@ -112,6 +112,7 @@ struct EvalStack
         {
       default:
         assert(*op<elemStars.size());
+        assert(stackTop<stack.size());
         stack[stackTop++]=elemStars[*op];
         break;
         case setUnion:
@@ -133,7 +134,7 @@ struct EvalStack
     return stack[0];
   }
 };
-  
+
 // structure holding position vector of stars within a recipe
 struct Pos: public vector<int>
 {
@@ -154,6 +155,39 @@ struct Pos: public vector<int>
   }
 };
 
+// constant representing no graph at all
+constexpr linkRep noGraph=~linkRep(0);
+
+struct BlockEvaluator
+{
+  vector<EvalStack> block;
+  vector<linkRep> result;
+  unsigned numGraphs=1;
+  vector<unsigned> range, stride;
+  Pos pos;
+  BlockEvaluator(unsigned blockSize, unsigned numStars, const EvalStack& eval):
+    block(blockSize,eval), result(blockSize,noGraph), pos(numStars) {
+    for (unsigned i=2; i<numStars; ++i)
+      {
+        range.push_back(min(unsigned(eval.elemStars.size()),(i+1)));
+        stride.push_back(numGraphs);
+        numGraphs*=range.back();
+      }
+  }
+  void eval(Recipe recipe, size_t i) {
+    for (unsigned j=2; j<pos.size(); ++j)
+      recipe[pos[j]]=(i/stride[j-2])%range[j-2];
+    block[i].stackTop=0;
+    result[i]=block[i].evalRecipe(recipe.begin(),recipe.end());
+  }
+  void evalBlock(const Recipe& recipe, size_t start) {
+    // this loop to be parallelised
+    for (size_t i=start; i<block.size() && i<numGraphs; ++i)
+      eval(recipe,i);
+  }
+  size_t size() const {return block.size();}
+};
+
 void StarComplexityGen::fillStarMap(unsigned maxStars)
 {
   if (elemStars.empty()) return;
@@ -162,24 +196,16 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
 
   for (unsigned numStars=2; numStars<maxStars; ++numStars)
     {
-      // compute number of star combinations in a formula
-      unsigned numGraphs=1;
-      vector<unsigned> range, stride;
-      for (unsigned i=2; i<numStars; ++i)
-        {
-          range.push_back(min(unsigned(elemStars.size()),(i+1)));
-          stride.push_back(numGraphs);
-          numGraphs*=range.back();
-        }
-      
-      Pos pos(numStars);
+      // TODO - if using the precompute optimisation, these 2 decls will need to be pushed into next loop
+      EvalStack evalStack(Recipe(2*numStars-1), elemStars, 0);
+      BlockEvaluator block(1024, numStars,evalStack);
       do
         {
           for (unsigned op=0; op<(1<<(numStars-1)); ++op)
             {
               Recipe recipe{0,1}; recipe.reserve(2*numStars-1);
               for (int i=2, opIdx=0, starIdx=2; i<2*numStars-1; ++i)
-                if (pos[starIdx]==i)
+                if (block.pos[starIdx]==i)
                   {
                     recipe.push_back(0);
                     ++starIdx;
@@ -192,29 +218,19 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
                       recipe.push_back(setUnion);
                     ++opIdx;
                   }
-              // now fill in star details. Parallelise this loop.
-              for (unsigned i=0; i<numGraphs; ++i)
+              // now fill in star details.
+              for (unsigned i=0; i<block.numGraphs; i+=block.size())
                 {
-                  for (unsigned j=2; j<numStars; ++j)
-                    recipe[pos[j]]=(i/stride[j-2])%range[j-2];
-                    
+                  block.evalBlock(recipe,i);
+                  for (unsigned j=0; j<block.result.size(); ++j)
+                    if (i+j<block.numGraphs)
+                      starMap.emplace(block.result[j], numStars);
 //                  for (auto i: recipe)
 //                    cout<<i<<",";
 //                  cout<<endl;
-//                  unsigned s=2;
-                  EvalStack stack(recipe, elemStars, recipe.size());
-                  starMap.emplace(stack.stack[0], numStars);
-//                  for (auto p=recipe.begin()+2; p!=recipe.end(); ++p)
-//                    if (*p >= 0) 
-//                      {
-//                        ++*p;
-//                        if (*p<=s) break;
-//                        *p=0; // overflow to next
-//                        if (s<elemStars.size()-1) ++s;
-//                      }
-                }
+                  }
             }
-        } while (pos.next());
+        } while (block.pos.next());
     }
 }
 

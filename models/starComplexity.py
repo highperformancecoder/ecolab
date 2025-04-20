@@ -1,5 +1,5 @@
 from starComplexity import starC
-nodes=4
+nodes=7
 # computed from max_{l\in[0,L]}min(n+L-l,2l) where L=n(n-1)/2
 maxStars=0
 L=int(0.5*nodes*(nodes-1))
@@ -8,7 +8,7 @@ for l in range(L):
     maxStars=max(maxStars,v)
 
 print('maxStars=',maxStars)
-maxStars=7
+maxStars=9
 
 starC.generateElementaryStars(nodes)
 starC.fillStarMap(maxStars)
