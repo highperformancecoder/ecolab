@@ -81,6 +81,12 @@ struct EvalStack
           }
         break;
         }
+    if (stackTop==0)
+      {
+        for (auto op: recipe)
+          syclPrintf("%d ",op);
+        syclPrintf("\n");
+      }
     assert(stackTop>=1);
     return stack[0];
   }
@@ -109,16 +115,65 @@ struct Pos: public vector<int,Alloc<int>>
 // constant representing no graph at all
 constexpr linkRep noGraph=~linkRep(0);
 
+class OutputBuffer
+{
+  linkRep data[1000000];
+  bool m_blown=false;
+public:
+  using size_type=unsigned;
+  using iterator=linkRep*;
+  // push_back is GPU/CPU thread-safe
+  void push_back(linkRep x) {
+    
+    size_type curr=writePtr, next;
+    if (curr>=sizeof(data))
+      { // buffer full!
+        m_blown=true;
+        return;
+      }
+   
+#ifdef SYCL_LANGUAGE_VERSION
+    sycl::atomic_ref<size_type,sycl::memory_order::seq_cst,
+                     sycl::memory_scope::device> writeIdx(writePtr);
+    do
+      {
+        curr=writeIdx;
+        next=curr+1;
+      } while (!writeIdx.compare_exchange_weak(curr,next));
+#else
+    writePtr=curr+1;
+#endif
+    data[curr]=x;
+  }
+  linkRep operator[](size_t i) const {return data[i];}
+  size_type size() const {return writePtr;}
+  iterator begin() {return data;}
+  iterator end() {return data+size();}
+  bool blown() const {return m_blown;}
+private:
+  size_type writePtr=0;
+};
+
+#ifdef SYCL_LANGUAGE_VERSION
+using Event=sycl::event;
+#else
+struct Event
+{
+  void wait() {}
+};
+#endif
+
 struct BlockEvaluator
 {
   vector<EvalStack,Alloc<EvalStack>> block;
-  vector<linkRep,Alloc<linkRep>> result;
+  // implement an output queue for the results
+  OutputBuffer result;
   unsigned numGraphs=1;
   vector<unsigned,Alloc<unsigned>> range, stride;
   vector<linkRep,Alloc<linkRep>> alreadySeen; // sorted list of graphs already visited
   Pos pos;
   BlockEvaluator(unsigned blockSize, unsigned numStars, const Pos& pos, const EvalStack& evalStack):
-    block(blockSize,evalStack), result(blockSize,noGraph), pos(pos)
+    block(blockSize,evalStack), pos(pos)
   {
     for (unsigned i=2; i<numStars; ++i)
       {
@@ -131,24 +186,28 @@ struct BlockEvaluator
     for (unsigned j=2; j<pos.size(); ++j)
       block[i].recipe[pos[j]]=(idx/stride[j-2])%range[j-2];
     block[i].stackTop=0;
-    result[i]=block[i].evalRecipe(0, block[i].recipe.size());
+    auto r=block[i].evalRecipe(0, block[i].recipe.size());
+    result.push_back(r);
 //#ifdef SYCL_LANGUAGE_VERSION
 //    if (binary_search(alreadySeen.begin(),alreadySeen.end(),result[i]))
 //      result[i]=noGraph;
 //#endif
   }
-  void evalBlock(size_t start) {
+  Event evalBlock(size_t start) {
     // this loop to be parallelised
 #ifdef SYCL_LANGUAGE_VERSION
-    ecolab::syclQ().parallel_for(size(),[=,this](auto i) {
-      eval(i,i+start);
-    }).wait();
+    return ecolab::syclQ().parallel_for(size(),[=,this](auto i) {
+      if (i+start<numGraphs)
+        eval(i,i+start);
+    });
 //    for (unsigned i=0; i<size(); ++i)
 //      cout<<result[i]<<" ";
 //    cout<<endl;
 #else
     for (size_t i=0; i<size(); ++i)
-      eval(i, i+start);
+      if (i+start<numGraphs)
+        eval(i, i+start);
+    return {};
 #endif
   }
   size_t size() const {return block.size();}
@@ -188,20 +247,22 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
               EvalStack evalStack(recipe,*elemStars,0);
               ecolab::DeviceType<BlockEvaluator> block(blockSize, numStars,pos,evalStack);
 
-              for (unsigned i=0; i<block->numGraphs; i+=block->size())
-                {
+              Event event;
+              for (unsigned i=0; i<block->numGraphs; i+=block->size(), event.wait())
 //#ifdef SYCL_LANGUAGE_VERSION
 //                  block.alreadySeen.clear();
 //                  for (auto& k: starMap) block.alreadySeen.push_back(k.first);
 //#endif
-                  block->evalBlock(i);
-                  for (unsigned j=0; j<block->result.size(); ++j)
-                    if (i+j<block->numGraphs && block->result[j]!=noGraph)
-                      starMap.emplace(block->result[j], numStars);
+                  event=block->evalBlock(i);
+              event.wait();
+              if (block->result.blown())
+                throw runtime_error("Output buffer blown");
+              
+              for (auto j: block->result)
+                starMap.emplace(j, numStars);
 //                  for (auto i: recipe)
 //                    cout<<i<<",";
 //                  cout<<endl;
-                  }
             }
         } while (pos.next());
     }
