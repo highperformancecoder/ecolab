@@ -1,7 +1,7 @@
 #include "starComplexity.h"
 #include "starComplexity.cd"
-#include "pythonBuffer.h"
 #include "netcomplexity.h"
+#include "pythonBuffer.h"
 #include "ecolab_epilogue.h"
 
 #include <algorithm>
@@ -19,7 +19,7 @@ linkRep edge(unsigned i, unsigned j)
 {
   if (i==j) return 0; // no self-edges
   if (i<j) swap(i,j);
-  return linkRep(1)<<i*(i-1)/2+j;
+  return linkRep(1)<<(i*(i-1)/2+j);
 }
 
 void StarComplexityGen::generateElementaryStars(unsigned nodes)
@@ -34,7 +34,7 @@ void StarComplexityGen::generateElementaryStars(unsigned nodes)
 }
 
 constexpr int setUnion=-2, setIntersection=-1;
-using Recipe=vector<int>;
+using Recipe=vector<int,Alloc<int>>;
 
 inline unsigned countStars(const Recipe& recipe)
 {
@@ -42,72 +42,23 @@ inline unsigned countStars(const Recipe& recipe)
                     [](unsigned a, int i) {return a+(i>=0);});
 }
 
-//// @return number of stars in result, 0 if finished
-//int next(Recipe& recipe, int nodes, int maxNumStars)
-//{
-//  //const unsigned maxNumStars=7; //nodes*(nodes-1)-1;
-//  if (recipe.size()<3)
-//    return false;
-//
-// tryAgain:
-//  //int nodeCtr=2;
-//  int numStars=2, numOps=0;
-//  auto i=recipe.begin()+2;
-//  for (; i!=recipe.end(); ++i)
-//    {
-//      if (*i>=0)
-//        {
-//        }
-//      ++*i;
-//      bool wrappedAround=*i>0;
-//      if (wrappedAround)
-//        if (numStars>numOps+1)
-//          {
-//            *i=setUnion;
-//            --recipe.numStars;
-//            ++recipe.numOps;
-//          }
-//        else
-//          *i=0; // no point putting a set operation here, it would be nop
-//      //if (*i>=0) *i=nodeCtr++;
-//      
-//      if (*i<0)
-//        ++numOps;
-//      else
-//        ++numStars;
-//
-//      if (!wrappedAround)
-//        {
-//          if (*i>=0) // gone from op to star
-//            {
-//              ++recipe.numStars;
-//              --recipe.numOps;
-//            }
-//          if (recipe.numStars>maxNumStars) goto tryAgain;
-//          for (; recipe.numStars>recipe.numOps+1 || recipe.back()>=0; ++recipe.numOps)
-//            recipe.push_back(setUnion);
-//          return numStars;
-//        }
-//    }
-//  return 0;
-//}
-
 struct EvalStack
 {
-  vector<linkRep> stack;
+  Recipe recipe;
+  vector<linkRep,Alloc<linkRep>> stack;
   size_t stackTop=0;
-  const std::vector<linkRep>& elemStars;
+  const ElemStars& elemStars;
   /// initialises the stack with the tresults of evaluating the first \a pre elements of \a recipe
-  EvalStack(const Recipe& recipe, const std::vector<linkRep>& elemStars, size_t pre):
-    stack(recipe.size()), elemStars(elemStars)
+  EvalStack(const Recipe& recipe, const ElemStars& elemStars, size_t pre):
+    recipe(recipe), stack(recipe.size()), elemStars(elemStars)
   {
     if (pre>recipe.size()) pre=recipe.size();
-    if (pre) evalRecipe(recipe.begin(), recipe.begin()+pre);
+    if (pre) evalRecipe(0,pre);
   }
 
-  linkRep evalRecipe(Recipe::const_iterator op, const Recipe::const_iterator& end)
+  linkRep evalRecipe(size_t start, size_t end)
   {
-    for (; op!=end; ++op)
+    for (auto op=recipe.begin()+start; op!=recipe.begin()+end; ++op)
       switch (*op)
         {
       default:
@@ -136,7 +87,7 @@ struct EvalStack
 };
 
 // structure holding position vector of stars within a recipe
-struct Pos: public vector<int>
+struct Pos: public vector<int,Alloc<int>>
 {
   Pos(int numStars) {
     assert(numStars>1);
@@ -160,35 +111,45 @@ constexpr linkRep noGraph=~linkRep(0);
 
 struct BlockEvaluator
 {
-  vector<EvalStack> block;
-  vector<linkRep> result;
+  vector<EvalStack,Alloc<EvalStack>> block;
+  vector<linkRep,Alloc<linkRep>> result;
   unsigned numGraphs=1;
-  vector<unsigned> range, stride;
-  vector<linkRep> alreadySeen; // sorted list of graphs already visited
+  vector<unsigned,Alloc<unsigned>> range, stride;
+  vector<linkRep,Alloc<linkRep>> alreadySeen; // sorted list of graphs already visited
   Pos pos;
-  BlockEvaluator(unsigned blockSize, unsigned numStars, const EvalStack& eval):
-    block(blockSize,eval), result(blockSize,noGraph), pos(numStars) {
+  BlockEvaluator(unsigned blockSize, unsigned numStars, const Pos& pos, const EvalStack& evalStack):
+    block(blockSize,evalStack), result(blockSize,noGraph), pos(pos)
+  {
     for (unsigned i=2; i<numStars; ++i)
       {
-        range.push_back(min(unsigned(eval.elemStars.size()),(i+1)));
+        range.push_back(min(unsigned(evalStack.elemStars.size()),(i+1)));
         stride.push_back(numGraphs);
         numGraphs*=range.back();
       }
   }
-  void eval(Recipe recipe, size_t i) {
+  void eval(size_t i, size_t idx) {
     for (unsigned j=2; j<pos.size(); ++j)
-      recipe[pos[j]]=(i/stride[j-2])%range[j-2];
+      block[i].recipe[pos[j]]=(idx/stride[j-2])%range[j-2];
     block[i].stackTop=0;
-    result[i]=block[i].evalRecipe(recipe.begin(),recipe.end());
-#ifdef SYCL_LANGUAGE_VERSION
-    if (binary_search(alreadySeen.begin(),alreadySeen.end(),result[i]))
-      result[i]=noGraph;
-#endif
+    result[i]=block[i].evalRecipe(0, block[i].recipe.size());
+//#ifdef SYCL_LANGUAGE_VERSION
+//    if (binary_search(alreadySeen.begin(),alreadySeen.end(),result[i]))
+//      result[i]=noGraph;
+//#endif
   }
-  void evalBlock(const Recipe& recipe, size_t start) {
+  void evalBlock(size_t start) {
     // this loop to be parallelised
-    for (size_t i=start; i<block.size() && i<numGraphs; ++i)
-      eval(recipe,i);
+#ifdef SYCL_LANGUAGE_VERSION
+    ecolab::syclQ().parallel_for(size(),[=,this](auto i) {
+      eval(i,i+start);
+    }).wait();
+//    for (unsigned i=0; i<size(); ++i)
+//      cout<<result[i]<<" ";
+//    cout<<endl;
+#else
+    for (size_t i=0; i<size(); ++i)
+      eval(i, i+start);
+#endif
   }
   size_t size() const {return block.size();}
 };
@@ -199,18 +160,18 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
   // insert the single star graph
   starMap.emplace(EvalStack({0,setUnion},elemStars,2).stack.front(),1);
 
+  // make a device accessible copy;
+  ecolab::DeviceType<ElemStars> elemStars(this->elemStars);
   for (unsigned numStars=2; numStars<maxStars; ++numStars)
     {
-      // TODO - if using the precompute optimisation, these 2 decls will need to be pushed into next loop
-      EvalStack evalStack(Recipe(2*numStars-1), elemStars, 0);
-      BlockEvaluator block(1024, numStars,evalStack);
+      Pos pos(numStars);
       do
         {
           for (unsigned op=0; op<(1<<(numStars-1)); ++op)
             {
               Recipe recipe{0,1}; recipe.reserve(2*numStars-1);
               for (int i=2, opIdx=0, starIdx=2; i<2*numStars-1; ++i)
-                if (block.pos[starIdx]==i)
+                if (pos[starIdx]==i)
                   {
                     recipe.push_back(0);
                     ++starIdx;
@@ -223,23 +184,26 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
                       recipe.push_back(setUnion);
                     ++opIdx;
                   }
-              // now fill in star details.
-              for (unsigned i=0; i<block.numGraphs; i+=block.size())
+
+              EvalStack evalStack(recipe,*elemStars,0);
+              ecolab::DeviceType<BlockEvaluator> block(blockSize, numStars,pos,evalStack);
+
+              for (unsigned i=0; i<block->numGraphs; i+=block->size())
                 {
-#ifdef SYCL_LANGUAGE_VERSION
-                  block.alreadySeen.clear();
-                  for (auto& k: starMap) block.alreadySeen.push_back(k.first);
-#endif
-                  block.evalBlock(recipe,i);
-                  for (unsigned j=0; j<block.result.size(); ++j)
-                    if (i+j<block.numGraphs && block.result[j]!=noGraph)
-                      starMap.emplace(block.result[j], numStars);
+//#ifdef SYCL_LANGUAGE_VERSION
+//                  block.alreadySeen.clear();
+//                  for (auto& k: starMap) block.alreadySeen.push_back(k.first);
+//#endif
+                  block->evalBlock(i);
+                  for (unsigned j=0; j<block->result.size(); ++j)
+                    if (i+j<block->numGraphs && block->result[j]!=noGraph)
+                      starMap.emplace(block->result[j], numStars);
 //                  for (auto i: recipe)
 //                    cout<<i<<",";
 //                  cout<<endl;
                   }
             }
-        } while (block.pos.next());
+        } while (pos.next());
     }
 }
 
@@ -260,10 +224,12 @@ linkRep toLinkRep(const NautyRep& g)
   for (unsigned i=0; i<g.nodes(); ++i)
     for (unsigned j=0; j<g.nodes(); ++j)
       if (g(i,j))
-        if (j<i)
-          l|=1<<(i*(i-1)/2+j);
-        else if (i<j)
-          l|=1<<(j*(j-1)/2+i);
+        {
+          if (j<i)
+            l|=1<<(i*(i-1)/2+j);
+          else if (i<j)
+            l|=1<<(j*(j-1)/2+i);
+        }
         // else ignore self-links
   return l;
 }

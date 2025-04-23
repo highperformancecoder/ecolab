@@ -112,6 +112,7 @@ namespace ecolab
   template <class T>
   struct SyclType: public T
   {
+    template <class... A> SyclType(A... args): T(std::forward<A>(args)...) {}
 #ifdef SYCL_LANGUAGE_VERSION
     void* operator new(size_t s) {return reallocSycl(nullptr,s);}
     void operator delete(void* p) {reallocSycl(p,0);}
@@ -153,14 +154,15 @@ namespace ecolab
 
   
   template <class M>
-  struct DeviceType
+  class DeviceType
   {
-    using element_type=M;
     SyclType<M>* const model;
+  public:
+    using element_type=M;
     template <class... A>
     DeviceType(A... args): model(new SyclType<M>(std::forward<A>(args)...)) {}
-    DeviceType(const DeviceType& x) {*this=x;}
-    DeviceType& operator=(const DeviceType& x) {*model=x.*model; return *this;}
+    DeviceType(const DeviceType& x): model(new SyclType<M>(*x.model)) {}
+    DeviceType& operator=(const DeviceType& x) {*model=*x.model; return *this;}
     ~DeviceType() {delete model;}
     M& operator*() {return *model;}
     const M& operator*() const {return *model;}
@@ -169,6 +171,21 @@ namespace ecolab
     operator bool() const {return true;} // always defined
   };
 
+#ifdef SYCL_LANGUAGE_VERSION
+  using USMAlloc=sycl::usm::alloc;
+#else
+  using USMAlloc=int;
+#endif
+  
+  template <class T, ecolab::USMAlloc UA>
+  struct SyclQAllocator: public graphcode::Allocator<T>
+  {
+#ifdef SYCL_LANGUAGE_VERSION
+    SyclQAllocator(): graphcode::Allocator<T>(syclQ(), UA) {}
+#endif
+    template<class U> struct rebind {using other=SyclQAllocator;};
+  };
+  
   struct CellBase
   {
 #ifdef SYCL_LANGUAGE_VERSION

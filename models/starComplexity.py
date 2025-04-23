@@ -1,3 +1,6 @@
+import ecolab
+print(ecolab.device())
+
 from starComplexity import starC
 nodes=7
 # computed from max_{l\in[0,L]}min(n+L-l,2l) where L=n(n-1)/2
@@ -9,6 +12,8 @@ for l in range(L):
 
 print('maxStars=',maxStars)
 maxStars=9
+
+starC.blockSize(128)
 
 starC.generateElementaryStars(nodes)
 starC.fillStarMap(maxStars)
