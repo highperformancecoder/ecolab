@@ -42,56 +42,6 @@ inline unsigned countStars(const Recipe& recipe)
                     [](unsigned a, int i) {return a+(i>=0);});
 }
 
-struct EvalStack
-{
-  Recipe recipe;
-  vector<linkRep,Alloc<linkRep>> stack;
-  size_t stackTop=0;
-  const ElemStars& elemStars;
-  /// initialises the stack with the tresults of evaluating the first \a pre elements of \a recipe
-  EvalStack(const Recipe& recipe, const ElemStars& elemStars, size_t pre):
-    recipe(recipe), stack(recipe.size()), elemStars(elemStars)
-  {
-    if (pre>recipe.size()) pre=recipe.size();
-    if (pre) evalRecipe(0,pre);
-  }
-
-  linkRep evalRecipe(size_t start, size_t end)
-  {
-    for (auto op=recipe.begin()+start; op!=recipe.begin()+end; ++op)
-      switch (*op)
-        {
-      default:
-        assert(*op<elemStars.size());
-        assert(stackTop<stack.size());
-        stack[stackTop++]=elemStars[*op];
-        break;
-        case setUnion:
-          if (stackTop>1)
-            {
-            auto v=stack[--stackTop];
-            stack[stackTop-1]|=v;
-            }
-          break;
-        case setIntersection:
-        if (stackTop>1)
-          {
-            auto v=stack[--stackTop];
-            stack[stackTop-1]&=v;
-          }
-        break;
-        }
-    if (stackTop==0)
-      {
-        for (auto op: recipe)
-          syclPrintf("%d ",op);
-        syclPrintf("\n");
-      }
-    assert(stackTop>=1);
-    return stack[0];
-  }
-};
-
 // structure holding position vector of stars within a recipe
 struct Pos: public vector<int,Alloc<int>>
 {
@@ -109,6 +59,73 @@ struct Pos: public vector<int,Alloc<int>>
         return next(starIdx-1);
       }
     return true;
+  }
+};
+
+struct EvalStackData
+{
+  ElemStars elemStars;
+  Pos pos;
+  vector<unsigned,Alloc<unsigned>> range, stride;
+  unsigned numGraphs=1;
+
+  EvalStackData(const ElemStars&  elemStars, const Pos& pos, unsigned numStars):
+    elemStars(elemStars), pos(pos)
+  {
+    for (unsigned i=2; i<numStars; ++i)
+      {
+        range.push_back(min(unsigned(elemStars.size()),(i+1)));
+        stride.push_back(numGraphs);
+        numGraphs*=range.back();
+      }
+  }
+};
+
+struct EvalStack
+{
+  const EvalStackData& data;
+  vector<linkRep,Alloc<linkRep>> stack;
+  size_t stackTop=0;
+  EvalStack(const EvalStackData& data): data(data), stack(data.pos.size())  { }
+
+  // evaluate recipe encoded by the op bitset and index \a idx within enumeration of numGraphs
+  linkRep evalRecipe(unsigned op, unsigned idx)
+  {
+    stackTop=0;
+    for (unsigned p=0, opIdx=0, starIdx=2; p<2*data.pos.size()-1; ++p) // recipe.size()==2*data.pos.size()-1
+      if (p<2)
+        stack[stackTop++]=data.elemStars[p];
+      else if (starIdx<data.pos.size() && data.pos[starIdx]==p) // push a star, according to idx
+        {
+          stack[stackTop++]=data.elemStars[(idx/data.stride[starIdx-2])%data.range[starIdx-2]];
+          ++starIdx;
+        }
+      else
+        {
+          if (stackTop>1)
+            {
+              if (op&(1<<opIdx)) // set intersection
+                {
+                  auto v=stack[--stackTop];
+                  stack[stackTop-1]&=v;
+                }
+              else                   // set union
+                {
+                  auto v=stack[--stackTop];
+                  stack[stackTop-1]|=v;
+                }
+            }
+          ++opIdx;
+        }
+
+//    if (stackTop==0)
+//      {
+//        for (auto op: recipe)
+//          syclPrintf("%d ",op);
+//        syclPrintf("\n");
+//      }
+    assert(stackTop>=1);
+    return stack[0];
   }
 };
 
@@ -157,56 +174,40 @@ private:
 #ifdef SYCL_LANGUAGE_VERSION
 using Event=sycl::event;
 #else
-struct Event
-{
-  void wait() {}
+struct Event {
+  static void wait(const vector<Event>&) {}
 };
 #endif
 
-struct BlockEvaluator
+struct BlockEvaluator: public EvalStackData
 {
+
   vector<EvalStack,Alloc<EvalStack>> block;
-  // implement an output queue for the results
+  // an output queue for the results
   OutputBuffer result;
-  unsigned numGraphs=1;
-  vector<unsigned,Alloc<unsigned>> range, stride;
   vector<linkRep,Alloc<linkRep>> alreadySeen; // sorted list of graphs already visited
-  Pos pos;
-  BlockEvaluator(unsigned blockSize, unsigned numStars, const Pos& pos, const EvalStack& evalStack):
-    block(blockSize,evalStack), pos(pos)
+  BlockEvaluator(unsigned blockSize, unsigned numStars, const Pos& pos, const ElemStars& elemStars):
+    EvalStackData(elemStars, pos, numStars), block(blockSize,{*this})
+  {}
+
+  void eval(unsigned op, unsigned start, unsigned i)
   {
-    for (unsigned i=2; i<numStars; ++i)
+    if (i+start<numGraphs)
       {
-        range.push_back(min(unsigned(evalStack.elemStars.size()),(i+1)));
-        stride.push_back(numGraphs);
-        numGraphs*=range.back();
+        auto r=block[i].evalRecipe(op,i+start);
+        if (!binary_search(alreadySeen.begin(),alreadySeen.end(),r))
+          result.push_back(r);
       }
   }
-  void eval(size_t i, size_t idx) {
-    for (unsigned j=2; j<pos.size(); ++j)
-      block[i].recipe[pos[j]]=(idx/stride[j-2])%range[j-2];
-    block[i].stackTop=0;
-    auto r=block[i].evalRecipe(0, block[i].recipe.size());
-    result.push_back(r);
-//#ifdef SYCL_LANGUAGE_VERSION
-//    if (binary_search(alreadySeen.begin(),alreadySeen.end(),result[i]))
-//      result[i]=noGraph;
-//#endif
-  }
-  Event evalBlock(size_t start) {
+  Event evalBlock(unsigned op, unsigned start) {
     // this loop to be parallelised
 #ifdef SYCL_LANGUAGE_VERSION
-    return ecolab::syclQ().parallel_for(size(),[=,this](auto i) {
-      if (i+start<numGraphs)
-        eval(i,i+start);
-    });
+    return ecolab::syclQ().parallel_for(size(),[=,this](auto i) {eval(op,start,i);});
 //    for (unsigned i=0; i<size(); ++i)
 //      cout<<result[i]<<" ";
 //    cout<<endl;
 #else
-    for (size_t i=0; i<size(); ++i)
-      if (i+start<numGraphs)
-        eval(i, i+start);
+    for (size_t i=0; i<size(); ++i) eval(op,start,i);
     return {};
 #endif
   }
@@ -217,53 +218,33 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
 {
   if (elemStars.empty()) return;
   // insert the single star graph
-  starMap.emplace(EvalStack({0,setUnion},elemStars,2).stack.front(),1);
+  starMap.emplace(elemStars[0],1);
 
-  // make a device accessible copy;
-  ecolab::DeviceType<ElemStars> elemStars(this->elemStars);
   for (unsigned numStars=2; numStars<maxStars; ++numStars)
     {
       Pos pos(numStars);
       do
         {
+          ecolab::DeviceType<BlockEvaluator> block(blockSize, numStars,pos,elemStars);
+          vector<Event> events;
+          //#ifdef SYCL_LANGUAGE_VERSION
+          block->alreadySeen.clear();
+          for (auto& k: starMap) block->alreadySeen.push_back(k.first);
+          //#endif
           for (unsigned op=0; op<(1<<(numStars-1)); ++op)
             {
-              Recipe recipe{0,1}; recipe.reserve(2*numStars-1);
-              for (int i=2, opIdx=0, starIdx=2; i<2*numStars-1; ++i)
-                if (pos[starIdx]==i)
-                  {
-                    recipe.push_back(0);
-                    ++starIdx;
-                  }
-                else
-                  {
-                    if (op&(1<<opIdx))
-                      recipe.push_back(setIntersection);
-                    else
-                      recipe.push_back(setUnion);
-                    ++opIdx;
-                  }
-
-              EvalStack evalStack(recipe,*elemStars,0);
-              ecolab::DeviceType<BlockEvaluator> block(blockSize, numStars,pos,evalStack);
-
-              Event event;
-              for (unsigned i=0; i<block->numGraphs; i+=block->size(), event.wait())
-//#ifdef SYCL_LANGUAGE_VERSION
-//                  block.alreadySeen.clear();
-//                  for (auto& k: starMap) block.alreadySeen.push_back(k.first);
-//#endif
-                  event=block->evalBlock(i);
-              event.wait();
-              if (block->result.blown())
-                throw runtime_error("Output buffer blown");
+              for (unsigned i=0; i<block->numGraphs; i+=block->size())
+                events.emplace_back(block->evalBlock(op, i));
+            }
+          Event::wait(events);
+          if (block->result.blown())
+            throw runtime_error("Output buffer blown");
               
-              for (auto j: block->result)
-                starMap.emplace(j, numStars);
+          for (auto j: block->result)
+            starMap.emplace(j, numStars);
 //                  for (auto i: recipe)
 //                    cout<<i<<",";
 //                  cout<<endl;
-            }
         } while (pos.next());
     }
 }
