@@ -13,7 +13,7 @@ using Alloc=ecolab::SyclQAllocator<T, sycl::usm::alloc::shared>;
 template <class T> using Alloc=std::allocator<T>;
 #endif
 
-using ElemStars=std::vector<linkRep,Alloc<linkRep>>;
+using ElemStars=std::vector<linkRep>;
 
 struct StarComplexityGen
 {
