@@ -107,56 +107,60 @@ namespace ecolab
   extern bool syclQDestroyed;
   sycl::queue& syclQ();
   void* reallocSycl(void*,size_t);
+  using USMAlloc=sycl::usm::alloc;
+#else
+  enum class USMAlloc {host,device,shared,unknown};
 #endif
   
+  template <class T, ecolab::USMAlloc UA>
+  struct SyclQAllocator: public graphcode::Allocator<T>
+  {
+#ifdef SYCL_LANGUAGE_VERSION
+    SyclQAllocator(): graphcode::Allocator<T>(syclQ(), UA) {}
+#endif
+    template<class U> struct rebind {using other=SyclQAllocator;};
+  };
+
+  // new/delete definitions for standard GPU allocations
+  template <class T, USMAlloc A>
+  struct SyclTypeBase
+  {
+#ifdef SYCL_LANGUAGE_VERSION
+    void* operator new(size_t s) {return sycl::malloc<T>(s,syclQ(),A);}
+    void operator delete(void* p) {sycl::free(p,syclQ());}
+    void* operator new[](size_t s) {return sycl::malloc<T>(s,syclQ(),A);}
+    void operator delete[](void* p) {sycl::free(p,syclQ());}
+#endif
+  };
+
+  // For unknown, data is allocated on host
   template <class T>
-  struct SyclType: public T
+  struct SyclTypeBase<T, USMalloc::unknown>
+  {};
+
+  /// SyclType is a type that when allocated from standard "new" statements is allocated according to the \a A parameter
+  template <class T, USMAlloc A, class Enable=void> struct SyclType;
+  
+  template <class T, USMAlloc A=USMalloc::shared, class Enable=typename enable_if<is_class<T>,void>>
+  struct SyclType: public SyclTypeBase<T,A>, public T
   {
     template <class... A> SyclType(A... args): T(std::forward<A>(args)...) {}
-#ifdef SYCL_LANGUAGE_VERSION
-    void* operator new(size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete(void* p) {reallocSycl(p,0);}
-    void* operator new[](size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete[](void* p) {reallocSycl(p,0);}
-#endif
   };
 
-  template <>
-  struct SyclType<size_t>
+  template <class T, USMAlloc A=USMalloc::shared, class Enable=typename enable_if<Not<is_class<T>>,void>>
+  struct SyclType: public SyclTypeBase<T,A>, public T
   {
-    size_t data;
-    operator size_t() const {return data;}
-    operator size_t&() {return data;}
-    size_t operator=(size_t x) {return data=x;}
-#ifdef SYCL_LANGUAGE_VERSION
-    void* operator new(size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete(void* p) {reallocSycl(p,0);}
-    void* operator new[](size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete[](void* p) {reallocSycl(p,0);}
-#endif
-  };
-
-  template <class T>
-  struct SyclType<T*>
-  {
-    T* data;
-    operator T*() const {return data;}
-    operator T*&() {return data;}
-    T* operator=(T* x) {return data=x;}
-#ifdef SYCL_LANGUAGE_VERSION
-    void* operator new(size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete(void* p) {reallocSycl(p,0);}
-    void* operator new[](size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete[](void* p) {reallocSycl(p,0);}
-#endif
+    T data;
+    operator T() const {return data;}
+    operator T&() {return data;}
+    T operator=(T x) {return data=x;}
   };
 
 
-  
-  template <class M>
+  template <class M, USMAlloc A>
   class DeviceType
   {
-    SyclType<M>* const model;
+    SyclType<M,A>* const model;
   public:
     using element_type=M;
     template <class... A>
@@ -169,23 +173,61 @@ namespace ecolab
     M* operator->() {return model;}
     const M* operator->() const {return model;}
     operator bool() const {return true;} // always defined
+    void toDevice() {}
+    void toHost() {}
+    bool deviceAccessible() const {return A!=USMAlloc::unknown;}
   };
 
-#ifdef SYCL_LANGUAGE_VERSION
-  using USMAlloc=sycl::usm::alloc;
-#else
-  using USMAlloc=int;
-#endif
-  
-  template <class T, ecolab::USMAlloc UA>
-  struct SyclQAllocator: public graphcode::Allocator<T>
+  template <class M>
+  class DeviceType<M, USMalloc::device>
   {
+    M* const hostModel;
+    M* const deviceModel;
+    mutable bool onDevice=false; // updated by toDevice and toHost
+    M* mallocDevice() {
 #ifdef SYCL_LANGUAGE_VERSION
-    SyclQAllocator(): graphcode::Allocator<T>(syclQ(), UA) {}
+      return sycl::mallocDevice<T>(1,syclQ());
+#else
+      return nullptr;
+#endif      
+    }
+  public:
+    using element_type=M;
+    template <class... A>
+    DeviceType(A... args):
+      hostModel(new M(std::forward<A>(args)...)),
+      deviceModel(mallocDevice()) {}
+    DeviceType(const DeviceType& x): model(new M(*x)), deviceModel(mallocDevice()) {}
+    DeviceType& operator=(const DeviceType& x) {
+      toHost();
+      *hostModel=*x;
+      return *this;
+    }
+    ~DeviceType() {
+      toHost();
+      delete hostModel;
+#ifdef SYCL_LANGUAGE_VERSION
+      sycl::free(deviceModel,syclQ());
 #endif
-    template<class U> struct rebind {using other=SyclQAllocator;};
+    }
+    /// ensures data is accessible from host and returns reference
+    M& operator*() {toHost(); return *model;}
+    /// ensures data is accessible from host and returns reference
+    const M& operator*() const {toHost(); return *model;}
+    /// ensures data is accessible from device and returns reference
+    M& deviceRep() {toDevice(); return *deviceModel;}
+    /// ensures data is accessible from device and returns reference
+    const M& deviceRep() const {toDevice(); return *deviceModel;}
+    /// ensures data is accessible from host
+    M* operator->() {toHost(); return model;}
+    /// ensures data is accessible from host
+    const M* operator->() const {toHost(); return model;}
+    operator bool() const {return true;} // always defined
+    void toDevice() const;
+    void toHost() const;
+    bool deviceAccessible() const {return onDevice;}
   };
-  
+
   struct CellBase
   {
 #ifdef SYCL_LANGUAGE_VERSION

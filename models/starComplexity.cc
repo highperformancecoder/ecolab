@@ -14,6 +14,17 @@ CLASSDESC_PYTHON_MODULE(starComplexity);
 using namespace std;
 using ecolab::NautyRep;
 
+#ifdef SYCL_LANGUAGE_VERSION
+template <class T, sycl::usm::alloc A>
+using Alloc=ecolab::SyclQAllocator<T, A>;
+using sycl::usm::alloc::shared;
+using sycl::usm::alloc::device;
+using sycl::usm::alloc::unknown; // refers to host allocated memory only
+#else
+enum AllocType {shared, device, unknown};
+template <class T, AllocType> using Alloc=std::allocator<T>;
+#endif
+
 // generate a an edge between node i and j, non-directional
 linkRep edge(unsigned i, unsigned j)
 {
@@ -34,16 +45,9 @@ void StarComplexityGen::generateElementaryStars(unsigned nodes)
 }
 
 constexpr int setUnion=-2, setIntersection=-1;
-using Recipe=vector<int,Alloc<int>>;
-
-inline unsigned countStars(const Recipe& recipe)
-{
-  return accumulate(recipe.begin(), recipe.end(), 0U,
-                    [](unsigned a, int i) {return a+(i>=0);});
-}
 
 // structure holding position vector of stars within a recipe
-struct Pos: public vector<int,Alloc<int>>
+struct Pos: public vector<int,Alloc<int,device>>
 {
   Pos(int numStars) {
     assert(numStars>1);
@@ -182,8 +186,7 @@ struct Event {
 
 struct BlockEvaluator: public EvalStackData
 {
-
-  vector<EvalStack,Alloc<EvalStack>> block;
+  vector<EvalStack,Alloc<EvalStack,device>> block;
   // an output queue for the results
   OutputBuffer result;
   vector<linkRep,Alloc<linkRep>> alreadySeen; // sorted list of graphs already visited
