@@ -14,6 +14,13 @@ CLASSDESC_PYTHON_MODULE(starComplexity);
 using namespace std;
 using ecolab::NautyRep;
 
+#ifdef SYCL_LANGUAGE_VERSION
+template <class T>
+using Alloc=ecolab::SyclQAllocator<T, sycl::usm::alloc::shared>;
+#else
+template <class T> using Alloc=std::allocator<T>;
+#endif
+
 // generate a an edge between node i and j, non-directional
 linkRep edge(unsigned i, unsigned j)
 {
@@ -34,13 +41,6 @@ void StarComplexityGen::generateElementaryStars(unsigned nodes)
 }
 
 constexpr int setUnion=-2, setIntersection=-1;
-using Recipe=vector<int,Alloc<int>>;
-
-inline unsigned countStars(const Recipe& recipe)
-{
-  return accumulate(recipe.begin(), recipe.end(), 0U,
-                    [](unsigned a, int i) {return a+(i>=0);});
-}
 
 // structure holding position vector of stars within a recipe
 struct Pos: public vector<int,Alloc<int>>
