@@ -13,13 +13,14 @@ CLASSDESC_PYTHON_MODULE(starComplexity);
 
 using namespace std;
 using ecolab::NautyRep;
+using ecolab::USMAlloc;
 
 #ifdef SYCL_LANGUAGE_VERSION
 using ecolab::syclQ;
-template <class T>
-using Alloc=ecolab::SyclQAllocator<T, sycl::usm::alloc::shared>;
+template <class T, USMAlloc A=USMAlloc::shared>
+using Alloc=ecolab::SyclQAllocator<T, A>;
 #else
-template <class T> using Alloc=std::allocator<T>;
+template <class T, USMAlloc A=USMAlloc::shared> using Alloc=std::allocator<T>;
 #endif
 
 // generate a an edge between node i and j, non-directional
@@ -106,7 +107,7 @@ public:
 
 #if defined(SYCL_LANGUAGE_VERSION) && !defined(__SYCL_DEVICE_ONLY__)
   int& operator[](size_t i) {return hostCopy[i];}
-  int operator[](size_t i) const {return hostCopy[i];}
+  const int& operator[](size_t i) const {return hostCopy[i];}
 #endif
 
   bool next() {
@@ -160,20 +161,28 @@ struct EvalStack
   linkRep evalRecipe(unsigned op, unsigned idx)
   {
     stackTop=0;
-    for (unsigned p=0, opIdx=0, starIdx=2; p<2*data.pos.size()-1; ++p) // recipe.size()==2*data.pos.size()-1
+    auto numStars=data.pos.size();
+    auto recipeSize=2*numStars-1;
+    auto pos=&data.pos[0];
+    auto elemStars=&data.elemStars[0];
+    auto range=&data.range[0];
+    auto stride=&data.stride[0];
+    auto stack=&this->stack[0];
+    for (unsigned p=0, opIdx=0, starIdx=2; p<recipeSize; ++p) // recipe.size()==2*data.pos.size()-1
       if (p<2)
-        stack[stackTop++]=data.elemStars[p];
-      else if (starIdx<data.pos.size() && data.pos[starIdx]==p) // push a star, according to idx
+        stack[stackTop++]=elemStars[p];
+      else if (starIdx<numStars && pos[starIdx]==p) // push a star, according to idx
         {
           assert(starIdx<data.range.size()+2 && starIdx<data.stride.size()+2);
           assert((idx/data.stride[starIdx-2])%data.range[starIdx-2]<data.elemStars.size());
-          assert(stackTop<stack.size());
-          stack[stackTop++]=data.elemStars[(idx/data.stride[starIdx-2])%data.range[starIdx-2]];
+          assert(stackTop<numStars);
+          if (stackTop<numStars)
+            stack[stackTop++]=elemStars[(idx/stride[starIdx-2])%range[starIdx-2]];
           ++starIdx;
         }
       else
         {
-          if (stackTop>1)
+          if (stackTop>1 && stackTop<=numStars)
             {
               if (op&(1<<opIdx)) // set intersection
                 {
@@ -205,9 +214,8 @@ constexpr linkRep noGraph=~linkRep(0);
 
 class OutputBuffer
 {
-  linkRep data[1000000];
-  bool m_blown=false;
 public:
+  static constexpr size_t maxQ=1000000;
   using size_type=unsigned;
   using iterator=linkRep*;
   // push_back is GPU/CPU thread-safe
@@ -238,6 +246,8 @@ public:
   bool blown() const {return m_blown;}
 private:
   size_type writePtr=0;
+  linkRep data[maxQ];
+  bool m_blown=false;
 };
 
 #ifdef SYCL_LANGUAGE_VERSION
@@ -253,12 +263,20 @@ struct BlockEvaluator: public EvalStackData
 
   vector<EvalStack,Alloc<EvalStack>> block;
   // an output queue for the results
-  vector<OutputBuffer,Alloc<OutputBuffer>> result;
+  vector<OutputBuffer,Alloc<OutputBuffer,USMAlloc::device>> result;
   vector<linkRep,Alloc<linkRep>> alreadySeen; // sorted list of graphs already visited
   BlockEvaluator(unsigned blockSize, unsigned numStars, const ElemStars& elemStars):
-    EvalStackData(elemStars, numStars), result(blockSize)
+    EvalStackData(elemStars, numStars)
   {
     for (size_t i=0; i<blockSize; ++i) block.emplace_back(*this);
+    result.reserve(blockSize);
+    auto initResult=[this]() {new (result.data())OutputBuffer[result.size()];};
+#ifdef SYCL_LANGUAGE_VERSION
+    syclQ().single_task(initResult).wait();
+#else
+    initResult();
+#endif
+
   }
 
   void eval(unsigned op, unsigned start, unsigned i)
@@ -280,6 +298,15 @@ struct BlockEvaluator: public EvalStackData
 #else
     for (size_t i=0; i<size(); ++i) eval(op,start,i);
     return {};
+#endif
+  }
+  vector<OutputBuffer> getResults() {
+#ifdef SYCL_LANGUAGE_VERSION
+    vector<OutputBuffer> r(result.size());
+    syclQ().copy(result.data(),r.data(),result.size()).wait();
+    return r;
+#else
+    return result;
 #endif
   }
   size_t size() const {return block.size();}
@@ -309,7 +336,7 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
           }
         Event::wait(events);
         
-        for (auto& j: block->result)
+        for (auto& j: block->getResults())
           {
             if (j.blown())
               throw runtime_error("Output buffer blown");

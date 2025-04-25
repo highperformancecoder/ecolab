@@ -34,6 +34,7 @@ inline sycl::sub_group syclSubGroup() {return sycl::ext::oneapi::this_work_item:
 #include <stdlib.h>
 #include "pythonBuffer.h"
 #include "graphcode.h"
+#include "usmAlloc.h"
 
 // mpi.h must appear before any standard library stuff
 #ifdef MPI_SUPPORT
@@ -171,12 +172,6 @@ namespace ecolab
     operator bool() const {return true;} // always defined
   };
 
-#ifdef SYCL_LANGUAGE_VERSION
-  using USMAlloc=sycl::usm::alloc;
-#else
-  using USMAlloc=int;
-#endif
-  
   template <class T, ecolab::USMAlloc UA>
   struct SyclQAllocator: public graphcode::Allocator<T>
   {
