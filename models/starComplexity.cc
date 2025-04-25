@@ -205,7 +205,7 @@ constexpr linkRep noGraph=~linkRep(0);
 
 class OutputBuffer
 {
-  linkRep data[100000000];
+  linkRep data[1000000];
   bool m_blown=false;
 public:
   using size_type=unsigned;
@@ -215,17 +215,17 @@ public:
     
     size_type curr=writePtr, next;
    
-#ifdef SYCL_LANGUAGE_VERSION
-    sycl::atomic_ref<size_type,sycl::memory_order::seq_cst,
-                     sycl::memory_scope::device> writeIdx(writePtr);
-    do
-      {
-        curr=writeIdx;
-        next=curr+1;
-      } while (!writeIdx.compare_exchange_weak(curr,next));
-#else
+//#ifdef SYCL_LANGUAGE_VERSION
+//    sycl::atomic_ref<size_type,sycl::memory_order::seq_cst,
+//                     sycl::memory_scope::device> writeIdx(writePtr);
+//    do
+//      {
+//        curr=writeIdx;
+//        next=curr+1;
+//      } while (!writeIdx.compare_exchange_weak(curr,next));
+//#else
     writePtr=curr+1;
-#endif
+    //#endif
     if (curr<sizeof(data)/sizeof(data[0]))
       data[curr]=x;
     else // buffer full!
@@ -253,10 +253,10 @@ struct BlockEvaluator: public EvalStackData
 
   vector<EvalStack,Alloc<EvalStack>> block;
   // an output queue for the results
-  OutputBuffer result;
+  vector<OutputBuffer,Alloc<OutputBuffer>> result;
   vector<linkRep,Alloc<linkRep>> alreadySeen; // sorted list of graphs already visited
   BlockEvaluator(unsigned blockSize, unsigned numStars, const ElemStars& elemStars):
-    EvalStackData(elemStars, numStars)
+    EvalStackData(elemStars, numStars), result(blockSize)
   {
     for (size_t i=0; i<blockSize; ++i) block.emplace_back(*this);
   }
@@ -267,7 +267,7 @@ struct BlockEvaluator: public EvalStackData
       {
         auto r=block[i].evalRecipe(op,i+start);
         if (!binary_search(alreadySeen.begin(),alreadySeen.end(),r))
-          result.push_back(r);
+          result[i].push_back(r);
       }
   }
   Event evalBlock(unsigned op, unsigned start) {
@@ -308,11 +308,14 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
               events.emplace_back(block->evalBlock(op, i));
           }
         Event::wait(events);
-        if (block->result.blown())
-          throw runtime_error("Output buffer blown");
         
-        for (auto j: block->result)
-          starMap.emplace(j, numStars);
+        for (auto& j: block->result)
+          {
+            if (j.blown())
+              throw runtime_error("Output buffer blown");
+            for (auto k: j)
+              starMap.emplace(k, numStars);
+          }
       } while (false/*block->pos.next()*/);
     //                  for (auto i: recipe)
     //                    cout<<i<<",";
