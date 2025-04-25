@@ -19,4 +19,5 @@ starC.blockSize(4096)
 
 starC.generateElementaryStars(nodes)
 starC.fillStarMap(maxStars)
-starC.canonicaliseStarMap();
+starC.canonicaliseStarMap()
+print(starC.starMap())

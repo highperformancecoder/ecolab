@@ -215,39 +215,21 @@ constexpr linkRep noGraph=~linkRep(0);
 class OutputBuffer
 {
 public:
-  static constexpr size_t maxQ=1000000;
+  static constexpr size_t maxQ=250000;
   using size_type=unsigned;
   using iterator=linkRep*;
-  // push_back is GPU/CPU thread-safe
   void push_back(linkRep x) {
-    
-    size_type curr=writePtr, next;
-   
-//#ifdef SYCL_LANGUAGE_VERSION
-//    sycl::atomic_ref<size_type,sycl::memory_order::seq_cst,
-//                     sycl::memory_scope::device> writeIdx(writePtr);
-//    do
-//      {
-//        curr=writeIdx;
-//        next=curr+1;
-//      } while (!writeIdx.compare_exchange_weak(curr,next));
-//#else
-    writePtr=curr+1;
-    //#endif
-    if (curr<sizeof(data)/sizeof(data[0]))
-      data[curr]=x;
-    else // buffer full!
-      m_blown=true;
+    if (writePtr<maxQ)
+      data[writePtr++]=x;
   }
   linkRep operator[](size_t i) const {return data[i];}
   size_type size() const {return writePtr;}
   iterator begin() {return data;}
   iterator end() {return data+size();}
-  bool blown() const {return m_blown;}
+  bool blown() const {return writePtr>=maxQ;}
 private:
   size_type writePtr=0;
   linkRep data[maxQ];
-  bool m_blown=false;
 };
 
 #ifdef SYCL_LANGUAGE_VERSION
@@ -302,8 +284,13 @@ struct BlockEvaluator: public EvalStackData
   }
   vector<OutputBuffer> getResults() {
 #ifdef SYCL_LANGUAGE_VERSION
-    vector<OutputBuffer> r(result.size());
-    syclQ().copy(result.data(),r.data(),result.size()).wait();
+    vector<OutputBuffer> r(block.size());
+    for (auto& i: r) cout<<i.size()<<" ";
+    cout<<endl;
+    syclQ().copy(result.data(),r.data(),r.size()).wait();
+    cout<<"after copy"<<endl;
+    for (auto& i: r) cout<<i.size()<<" ";
+    cout<<endl;
     return r;
 #else
     return result;
@@ -341,7 +328,7 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
             if (j.blown())
               throw runtime_error("Output buffer blown");
             for (auto k: j)
-              starMap.emplace(k, numStars);
+              starMap.emplace(k, GraphComplexity{numStars,0.0});
           }
       } while (false/*block->pos.next()*/);
     //                  for (auto i: recipe)
@@ -386,10 +373,11 @@ void StarComplexityGen::canonicaliseStarMap()
       if (c!=i->first)
         {
           auto& starC=starMap[c];
-          starC=starC>0? min(starC, i->second): i->second;
-          //i=starMap.erase(i);
+          starC.star=starC.star>0? min(starC.star, i->second.star): i->second.star;
           toErase.push_back(i->first);
         }
     }
   for (auto i: toErase) starMap.erase(i);
+  for (auto& i: starMap)
+    i.second.complexity=complexity(toNautyRep(i.first, elemStars.size()),true);
 }
