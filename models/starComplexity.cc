@@ -15,6 +15,7 @@ using namespace std;
 using ecolab::NautyRep;
 
 #ifdef SYCL_LANGUAGE_VERSION
+using ecolab::syclQ;
 template <class T>
 using Alloc=ecolab::SyclQAllocator<T, sycl::usm::alloc::shared>;
 #else
@@ -42,49 +43,116 @@ void StarComplexityGen::generateElementaryStars(unsigned nodes)
 
 constexpr int setUnion=-2, setIntersection=-1;
 
-// structure holding position vector of stars within a recipe
-struct Pos: public vector<int,Alloc<int>>
+// creates a uninitialised array on device
+#ifdef SYCL_LANGUAGE_VERSION
+template <class T>
+class  DeviceArray
 {
-  Pos(int numStars) {
-    assert(numStars>1);
-    for (int i=0; i<numStars; ++i) push_back(i);
+  T* data;
+  size_t m_size;
+  DeviceArray(const DeviceArray&)=delete;
+  void operator=(const DeviceArray&)=delete;
+public:
+  DeviceArray(size_t size=0): m_size(size) {
+    data=sycl::malloc_device<T>(size,syclQ());
   }
-  bool next() {return next(size()-1);}
+  ~DeviceArray() {dealloc();}
+  void dealloc() {
+    sycl::free(data,syclQ());
+  }
+  DeviceArray(DeviceArray&& x): data(x.data), m_size(x.m_size) {x.data=nullptr; x.m_size=0;}
+  DeviceArray& operator=(DeviceArray&& x) {dealloc(); data=x.data; m_size=x.m_size; x.data=nullptr; x.m_size=0; return *this;}
+  T& operator[](size_t i) {return data[i];}
+  const T& operator[](size_t i) const {return data[i];}
+  size_t size() const {return m_size;}
+  T* begin() {return data;}
+  T* end() {return data+m_size;}
+};
+#else
+template <class T> using DeviceArray=vector<T>;
+#endif
+
+// structure holding position vector of stars within a recipe
+class Pos: public DeviceArray<int>
+{
+  vector<int> hostCopy; // shadow data on host
   bool next(int starIdx) {
     if (starIdx==1) return false;
     auto& p=operator[](starIdx);
+    auto& p1=operator[](starIdx-1);
     if (++p>2*starIdx-1) // exhausted positions, move next star down
       {
-        p=operator[](starIdx-1)+1;
+        p=p1+1;
         return next(starIdx-1);
       }
     return true;
+  }
+  void copy() {
+#ifdef SYCL_LANGUAGE_VERSION
+    syclQ().copy(hostCopy.data(), begin(), size()).wait();
+#endif
+  }
+public:
+  Pos(int numStars): DeviceArray<int>(numStars) {
+    assert(numStars>1);
+    for (int i=0; i<numStars; ++i) hostCopy.push_back(i);
+#ifdef SYCL_LANGUAGE_VERSION
+    copy();
+#else
+    swap(hostCopy);
+#endif
+  }
+
+
+#if defined(SYCL_LANGUAGE_VERSION) && !defined(__SYCL_DEVICE_ONLY__)
+  int& operator[](size_t i) {return hostCopy[i];}
+  int operator[](size_t i) const {return hostCopy[i];}
+#endif
+
+  bool next() {
+    auto r=next(size()-1);
+    copy();
+    return r;
+  }
+  void print() const {
+    for (size_t i=0; i<size(); ++i)
+      cout << operator[](i) << " ";
+    cout << endl;
   }
 };
 
 struct EvalStackData
 {
-  ElemStars elemStars;
+  DeviceArray<linkRep> elemStars;
   Pos pos;
-  vector<unsigned,Alloc<unsigned>> range, stride;
+  DeviceArray<unsigned> range, stride;
   unsigned numGraphs=1;
 
   EvalStackData(const ElemStars&  elemStars, unsigned numStars):
-    elemStars(elemStars), pos(numStars)
+    elemStars(elemStars.size()), pos(numStars), range(numStars-2), stride(numStars-2)
   {
-    for (unsigned i=2; i<numStars; ++i)
-      {
-        range.push_back(min(unsigned(elemStars.size()),(i+1)));
-        stride.push_back(numGraphs);
-        numGraphs*=range.back();
-      }
+    auto init=[numStars, numNodes=elemStars.size(), this]() {
+      for (unsigned i=2; i<numStars; ++i)
+        {
+          range[i-2]=min(unsigned(numNodes),(i+1));
+          stride[i-2]=numGraphs;
+          numGraphs*=range[i-2];
+        }
+    };
+#ifdef SYCL_LANGUAGE_VERSION
+    syclQ().copy(elemStars.data(), this->elemStars.begin(), elemStars.size());
+    syclQ().single_task(init);
+    syclQ().wait();
+#else
+    init();
+#endif
   }
 };
 
 struct EvalStack
 {
   const EvalStackData& data;
-  vector<linkRep,Alloc<linkRep>> stack;
+  DeviceArray<linkRep> stack;
   size_t stackTop=0;
   EvalStack(const EvalStackData& data): data(data), stack(data.pos.size())  { }
 
@@ -188,8 +256,10 @@ struct BlockEvaluator: public EvalStackData
   OutputBuffer result;
   vector<linkRep,Alloc<linkRep>> alreadySeen; // sorted list of graphs already visited
   BlockEvaluator(unsigned blockSize, unsigned numStars, const ElemStars& elemStars):
-    EvalStackData(elemStars, numStars), block(blockSize,{*this})
-  {}
+    EvalStackData(elemStars, numStars)
+  {
+    for (size_t i=0; i<blockSize; ++i) block.emplace_back(*this);
+  }
 
   void eval(unsigned op, unsigned start, unsigned i)
   {
@@ -237,13 +307,13 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
             for (unsigned i=0; i<block->numGraphs; i+=block->size())
               events.emplace_back(block->evalBlock(op, i));
           }
-      } while (block->pos.next());
-    Event::wait(events);
-    if (block->result.blown())
-      throw runtime_error("Output buffer blown");
-    
-    for (auto j: block->result)
-      starMap.emplace(j, numStars);
+        Event::wait(events);
+        if (block->result.blown())
+          throw runtime_error("Output buffer blown");
+        
+        for (auto j: block->result)
+          starMap.emplace(j, numStars);
+      } while (false/*block->pos.next()*/);
     //                  for (auto i: recipe)
     //                    cout<<i<<",";
     //                  cout<<endl;

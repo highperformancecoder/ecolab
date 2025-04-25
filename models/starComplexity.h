@@ -6,13 +6,6 @@ using linkRep=unsigned;
 
 #include "ecolab.h"
 
-#ifdef SYCL_LANGUAGE_VERSION
-template <class T>
-using Alloc=ecolab::SyclQAllocator<T, sycl::usm::alloc::shared>;
-#else
-template <class T> using Alloc=std::allocator<T>;
-#endif
-
 using ElemStars=std::vector<linkRep>;
 
 struct StarComplexityGen
