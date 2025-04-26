@@ -261,36 +261,34 @@ struct BlockEvaluator: public EvalStackData
 
   }
 
-  void eval(unsigned op, unsigned start, unsigned i)
+  void eval(unsigned start, unsigned i)
   {
     if (i+start<numGraphs)
       {
-        auto r=block[i].evalRecipe(op,i+start);
-        if (!binary_search(alreadySeen.begin(),alreadySeen.end(),r))
-          result[i].push_back(r);
+        for (unsigned op=0; op<(1<<(pos.size()-1)); ++op)
+          {
+            auto r=block[i].evalRecipe(op,i+start);
+            if (!binary_search(alreadySeen.begin(),alreadySeen.end(),r))
+              result[i].push_back(r);
+          }
       }
   }
-  Event evalBlock(unsigned op, unsigned start) {
+  Event evalBlock(unsigned start) {
     // this loop to be parallelised
 #ifdef SYCL_LANGUAGE_VERSION
-    return ecolab::syclQ().parallel_for(size(),[=,this](auto i) {eval(op,start,i);});
+    return ecolab::syclQ().parallel_for(size(),[=,this](auto i) {eval(start,i);});
 //    for (unsigned i=0; i<size(); ++i)
 //      cout<<result[i]<<" ";
 //    cout<<endl;
 #else
-    for (size_t i=0; i<size(); ++i) eval(op,start,i);
+    for (size_t i=0; i<size(); ++i) eval(start,i);
     return {};
 #endif
   }
   vector<OutputBuffer> getResults() {
 #ifdef SYCL_LANGUAGE_VERSION
     vector<OutputBuffer> r(block.size());
-    for (auto& i: r) cout<<i.size()<<" ";
-    cout<<endl;
     syclQ().copy(result.data(),r.data(),r.size()).wait();
-    cout<<"after copy"<<endl;
-    for (auto& i: r) cout<<i.size()<<" ";
-    cout<<endl;
     return r;
 #else
     return result;
@@ -316,11 +314,8 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
         block->alreadySeen.clear();
         for (auto& k: starMap) block->alreadySeen.push_back(k.first);
         //#endif
-        for (unsigned op=0; op<(1<<(numStars-1)); ++op)
-          {
-            for (unsigned i=0; i<block->numGraphs; i+=block->size())
-              events.emplace_back(block->evalBlock(op, i));
-          }
+        for (unsigned i=0; i<block->numGraphs; i+=block->size())
+          events.emplace_back(block->evalBlock(i));
         Event::wait(events);
         
         for (auto& j: block->getResults())
