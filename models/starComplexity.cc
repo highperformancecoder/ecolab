@@ -169,7 +169,6 @@ struct EvalStack
     linkRep elemStars[maxNodes];
     memcpy(elemStars,&data.elemStars[0],nodes);
     auto pos=&data.pos[0]; // curiously stack copy of pos is worse than accessing the local heap
-    //auto stack=&this->stack[0];
     linkRep stack[maxStars]; // suitable up to 10 node networks
     for (unsigned p=0, opIdx=0, starIdx=2, range=3; p<recipeSize; ++p) // recipe.size()==2*data.pos.size()-1
       if (p<2)
@@ -298,10 +297,10 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
 {
   if (elemStars.empty()) return;
   // insert the single star graph
-  starMap.emplace(elemStars[0],1);
+  starMap.emplace(elemStars[0],GraphComplexity{1,0.0});
 
-  //  for (unsigned numStars=2; numStars<=maxStars; ++numStars)
-  unsigned numStars=maxStars;
+  for (unsigned numStars=2; numStars<=maxStars; ++numStars)
+  //unsigned numStars=maxStars;
   {
     ecolab::DeviceType<BlockEvaluator> block(blockSize, numStars,elemStars);
     vector<Event> events;
@@ -322,7 +321,7 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
             for (auto k: j)
               starMap.emplace(k, GraphComplexity{numStars,0.0});
           }
-      } while (false/*block->pos.next()*/);
+      } while (block->pos.next());
     //                  for (auto i: recipe)
     //                    cout<<i<<",";
     //                  cout<<endl;
