@@ -153,31 +153,34 @@ struct EvalStackData
 struct EvalStack
 {
   const EvalStackData& data;
-  DeviceArray<linkRep> stack;
-  size_t stackTop=0;
-  EvalStack(const EvalStackData& data): data(data), stack(data.pos.size())  { }
+  EvalStack(const EvalStackData& data): data(data)/*, stack(data.pos.size())*/  { }
 
   // evaluate recipe encoded by the op bitset and index \a idx within enumeration of numGraphs
   linkRep evalRecipe(unsigned op, unsigned idx)
   {
-    stackTop=0;
+    unsigned stackTop=0;
+    auto nodes=data.elemStars.size();
     auto numStars=data.pos.size();
     auto recipeSize=2*numStars-1;
-    auto pos=&data.pos[0];
-    auto elemStars=&data.elemStars[0];
-    auto range=&data.range[0];
-    auto stride=&data.stride[0];
-    auto stack=&this->stack[0];
-    for (unsigned p=0, opIdx=0, starIdx=2; p<recipeSize; ++p) // recipe.size()==2*data.pos.size()-1
+
+    // create stack copies of arrays
+    constexpr unsigned maxNodes=10, maxStars=2*maxNodes-1;
+    assert(nodes<=maxNodes);
+    linkRep elemStars[maxNodes];
+    memcpy(elemStars,&data.elemStars[0],nodes);
+    auto pos=&data.pos[0]; // curiously stack copy of pos is worse than accessing the local heap
+    //auto stack=&this->stack[0];
+    linkRep stack[maxStars]; // suitable up to 10 node networks
+    for (unsigned p=0, opIdx=0, starIdx=2, range=3; p<recipeSize; ++p) // recipe.size()==2*data.pos.size()-1
       if (p<2)
         stack[stackTop++]=elemStars[p];
       else if (starIdx<numStars && pos[starIdx]==p) // push a star, according to idx
         {
-          assert(starIdx<data.range.size()+2 && starIdx<data.stride.size()+2);
-          assert((idx/data.stride[starIdx-2])%data.range[starIdx-2]<data.elemStars.size());
           assert(stackTop<numStars);
           if (stackTop<numStars)
-            stack[stackTop++]=elemStars[(idx/stride[starIdx-2])%range[starIdx-2]];
+            stack[stackTop++]=elemStars[idx%range];
+          idx/=range;
+          if (range<nodes) ++range;
           ++starIdx;
         }
       else
@@ -198,12 +201,6 @@ struct EvalStack
           ++opIdx;
         }
 
-//    if (stackTop==0)
-//      {
-//        for (auto op: recipe)
-//          syclPrintf("%d ",op);
-//        syclPrintf("\n");
-//      }
     assert(stackTop>=1);
     return stack[0];
   }

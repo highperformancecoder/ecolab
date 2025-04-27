@@ -15,6 +15,7 @@ maxStars=10
 
 #starC.blockSize(256)
 starC.blockSize(4096)
+#starC.blockSize(2048)
 #starC.blockSize(40320)
 
 starC.generateElementaryStars(nodes)
