@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <time.h>
 
 StarComplexityGen starC;
 CLASSDESC_ADD_GLOBAL(starC);
@@ -126,27 +127,18 @@ struct EvalStackData
 {
   DeviceArray<linkRep> elemStars;
   Pos pos;
-  DeviceArray<unsigned> range, stride;
   unsigned numGraphs=1;
 
   EvalStackData(const ElemStars&  elemStars, unsigned numStars):
-    elemStars(elemStars.size()), pos(numStars), range(numStars-2), stride(numStars-2)
+    elemStars(elemStars.size()), pos(numStars)
   {
-    auto init=[numStars, numNodes=elemStars.size(), this]() {
-      for (unsigned i=2; i<numStars; ++i)
-        {
-          range[i-2]=min(unsigned(numNodes),(i+1));
-          stride[i-2]=numGraphs;
-          numGraphs*=range[i-2];
-        }
-    };
+    for (unsigned i=2; i<numStars; ++i)
+      numGraphs*=min(unsigned(elemStars.size()),(i+1));
 #ifdef SYCL_LANGUAGE_VERSION
     syclQ().copy(elemStars.data(), this->elemStars.begin(), elemStars.size());
-    syclQ().single_task(init);
     syclQ().wait();
 #else
     this->elemStars=elemStars;
-    init();
 #endif
   }
 };
@@ -154,7 +146,7 @@ struct EvalStackData
 struct EvalStack
 {
   const EvalStackData& data;
-  EvalStack(const EvalStackData& data): data(data)/*, stack(data.pos.size())*/  { }
+  EvalStack(const EvalStackData& data): data(data)  { }
 
   // evaluate recipe encoded by the op bitset and index \a idx within enumeration of numGraphs
   linkRep evalRecipe(unsigned op, unsigned idx)
@@ -225,6 +217,7 @@ public:
   iterator begin() {return data;}
   iterator end() {return data+size();}
   bool blown() const {return writePtr>=maxQ;}
+  void reset() {writePtr=0;}
 private:
   size_type writePtr=0;
   linkRep data[maxQ];
@@ -243,17 +236,14 @@ struct BlockEvaluator: public EvalStackData
 
   vector<EvalStack,Alloc<EvalStack>> block;
   // an output queue for the results
-  vector<OutputBuffer,Alloc<OutputBuffer,USMAlloc::device>> result;
+  DeviceArray<OutputBuffer> result;
   vector<linkRep,Alloc<linkRep>> alreadySeen; // sorted list of graphs already visited
   BlockEvaluator(unsigned blockSize, unsigned numStars, const ElemStars& elemStars):
-    EvalStackData(elemStars, numStars)
+    EvalStackData(elemStars, numStars), result(blockSize)
   {
     for (size_t i=0; i<blockSize; ++i) block.emplace_back(*this);
 #ifdef SYCL_LANGUAGE_VERSION
-    result.reserve(blockSize);
-    syclQ().single_task([this]() {new (result.data())OutputBuffer[result.size()];}).wait();
-#else
-    result.resize(blockSize);
+    syclQ().parallel_for(blockSize,[=,this](auto i) {result[i].reset();}).wait();
 #endif
 
   }
@@ -262,7 +252,8 @@ struct BlockEvaluator: public EvalStackData
   {
     if (i+start<numGraphs)
       {
-        for (unsigned op=0; op<(1<<(pos.size()-1)); ++op)
+        auto numOps=1<<(pos.size()-1);
+        for (unsigned op=0; op<numOps; ++op)
           {
             auto r=block[i].evalRecipe(op,i+start);
             if (!binary_search(alreadySeen.begin(),alreadySeen.end(),r))
@@ -282,9 +273,11 @@ struct BlockEvaluator: public EvalStackData
   vector<OutputBuffer> getResults() {
 #ifdef SYCL_LANGUAGE_VERSION
     vector<OutputBuffer> r(block.size());
-    syclQ().copy(result.data(),r.data(),r.size()).wait();
+    auto copied=syclQ().copy(result.begin(),r.data(),r.size());
+    syclQ().parallel_for(r.size(),[this](auto i){result[i].reset();}).wait();
     return r;
 #else
+    for (auto& i: result) i.reset();
     return result;
 #endif
   }
@@ -299,11 +292,13 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
 
   for (unsigned numStars=2; numStars<=maxStars; ++numStars)
   //unsigned numStars=maxStars;
+  //int numLoops=10;
   {
     ecolab::DeviceType<BlockEvaluator> block(blockSize, numStars,elemStars);
     vector<Event> events;
     do
       {
+        auto start=time(nullptr);
         #ifdef SYCL_LANGUAGE_VERSION
         block->alreadySeen.clear();
         for (auto& k: starMap) block->alreadySeen.push_back(k.first);
@@ -319,7 +314,8 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
             for (auto k: j)
               starMap.emplace(k, GraphComplexity{numStars,0.0});
           }
-      } while (block->pos.next());
+        cout<<(time(nullptr)-start)<<"secs\n";
+      } while (block->pos.next()/* && --numLoops>0*/);
   }
 }
 
