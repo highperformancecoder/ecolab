@@ -145,6 +145,7 @@ struct EvalStackData
     syclQ().single_task(init);
     syclQ().wait();
 #else
+    this->elemStars=elemStars;
     init();
 #endif
   }
@@ -167,7 +168,7 @@ struct EvalStack
     constexpr unsigned maxNodes=10, maxStars=2*maxNodes-1;
     assert(nodes<=maxNodes);
     linkRep elemStars[maxNodes];
-    memcpy(elemStars,&data.elemStars[0],nodes);
+    memcpy(elemStars,&data.elemStars[0],nodes*sizeof(linkRep));
     auto pos=&data.pos[0]; // curiously stack copy of pos is worse than accessing the local heap
     linkRep stack[maxStars]; // suitable up to 10 node networks
     for (unsigned p=0, opIdx=0, starIdx=2, range=3; p<recipeSize; ++p) // recipe.size()==2*data.pos.size()-1
@@ -176,9 +177,10 @@ struct EvalStack
       else if (starIdx<numStars && pos[starIdx]==p) // push a star, according to idx
         {
           assert(stackTop<numStars);
+          auto divResult=div(int(idx), int(range));
           if (stackTop<numStars)
-            stack[stackTop++]=elemStars[idx%range];
-          idx/=range;
+            stack[stackTop++]=elemStars[divResult.rem];
+          idx=divResult.quot;
           if (range<nodes) ++range;
           ++starIdx;
         }
@@ -247,12 +249,11 @@ struct BlockEvaluator: public EvalStackData
     EvalStackData(elemStars, numStars)
   {
     for (size_t i=0; i<blockSize; ++i) block.emplace_back(*this);
-    result.reserve(blockSize);
-    auto initResult=[this]() {new (result.data())OutputBuffer[result.size()];};
 #ifdef SYCL_LANGUAGE_VERSION
-    syclQ().single_task(initResult).wait();
+    result.reserve(blockSize);
+    syclQ().single_task([this]() {new (result.data())OutputBuffer[result.size()];}).wait();
 #else
-    initResult();
+    result.resize(blockSize);
 #endif
 
   }
@@ -273,9 +274,6 @@ struct BlockEvaluator: public EvalStackData
     // this loop to be parallelised
 #ifdef SYCL_LANGUAGE_VERSION
     return ecolab::syclQ().parallel_for(size(),[=,this](auto i) {eval(start,i);});
-//    for (unsigned i=0; i<size(); ++i)
-//      cout<<result[i]<<" ";
-//    cout<<endl;
 #else
     for (size_t i=0; i<size(); ++i) eval(start,i);
     return {};
@@ -306,10 +304,10 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
     vector<Event> events;
     do
       {
-        //#ifdef SYCL_LANGUAGE_VERSION
+        #ifdef SYCL_LANGUAGE_VERSION
         block->alreadySeen.clear();
         for (auto& k: starMap) block->alreadySeen.push_back(k.first);
-        //#endif
+        #endif
         for (unsigned i=0; i<block->numGraphs; i+=block->size())
           events.emplace_back(block->evalBlock(i));
         Event::wait(events);
@@ -322,9 +320,6 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
               starMap.emplace(k, GraphComplexity{numStars,0.0});
           }
       } while (block->pos.next());
-    //                  for (auto i: recipe)
-    //                    cout<<i<<",";
-    //                  cout<<endl;
   }
 }
 

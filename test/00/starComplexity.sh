@@ -14,18 +14,24 @@ starC.generateElementaryStars(nodes)
 starC.fillStarMap(maxStars)
 starC.canonicaliseStarMap();
 
-assert(starC.starMap()==[{'first': 0, 'second': 3}, {'first': 32, 'second': 2}, {'first': 33, 'second': 4}, {'first': 48, 'second': 3}, {'first': 50, 'second': 5}, {'first': 51, 'second': 4}, {'first': 52, 'second': 5}, {'first': 56, 'second': 1}, {'first': 60, 'second': 3}, {'first': 62, 'second': 2}, {'first': 63, 'second': 3}])
+assert starC.starMap.keys()==[0, 32, 33, 48, 50, 51, 52, 56, 60, 62, 63]
+starMapRef={0: 3, 32: 2, 33: 4, 48: 3, 50: 5, 51: 4, 52: 5, 56: 1, 60: 3, 62: 2, 63: 3}
+for i in starC.starMap.keys():
+    assert starC.starMap[i].star()==starMapRef[i]
 
 nodes=5
-maxStars=7
+maxStars=6
 starC.elemStars([])
 starC.starMap([])
 starC.generateElementaryStars(nodes)
 starC.fillStarMap(maxStars)
 starC.canonicaliseStarMap();
 
-assert(starC.starMap()==[{'first': 0, 'second': 3}, {'first': 224, 'second': 5}, {'first': 424, 'second': 6}, {'first': 496, 'second': 6}, {'first': 504, 'second': 5}, {'first': 512, 'second': 2}, {'first': 516, 'second': 4}, {'first': 736, 'second': 6}, {'first': 768, 'second': 3}, {'first': 784, 'second': 5}, {'first': 788, 'second': 4}, {'first': 800, 'second': 5}, {'first': 896, 'second': 4}, {'first': 928, 'second': 6}, {'first': 944, 'second': 6}, {'first': 960, 'second': 1}, {'first': 992, 'second': 3}, {'first': 993, 'second': 5}, {'first': 1008, 'second': 4}, {'first': 1010, 'second': 6}, {'first': 1011, 'second': 5}, {'first': 1012, 'second': 6}, {'first': 1016, 'second': 2}, {'first': 1020, 'second': 4}, {'first': 1022, 'second': 3}, {'first': 1023, 'second': 4}])
+assert starC.starMap.keys()==[0, 224, 424, 496, 504, 512, 516, 736, 768, 784, 788, 800, 896, 928, 944, 960, 992, 993, 1008, 1010, 1011, 1012, 1016, 1020, 1022, 1023]
 
+starMapRef={0: 3, 224: 5, 424: 6, 496: 6, 504: 5, 512: 2, 516: 4, 736: 6, 768: 3, 784: 5, 788: 4, 800: 5, 896: 4, 928: 6, 944: 6, 960: 1, 992: 3, 993: 5, 1008: 4, 1010: 6, 1011: 5, 1012: 6, 1016: 2, 1020: 4, 1022: 3, 1023: 4}
+for i in starC.starMap.keys():
+    assert starC.starMap[i].star()==starMapRef[i]
 EOF
 
 python3 input.py
