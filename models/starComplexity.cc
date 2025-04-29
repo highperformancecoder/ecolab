@@ -69,6 +69,7 @@ public:
   size_t size() const {return m_size;}
   T* begin() {return data;}
   T* end() {return data+m_size;}
+  void swap(DeviceArray& x) {std::swap(data,x.data); std::swap(m_size,x.m_size);}
 };
 #else
 template <class T> using DeviceArray=vector<T>;
@@ -205,7 +206,7 @@ constexpr linkRep noGraph=~linkRep(0);
 class OutputBuffer
 {
 public:
-  static constexpr size_t maxQ=250000;
+  static constexpr size_t maxQ=1024;
   using size_type=unsigned;
   using iterator=linkRep*;
   void push_back(linkRep x) {
@@ -236,10 +237,10 @@ struct BlockEvaluator: public EvalStackData
 
   vector<EvalStack,Alloc<EvalStack>> block;
   // an output queue for the results
-  DeviceArray<OutputBuffer> result;
-  vector<linkRep,Alloc<linkRep>> alreadySeen; // sorted list of graphs already visited
+  DeviceArray<OutputBuffer> result, backedResult;
+  vector<linkRep,Alloc<linkRep>> alreadySeen, alreadySeenBacked; // sorted list of graphs already visited
   BlockEvaluator(unsigned blockSize, unsigned numStars, const ElemStars& elemStars):
-    EvalStackData(elemStars, numStars), result(blockSize)
+    EvalStackData(elemStars, numStars), result(blockSize), backedResult(blockSize)
   {
     for (size_t i=0; i<blockSize; ++i) block.emplace_back(*this);
 #ifdef SYCL_LANGUAGE_VERSION
@@ -270,16 +271,25 @@ struct BlockEvaluator: public EvalStackData
     return {};
 #endif
   }
-  vector<OutputBuffer> getResults() {
+  
+  Event swapBackingBuffer(vector<Event> events) {
 #ifdef SYCL_LANGUAGE_VERSION
-    vector<OutputBuffer> r(block.size());
-    auto copied=syclQ().copy(result.begin(),r.data(),r.size());
-    syclQ().parallel_for(r.size(),[this](auto i){result[i].reset();}).wait();
-    return r;
+    return syclQ().single_task(events, [this](){result.swap(backedResult);});
 #else
-    for (auto& i: result) i.reset();
-    return result;
+    result.swap(backedResult);
+    return {};
 #endif
+  }
+  
+  vector<OutputBuffer> getResults() {
+    vector<OutputBuffer> r(block.size());
+#ifdef SYCL_LANGUAGE_VERSION
+    auto copied=syclQ().copy(backedResult.begin(),r.data(),r.size());
+    syclQ().parallel_for(r.size(),copied,[this](auto i){backedResult[i].reset();}).wait();
+#else
+    r.swap(result);
+#endif
+    return r;
   }
   size_t size() const {return block.size();}
 };
@@ -295,25 +305,63 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
   //int numLoops=10;
   {
     ecolab::DeviceType<BlockEvaluator> block(blockSize, numStars,elemStars);
-    vector<Event> events;
+    vector<Event> compute;
+    Event resultSwapped, alreadySeenSwapped, starMapPopulated;
+    auto populateStarMap=[&]() {
+      for (auto& j: block->getResults())
+        {
+          if (j.blown())
+            throw runtime_error("Output buffer blown");
+          for (auto k: j)
+            starMap.emplace(k, GraphComplexity{numStars,0.0});
+        }
+    };
+
     do
       {
         auto start=time(nullptr);
-        #ifdef SYCL_LANGUAGE_VERSION
-        block->alreadySeen.clear();
-        for (auto& k: starMap) block->alreadySeen.push_back(k.first);
-        #endif
+
+#ifdef SYCL_LANGUAGE_VERSION
+        /* Using SYCL dependency graph structure, to run the compute
+           side simultaneously with accumulating results in the
+           starMap on the host. sycl::event is used to coordinate host
+           and device threads. */
         for (unsigned i=0; i<block->numGraphs; i+=block->size())
-          events.emplace_back(block->evalBlock(i));
-        Event::wait(events);
-        
-        for (auto& j: block->getResults())
           {
-            if (j.blown())
-              throw runtime_error("Output buffer blown");
-            for (auto k: j)
-              starMap.emplace(k, GraphComplexity{numStars,0.0});
+            // compute a block of graphs
+            compute.push_back
+              (syclQ().parallel_for(blockSize, {resultSwapped, alreadySeenSwapped},
+                                    [=,block=&*block](auto j){block->eval(i,j);}));
+
+            // retrieve results to host by swapping with backing buffers
+            resultSwapped=syclQ().single_task
+              (compute,
+               [=,block=&*block](){block->result.swap(block->backedResult);});
+            
+            // accumulate starMap results on separate host thread
+            starMapPopulated=syclQ().submit([&](auto& handler) {
+              handler.depends_on(resultSwapped);
+              handler.host_task([&]() {
+                populateStarMap();
+                block->alreadySeenBacked.clear();
+                for (auto& k: starMap) block->alreadySeenBacked.push_back(k.first);
+                // push update already seen vector to device
+                alreadySeenSwapped=syclQ().single_task
+                  (compute,
+                   [=,block=&*block]{
+                     block->alreadySeen.swap(block->alreadySeenBacked);
+                   });
+              });
+            });
           }
+        // wait until all background threads finished before bumping pos
+        syclQ().wait();
+#else
+        for (unsigned i=0; i<block->numGraphs; i+=block->size())
+          for (unsigned j=0; j<block->size(); ++j)
+            block->eval(i,j);
+        populateStarMap();
+#endif
         cout<<(time(nullptr)-start)<<"secs\n";
       } while (block->pos.next()/* && --numLoops>0*/);
   }

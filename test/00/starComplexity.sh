@@ -14,6 +14,7 @@ starC.generateElementaryStars(nodes)
 starC.fillStarMap(maxStars)
 starC.canonicaliseStarMap();
 
+print('testing nodes=4')
 assert starC.starMap.keys()==[0, 32, 33, 48, 50, 51, 52, 56, 60, 62, 63]
 starMapRef={0: 3, 32: 2, 33: 4, 48: 3, 50: 5, 51: 4, 52: 5, 56: 1, 60: 3, 62: 2, 63: 3}
 for i in starC.starMap.keys():
