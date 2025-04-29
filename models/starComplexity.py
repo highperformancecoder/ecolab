@@ -13,13 +13,15 @@ for l in range(L):
 print('maxStars=',maxStars)
 maxStars=10
 
-starC.blockSize(256)
+#starC.blockSize(256)
 #starC.blockSize(4096)
 starC.blockSize(17920)
 #starC.blockSize(40320)
 
 starC.generateElementaryStars(nodes)
 starC.fillStarMap(maxStars)
-print(len(starC.starMap))
 starC.canonicaliseStarMap()
-print(starC.starMap())
+
+for i in starC.starMap.keys():
+    print(i,starC.starMap[i].star(),starC.starMap[i].complexity())
+

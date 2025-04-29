@@ -158,14 +158,13 @@ struct EvalStack
     auto numStars=data.pos.size();
     auto recipeSize=2*numStars-1;
 
-    // create stack copies of arrays
+    // suitable up to 10 node networks
     constexpr unsigned maxNodes=10, maxStars=2*maxNodes-1;
     assert(nodes<=maxNodes);
-    linkRep elemStars[maxNodes];
-    memcpy(elemStars,&data.elemStars[0],nodes*sizeof(linkRep));
-    auto pos=&data.pos[0]; // curiously stack copy of pos is worse than accessing the local heap
-    linkRep stack[maxStars]; // suitable up to 10 node networks
-    for (unsigned p=0, opIdx=0, starIdx=2, range=3; p<recipeSize; ++p) // recipe.size()==2*data.pos.size()-1
+    auto elemStars=&data.elemStars[0];
+    auto pos=&data.pos[0];
+    linkRep stack[maxStars];
+    for (unsigned p=0, opIdx=0, starIdx=2, range=3; p<recipeSize; ++p)
       if (p<2)
         stack[stackTop++]=elemStars[p];
       else if (starIdx<numStars && pos[starIdx]==p) // push a star, according to idx
@@ -362,12 +361,12 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
             block->eval(i,j);
         populateStarMap();
 #endif
-        cout<<(time(nullptr)-start)<<"secs\n";
-      } while (block->pos.next() /*&& --numLoops>0*/);
+        //cout<<(time(nullptr)-start)<<"secs\n";
+      } while (block->pos.next() /* && --numLoops>0*/);
 #ifdef SYCL_LANGUAGE_VERSION
     auto start=time(nullptr);
     syclQ().wait(); // flush queue before destructors called
-    cout<<"Final wait:"<<(time(nullptr)-start)<<"secs\n";
+    //cout<<"Final wait:"<<(time(nullptr)-start)<<"secs\n";
 #endif
   }
 }
