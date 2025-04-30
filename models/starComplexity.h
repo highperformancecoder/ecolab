@@ -24,5 +24,7 @@ struct StarComplexityGen
   // fills starMap with graphs of \a numStars
   void fillStarMap(unsigned maxStars);
   void canonicaliseStarMap();
+  /// return lesser of star and star of complement
+  unsigned symmStar(linkRep);
 };
 

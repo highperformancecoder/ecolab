@@ -126,7 +126,7 @@ public:
     do
       {
         r=next(size()-1);
-      } while (!valid());
+      } while (r && !valid());
     if (r) copy();
     return r;
   }
@@ -218,7 +218,7 @@ constexpr linkRep noGraph=~linkRep(0);
 class OutputBuffer
 {
 public:
-  static constexpr size_t maxQ=8192;
+  static constexpr size_t maxQ=20000;
   using size_type=unsigned;
   using iterator=linkRep*;
   void push_back(linkRep x) {
@@ -340,9 +340,11 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
                 // retrieve results to host by swapping with backing buffers
                 resultSwapped=syclQ().submit([&](auto& handler) {
                   handler.depends_on(compute);
-                  handler.host_task([&](){block->result.swap(block->backedResult);});
+                  handler.host_task([&](){
+                    block->result.swap(block->backedResult);
+                    resultBufferConsumed=0;
+                  });
                 });
-                resultBufferConsumed=0;
                 
                 // accumulate starMap results on separate host thread
                 starMapPopulated=syclQ().submit([&](auto& handler) {
@@ -373,8 +375,8 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
             block->eval(i,j);
         populateStarMap();
 #endif
-        cout<<(time(nullptr)-start)<<"secs\n";
-      } while (block->pos.next() /*&& --numLoops>0*/);
+        //cout<<(time(nullptr)-start)<<"secs\n";
+      } while (block->pos.next()/* && --numLoops>0*/);
 #ifdef SYCL_LANGUAGE_VERSION
     auto start=time(nullptr);
     syclQ().wait(); // flush queue before destructors called
@@ -427,4 +429,13 @@ void StarComplexityGen::canonicaliseStarMap()
   for (auto i: toErase) starMap.erase(i);
   for (auto& i: starMap)
     i.second.complexity=complexity(toNautyRep(i.first, elemStars.size()),true);
+}
+
+unsigned StarComplexityGen::symmStar(linkRep x)
+{
+  if (!starMap.contains(x)) return 0;
+  linkRep complement=toLinkRep(toNautyRep(~x, elemStars.size()).canonicalise());
+  if (starMap.contains(complement))
+    return min(starMap[x].star, starMap[complement].star);
+  return starMap[x].star;
 }
