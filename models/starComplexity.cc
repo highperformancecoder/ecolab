@@ -113,9 +113,21 @@ public:
   const int& operator[](size_t i) const {return hostCopy[i];}
 #endif
 
+  // Simple tests of validity. Don't end on a push, numOps<2*-1 preceding etc.
+  bool valid() const {
+    for (int p=2, numOps=0; p<size(); ++p)
+      if (operator[](p)-p>p-1)
+        return false;
+    return true;
+  }
+  
   bool next() {
-    auto r=next(size()-1);
-    copy();
+    bool r=false;
+    do
+      {
+        r=next(size()-1);
+      } while (!valid());
+    if (r) copy();
     return r;
   }
   void print() const {
@@ -282,9 +294,9 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
   // insert the single star graph
   starMap.emplace(elemStars[0],GraphComplexity{1,0.0});
 
-  for (unsigned numStars=2; numStars<=maxStars; ++numStars)
   //unsigned numStars=maxStars;
   //int numLoops=10;
+  for (unsigned numStars=2; numStars<=maxStars; ++numStars)
   {
     ecolab::DeviceType<BlockEvaluator> block(blockSize, numStars,elemStars);
     vector<Event> compute;
@@ -361,11 +373,12 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
             block->eval(i,j);
         populateStarMap();
 #endif
-        //cout<<(time(nullptr)-start)<<"secs\n";
-      } while (block->pos.next() /* && --numLoops>0*/);
+        cout<<(time(nullptr)-start)<<"secs\n";
+      } while (block->pos.next() /*&& --numLoops>0*/);
 #ifdef SYCL_LANGUAGE_VERSION
     auto start=time(nullptr);
     syclQ().wait(); // flush queue before destructors called
+    cout<<"numStars done:"<<numStars<<endl;
     //cout<<"Final wait:"<<(time(nullptr)-start)<<"secs\n";
 #endif
   }

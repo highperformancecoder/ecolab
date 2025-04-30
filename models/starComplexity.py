@@ -2,7 +2,7 @@
 #print(ecolab.device())
 
 from starComplexity import starC
-nodes=7
+nodes=6
 # computed from max_{l\in[0,L]}min(n+L-l,2l) where L=n(n-1)/2
 maxStars=0
 L=int(0.5*nodes*(nodes-1))
