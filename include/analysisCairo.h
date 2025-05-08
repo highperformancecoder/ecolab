@@ -12,7 +12,7 @@
 
 namespace ecolab
 {
-  struct HistoGram: public Plot, public HistoStats
+  struct HistoGram: public PlotSurface, public HistoStats
   {
     HistoGram() {plotType=bar;}
     // overload add_data to plot the data
@@ -22,7 +22,7 @@ namespace ecolab
 //    }
     void reread() {
       Plot::clear();
-      if (size() && max>min) Plot::add(1,bins(), histogram());
+      if (size() && max>min) PlotSurface::add(1,bins(), histogram());
     }
     void clear() {
       Plot::clear();

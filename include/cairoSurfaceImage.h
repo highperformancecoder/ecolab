@@ -22,12 +22,17 @@ namespace ecolab
 
  */
 
-  struct CairoSurfaceRedraw: public classdesc::object
+  struct CairoSurfaceRedraw
   {
     cairo::SurfacePtr surface;
     /// @return true if something drawn
     virtual bool redraw(int x0, int y0, int width, int height)=0;
     virtual void redrawWithBounds() {redraw(-1e9,-1e9,2e9,2e9);} //TODO better name for this?
+    /// increase output resolution of pixmap surfaces by this factor
+    double m_resolutionScaleFactor=1.0;
+    /// export to a file, using a surface factory \a s
+    cairo::SurfacePtr vectorRender
+    (const char* filename, cairo_surface_t* (*s)(const char *,double,double));
   };
 
   struct CairoSurface: public classdesc::Exclude<CairoSurfaceRedraw>
@@ -42,12 +47,10 @@ namespace ecolab
         command will do it. 
     */
     static void registerImage();
-    /// export to a file, using a surface factory \a s
-    cairo::SurfacePtr vectorRender
-    (const char* filename, cairo_surface_t* (*s)(const char *,double,double));
 
     /// increase output resolution of pixmap surfaces by this factor
-    double resolutionScaleFactor=1.0;
+    double resolutionScaleFactor() const {return m_resolutionScaleFactor;}
+    double resolutionScaleFactor(double rsf) {return m_resolutionScaleFactor=rsf;}
     /// render to a postscript file
     void renderToPS(const std::string& filename);
     /// render to a PDF file

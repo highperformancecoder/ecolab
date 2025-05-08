@@ -31,7 +31,7 @@ namespace ecolab
   extern cairo::Colour palette[];
   extern const int paletteSz;
 
-  class Plot: public classdesc::Object<Plot, CairoSurface>
+  class Plot//: public CairoSurface
   {
   public:
     // transform y coordinates (handles RHS being a different scale, as
@@ -73,9 +73,6 @@ namespace ecolab
     std::vector<std::vector<double> > x;
     std::vector<std::vector<double> > y;
 
-    // record error message from setMinMax
-    const char* msg;
-    
     CLASSDESC_ACCESS(Plot);
 
     // internal common routine for add()
@@ -105,48 +102,39 @@ namespace ecolab
     std::string axisLabel(double x, double scale, bool percent=false) const;
     bool onlyMarkers() const; ///< return true if the only data is marker data
   public:
-    Plot(): palette(paletteSz), msg(NULL), nxTicks(30), nyTicks(30), fontScale(1),
-            offx(0), offy(0), logx(false), logy(false), 
-            grid(false), subgrid(false), 
-            leadingMarker(false), autoscale(true), percent(false), 
-            legend(false), legendSide(right), legendLeft(0.9), legendTop(0.95), legendFontSz(0.03), legendOffset(0.06),
-            plotType(line), xtickAngle(-45), exp_threshold(4), minx(-1), maxx(1), miny(-1), maxy(1), miny1(1), maxy1(-1)
+    Plot(): palette(paletteSz)
     {
       for (int i=0; i<paletteSz; ++i) palette[i].colour=ecolab::palette[i];
     }
     virtual ~Plot() {}
 
-    unsigned nxTicks, nyTicks; ///< number of x/y-axis ticks
-    double fontScale; ///< scale tick labels
-    double offx, offy; ///< origin of plot within image
-    bool logx, logy; ///< logarithmic plots (x/y axes)
-    bool grid, subgrid; ///< draw grid options
-    bool leadingMarker; ///< draw a leading marker on the curve (full draw only)
-    bool autoscale; ///< autoscale plot to data
-    bool percent; ///< scales y axis label by 100
-    bool legend;  ///< add a legend to the plot
-    Side legendSide; ///< legend drawn towards the left or right
-    double legendLeft; ///< x coordinate of legend in scale 0-1 if legendSide==boundingBox
-    double legendTop; ///< y coordinate of legend in scale 0-1 if legendSide==boundingBox
-    double legendFontSz; ///< y coordinate of legend in scale 0-1 if legendSide==boundingBox
-    const double legendOffset; ///< offset of legend text within legend box as fraction of width
-    PlotType plotType;
+    unsigned nxTicks=30, nyTicks=30; ///< number of x/y-axis ticks
+    double fontScale=1; ///< scale tick labels
+    double offx=0, offy=0; ///< origin of plot within image
+    bool logx=false, logy=false; ///< logarithmic plots (x/y axes)
+    bool grid=false, subgrid=false; ///< draw grid options
+    bool leadingMarker=false; ///< draw a leading marker on the curve (full draw only)
+    bool autoscale=true; ///< autoscale plot to data
+    bool percent=false; ///< scales y axis label by 100
+    bool legend=false;  ///< add a legend to the plot
+    Side legendSide=right; ///< legend drawn towards the left or right
+    double legendLeft=0.9; ///< x coordinate of legend in scale 0-1 if legendSide==boundingBox
+    double legendTop=0.95; ///< y coordinate of legend in scale 0-1 if legendSide==boundingBox
+    double legendFontSz=0.03; ///< y coordinate of legend in scale 0-1 if legendSide==boundingBox
+    const double legendOffset=0.06; ///< offset of legend text within legend box as fraction of width
+    PlotType plotType=line;
     /// axis labels
     std::string xlabel, ylabel, y1label;
-    double xtickAngle; ///< angle (in degrees) at which xtick labels are drawn
+    double xtickAngle=-45; ///< angle (in degrees) at which xtick labels are drawn
     /// if |log_10 (x)| < exp_threshold, do not rescale tick value
-    unsigned exp_threshold;
+    unsigned exp_threshold=4;
     unsigned symbolEvery=1; ///< every symbolEvery data points, a symbol is plotted.
 
-    /// height (or width) of an axis label in pixels
-    double labelheight() const {return lh(width(), height());}
     double lh(double width, double height) const;
 
     //cairo_surface_t* cairoSurface() const;
-    int width() const;
-    int height() const;
     /// plot bounding box. y1 refers to the right hand scale
-    double minx, maxx, miny, maxy, miny1, maxy1;
+    double minx=-1, maxx=1, miny=-1, maxy=1, miny1=1, maxy1=-1;
 
     /// set min/max to autoscale on contained data
     void setMinMax();
@@ -166,24 +154,14 @@ namespace ecolab
 //        return Image();
 //    }
     
-    /// redraw the plot
-    bool redraw();
-    bool redraw(int x0, int y0, int width, int height) override {return redraw();}
-    void requestRedraw() const {if (surface) surface->requestRedraw();}
     /// draw the plot onto a given surface
     virtual void draw(cairo::Surface&);
     void draw(cairo_t*, double width, double height) const;
     /// clear all datapoints (and redraw)
     void clear();
-
-    /// add a datapoint
-    void add(unsigned pen, double x, double y) 
-    {if (surface) add(*surface,pen,x,y);}
-    /// add multiple points (C=container - eg vector/array)
-    template <class C> 
-    void add(unsigned pen, const C& x, const C& y) 
-    {if (surface) add(*surface,pen,x,y);}
-
+    /// redraw the plot. @return true if display updated
+    virtual bool redraw() {return false;}
+    
     /// label a pen (for display in a legend). The string may contain
     /// pango markup.
     void labelPen(unsigned pen, const std::string& label);
@@ -202,16 +180,13 @@ namespace ecolab
       penLabel.clear(); penTextLabel.clear(); penSide.clear();
     }
 
-    /// TCL interface
-    //void plot(TCL_args args); 
-
-    //serialisation support (surface is not auto-serialisable)
-    void pack(classdesc::pack_t& p) const override {p<<m_image<<x<<y<<minx<<maxx<<miny<<maxy;}
-
-    void unpack(classdesc::pack_t& p) override {
-        p>>m_image>>x>>y>>minx>>maxx>>miny>>maxy;
-        Image(m_image);
-    }
+//    //serialisation support (surface is not auto-serialisable)
+//    void pack(classdesc::pack_t& p) const override {p<<m_image<<x<<y<<minx<<maxx<<miny<<maxy;}
+//
+//    void unpack(classdesc::pack_t& p) override {
+//        p>>m_image>>x>>y>>minx>>maxx>>miny>>maxy;
+//        Image(m_image);
+//    }
 
     /// add a point to the graph withour redrwaing anything
     void addPt(unsigned pen, double x, double y);
@@ -244,11 +219,6 @@ namespace ecolab
                    const array_ns::array<unsigned>& pens, 
                    double x1, const array_ns::array<double>& y1);
 
-    /// add multiple pens worth of data in one hit
-    void add(const array_ns::array<unsigned>& pens, double x, 
-             const array_ns::array<double>& y) 
-    {if (surface) add(*surface,pens,x,y);}     
-    
     template <class C>
     void add(cairo::Surface& surf, unsigned pen, const C& x1, const C& y1)
     {
@@ -291,28 +261,54 @@ namespace ecolab
     // if this is empty, all pens are on the left, and no RHS scale is drawn
     std::vector<Side> penSide;
   };
+
+  class PlotSurface: public Plot, public CairoSurface, public classdesc::Object<PlotSurface>
+  {
+  public:
+    int width() const;
+    int height() const;
+    /// height (or width) of an axis label in pixels
+    double labelheight() const {return lh(width(), height());}
+    bool redraw() override;
+    bool redraw(int x0, int y0, int width, int height) override {return redraw();}
+    void requestRedraw() const {if (surface) surface->requestRedraw();}
+    using Plot::add;
+    /// add a datapoint
+    void add(unsigned pen, double x, double y) 
+    {if (surface) this->add(*surface,pen,x,y);}
+    /// add multiple points (C=container - eg vector/array)
+    template <class C> 
+    void add(unsigned pen, const C& x, const C& y) 
+    {if (surface) Plot::add(*surface,pen,x,y);}
+    /// add multiple pens worth of data in one hit
+    void add(const array_ns::array<unsigned>& pens, double x, 
+             const array_ns::array<double>& y) 
+    {if (surface) Plot::add(*surface,pens,x,y);}     
+    
+  };
+  
 }
 
-namespace classdesc_access
-{
-  template <> struct access_pack<ecolab::Plot>
-  {
-    template <class U>
-    void operator()(classdesc::pack_t& p, const classdesc::string& d, U& a)
-    {a.pack(p);}
-  };
-
-  template <> struct access_unpack<ecolab::Plot>
-  {
-    template <class U>
-    void operator()(classdesc::pack_t& p, const classdesc::string& d, U& a)
-    {a.unpack(p);}
-  };
-}  
+//namespace classdesc_access
+//{
+//  template <> struct access_pack<ecolab::Plot>
+//  {
+//    template <class U>
+//    void operator()(classdesc::pack_t& p, const classdesc::string& d, U& a)
+//    {a.pack(p);}
+//  };
+//
+//  template <> struct access_unpack<ecolab::Plot>
+//  {
+//    template <class U>
+//    void operator()(classdesc::pack_t& p, const classdesc::string& d, U& a)
+//    {a.unpack(p);}
+//  };
+//}  
 
 #include "plot.cd"
 #ifdef _CLASSDESC
-#pragma omit pack ecolab::Plot
-#pragma omit unpack ecolab::Plot
+//#pragma omit pack ecolab::Plot
+//#pragma omit unpack ecolab::Plot
 #endif
 #endif

@@ -21,7 +21,9 @@ using Float=float;
 using Float=double;
 #endif
 
-struct ConnectionPlot: public Object<ConnectionPlot, CairoSurface>
+struct ConnectionPlotBase: public CairoSurface, public classdesc::object {};
+
+struct ConnectionPlot: public Object<ConnectionPlot, ConnectionPlotBase>
 {
   array<int,graphcode::Allocator<int>> density;
   sparse_mat<Float, graphcode::Allocator> connections;

@@ -206,7 +206,7 @@ void CairoSurface::registerImage()
   Tk_CreateImageType(&canvasImage);
 }
 
-cairo::SurfacePtr CairoSurface::vectorRender(const char* filename, cairo_surface_t* (*s)(const char *,double,double))
+cairo::SurfacePtr CairoSurfaceRedraw::vectorRender(const char* filename, cairo_surface_t* (*s)(const char *,double,double))
 {
   cairo::SurfacePtr tmp(new cairo::Surface(cairo_recording_surface_create
                                            (CAIRO_CONTENT_COLOR_ALPHA,NULL)));
@@ -214,11 +214,11 @@ cairo::SurfacePtr CairoSurface::vectorRender(const char* filename, cairo_surface
   redrawWithBounds();
   double left=surface->left(), top=surface->top();
   surface->surface
-    (s(filename, surface->width()*resolutionScaleFactor, surface->height()*resolutionScaleFactor));
+    (s(filename, surface->width()*m_resolutionScaleFactor, surface->height()*m_resolutionScaleFactor));
   if (s==cairo_ps_surface_create)
     cairo_ps_surface_set_eps(surface->surface(),true);
   cairo_surface_set_device_offset(surface->surface(), -left, -top);
-  cairo_surface_set_device_scale(surface->surface(), resolutionScaleFactor, resolutionScaleFactor);
+  cairo_surface_set_device_scale(surface->surface(), m_resolutionScaleFactor, m_resolutionScaleFactor);
   redrawWithBounds();
   cairo_surface_flush(surface->surface());
   surface.swap(tmp);

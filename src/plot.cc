@@ -248,8 +248,8 @@ namespace ecolab
 //  cairo_surface_t* Plot::cairoSurface() const {
 //      return surface? surface->surface(): 0;
 //  }
-  int Plot::width() const {return surface? surface->width():0;}
-  int Plot::height() const {return surface? surface->height():0;}
+  int PlotSurface::width() const {return surface? surface->width():0;}
+  int PlotSurface::height() const {return surface? surface->height():0;}
 
 
   string Plot::Image(const string& im, bool transparency)
@@ -320,7 +320,6 @@ namespace ecolab
   void Plot::setMinMax()
   {
     assert(x.size()==y.size());
-    msg=NULL;
     
     // calculate min/max
     if (onlyMarkers())
@@ -657,10 +656,10 @@ namespace ecolab
     else if (!(maxx>minx) || (!displayLHSscale() && !displayRHSscale()))
       errMsg = "no data";
 
-    if (msg || errMsg)
+    if (errMsg)
       {
         Pango pango(cairo);
-        pango.setMarkup(errMsg? errMsg: msg);
+        pango.setMarkup(errMsg);
         cairo_move_to(cairo,0.5*(width-pango.width()),0.5*(height-pango.height()));
         pango.show();
         return;
@@ -1080,7 +1079,7 @@ namespace ecolab
 #endif    
   }
   
-  bool Plot::redraw()
+  bool PlotSurface::redraw()
   {
 #if defined(CAIRO)
     if (surface)
@@ -1158,8 +1157,7 @@ namespace ecolab
           }
         cairo_restore(surf.cairo());
       }
-    if (&surf==surface.get())
-      surface->blit();
+    surf.blit();
   }
 
   void Plot::addPt(unsigned pen, double xx, double yy)

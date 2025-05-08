@@ -212,7 +212,11 @@ namespace ecolab
   CLASSDESC_ADD_GLOBAL(array_grand);
   CLASSDESC_ADD_FUNCTION(myid);
   CLASSDESC_ADD_FUNCTION(nprocs);
-  CLASSDESC_DECLARE_TYPE(Plot);
+  namespace python
+  {
+    using Plot=PlotSurface;
+    CLASSDESC_DECLARE_TYPE(Plot);
+  }
 
   // device SYCL kernels are running on
   std::string device() {

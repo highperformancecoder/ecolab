@@ -433,9 +433,9 @@ void StarComplexityGen::canonicaliseStarMap()
 
 unsigned StarComplexityGen::symmStar(linkRep x)
 {
-  if (!starMap.contains(x)) return 0;
+  if (!starMap.count(x)) return 0;
   linkRep complement=toLinkRep(toNautyRep(~x, elemStars.size()).canonicalise());
-  if (starMap.contains(complement))
+  if (starMap.count(complement))
     return min(starMap[x].star, starMap[complement].star);
   return starMap[x].star;
 }

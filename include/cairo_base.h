@@ -414,12 +414,15 @@ namespace ecolab
   }
 }
 
-namespace classdesc
+#define CLASSDESC_pack___ecolab__cairo__Surface
+#define CLASSDESC_unpack___ecolab__cairo__Surface
+
+namespace classdesc_access
 {
-  template <> struct tn<ecolab::cairo::Surface>
-  {
-    static string name() {return "ecolab::cairo::Surface";}
-  };
+  template <> struct access_pack<ecolab::cairo::Surface>:
+    public classdesc::NullDescriptor<classdesc::pack_t> {};
+  template <> struct access_unpack<ecolab::cairo::Surface>:
+    public classdesc::NullDescriptor<classdesc::pack_t> {};
 }
 
 #include "cairo_base.cd"
