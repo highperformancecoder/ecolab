@@ -27,7 +27,7 @@ namespace ecolab
     cairo::SurfacePtr surface;
     /// @return true if something drawn
     virtual bool redraw(int x0, int y0, int width, int height)=0;
-    virtual void redrawWithBounds() {redraw(-1e9,-1e9,2e9,2e9);} //TODO better name for this?
+    virtual void redrawWithBounds() {redraw(-1e6,-1e6,2e6,2e6);} //TODO better name for this?
     /// increase output resolution of pixmap surfaces by this factor
     double m_resolutionScaleFactor=1.0;
     /// export to a file, using a surface factory \a s
