@@ -2,7 +2,7 @@
 #print(ecolab.device())
 
 from starComplexity import starC
-nodes=10
+nodes=8
 # computed from max_{l\in[0,L]}min(n+L-l,2l) where L=n(n-1)/2
 maxStars=0
 L=int(0.5*nodes*(nodes-1))
@@ -23,5 +23,6 @@ starC.fillStarMap(maxStars)
 starC.canonicaliseStarMap()
 
 for i in starC.starMap.keys():
-    print(i,starC.symmStar(i),starC.starMap[i].complexity())
+    c=starC.complexity(i)
+    print(i,starC.symmStar(i),c.complexity(),c.starComplexity())
 

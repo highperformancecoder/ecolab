@@ -29,9 +29,24 @@ using namespace sycl;
 bool ecolab::syclQDestroyed=false;
 namespace
 {
+  void errHandler(const sycl::exception_list& exceptions)
+  {
+    for (auto& i: exceptions)
+      try
+        {
+          std::rethrow_exception(i);
+        }
+      catch (const std::exception& ex)
+        {
+          std::cerr<<ex.what()<<std::endl;
+        }
+    if (exceptions.size())
+      std::rethrow_exception(*exceptions.begin()); // throw first exception
+  }
+  
   struct SyclQ: public queue
   {
-    SyclQ(): queue(default_selector_v) {}
+    SyclQ(): queue(default_selector_v, errHandler) {}
     ~SyclQ() {syclQDestroyed=true;}
   };
 }
