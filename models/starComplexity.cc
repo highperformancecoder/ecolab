@@ -115,8 +115,8 @@ public:
 
   // Simple tests of validity. Don't end on a push, numOps<2*-1 preceding etc.
   bool valid() const {
-    for (int p=2, numOps=0; p<size(); ++p)
-      if (operator[](p)-p>p-1)
+    for (size_t p=2; p<size(); ++p)
+      if (operator[](p)>int(2*p-1))
         return false;
     return true;
   }
@@ -179,7 +179,7 @@ struct EvalStack
     for (unsigned p=0, opIdx=0, starIdx=2, range=3; p<recipeSize; ++p)
       if (p<2)
         stack[stackTop++]=elemStars[p];
-      else if (starIdx<numStars && pos[starIdx]==p) // push a star, according to idx
+      else if (starIdx<numStars && pos[starIdx]==int(p)) // push a star, according to idx
         {
           assert(stackTop<numStars);
           auto divResult=div(int(idx), int(range));
@@ -265,7 +265,7 @@ struct BlockEvaluator: public EvalStackData
   {
     if (i+start<numGraphs)
       {
-        auto numOps=1<<(pos.size()-1);
+        unsigned numOps=1<<(pos.size()-1);
         for (unsigned op=0; op<numOps; ++op)
           {
             auto r=block[i].evalRecipe(op,i+start);

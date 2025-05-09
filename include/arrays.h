@@ -2475,7 +2475,7 @@ namespace ecolab
     {
       array<T,A> r(sum(x),x.allocator());
       for (size_t i=0,p=0; i<x.size(); i++)
-        for (int j=0; j<x[i]; j++,p++)
+        for (int j=0; j<int(x[i]); j++,p++)
           r[p]=i;
       return r;
     }

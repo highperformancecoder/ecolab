@@ -14,11 +14,6 @@ FLAGS+=-DTHREE_D -UTK
 
 include $(ECOLAB_HOME)/include/Makefile
 
-# This is for EcoLab internal testing purposes
-ifdef AEGIS
-CXXFLAGS+=-std=c++11
-endif
-
 ifdef DPCPP
 # GPU may not have double precision support
 FLAGS+=-DUSE_FLOAT

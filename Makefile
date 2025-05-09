@@ -24,7 +24,7 @@ MCFG=include/Makefile.config
 
 ifneq ($(MAKECMDGOALS),clean)
 # make sure Classdesc is built first, even before starting to include Makefiles
-build_classdesc:=$(shell if [ ! -x bin/classdesc ]; then pushd classdesc; $(MAKE) XDR=$(XDR); popd; ln -sf `pwd`/classdesc/classdesc bin/classdesc; fi)
+build_classdesc:=$(shell if [ ! -x bin/classdesc ]; then pushd classdesc; $(MAKE) XDR=$(XDR); popd; mkdir -p bin; ln -sf `pwd`/classdesc/classdesc bin/classdesc; fi)
 endif
 
 include include/Makefile

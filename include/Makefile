@@ -80,7 +80,7 @@ FLAGS+=-Werror -Wall -Wno-unused-variable -Wno-unused-function
 # for now, we maintain the code for C++98 standard
 # noexcept-type is a warning about ABI changes coming in C++17
 # Travis complains about unused-local-typedefs, so shut it up.
-CXXFLAGS+=-Wno-noexcept-type -Wno-unused-local-typedefs
+CXXFLAGS+=-Wno-noexcept-type -Wno-unused-local-typedefs -std=c++20
 endif
 
 # needed for generating .so files
