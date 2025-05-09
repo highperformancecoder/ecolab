@@ -12,8 +12,9 @@
 #include "ecolab_epilogue.h"
 
 const char *ecolab::Pango::defaultFamily=NULL;
+double ecolab::Pango::scaleFactor=1;
 
-#if defined(CAIRO) && defined(TK)
+#if defined(CAIRO)
 
 #if CAIRO_VERSION_MAJOR <= 1 && CAIRO_VERSION_MINOR < 10
 //#error "Cairo 1.10.x minimum required"
@@ -22,6 +23,7 @@ bool cairo_in_clip(cairo_t*,double,double) {return true;}
 #endif
 
 using namespace std;
+#if defined(TK)
 
 namespace
 {
@@ -90,7 +92,6 @@ namespace
 
 namespace ecolab
 {
-  double Pango::scaleFactor=1;
   
   namespace cairo
   {
@@ -136,7 +137,7 @@ namespace ecolab
 //      else
 //        throw error("image %s not found", imgName.c_str());
     }
-
+    
    double CairoImage::distanceFrom(double x, double y) const
     {
       if (cairoSurface)
@@ -225,4 +226,5 @@ namespace ecolab
   }
 }
 
-#endif
+#endif // TK
+#endif // CAIRO

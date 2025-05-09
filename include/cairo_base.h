@@ -170,6 +170,26 @@ namespace ecolab
     typedef std::tr1::shared_ptr<Surface> SurfacePtr;
 #endif
     
+    /// RAII object wrapping a cairo_path_t, along with its transformation
+    class Path
+    {
+      cairo_path_t* m_path;
+      cairo_matrix_t m_transformation;
+      Path(const Path&);
+      void operator=(const Path&);
+    public:
+      Path(cairo_t* cairo): m_path(cairo_copy_path(cairo))
+      {cairo_get_matrix(cairo, &m_transformation);}
+      ~Path() {cairo_path_destroy(m_path);}
+      void appendToCurrent(cairo_t* cairo) {
+        // apply saved transformation along with path
+        cairo_save(cairo);
+        cairo_set_matrix(cairo,&m_transformation);
+        cairo_append_path(cairo,m_path);
+        cairo_restore(cairo);
+      }
+    };
+
 #ifdef TK
     struct PhotoImageBlock: public Tk_PhotoImageBlock
     {
@@ -321,27 +341,6 @@ namespace ecolab
 
     };
 
-    /// RAII object wrapping a cairo_path_t, along with its transformation
-    class Path
-    {
-      cairo_path_t* m_path;
-      cairo_matrix_t m_transformation;
-      Path(const Path&);
-      void operator=(const Path&);
-    public:
-      Path(cairo_t* cairo): m_path(cairo_copy_path(cairo))
-      {cairo_get_matrix(cairo, &m_transformation);}
-      ~Path() {cairo_path_destroy(m_path);}
-      void appendToCurrent(cairo_t* cairo) {
-        // apply saved transformation along with path
-        cairo_save(cairo);
-        cairo_set_matrix(cairo,&m_transformation);
-        cairo_append_path(cairo,m_path);
-        cairo_restore(cairo);
-      }
-    };
-
-    
     /// internal structure used for Tk Canvas cairo image items
     struct ImageItem  {
       Tk_Item header;		/* Generic stuff that's the same for all
@@ -384,7 +383,7 @@ namespace ecolab
       /// generic configure function, given a particular \a configSpecs
       int configureCairoItem(Tcl_Interp *interp, Tk_Canvas canvas, 
                              Tk_Item *itemPtr,	int objc, 
-                             Tcl_Obj *CONST objv[],
+                             Tcl_Obj *const objv[],
                              int flags, Tk_ConfigSpec configSpecs[]);
       void  ComputeImageBbox(Tk_Canvas canvas, ImageItem *imgPtr);
     }
@@ -393,7 +392,7 @@ namespace ecolab
     /// creating Tk canvas itemTypes
     template <class C>
     int createImage(Tcl_Interp *interp,	Tk_Canvas canvas, Tk_Item *itemPtr, 
-                    int objc,Tcl_Obj *CONST objv[])
+                    int objc,Tcl_Obj *CONST84 objv[])
     {
       if (TkImageCode::CreateImage(interp,canvas,itemPtr,objc,objv,C::configSpecs)==TCL_OK)
         {

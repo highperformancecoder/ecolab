@@ -103,7 +103,7 @@ NEWCMD(pcoord,1)
 
 NEWCMD(max,1)
 {
-  int i,n;
+  Tcl_Size i,n;
   CONST84 char **v;
   double m=-DBL_MAX;
   tclreturn result;
@@ -116,7 +116,7 @@ NEWCMD(max,1)
 
 NEWCMD(min,1)
 {
-  int i,n;
+  Tcl_Size i,n;
   CONST84 char **v;
   double m=DBL_MAX;
   tclreturn result;
@@ -129,7 +129,7 @@ NEWCMD(min,1)
 
 NEWCMD(av,1)
 {
-  int i,n;
+  Tcl_Size i,n;
   CONST84 char **v;
   double m=0;
   tclreturn result;

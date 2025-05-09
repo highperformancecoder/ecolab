@@ -8,6 +8,7 @@
 
 
 #if defined(CAIRO) && defined(TK)
+#include "tcl++.h"
 #include "cairo_base.h"
 #include "ecolab_epilogue.h"
 #if defined(CAIRO_HAS_XLIB_SURFACE) && !defined(MAC_OSX_TK)
@@ -97,11 +98,11 @@ namespace ecolab
       {
         //-image is deprecated, and not used
         {TK_CONFIG_STRING, "-image", NULL, NULL,
-         NULL, Tk_Offset(ImageItem, imageString), TK_CONFIG_NULL_OK},
+         NULL, offsetof(ImageItem, imageString), TK_CONFIG_NULL_OK},
         {TK_CONFIG_DOUBLE, "-scale", NULL, NULL,
-         "1.0", Tk_Offset(ImageItem, scale), TK_CONFIG_NULL_OK},
+         "1.0", offsetof(ImageItem, scale), TK_CONFIG_NULL_OK},
         {TK_CONFIG_DOUBLE, "-rotation", NULL, NULL,
-         "0.0", Tk_Offset(ImageItem, rotation), TK_CONFIG_NULL_OK},
+         "0.0", offsetof(ImageItem, rotation), TK_CONFIG_NULL_OK},
         {TK_CONFIG_CUSTOM, "-tags", NULL, NULL,
          NULL, 0, TK_CONFIG_NULL_OK, &tagsOption},
         {TK_CONFIG_END}
@@ -451,7 +452,7 @@ namespace ecolab
                   Tk_Canvas canvas,		/* Canvas containing item. */
                   Tk_Item *itemPtr,		/* Item whose coordinates are to be read or
                                                  * modified. */
-                  int objc,			/* Number of coordinates supplied in objv. */
+                  Tcl_Size objc,			/* Number of coordinates supplied in objv. */
                   Tcl_Obj *CONST objv[])	/* Array of coordinates: x1, y1, x2, y2, ... */
       {
         ImageItem *imgPtr = (ImageItem *) itemPtr;
@@ -525,7 +526,10 @@ namespace ecolab
 
         tkwin = Tk_CanvasTkwin(canvas);
         if (TCL_OK != Tk_ConfigureWidget(interp, tkwin, configSpecs, objc,
-                                         (CONST char **) objv, (char *) imgPtr, flags|TK_CONFIG_OBJS)) {
+#if TCL_MAJOR_VERSION < 9
+                                         (CONST char **)
+#endif
+                                         objv, (char *) imgPtr, flags|TK_CONFIG_OBJS)) {
           return TCL_ERROR;
         }
 
@@ -591,7 +595,7 @@ namespace ecolab
                      Tcl_Interp *interp,		/* Used for error reporting. */
                      Tk_Canvas canvas,		/* Canvas containing itemPtr. */
                      Tk_Item *itemPtr,		/* Image item to reconfigure. */
-                     int objc,			/* Number of elements in objv.  */
+                     Tcl_Size objc,			/* Number of elements in objv.  */
                      Tcl_Obj *CONST objv[],	/* Arguments describing things to configure. */
                      int flags)
       {

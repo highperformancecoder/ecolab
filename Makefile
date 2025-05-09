@@ -78,9 +78,9 @@ endif
 ifdef AQUA
 CXXFLAGS+=-DMAC_OSX_TK 
 OBJS+=src/getContext.o
+LIBS+=-framework AppKit
 endif
 
-#CDHDRS=graph.cd graphcode.cd netcomplexity.cd object.cd plot.cd poly.cd polyRESTProcess.cd polyRESTProcessBase.cd ref.cd random.cd random_basic.cd ref.cd RESTProcess_base.cd signature.cd sparse_mat.cd
 CDHDRS=
 
 # Clunky, but this extracts all .cd files mentioned in header files,

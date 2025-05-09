@@ -6,9 +6,8 @@
   Open source licensed under the MIT license. See LICENSE for details.
 */
 
-#if defined(CAIRO) && defined(TK)
+#ifdef CAIRO
 #include "cairoSurfaceImage.h"
-#include "tcl++.h"
 #include "pango.h"
 #include "pythonBuffer.h"
 
@@ -21,12 +20,19 @@
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-svg.h>
 
+using namespace ecolab;
+using namespace std;
+
+#ifdef TK
+#include "tcl++.h"
+
 #ifdef _WIN32
 #undef Realloc
 #include <windows.h>
 #include <wingdi.h>
 #ifdef USE_WIN32_SURFACE
 #include <cairo/cairo-win32.h>
+
 // undocumented internal function for extracting the HDC from a Drawable
 extern "C" HDC TkWinGetDrawableDC(Display*, Drawable, void*);
 extern "C" HDC TkWinReleaseDrawableDC(Drawable, HDC, void*);
@@ -47,9 +53,6 @@ extern "C" HDC TkWinReleaseDrawableDC(Drawable, HDC, void*);
 #if TK_MAJOR_VERSION==8 && TK_MINOR_VERSION < 6
 #define CONST86
 #endif
-
-using namespace ecolab;
-using namespace std;
 
 namespace
 {
@@ -78,7 +81,7 @@ namespace
     };
     
     // Define a new image type that renders a minsky::Canvas
-    int createCI(Tcl_Interp* interp, CONST86 char* name, int objc, Tcl_Obj *const objv[],
+    int createCI(Tcl_Interp* interp, CONST86 char* name, Tcl_Size objc, Tcl_Obj *const objv[],
                  CONST86 Tk_ImageType* typePtr, Tk_ImageMaster master, ClientData *masterData)
     {
       try
@@ -205,6 +208,7 @@ void CairoSurface::registerImage()
 {
   Tk_CreateImageType(&canvasImage);
 }
+#endif // TK
 
 cairo::SurfacePtr CairoSurfaceRedraw::vectorRender(const char* filename, cairo_surface_t* (*s)(const char *,double,double))
 {
@@ -299,4 +303,4 @@ void CairoSurface::renderToEMF(const string& filename)
 
 #endif
 
-#endif
+#endif //CAIRO

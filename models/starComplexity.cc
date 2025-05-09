@@ -287,10 +287,12 @@ struct BlockEvaluator: public EvalStackData
   size_t size() const {return block.size();}
 };
 
+#ifdef SYCL_LANGUAGE_VERSION
 sycl::info::event_command_status eventStatus(Event ev)
 {
   return ev.get_info<sycl::info::event::command_execution_status>();
 }
+#endif
 
 void StarComplexityGen::fillStarMap(unsigned maxStars)
 {

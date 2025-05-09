@@ -223,7 +223,7 @@ namespace ecolab
         options.invarproc=cellind;
         options.invararg=5;
         break;
-       case 14:
+      case 14:
         options.invarproc=adjacencies;
         options.maxinvarlevel=10;
         break;

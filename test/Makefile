@@ -27,6 +27,8 @@ MODELS=testParallel
 EXES=test_omp_rw_lock testCheckpointableFile test_netcomplexity test_ecostrstream posTest testarrays pangoTest 
 SPECIALS=testNDBM testBDB
 
+LIBS+=-lboost_system
+
 ifeq ($(CC),gcc)
 OMPOPT=-fopenmp
 endif

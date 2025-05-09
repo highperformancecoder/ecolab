@@ -913,25 +913,23 @@ namespace ecolab
                           }
                       };
                       
+                      // compute minimum gap between successive points to determine bar width
+                      double w=iflogx(maxx)-iflogx(minx);
+                      for (size_t j=1; j<x[i].size(); ++j)
+                        w=std::min(w, iflogx(x[i][j])-iflogx(x[i][j-1]));
+                      w*=ls.barWidth;
+
                       size_t j=0;
                       if (inBounds(iflogx(x[i][j]), y[i][j], side))
                         {
-                          auto w = ls.barWidth*(x[i].size()>1? abs(iflogx(x[i][1]) - iflogx(x[i][0])): iflogx(maxx)-iflogx(minx));
                           auto xx=x[i].size()>1? iflogx(x[i][0])-0.5*w: iflogx(minx);
                           shadowShowBox(xx,xfy(y[i][0]),w);
                         }
                       for (++j; j<x[i].size()-1; ++j)
                         if (inBounds(iflogx(x[i][j]), y[i][j], side))
-                          {
-                            auto w=ls.barWidth*min(abs(iflogx(x[i][j]) - iflogx(x[i][j-1])), 
-                                  abs(iflogx(x[i][j+1])-iflogx(x[i][j])));
-                            shadowShowBox(iflogx(x[i][j])-0.5*w, xfy(y[i][j]), w);
-                          }
-                      if (x[i].size()>1 && inBounds(iflogx(x[i][j]), y[i][j], side))
-                        {
-                          auto w=ls.barWidth*abs(iflogx(x[i][j]) - iflogx(x[i][j-1]));
                           shadowShowBox(iflogx(x[i][j])-0.5*w, xfy(y[i][j]), w);
-                        }
+                      if (x[i].size()>1 && inBounds(iflogx(x[i][j]), y[i][j], side))
+                        shadowShowBox(iflogx(x[i][j])-0.5*w, xfy(y[i][j]), w);
                     }
               default: break;
               }

@@ -316,7 +316,7 @@ int main()
   }
 
   {
-    sparse_mat a(2,2);
+    sparse_mat<double> a(2,2);
     array<int> b(2); array<double> c(2);
     a.diag[0]=1; a.diag[1]=2; a.val[0]=1; a.val[1]=2; 
     a.row[0]=0;a.row[1]=1;a.col[0]=1;a.col[1]=0;

@@ -8,7 +8,7 @@
 
 #ifndef CAIROSURFACEIMAGE_H
 #define CAIROSURFACEIMAGE_H
-#if defined(CAIRO) && defined(TK)
+#if defined(CAIRO)
 #include "cairo_base.h"
 
 namespace ecolab

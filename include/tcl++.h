@@ -43,7 +43,14 @@ into a simple I/O stream and tclindex, a simple iterator through a TCL array */
 
 /* for Tcl 8.4 compatibility */
 #ifndef CONST84
-#define CONST84
+#define CONST84 const
+#endif
+#ifndef CONST
+#define CONST const
+#endif
+
+#if TCL_MAJOR_VERSION < 9
+using Tcl_Size=int;
 #endif
 
 #ifdef TK
@@ -813,11 +820,11 @@ namespace ecolab
     }
     //    TCL_args& operator>>(float& x) {x=*this; return *this;}
     template <class T>
-    typename enable_if<is_rvalue<T>, T>::T
+    typename classdesc::enable_if<is_rvalue<T>, T>::T
     get(dummy<0> d=0) {T x; *this>>x; return x;}
 
     template <class T>
-    typename enable_if<Not<is_rvalue<T> >, T>::T
+    typename classdesc::enable_if<classdesc::Not<is_rvalue<T> >, T>::T
     get(dummy<1> d=0) 
     {throw error("calling get on %s", typeName<T>().c_str());}
 

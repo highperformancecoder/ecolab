@@ -18,6 +18,8 @@
 #include "plot.h"
 #endif
 
+#include "tcl++.h"
+
 #include <fstream>
 #include <sstream>
 
@@ -38,7 +40,7 @@ int palette_class::size=0;
 
 palette_class::palette_class()
 {
-  int  elemc;
+  Tcl_Size  elemc;
 
   if (size==0)
    {
