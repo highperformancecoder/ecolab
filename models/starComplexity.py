@@ -24,5 +24,5 @@ starC.canonicaliseStarMap()
 
 for i in starC.starMap.keys():
     c=starC.complexity(i)
-    print(i,starC.symmStar(i),c.complexity(),c.starComplexity())
+    print(i,starC.symmStar(i),c.complexity(),c.starComplexity(),starC.counts[i],starC.counts[starC.complement(i)])
 

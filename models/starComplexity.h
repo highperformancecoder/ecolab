@@ -19,12 +19,14 @@ struct StarComplexityGen
   size_t blockSize=128;
   // star complexity registry
   std::map<linkRep,unsigned> starMap;
+  std::map<linkRep,unsigned> counts; // counts the number of times linkRep is seen
   ElemStars elemStars;
   void generateElementaryStars(unsigned nodes);
   // fills starMap with graphs of \a numStars
   void fillStarMap(unsigned maxStars);
   void canonicaliseStarMap();
-  /// return lesser of star and star of complement
+  /// return complement canonical graph
+  linkRep complement(linkRep) const;
   unsigned symmStar(linkRep) const;
   GraphComplexity complexity(linkRep) const;
 };

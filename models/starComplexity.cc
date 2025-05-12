@@ -299,6 +299,7 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
   if (elemStars.empty()) return;
   // insert the single star graph
   starMap.emplace(elemStars[0],1);
+  counts.emplace(elemStars[0],1);
 
   //unsigned numStars=maxStars;
   for (unsigned numStars=2; numStars<=maxStars; ++numStars)
@@ -319,7 +320,11 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
               return;
             }
           for (auto k: j)
-            starMap.emplace(k, numStars);
+            {
+              auto res=starMap.emplace(k, numStars);
+              if (res.first->second==numStars) // only count least star operations
+                counts[k]++;
+            }
         }
     };
 
@@ -350,17 +355,17 @@ void StarComplexityGen::fillStarMap(unsigned maxStars)
             handler.host_task([&]() {
               resultBufferConsumed=0;
               populateStarMap();
-              if (!lastLoop)
-                {
-                  block->alreadySeenBacked.clear();
-                  for (auto& k: starMap) block->alreadySeenBacked.push_back(k.first);
-                  // push update already seen vector to device
-                  alreadySeenSwapped=syclQ().single_task
-                    (compute,
-                     [=,block=&*block]{
-                       block->alreadySeen.swap(block->alreadySeenBacked);
-                     });
-                }
+//              if (!lastLoop)
+//                {
+//                  block->alreadySeenBacked.clear();
+//                  for (auto& k: starMap) block->alreadySeenBacked.push_back(k.first);
+//                  // push update already seen vector to device
+//                  alreadySeenSwapped=syclQ().single_task
+//                    (compute,
+//                     [=,block=&*block]{
+//                       block->alreadySeen.swap(block->alreadySeenBacked);
+//                     });
+//                }
               populating=false;
             });
           });
@@ -459,21 +464,43 @@ void StarComplexityGen::canonicaliseStarMap()
       if (c!=i->first)
         {
           auto& starC=starMap[c];
-          starC=starC>0? min(starC, i->second): i->second;
+          if (starC==0 || i->second<starC)
+            {
+              starC=i->second;
+              counts[c]=counts[i->first];
+            }
+          else if (i->second==starC)
+            counts[c]+=counts[i->first];
+          assert(counts[c]);
           toErase.push_back(i->first);
         }
     }
-  for (auto i: toErase) starMap.erase(i);
+  for (auto i: toErase)
+    {
+      starMap.erase(i);
+      counts.erase(i);
+    }
+}
+
+linkRep StarComplexityGen::complement(linkRep x) const
+{
+  return toLinkRep(toNautyRep(~x, elemStars.size()).canonicalise());
 }
 
 unsigned StarComplexityGen::symmStar(linkRep x) const
 {
   auto star=starMap.find(x);
   if (star==starMap.end()) return 0;
-  linkRep complement=toLinkRep(toNautyRep(~x, elemStars.size()).canonicalise());
-  auto starComp=starMap.find(complement);
+  auto starComp=starMap.find(complement(x));
   if (starComp==starMap.end()) return star->second;
   return min(star->second, starComp->second);
+}
+
+double lnFactorial(unsigned n)
+{
+  double r=0;
+  for (unsigned i=2; i<n; ++i) r+=log(i);
+  return r;
 }
 
 GraphComplexity StarComplexityGen::complexity(linkRep g) const
@@ -485,10 +512,38 @@ GraphComplexity StarComplexityGen::complexity(linkRep g) const
   ecolab_nauty(ng, ng, lnomega, false);
   r.complexity=ecolab::baseComplexity(ng.nodes(), ng.links(), true) - ilog2*lnomega;
   auto star=symmStar(g);
-  if (star==0)
-    r.starComplexity=nan("");
-  else
-    r.starComplexity=2*ceil(ilog2*log(ng.nodes()))+ceil(ilog2*log(star))+
-      (2*star-1)*ceil(ilog2*(ng.nodes()+2)) - ilog2*lnomega;
+  switch (star)
+    {
+    case 0:
+      r.starComplexity=nan("");
+      break;
+    case 1:
+      r.starComplexity=2*ceil(ilog2*log(ng.nodes()))+1;
+      break;
+    default:
+      {
+        auto gIter=starMap.find(g);
+        unsigned count=0;
+        if (gIter!=starMap.end() && gIter->second==star)
+          {
+            auto countIter=counts.find(g);
+            assert(countIter!=counts.end());
+            count=countIter->second;
+          }
+        else
+          {        
+            auto countIter=counts.find(complement(g));
+            assert(countIter!=counts.end());
+            count=countIter->second;
+          }
+        assert(count>0);
+        r.starComplexity=2*ceil(ilog2*log(ng.nodes()))+ceil(ilog2*log(star))+(star-2)-ilog2*log(count);
+        if (star<=ng.nodes())
+          r.starComplexity+=ilog2*(lnFactorial(star));
+        else
+          r.starComplexity+=ilog2*(lnFactorial(ng.nodes())+(star-ng.nodes())*log(ng.nodes()));
+      }
+      break;
+    }
   return r;
 }

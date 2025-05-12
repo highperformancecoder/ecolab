@@ -541,7 +541,7 @@ endif
 ifdef DEBUGGING
 OPT+=-g
 else
-FLAGS+= -DNDEBUG
+OPT+= -DNDEBUG
 ifeq ($(OS),OSF1)
 OPT+=-O4
 else
