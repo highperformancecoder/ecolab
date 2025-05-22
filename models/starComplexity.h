@@ -1,4 +1,4 @@
-using linkRep=unsigned;
+using linkRep=unsigned long long;
 
 #include <map>
 #include <unordered_map>
