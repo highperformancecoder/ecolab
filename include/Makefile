@@ -38,6 +38,7 @@ MXE_PREFIX=x86_64-w64-mingw32.shared
 else
 $(error "MXE compiler not found")
 endif
+BOOST_EXT=-mt-x64
 endif
 
 # force 64 bit build
@@ -112,6 +113,17 @@ endif
 # needed for generating .so files
 ifndef MXE
 FLAGS+=-fPIC
+
+BOOST_EXT=
+# try to autonomously figure out which boost extension we should be using
+  ifeq ($(shell if $(CPLUSPLUS) test/testmain.cc $(LIBS) -lboost_system>&/dev/null; then echo 1; else echo 0; fi),0)
+    ifeq ($(shell if $(CPLUSPLUS) test/testmain.cc $(LIBS) -lboost_system-mt>&/dev/null; then echo 1; else echo 0; fi),1)
+      BOOST_EXT=-mt
+    else
+      $(warning cannot figure out boost extension) 
+    endif
+  endif
+ $(warning Boost extension=$(BOOST_EXT))
 endif
 
 # use mpicc etc by default if MPI set
@@ -198,7 +210,7 @@ endif
 ECOLIBS=$(ECOLAB_HOME)/lib/libecolab$(ECOLIBS_EXT).a
 
 # why is boost_thread required here?
-LIBS+=-L$(ECOLAB_HOME)/lib -lecolab$(ECOLIBS_EXT) -lboost_thread
+LIBS+=-L$(ECOLAB_HOME)/lib -lecolab$(ECOLIBS_EXT) -lboost_thread$(BOOST_EXT)
 FLAGS+=-I. -I$(ECOLAB_HOME)/classdesc -I$(ECOLAB_HOME)/classdesc/json5_parser/json5_parser -I$(ECOLAB_HOME)/graphcode -I$(ECOLAB_HOME)/include -I$(ECOLAB_HOME)/Ouroboros-SYCL/include -DHASH_TCL_hash
 
 # The following section uses GNU Make specific syntax. If not using
