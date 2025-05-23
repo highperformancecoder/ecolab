@@ -119,7 +119,11 @@ endif
 all: all-without-models
 	$(MAKE) models 
 
-all-without-models: ecolab-libs lib/libecolab$(ECOLIBS_EXT).a bin/ecolab$(ECOLIBS_EXT)
+ifndef MXE
+ECOLAB_INTERPRETER=bin/ecolab$(ECOLIBS_EXT)
+endif
+
+all-without-models: ecolab-libs lib/libecolab$(ECOLIBS_EXT).a $(ECOLAB_INTERPRETER)
 	-$(CHMOD) a+x $(SCRIPTS)
 # copy in the system built TCL library
 ifdef MXE
@@ -174,9 +178,13 @@ lib/libecolab$(ECOLIBS_EXT).a: $(OBJS) $(LIBMODS) graphcode
 ifeq ($(OS),Darwin)
 	ranlib $@
 endif
+ifeq ($(OS),Linux)
+ifndef MXE
 	$(CPLUSPLUS) -shared -Wl,-soname,libecolab$(ECOLIBS_EXT).so.$(SOVERSION)  $(OBJS) $(LIBMODS) graphcode/*.o $(LIBS) -o lib/libecolab$(ECOLIBS_EXT).so.$(SOVERSION)
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) libecolab$(ECOLIBS_EXT).so
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) ecolab.so
+endif
+endif
 
 $(MODS:%=lib/%): lib/%: src/%
 	cp $< $@
@@ -269,11 +277,13 @@ UNURAN_LIB=$(firstword $(call search,lib*/libunuran.a))
 
 $(ECOLAB_HOME)/$(MCFG):
 	@rm -f $(MCFG)
+ifndef MXE
 # absolute dependencies
 	@if ! $(PKG_CONFIG) --exists python3; then \
 	   echo "Error: Cannot find Python libs - please install python3-dev"; \
 	   exit 1; \
 	fi
+endif
 # optional dependecies
 	@if [ -n "$(call search,lib*/tclConfig.sh)" ]; then echo TCL=1>>$(MCFG); fi
 	@if [ -n "$(call search,lib*/tkConfig.sh)" ]; then echo TK=1>>$(MCFG); fi
