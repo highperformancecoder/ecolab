@@ -171,7 +171,8 @@ struct EvalStack
     auto recipeSize=2*numStars-1;
 
     // suitable up to 10 node networks
-    constexpr unsigned maxNodes=10, maxStars=2*maxNodes-1;
+    constexpr unsigned maxNodes=11, maxStars=2*maxNodes-1;
+    static_assert(sizeof(linkRep)*8 > (maxNodes*(maxNodes-1))/2);
     assert(nodes<=maxNodes);
     auto elemStars=&data.elemStars[0];
     auto pos=&data.pos[0];
@@ -447,9 +448,9 @@ linkRep toLinkRep(const NautyRep& g)
       if (g(i,j))
         {
           if (j<i)
-            l|=1<<(i*(i-1)/2+j);
+            l|=linkRep(1)<<(i*(i-1)/2+j);
           else if (i<j)
-            l|=1<<(j*(j-1)/2+i);
+            l|=linkRep(1)<<(j*(j-1)/2+i);
         }
         // else ignore self-links
   return l;

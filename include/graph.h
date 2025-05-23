@@ -277,18 +277,8 @@ public:
   using Evec::value_type;
   using Evec::size_type;
   using Evec::difference_type;
-  //using Evec::const_iterator;
+  using Evec::const_iterator;
   using Evec::const_reference;
-
-  struct const_iterator: public Evec::const_iterator
-  {
-    const_iterator() {}
-    const_iterator(const Evec::const_iterator& x): Evec::const_iterator(x) {}
-#ifdef __APPLE_CC__
-  // bizarrely iterator equality is missing on Apple's compiler!
-    bool operator==(const const_iterator& x) const {return &**this==&*x;}
-#endif
-  };
 
   using iterator=const_iterator; //disallow modification of edges
     

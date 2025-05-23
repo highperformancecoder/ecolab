@@ -21,10 +21,6 @@
 #include <cairo/cairo-svg.h>
 
 using namespace ecolab;
-using namespace std;
-
-#ifdef TK
-#include "tcl++.h"
 
 #ifdef _WIN32
 #undef Realloc
@@ -32,13 +28,8 @@ using namespace std;
 #include <wingdi.h>
 #ifdef USE_WIN32_SURFACE
 #include <cairo/cairo-win32.h>
-
-// undocumented internal function for extracting the HDC from a Drawable
-extern "C" HDC TkWinGetDrawableDC(Display*, Drawable, void*);
-extern "C" HDC TkWinReleaseDrawableDC(Drawable, HDC, void*);
 #endif
 #endif
-
 
 #if defined(CAIRO_HAS_XLIB_SURFACE) && !defined(MAC_OSX_TK)
 #include <cairo/cairo-xlib.h>
@@ -50,9 +41,19 @@ extern "C" HDC TkWinReleaseDrawableDC(Drawable, HDC, void*);
 #include "getContext.h"
 #endif
 
+#ifdef TK
+#include "tcl++.h"
+
 #if TK_MAJOR_VERSION==8 && TK_MINOR_VERSION < 6
 #define CONST86
 #endif
+
+#ifdef _WIN32
+// undocumented internal function for extracting the HDC from a Drawable
+extern "C" HDC TkWinGetDrawableDC(Display*, Drawable, void*);
+extern "C" HDC TkWinReleaseDrawableDC(Drawable, HDC, void*);
+#endif
+
 
 namespace
 {
@@ -121,8 +122,8 @@ namespace
     {
       clock_t t0=clock();
       CD& c=*(CD*)cd;
-      width=min(width,Tk_Width(c.tkWin));
-      height=min(height,Tk_Height(c.tkWin));
+      width=std::min(width,Tk_Width(c.tkWin));
+      height=std::min(height,Tk_Height(c.tkWin));
 #ifdef USE_WIN32_SURFACE
       // TkWinGetDrawableDC is an internal (ie undocumented) routine
       // for getting the DC. We need to declare something to take
@@ -135,7 +136,7 @@ namespace
       c.csurf.surface.reset
         (new TkWinSurface
          (c.csurf, c.master,
-          cairo_win32_surface_create(hdc),Tk_Width(c.tkWin)-2, Tk_Height(c.tkWin)-2)));
+          cairo_win32_surface_create(hdc),Tk_Width(c.tkWin)-2, Tk_Height(c.tkWin)-2));
 #elif defined(MAC_OSX_TK)
       // calculate the offset of the window within it's toplevel
       int xoffs=0, yoffs=0;

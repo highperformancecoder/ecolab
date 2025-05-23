@@ -22,7 +22,7 @@
 using namespace ecolab;
 using namespace std;
 
-#include <dlfcn.h>
+//#include <dlfcn.h>
 
 #ifdef SYCL_LANGUAGE_VERSION
 using namespace sycl;

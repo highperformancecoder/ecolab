@@ -58,7 +58,7 @@ endif
 endif
 
 ifeq ($(OS),Darwin)
-CXXFLAGS+=-std=c++11
+CXXFLAGS+=-std=c++20
 endif
 
 VPATH+=src
@@ -119,7 +119,13 @@ endif
 all: all-without-models
 	$(MAKE) models 
 
-all-without-models: ecolab-libs lib/libecolab$(ECOLIBS_EXT).a bin/ecolab$(ECOLIBS_EXT)
+ifeq ($(OS),Linux)
+  ifndef MXE
+    ECOLAB_INTERPRETER=bin/ecolab$(ECOLIBS_EXT)
+  endif
+endif
+
+all-without-models: ecolab-libs lib/libecolab$(ECOLIBS_EXT).a $(ECOLAB_INTERPRETER)
 	-$(CHMOD) a+x $(SCRIPTS)
 # copy in the system built TCL library
 ifdef MXE
@@ -173,10 +179,13 @@ lib/libecolab$(ECOLIBS_EXT).a: $(OBJS) $(LIBMODS) graphcode
 	ar r $@ $(OBJS) $(LIBMODS) graphcode/*.o
 ifeq ($(OS),Darwin)
 	ranlib $@
-endif
+else
+  ifndef MXE
 	$(CPLUSPLUS) -shared -Wl,-soname,libecolab$(ECOLIBS_EXT).so.$(SOVERSION)  $(OBJS) $(LIBMODS) graphcode/*.o $(LIBS) -o lib/libecolab$(ECOLIBS_EXT).so.$(SOVERSION)
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) libecolab$(ECOLIBS_EXT).so
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) ecolab.so
+  endif
+endif
 
 $(MODS:%=lib/%): lib/%: src/%
 	cp $< $@
@@ -236,8 +245,8 @@ latex-docs:
 	if which latex; then cd doc; rm -f *.aux *.dvi *.log *.blg *.toc *.lof *.out; latex -interaction=batchmode ecolab; fi
 
 #bin/ecolab is a python interpreter supporting MPI
-bin/ecolab$(ECOLIBS_EXT): src/pythonMain.o lib/libecolab$(ECOLIBS_EXT).so
-	$(LINK) $(FLAGS) src/pythonMain.o -Wl,-rpath $(ECOLAB_HOME)/lib $(LIBS) -lboost_system -o $@
+bin/ecolab$(ECOLIBS_EXT): src/pythonMain.o lib/libecolab$(ECOLIBS_EXT).a
+	$(LINK) $(FLAGS) src/pythonMain.o -Wl,-rpath $(ECOLAB_HOME)/lib $(LIBS) -lboost_system$(BOOST_EXT) -o $@
 	-find . \( -name "*.cc" -o -name "*.h" \) -print |etags -
 
 .PHONY: install
@@ -269,11 +278,13 @@ UNURAN_LIB=$(firstword $(call search,lib*/libunuran.a))
 
 $(ECOLAB_HOME)/$(MCFG):
 	@rm -f $(MCFG)
+ifndef MXE
 # absolute dependencies
 	@if ! $(PKG_CONFIG) --exists python3; then \
 	   echo "Error: Cannot find Python libs - please install python3-dev"; \
 	   exit 1; \
 	fi
+endif
 # optional dependecies
 	@if [ -n "$(call search,lib*/tclConfig.sh)" ]; then echo TCL=1>>$(MCFG); fi
 	@if [ -n "$(call search,lib*/tkConfig.sh)" ]; then echo TK=1>>$(MCFG); fi
