@@ -48,9 +48,11 @@ using namespace ecolab;
 #define CONST86
 #endif
 
+#ifdef _WIN32
 // undocumented internal function for extracting the HDC from a Drawable
 extern "C" HDC TkWinGetDrawableDC(Display*, Drawable, void*);
 extern "C" HDC TkWinReleaseDrawableDC(Drawable, HDC, void*);
+#endif
 
 
 namespace

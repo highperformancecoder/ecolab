@@ -58,7 +58,7 @@ endif
 endif
 
 ifeq ($(OS),Darwin)
-CXXFLAGS+=-std=c++11
+CXXFLAGS+=-std=c++20
 endif
 
 VPATH+=src
@@ -119,8 +119,10 @@ endif
 all: all-without-models
 	$(MAKE) models 
 
-ifndef MXE
-ECOLAB_INTERPRETER=bin/ecolab$(ECOLIBS_EXT)
+ifeq ($(OS),Linux)
+  ifndef MXE
+    ECOLAB_INTERPRETER=bin/ecolab$(ECOLIBS_EXT)
+  endif
 endif
 
 all-without-models: ecolab-libs lib/libecolab$(ECOLIBS_EXT).a $(ECOLAB_INTERPRETER)
@@ -177,13 +179,12 @@ lib/libecolab$(ECOLIBS_EXT).a: $(OBJS) $(LIBMODS) graphcode
 	ar r $@ $(OBJS) $(LIBMODS) graphcode/*.o
 ifeq ($(OS),Darwin)
 	ranlib $@
-endif
-ifeq ($(OS),Linux)
-ifndef MXE
+else
+  ifndef MXE
 	$(CPLUSPLUS) -shared -Wl,-soname,libecolab$(ECOLIBS_EXT).so.$(SOVERSION)  $(OBJS) $(LIBMODS) graphcode/*.o $(LIBS) -o lib/libecolab$(ECOLIBS_EXT).so.$(SOVERSION)
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) libecolab$(ECOLIBS_EXT).so
 	cd lib; ln -sf libecolab$(ECOLIBS_EXT).so.$(SOVERSION) ecolab.so
-endif
+  endif
 endif
 
 $(MODS:%=lib/%): lib/%: src/%
@@ -245,7 +246,7 @@ latex-docs:
 
 #bin/ecolab is a python interpreter supporting MPI
 bin/ecolab$(ECOLIBS_EXT): src/pythonMain.o lib/libecolab$(ECOLIBS_EXT).a
-	$(LINK) $(FLAGS) src/pythonMain.o -Wl,-rpath $(ECOLAB_HOME)/lib $(LIBS) -lboost_system -o $@
+	$(LINK) $(FLAGS) src/pythonMain.o -Wl,-rpath $(ECOLAB_HOME)/lib $(LIBS) -lboost_system$(BOOST_EXT) -o $@
 	-find . \( -name "*.cc" -o -name "*.h" \) -print |etags -
 
 .PHONY: install
