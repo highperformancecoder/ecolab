@@ -26,6 +26,31 @@ DPCPP=
 # enables ecolab for the MXE environment 
 MXE=
 
+# choose 32 bits by preference
+ifdef MXE
+MXE_32bit=$(shell if which i686-w64-mingw32.shared-g++>&/dev/null; then echo 1; fi)
+MXE_64bit=$(shell if which x86_64-w64-mingw32.shared-g++>&/dev/null; then echo 1; fi)
+ifeq ($(MXE_32bit),1)
+MXE_PREFIX=i686-w64-mingw32.shared
+else
+ifeq ($(MXE_64bit),1)
+MXE_PREFIX=x86_64-w64-mingw32.shared
+else
+$(error "MXE compiler not found")
+endif
+endif
+
+# force 64 bit build
+ifdef MXE64
+MXE_64bit=$(shell if which x86_64-w64-mingw32.shared-g++>&/dev/null; then echo 1; fi)
+ifeq ($(MXE_64bit),1)
+MXE_PREFIX=x86_64-w64-mingw32.shared
+else
+$(error "MXE compiler not found")
+endif
+endif
+
+
 FLAGS+=-DECOLAB_HOME=\"$(ECOLAB_HOME)\"
 
 ifdef MPI_DEBUG
@@ -66,6 +91,7 @@ DIRS=$(ECOLAB_HOME) $(HOME)/usr /usr/local /opt/local /usr/X11R6
 # a search mechanism to find a particular file
 # use as $(call search,name)
 ifdef MXE
+DIRS+=$(dir `which $(MXE_PREFIX)-g++`)
 search=$(firstword $(foreach dir,$(DIRS),$(wildcard $(dir)/$(1))))
 else
 search=$(firstword $(foreach dir,$(DIRS) /usr,$(wildcard $(dir)/$(1))))
@@ -121,30 +147,6 @@ endif
 ifdef CCACHE
 CC:=ccache $(CC)
 CPLUSPLUS:=ccache $(CPLUSPLUS)
-endif
-
-# choose 32 bits by preference
-ifdef MXE
-MXE_32bit=$(shell if which i686-w64-mingw32.shared-g++>&/dev/null; then echo 1; fi)
-MXE_64bit=$(shell if which x86_64-w64-mingw32.shared-g++>&/dev/null; then echo 1; fi)
-ifeq ($(MXE_32bit),1)
-MXE_PREFIX=i686-w64-mingw32.shared
-else
-ifeq ($(MXE_64bit),1)
-MXE_PREFIX=x86_64-w64-mingw32.shared
-else
-$(error "MXE compiler not found")
-endif
-endif
-
-# force 64 bit build
-ifdef MXE64
-MXE_64bit=$(shell if which x86_64-w64-mingw32.shared-g++>&/dev/null; then echo 1; fi)
-ifeq ($(MXE_64bit),1)
-MXE_PREFIX=x86_64-w64-mingw32.shared
-else
-$(error "MXE compiler not found")
-endif
 endif
 
 GCC=1
@@ -590,7 +592,8 @@ LINK+=$(OPT)
 LIBMODS=
 
 # modules to include on the MODLINK command line
-ALWAYSLINK=tcl_arrays tclgraph analysis random cairo_types plot
+#ALWAYSLINK=analysis random cairo_types plot
+ALWAYSLINK=
 
 # for some reason, the -u option doesn't work with MXE
 ifdef MXE
