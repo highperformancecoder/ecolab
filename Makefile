@@ -34,10 +34,10 @@ include include/Makefile
 #binary
 FLAGS+=-UECOLAB_LIB -DINSTALLED_ECOLAB_LIB=\"$(PREFIX)/include\" -DWORDSIZE=64
 
-#ifdef AEGIS
+ifdef AEGIS
 # must build and test against c++20 now
 CXXFLAGS+=-std=c++20
-#endif
+endif
 
 # when upgrading MXE, this will need to be removed 
 ifdef MXE
