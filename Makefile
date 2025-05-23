@@ -34,10 +34,10 @@ include include/Makefile
 #binary
 FLAGS+=-UECOLAB_LIB -DINSTALLED_ECOLAB_LIB=\"$(PREFIX)/include\" -DWORDSIZE=64
 
-ifdef AEGIS
+#ifdef AEGIS
 # must build and test against c++20 now
 CXXFLAGS+=-std=c++20
-endif
+#endif
 
 # when upgrading MXE, this will need to be removed 
 ifdef MXE
@@ -236,7 +236,7 @@ latex-docs:
 	if which latex; then cd doc; rm -f *.aux *.dvi *.log *.blg *.toc *.lof *.out; latex -interaction=batchmode ecolab; fi
 
 #bin/ecolab is a python interpreter supporting MPI
-bin/ecolab$(ECOLIBS_EXT): src/pythonMain.o lib/libecolab$(ECOLIBS_EXT).a
+bin/ecolab$(ECOLIBS_EXT): src/pythonMain.o lib/libecolab$(ECOLIBS_EXT).so
 	$(LINK) $(FLAGS) src/pythonMain.o -Wl,-rpath $(ECOLAB_HOME)/lib $(LIBS) -lboost_system -o $@
 	-find . \( -name "*.cc" -o -name "*.h" \) -print |etags -
 
