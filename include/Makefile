@@ -427,7 +427,7 @@ endif
 
 # python
 FLAGS+=$(shell $(PKG_CONFIG) --cflags python3)
-LIBS+=$(shell $(PKG_CONFIG) --libs python3)
+LIBS+=$(shell $(PKG_CONFIG) --libs python3) -lpython3
 
 ifdef XDR
 # libtirpc is where the XDR routines have been moved to from glibc
