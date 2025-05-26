@@ -119,19 +119,9 @@ endif
 all: all-without-models
 	$(MAKE) models 
 
-ifeq ($(OS),Linux)
-  ifndef MXE
-    ECOLAB_INTERPRETER=bin/ecolab$(ECOLIBS_EXT)
-  endif
-endif
+only-libs: ecolab-libs lib/libecolab$(ECOLIBS_EXT).a
 
-all-without-models: ecolab-libs lib/libecolab$(ECOLIBS_EXT).a $(ECOLAB_INTERPRETER)
-	-$(CHMOD) a+x $(SCRIPTS)
-# copy in the system built TCL library
-ifdef MXE
-	cp -r $(call search,lib*/tcl$(TCLVERSION)) include/tcl
-	cp -r $(call search,lib*/tk$(TCLVERSION)) include/tk
-endif
+all-without-models: only-libs bin/ecolab$(ECOLIBS_EXT)
 
 ecolab-libs: lib bin 
 	$(MAKE) $(UTILS) 
