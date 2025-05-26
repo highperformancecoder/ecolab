@@ -204,12 +204,14 @@ namespace
   };
 
 }
+#endif // TK
 
 void CairoSurface::registerImage()
 {
+#ifdef TK
   Tk_CreateImageType(&canvasImage);
+#endif
 }
-#endif // TK
 
 cairo::SurfacePtr CairoSurfaceRedraw::vectorRender(const char* filename, cairo_surface_t* (*s)(const char *,double,double))
 {
