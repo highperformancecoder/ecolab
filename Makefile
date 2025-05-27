@@ -21,6 +21,7 @@ ECOLAB_HOME=$(shell pwd)
 PATH:=$(PATH):$(ECOLAB_HOME)/utils
 
 MCFG=include/Makefile.config
+SHELL=bash
 
 ifneq ($(MAKECMDGOALS),clean)
 # make sure Classdesc is built first, even before starting to include Makefiles
