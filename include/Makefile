@@ -178,6 +178,7 @@ ifndef MXE
       $(warning cannot figure out boost extension) 
     endif
   endif
+  $(shell rm a.out)
   $(warning Boost extension=$(BOOST_EXT))
 else # MXE
   GCC=1

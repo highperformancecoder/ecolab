@@ -103,7 +103,9 @@ ELIBS=lib/libecolab$(ECOLIBS_EXT).a $(MODS:%=lib/%)
 # toplevel version
 include Makefile.version
 # run build CD headers before anything else
+ifneq ($(MAKECMDGOALS),clean)
 include cdhdrs
+endif
 
 # variant of $(VERSION) that has leading 0s stripped (for sonames)
 SOVERSION=$(subst D0,D,$(subst D00,D,$(VERSION)))
