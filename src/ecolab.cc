@@ -6,8 +6,9 @@
   Open source licensed under the MIT license. See LICENSE for details.
 */
 
+#ifdef TCL
 #include "tcl++.h"
-#define TK 1
+#endif
 #undef None
 #include "cairoSurfaceImage.h"
 #undef None
@@ -87,8 +88,10 @@ void* ecolab::reallocSycl(void* pp,size_t s)
 
 namespace ecolab
 {
+#ifdef TCL
   bool interpExiting=false;
   void interpExitProc(ClientData cd) {}
+#endif
   
 #ifdef MPI_SUPPORT
   unsigned myid() {return graphcode::myid();}
@@ -99,13 +102,15 @@ namespace ecolab
 #endif
 
   
+#ifdef TCL
   const char* TCL_args::str() 
 #if (TCL_MAJOR_VERSION==8 && TCL_MINOR_VERSION==0)
     {return Tcl_GetStringFromObj(pop_arg(),NULL);}
 #else
     {return Tcl_GetString(pop_arg());}
 #endif
-
+#endif
+  
   int addEcoLabPath()
   {
     if (Py_IsInitialized())
@@ -246,7 +251,7 @@ namespace ecolab
 
 CLASSDESC_PYTHON_MODULE(ecolab);
 
-
+#ifdef TCL
 // place for initialising any EcoLab extensions to the TCL
 // interpreter, to be called by tkinter's Tk() object
 extern "C" int Ecolab_Init(Tcl_Interp* interp)
@@ -257,4 +262,4 @@ extern "C" int Ecolab_Init(Tcl_Interp* interp)
 
 // some linkers add an _
 extern "C" int _Ecolab_Init(Tcl_Interp* interp) {return Ecolab_Init(interp);}
-
+#endif

@@ -498,6 +498,9 @@ endif
 ifdef TK
 FLAGS+=-DTK
 endif
+ifdef TCL
+FLAGS+=-DTCL
+endif
 
 # this conditional ensure TCL is present before doing this stuff, as
 # otherwise Make hangs
