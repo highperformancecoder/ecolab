@@ -164,7 +164,15 @@ namespace ecolab
     DeviceType(A... args): model(new SyclType<M>(std::forward<A>(args)...)) {}
     DeviceType(const DeviceType& x): model(new SyclType<M>(*x.model)) {}
     DeviceType& operator=(const DeviceType& x) {*model=*x.model; return *this;}
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+    // gcc incorrectly infers SyclType is polymorphic, which is quite plainly is not
+#pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
+#endif
     ~DeviceType() {delete model;}
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
     M& operator*() {return *model;}
     const M& operator*() const {return *model;}
     M* operator->() {return model;}
