@@ -1,4 +1,5 @@
 #include "starComplexity.h"
+#include "vecBitSet.cd"
 #include "starComplexity.cd"
 #include "netcomplexity.h"
 #include "pythonBuffer.h"

@@ -16,7 +16,7 @@ V swizzleFrom(const V& x) {
   } else if constexpr (NumItems<V::size()) { // fill in remainder of permutation
     return swizzleFrom<V,0,V::size()-NumItems,NumItems,N...>(x);
   } else {
-      return x.template swizzle<N...>();
+    return V(x.template swizzle<N...>());
   }
 }
 
@@ -44,7 +44,7 @@ class VecBitSet: public sycl::vec<T,N>
       swizzleAsg<VecBitSet,T,0,n>(r,0);
       return r;
     }
-    return sycl::vec<T,N>(0);
+    return VecBitSet(0);
   }
   
   // shift vector by n positions using a swizzle
@@ -54,7 +54,7 @@ class VecBitSet: public sycl::vec<T,N>
       swizzleAsg<VecBitSet,T,N-n,N>(r,0);
       return r;
     }
-    return sycl::vec<T,N>(0);
+    return VecBitSet(0);
   }
 
   // returns result of bitshifting to the left
@@ -63,21 +63,28 @@ class VecBitSet: public sycl::vec<T,N>
   VecBitSet bitShiftLeft(sycl::vec<T,N> r, const sycl::vec<T,N>& l, unsigned remainder) const {
     r>>=(8*sizeof(T)-remainder);
     r|=l<<remainder;
-    return r;
+    return VecBitSet(r);
   }
 
 #ifdef CLASSDESC_ACCESS
   CLASSDESC_ACCESS(VecBitSet);
 #endif
 public:
+  using Vec=sycl::vec<T,N>;
   VecBitSet()=default;
   template <class U>
-  VecBitSet(const U& x): sycl::vec<T,N>(x) {}
-  template <class U>
-  VecBitSet& operator=(const U& x) {sycl::vec<T,N>::operator=(x); return *this;}
+  explicit VecBitSet(const U& x): sycl::vec<T,N>(x) {}
+  VecBitSet& operator=(T x) {sycl::vec<T,N>::operator=(x); return *this;}
+  VecBitSet& operator=(const Vec& x) {sycl::vec<T,N>::operator=(x); return *this;}
+  operator bool() const {
+    for (unsigned i=0; i<N; ++i)
+      if ((*this)[i]) return true;
+    return false;
+  }
+  
   // only need to fix up bit shift operations
-  VecBitSet operator<<(unsigned n) const {
-    auto d=div(int(n),8*sizeof(T));
+  VecBitSet operator<<(int n) const {
+    auto d=div(n,8*sizeof(T));
     switch (d.quot) {
     case 0: return bitShiftLeft(shiftLeft<1>(), *this, d.rem);
     case 1: return bitShiftLeft(shiftLeft<2>(), shiftLeft<1>(), d.rem);
@@ -94,12 +101,12 @@ public:
     case 12: return bitShiftLeft(shiftLeft<13>(), shiftLeft<12>(), d.rem);
     case 13: return bitShiftLeft(shiftLeft<14>(), shiftLeft<13>(), d.rem);
     case 14: return bitShiftLeft(shiftLeft<15>(), shiftLeft<14>(), d.rem);
-    case 15: return shiftLeft<15>() >> (8*sizeof(T)-d.rem);
-    default: return sycl::vec<T,N>(0); // SYCL defines a maximum of 16 elements in a vec.
+    case 15: return shiftLeft<15>() >> int(8*sizeof(T)-d.rem);
+    default: return VecBitSet(0); // SYCL defines a maximum of 16 elements in a vec.
     }
   }
-  VecBitSet operator>>(unsigned n) const {
-    auto d=div(int(n),8*sizeof(T));
+  VecBitSet operator>>(int n) const {
+    auto d=div(n,8*sizeof(T));
     d.rem=(8*sizeof(T)-d.rem)%(8*sizeof(T)); // shift the other way
     switch (d.quot) {
     case 0: return bitShiftLeft(*this, shiftRight<1>(), d.rem);
@@ -117,13 +124,53 @@ public:
     case 12: return bitShiftLeft(shiftRight<12>(), shiftRight<13>(), d.rem);
     case 13: return bitShiftLeft(shiftRight<13>(), shiftRight<14>(), d.rem);
     case 14: return bitShiftLeft(shiftRight<14>(), shiftRight<15>(), d.rem);
-    case 15: return shiftRight<15>() >> (8*sizeof(T)-d.rem);
-    default: return sycl::vec<T,N>(0); // SYCL defines a maximum of 16 elements in a vec.
+    case 15: return shiftRight<15>() >> d.rem;
+    default: return VecBitSet(0); // SYCL defines a maximum of 16 elements in a vec.
     }
+  }
+
+  int operator<=>(const VecBitSet& x) const {
+    for (unsigned i=0; i<N; ++i)
+      {
+        if ((*this)[i]<x[i]) return -1;
+        if (x[i]<(*this)[i]) return 1;
+      }
+    return 0;
   }
 };
 
+#define CLASSDESC_json_pack___VecBitSet_T_N_
+#define CLASSDESC_json_unpack___VecBitSet_T_N_
+#define CLASSDESC_RESTProcess___VecBitSet_T_N_
 
+#include "json_pack_base.h"
+namespace classdesc_access
+{
+  template <class T, unsigned N> struct access_json_pack<VecBitSet<T,N>> {
+    template <class _CD_ARG_TYPE>
+    void operator()(classdesc::json_pack_t& targ, const classdesc::string& desc,_CD_ARG_TYPE& arg)
+    {
+      std::vector<T> tmp;
+      for (unsigned i=0; i<arg.size(); ++i)
+        tmp.push_back(arg[i]);
+      targ<<tmp;
+    }
+  };
+    
+  template <class T, unsigned N> struct access_json_unpack<VecBitSet<T,N>> {
+    template <class _CD_ARG_TYPE>
+    void operator()(classdesc::json_pack_t& targ, const classdesc::string& desc,_CD_ARG_TYPE& arg)
+    {
+      std::vector<T> tmp;
+      targ>>tmp;
+      for (unsigned i=0; i<arg.size() && i<tmp.size(); ++i)
+        arg[i]=tmp[i];
+    }
+  };
+
+  template <class T, unsigned N> struct access_RESTProcess<VecBitSet<T,N>>:
+    public classdesc::NullDescriptor<classdesc::RESTProcess_t> {};
+}
 
 #endif
 #endif

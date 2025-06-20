@@ -5,15 +5,18 @@ constexpr unsigned maxNodes=22, maxStars=2*maxNodes-1;
 
 #include "netcomplexity.h"
 
-#ifdef SYCL_LANGUAGE_VERSION
-
+#include "vecBitSet.h"
 
 
 
 class linkRep
 {
 public:
+#ifdef SYCL_LANGUAGE_VERSION
+  using Impl=VecBitSet<unsigned,4>;
+#else
   using Impl=/*long long*/ unsigned;
+#endif
 private:
   constexpr static unsigned size=maxNodes*(maxNodes-1)/(16*sizeof(Impl))+1;
   Impl data[linkRep::size];
@@ -58,7 +61,7 @@ public:
     for (unsigned i=0; i<size; ++i)
       {
         if (data[i]<x.data[i]) return true;
-        if (data[i]>x.data[i]) return false;
+        if (x.data[i]<data[i]) return false;
       }
     return false;
   }
