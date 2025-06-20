@@ -5,6 +5,11 @@ constexpr unsigned maxNodes=22, maxStars=2*maxNodes-1;
 
 #include "netcomplexity.h"
 
+#ifdef SYCL_LANGUAGE_VERSION
+
+
+
+
 class linkRep
 {
 public:
