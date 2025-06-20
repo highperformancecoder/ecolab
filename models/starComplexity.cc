@@ -170,9 +170,6 @@ struct EvalStack
     auto numStars=data.pos.size();
     auto recipeSize=2*numStars-1;
 
-    // suitable up to 10 node networks
-    constexpr unsigned maxNodes=11, maxStars=2*maxNodes-1;
-    static_assert(sizeof(linkRep)*8 > (maxNodes*(maxNodes-1))/2);
     assert(nodes<=maxNodes);
     auto elemStars=&data.elemStars[0];
     auto pos=&data.pos[0];
@@ -214,7 +211,7 @@ struct EvalStack
 };
 
 // constant representing no graph at all
-constexpr linkRep noGraph=~linkRep(0);
+const linkRep noGraph=~linkRep(0);
 
 class OutputBuffer
 {
@@ -434,7 +431,7 @@ NautyRep toNautyRep(linkRep g, unsigned nodes)
   NautyRep n(nodes);
   for (unsigned i=0; i<nodes; ++i)
     for (unsigned j=0; j<i; ++j)
-      if (g&(1<<(i*(i-1)/2+j)))
+      if (g&(linkRep(1)<<(i*(i-1)/2+j)))
         n(i,j)=n(j,i)=true;
   return n;
 }
