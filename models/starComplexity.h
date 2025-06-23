@@ -8,44 +8,40 @@ constexpr unsigned maxNodes=22, maxStars=2*maxNodes-1;
 #include "vecBitSet.h"
 
 
-
-class linkRep
+template <class I>
+class linkRepImpl
 {
 public:
-#ifdef SYCL_LANGUAGE_VERSION
-  using Impl=VecBitSet<unsigned,4>;
-#else
-  using Impl=/*long long*/ unsigned;
-#endif
+  using Impl=I;
 private:
   constexpr static unsigned size=maxNodes*(maxNodes-1)/(16*sizeof(Impl))+1;
-  Impl data[linkRep::size];
-  CLASSDESC_ACCESS(linkRep);
+  Impl data[linkRepImpl<I>::size];
+  CLASSDESC_ACCESS(linkRepImpl);
 public:
-  linkRep()=default;
-  linkRep(unsigned long long x) {
+  linkRepImpl()=default;
+  linkRepImpl(unsigned long long x) {
     static_assert(sizeof(data)>=sizeof(x));
     memcpy(data,&x,sizeof(x));
     memset(((char*)data)+sizeof(x),0,sizeof(data)-sizeof(x));
   }
-  const linkRep& operator|=(const linkRep& x) {
+  const linkRepImpl& operator|=(const linkRepImpl& x) {
     for (unsigned i=0; i<size; ++i) data[i]|=x.data[i];
     return *this;
   }
-  linkRep operator|(linkRep x) {return x|=*this;}
-  const linkRep& operator&=(const linkRep& x) {
+  linkRepImpl operator|(linkRepImpl x) {return x|=*this;}
+  const linkRepImpl& operator&=(const linkRepImpl& x) {
     for (unsigned i=0; i<size; ++i) data[i]&=x.data[i];
     return *this;
   }
-  linkRep operator&(linkRep x) {return x&=*this;}
+  linkRepImpl operator&(linkRepImpl x) {return x&=*this;}
   
-  linkRep operator~() const {
-    linkRep r;
+  linkRepImpl operator~() const {
+    linkRepImpl r;
     for (unsigned i=0; i<size; ++i) r.data[i]=~data[i];
     return r;
   }
-  linkRep operator<<(int n) {
-    linkRep r;
+  linkRepImpl operator<<(int n) {
+    linkRepImpl r;
     auto d=div(n, int(8*sizeof(Impl)));
     for (unsigned i=0; i<size-d.quot; ++i)
       r.data[i+d.quot]=data[i]<<d.rem;
@@ -57,21 +53,28 @@ public:
     return nullptr;
   }
 
-  bool operator<(const linkRep& x) const {
+  auto operator<=>(const linkRepImpl& x) const {
     for (unsigned i=0; i<size; ++i)
-      {
-        if (data[i]<x.data[i]) return true;
-        if (x.data[i]<data[i]) return false;
-      }
-    return false;
+      if (auto r=data[i]<=>x.data[i]; r!=0)
+        return r;
+    return std::strong_ordering::equal;
   }
-  std::vector<linkRep::Impl> dataAsVector() const {
-    return std::vector<Impl>(data,data+size);
+  std::vector<unsigned> dataAsVector() const {
+    auto start=reinterpret_cast<const unsigned*>(data);
+    auto end=reinterpret_cast<const unsigned*>(data+size);
+    return std::vector<unsigned>(start,end);
   }
-  void dataFromVector(const std::vector<linkRep::Impl>& x) {
-    memcpy(data,x.data(),std::min(size_t(size),x.size())*sizeof(linkRep::Impl));
+  void dataFromVector(const std::vector<unsigned>& x) {
+    memcpy(data,x.data(),std::min(size_t(size),x.size())*sizeof(Impl));
   }
 };
+
+#ifdef SYCL_LANGUAGE_VERSION
+using linkRep=linkRepImpl<VecBitSet<unsigned,4>>;
+#else
+// on NUC, unsigned works best (32 bits)
+using linkRep=linkRepImpl<unsigned>;
+#endif
 
 // Convert to/from a JSON array for Python conversion
 #define CLASSDESC_json_pack___linkRep
@@ -84,7 +87,7 @@ namespace classdesc_access
     template <class _CD_ARG_TYPE>
     void operator()(classdesc::json_pack_t& targ, const classdesc::string& desc,_CD_ARG_TYPE& arg)
     {
-      std::vector<linkRep::Impl> tmp=arg.dataAsVector();
+      auto tmp=arg.dataAsVector();
       targ<<tmp;
     }
   };
@@ -93,7 +96,7 @@ namespace classdesc_access
     template <class _CD_ARG_TYPE>
     void operator()(classdesc::json_pack_t& targ, const classdesc::string& desc,_CD_ARG_TYPE& arg)
     {
-      std::vector<linkRep::Impl> tmp;
+      std::vector<unsigned> tmp;
       targ>>tmp;
       arg.dataFromVector(tmp);
     }

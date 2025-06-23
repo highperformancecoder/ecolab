@@ -129,13 +129,11 @@ public:
     }
   }
 
-  int operator<=>(const VecBitSet& x) const {
+  auto operator<=>(const VecBitSet& x) const {
     for (unsigned i=0; i<N; ++i)
-      {
-        if ((*this)[i]<x[i]) return -1;
-        if (x[i]<(*this)[i]) return 1;
-      }
-    return 0;
+      if (auto r=(*this)[i]<=>x[i]; r!=0)
+        return r;
+    return std::strong_ordering::equal;
   }
 };
 
