@@ -293,138 +293,137 @@ sycl::info::event_command_status eventStatus(Event ev)
 }
 #endif
 
-void StarComplexityGen::fillStarMap(unsigned maxStars)
+void StarComplexityGen::fillStarMap(unsigned numStars)
 {
   if (elemStars.empty()) return;
-  // insert the single star graph
-  starMap.emplace(elemStars[0],1);
-  counts.emplace(elemStars[0],1);
+  if (numStars==1)
+    {
+      // insert the single star graph
+      starMap.emplace(elemStars[0],1);
+      counts.emplace(elemStars[0],1);
+      return;
+    }
 
-  //unsigned numStars=maxStars;
-  for (unsigned numStars=2; numStars<=maxStars; ++numStars)
-  {
-    ecolab::DeviceType<BlockEvaluator> block(blockSize, numStars,elemStars);
-    Event resultSwapped, alreadySeenSwapped, starMapPopulated,backedResultsReset;
-    atomic<bool> populating=false;
-    atomic<unsigned> resultBufferConsumed=0;
-    const unsigned numOps=1<<(numStars-1);
+  ecolab::DeviceType<BlockEvaluator> block(blockSize, numStars,elemStars);
+  Event resultSwapped, alreadySeenSwapped, starMapPopulated,backedResultsReset;
+  atomic<bool> populating=false;
+  atomic<unsigned> resultBufferConsumed=0;
+  const unsigned numOps=1<<(numStars-1);
 
-    bool blown=false;
-    auto populateStarMap=[&]() {
-      for (auto& j: block->getResults())
-        {
-          if (j.blown())
-            {
-              blown=true;
-              return;
-            }
-          for (auto k: j)
-            {
-              auto res=starMap.emplace(k, numStars);
-              if (res.first->second==numStars) // only count least star operations
-                counts[k]++;
-            }
-        }
-    };
-
-    //int numLoops=3000;
-    do
+  bool blown=false;
+  auto populateStarMap=[&]() {
+    for (auto& j: block->getResults())
       {
-        auto start=time(nullptr);
+        if (j.blown())
+          {
+            blown=true;
+            return;
+          }
+        for (auto k: j)
+          {
+            auto res=starMap.emplace(k, numStars);
+            if (res.first->second==numStars) // only count least star operations
+              counts[k]++;
+          }
+      }
+  };
 
+  //int numLoops=3000;
+  do
+    {
+      auto start=time(nullptr);
+      
 #ifdef SYCL_LANGUAGE_VERSION
-        /* Using SYCL dependency graph structure, to run the compute
-           side simultaneously with accumulating results in the
-           starMap on the host. sycl::event is used to coordinate host
-           and device threads. */
-        vector<Event> compute;
+      /* Using SYCL dependency graph structure, to run the compute
+         side simultaneously with accumulating results in the
+         starMap on the host. sycl::event is used to coordinate host
+         and device threads. */
+      vector<Event> compute;
 
-        auto consumeResults=[&](bool lastLoop) {
-          // retrieve results to host by swapping with backing buffers
-          resultSwapped=syclQ().single_task
-            (compute,[block=&*block](){
-              block->result.swap(block->backedResult);
-            });
-          backedResultsReset=syclQ().parallel_for
-            (blockSize,resultSwapped,[block=&*block](auto i){block->backedResult[i].reset();});
-                
-          // accumulate starMap results on separate host thread
-          starMapPopulated=syclQ().submit([&](auto& handler) {
-            handler.depends_on(resultSwapped);
-            handler.host_task([&]() {
-              resultBufferConsumed=0;
-              populateStarMap();
-//              if (!lastLoop)
-//                {
-//                  block->alreadySeenBacked.clear();
-//                  for (auto& k: starMap) block->alreadySeenBacked.push_back(k.first);
-//                  // push update already seen vector to device
-//                  alreadySeenSwapped=syclQ().single_task
-//                    (compute,
-//                     [=,block=&*block]{
-//                       block->alreadySeen.swap(block->alreadySeenBacked);
-//                     });
-//                }
-              populating=false;
-            });
+      auto consumeResults=[&](bool lastLoop) {
+        // retrieve results to host by swapping with backing buffers
+        resultSwapped=syclQ().single_task
+          (compute,[block=&*block](){
+            block->result.swap(block->backedResult);
           });
-
-          Event::wait({resultSwapped,backedResultsReset});
-          resultBufferConsumed=0;
-        };
+        backedResultsReset=syclQ().parallel_for
+          (blockSize,resultSwapped,[block=&*block](auto i){block->backedResult[i].reset();});
         
-        for (unsigned i=0; i<block->numGraphs; i+=blockSize)
-          {
-//            if (resultBufferConsumed+numOps>=OutputBuffer::maxQ)
-//              {
-//                consumeResults(i+blockSize>=block->numGraphs);
-//                cout<<"pausing..."<<endl;
-//                backedResultsReset.wait();
-////                while (resultBufferConsumed)
-////                  usleep(1000); // pause until results consumed
-//              }
-            
-            // compute a block of graphs
-            compute.push_back
-              (syclQ().parallel_for(blockSize, {resultSwapped, alreadySeenSwapped},
-                                    [=,block=&*block](auto j){block->eval(i,j);}));
-            resultBufferConsumed+=numOps;
+        // accumulate starMap results on separate host thread
+        starMapPopulated=syclQ().submit([&](auto& handler) {
+          handler.depends_on(resultSwapped);
+          handler.host_task([&]() {
+            resultBufferConsumed=0;
+            populateStarMap();
+            //              if (!lastLoop)
+            //                {
+            //                  block->alreadySeenBacked.clear();
+            //                  for (auto& k: starMap) block->alreadySeenBacked.push_back(k.first);
+            //                  // push update already seen vector to device
+            //                  alreadySeenSwapped=syclQ().single_task
+            //                    (compute,
+            //                     [=,block=&*block]{
+            //                       block->alreadySeen.swap(block->alreadySeenBacked);
+            //                     });
+            //                }
+            populating=false;
+          });
+        });
 
-            if (eventStatus(starMapPopulated)==sycl::info::event_command_status::complete)
-              // throttle consuming thread
-              consumeResults(i+blockSize>=block->numGraphs);
-          }
-        // wait until all compute threads finish before bumping pos
-        Event::wait(compute);
+        Event::wait({resultSwapped,backedResultsReset});
+        resultBufferConsumed=0;
+      };
+        
+      for (unsigned i=0; i<block->numGraphs; i+=blockSize)
+        {
+          //            if (resultBufferConsumed+numOps>=OutputBuffer::maxQ)
+          //              {
+          //                consumeResults(i+blockSize>=block->numGraphs);
+          //                cout<<"pausing..."<<endl;
+          //                backedResultsReset.wait();
+          ////                while (resultBufferConsumed)
+          ////                  usleep(1000); // pause until results consumed
+          //              }
+          
+          // compute a block of graphs
+          compute.push_back
+            (syclQ().parallel_for(blockSize, {resultSwapped, alreadySeenSwapped},
+                                  [=,block=&*block](auto j){block->eval(i,j);}));
+          resultBufferConsumed+=numOps;
+          
+          if (eventStatus(starMapPopulated)==sycl::info::event_command_status::complete)
+            // throttle consuming thread
+            consumeResults(i+blockSize>=block->numGraphs);
+        }
+      // wait until all compute threads finish before bumping pos
+      Event::wait(compute);
 #else
-        for (unsigned i=0; i<block->numGraphs; i+=block->size())
-          for (unsigned j=0; j<block->size(); ++j)
-            block->eval(i,j);
-        populateStarMap();
+      for (unsigned i=0; i<block->numGraphs; i+=block->size())
+        for (unsigned j=0; j<block->size(); ++j)
+          block->eval(i,j);
+      populateStarMap();
 #endif
-        if (blown)
-          {
-            cout<<"buffer blown, throwing"<<endl;
+      if (blown)
+        {
+          cout<<"buffer blown, throwing"<<endl;
 #ifdef SYCL_LANGUAGE_VERSION
-            syclQ().wait(); // flush queue before destructors called
+          syclQ().wait(); // flush queue before destructors called
 #endif
-            throw runtime_error("Output buffer blown");
-          }
+          throw runtime_error("Output buffer blown");
+        }
 
-        //cout<<"loops rem="<<numLoops<<" resultBufferConsumed:"<<unsigned(resultBufferConsumed)<<" "<<(time(nullptr)-start)<<"secs\n";
-      } while (block->pos.next() /*&& --numLoops>0*/);
+      //cout<<"loops rem="<<numLoops<<" resultBufferConsumed:"<<unsigned(resultBufferConsumed)<<" "<<(time(nullptr)-start)<<"secs\n";
+    } while (block->pos.next() /*&& --numLoops>0*/);
 #ifdef SYCL_LANGUAGE_VERSION
-    auto start=time(nullptr);
-    resultSwapped=syclQ().single_task
-      ([block=&*block](){
-        block->result.swap(block->backedResult);
-      });
-    populateStarMap();
-    syclQ().wait_and_throw(); // flush queue before destructors called
-    cout<<"numStars done:"<<numStars<<endl;
-    //cout<<"Final wait:"<<(time(nullptr)-start)<<"secs\n";
+  auto start=time(nullptr);
+  resultSwapped=syclQ().single_task
+    ([block=&*block](){
+      block->result.swap(block->backedResult);
+    });
+  populateStarMap();
+  syclQ().wait_and_throw(); // flush queue before destructors called
 #endif
-  }
+
 }
 
 NautyRep toNautyRep(linkRep g, unsigned nodes)

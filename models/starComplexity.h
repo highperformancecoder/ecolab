@@ -128,7 +128,7 @@ struct StarComplexityGen
   ElemStars elemStars;
   void generateElementaryStars(unsigned nodes);
   // fills starMap with graphs of \a numStars
-  void fillStarMap(unsigned maxStars);
+  void fillStarMap(unsigned numStars);
   void canonicaliseStarMap();
   /// return complement canonical graph
   linkRep complement(linkRep) const;
