@@ -2,6 +2,7 @@
 #print(ecolab.device())
 
 from starComplexity import starC
+from datetime import datetime
 nodes=22
 # computed from max_{l\in[0,L]}min(n+L-l,2l) where L=n(n-1)/2
 maxStars=0
@@ -11,7 +12,7 @@ for l in range(L):
     maxStars=max(maxStars,v)
 
 print('maxStars=',maxStars)
-maxStars=8
+maxStars=12
 
 #starC.blockSize(256)
 starC.blockSize(4096)
@@ -22,7 +23,7 @@ starC.blockSize(4096)
 starC.generateElementaryStars(nodes)
 for numStars in range(2,maxStars+1):
     starC.fillStarMap(numStars)
-    print('completed',numStars)
+    print('completed',numStars,datetime.now())
     starC.canonicaliseStarMap()
     with open(f'{nodes}-{maxStars}.csv','w') as out:
         print('id,links','*','C','C*','omega(g)','omega(g\')',sep=',',file=out)
