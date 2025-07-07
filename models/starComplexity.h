@@ -1,5 +1,5 @@
 // hard code maximum number of nodes
-constexpr unsigned maxNodes=22, maxStars=2*maxNodes-1;
+constexpr unsigned maxNodes=8, maxStars=2*maxNodes-1;
 
 //using linkRep=unsigned long long;
 
@@ -19,7 +19,7 @@ private:
   CLASSDESC_ACCESS(linkRepImpl);
 public:
   linkRepImpl()=default;
-  linkRepImpl(unsigned long long x) {
+  linkRepImpl(unsigned x) {
     static_assert(sizeof(data)>=sizeof(x));
     memcpy(data,&x,sizeof(x));
     memset(((char*)data)+sizeof(x),0,sizeof(data)-sizeof(x));
@@ -47,12 +47,22 @@ public:
       r.data[i+d.quot]=data[i]<<d.rem;
     return r;
   }
-  operator const void*() const {
-    for (unsigned i=0; i<size; ++i)
-      if (data[i]) return data;
-    return nullptr;
+  // return true if there is a link between nodes i and j
+  bool operator()(unsigned i,unsigned j) const {
+        if (i<j) std::swap(i,j);
+        auto d=div(i*(i-1)/2+j, int(8*sizeof(Impl)));
+        return (data[d.quot] & (Impl(1)<<d.rem))!=0;
   }
-
+  bool empty() const {
+    for (unsigned i=0; i<size; ++i)
+      if (data[i]) return false;
+    return true;
+  }
+  bool operator==(const linkRepImpl& x) const {
+    for (unsigned i=0; i<size; ++i)
+      if (data[i]!=x.data[i]) return false;
+    return true;
+  }
   auto operator<=>(const linkRepImpl& x) const {
     for (unsigned i=0; i<size; ++i)
       if (auto r=data[i]<=>x.data[i]; r!=0)
@@ -134,5 +144,8 @@ struct StarComplexityGen
   linkRep complement(linkRep) const;
   unsigned symmStar(linkRep) const;
   GraphComplexity complexity(linkRep) const;
+
+  /// return an upper bound on the number of stars in the link representation
+  unsigned starUpperBound(const linkRep&) const;
 };
 

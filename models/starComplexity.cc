@@ -1,5 +1,7 @@
 #include "starComplexity.h"
+#ifdef SYCL_LANGUAGE_VERSION
 #include "vecBitSet.cd"
+#endif
 #include "starComplexity.cd"
 #include "netcomplexity.h"
 #include "pythonBuffer.h"
@@ -32,6 +34,8 @@ linkRep edge(unsigned i, unsigned j)
   if (i<j) swap(i,j);
   return linkRep(1)<<(i*(i-1)/2+j);
 }
+
+
 
 void StarComplexityGen::generateElementaryStars(unsigned nodes)
 {
@@ -431,7 +435,7 @@ NautyRep toNautyRep(linkRep g, unsigned nodes)
   NautyRep n(nodes);
   for (unsigned i=0; i<nodes; ++i)
     for (unsigned j=0; j<i; ++j)
-      if (g&(linkRep(1)<<(i*(i-1)/2+j)))
+      if (!(g&(linkRep(1)<<(i*(i-1)/2+j))).empty())
         n(i,j)=n(j,i)=true;
   return n;
 }
@@ -545,3 +549,59 @@ GraphComplexity StarComplexityGen::complexity(linkRep g) const
     }
   return r;
 }
+
+
+unsigned starUpperBound(linkRep x, unsigned nodes) 
+{
+  // Firstly remove those nodes that are full stars
+  vector<unsigned> fullStars;
+  for (unsigned i=0; i<nodes; ++i)
+    {
+      bool fullStar=true;
+      for (unsigned j=0; fullStar && j<nodes; ++j)
+        if (i!=j && !x(i,j))
+          fullStar=false;
+      if (fullStar) fullStars.push_back(i);
+    }
+
+  unsigned stars=fullStars.size();
+  for (auto i: fullStars)
+    for (unsigned j=0; j<nodes; ++j)
+      x&=~edge(i,j); // remove all edges to this node
+
+
+  // calculate node degree
+  map<unsigned,unsigned> nodeDegree;
+  for (unsigned i=0; i<maxNodes; ++i)
+    for (unsigned j=0; j<i; ++j)
+      if (x(i,j))
+        {
+          ++nodeDegree[i];
+          ++nodeDegree[j];
+        }
+
+
+  struct SecondLess
+  {
+    bool operator()(const pair<unsigned,unsigned>& x, const pair<unsigned,unsigned>& y)
+      const {return x.second < y.second;}
+  };
+  
+  // compute the number of operations xᵢ∪(xₖ∩xₗ…)
+  auto maxDegree=max_element(nodeDegree.begin(), nodeDegree.end(), SecondLess());
+
+  while (maxDegree->second>0)
+    {
+      stars+=1+maxDegree->second;
+      maxDegree->second=0; // accounted for all links to this node
+      for (unsigned j=0; j<maxNodes; ++j)
+        if (x(maxDegree->first, j) && nodeDegree[j])
+          --nodeDegree[j];
+      maxDegree=max_element(nodeDegree.begin(), nodeDegree.end(), SecondLess());
+    }
+
+  return stars;
+}
+
+unsigned StarComplexityGen::starUpperBound(const linkRep& x) const
+{return min(::starUpperBound(x, elemStars.size()), ::starUpperBound(~x,elemStars.size()));}
