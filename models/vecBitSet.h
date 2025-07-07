@@ -74,6 +74,7 @@ public:
   VecBitSet()=default;
   template <class U>
   explicit VecBitSet(const U& x): sycl::vec<T,N>(x) {}
+  explicit VecBitSet(Vec&& x): sycl::vec<T,N>(std::move(x)) {}
   VecBitSet& operator=(T x) {sycl::vec<T,N>::operator=(x); return *this;}
   VecBitSet& operator=(const Vec& x) {sycl::vec<T,N>::operator=(x); return *this;}
   operator bool() const {
@@ -129,6 +130,12 @@ public:
     }
   }
 
+  bool operator==(const VecBitSet& x) const {
+    for (unsigned i=0; i<N; ++i)
+      if ((*this)[i]!=x[i])
+        return false;
+    return true;
+  }
   auto operator<=>(const VecBitSet& x) const {
     for (unsigned i=0; i<N; ++i)
       if (auto r=(*this)[i]<=>x[i]; r!=0)

@@ -39,6 +39,8 @@ linkRep edge(unsigned i, unsigned j)
 
 void StarComplexityGen::generateElementaryStars(unsigned nodes)
 {
+  if (nodes>maxNodes)
+    throw runtime_error("nodes requested exceeds maximum configured: "+to_string(maxNodes));
   for (unsigned i=0; i<nodes; ++i)
     {
       linkRep star=0;
@@ -617,7 +619,6 @@ unsigned StarComplexityGen::starUpperBound(const linkRep& x) const
 {
   unsigned ub=::starUpperBound(x, elemStars.size());
   unsigned complementUb=::starUpperBound(~x, elemStars.size());
-  if (ub==0) return complementUb;
-  if (complementUb==0) return ub;
-  return min(::starUpperBound(x, elemStars.size()), ::starUpperBound(~x,elemStars.size()));
+  assert(ub>0 && complementUb>0);
+  return min(ub, complementUb);
 }

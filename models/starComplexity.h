@@ -1,5 +1,5 @@
 // hard code maximum number of nodes
-constexpr unsigned maxNodes=8, maxStars=2*maxNodes-1;
+constexpr unsigned maxNodes=10, maxStars=2*maxNodes-1;
 
 //using linkRep=unsigned long long;
 
@@ -51,7 +51,7 @@ public:
   bool operator()(unsigned i,unsigned j) const {
         if (i<j) std::swap(i,j);
         auto d=div(i*(i-1)/2+j, int(8*sizeof(Impl)));
-        return (data[d.quot] & (Impl(1)<<d.rem))!=0;
+        return Impl(data[d.quot] & (Impl(1)<<d.rem));
   }
   bool empty() const {
     for (unsigned i=0; i<size; ++i)
