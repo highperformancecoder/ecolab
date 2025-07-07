@@ -553,6 +553,7 @@ GraphComplexity StarComplexityGen::complexity(linkRep g) const
 
 unsigned starUpperBound(linkRep x, unsigned nodes) 
 {
+  if (x.empty()) return 3; // intersection of 3 stars is empty.
   // Firstly remove those nodes that are full stars
   vector<unsigned> fullStars;
   for (unsigned i=0; i<nodes; ++i)
@@ -590,13 +591,22 @@ unsigned starUpperBound(linkRep x, unsigned nodes)
   // compute the number of operations xᵢ∪(xₖ∩xₗ…)
   auto maxDegree=max_element(nodeDegree.begin(), nodeDegree.end(), SecondLess());
 
+  vector<unsigned> prevNbrs;
   while (maxDegree->second>0)
     {
-      stars+=1+maxDegree->second;
-      maxDegree->second=0; // accounted for all links to this node
+      vector<unsigned> neighbours;
       for (unsigned j=0; j<maxNodes; ++j)
         if (x(maxDegree->first, j) && nodeDegree[j])
-          --nodeDegree[j];
+          {
+            --nodeDegree[j];
+            neighbours.push_back(j);
+          }
+      if (neighbours==prevNbrs)
+        ++stars;
+      else
+        stars+=1+maxDegree->second;
+      prevNbrs=std::move(neighbours);
+      maxDegree->second=0; // accounted for all links to this node
       maxDegree=max_element(nodeDegree.begin(), nodeDegree.end(), SecondLess());
     }
 
@@ -604,4 +614,10 @@ unsigned starUpperBound(linkRep x, unsigned nodes)
 }
 
 unsigned StarComplexityGen::starUpperBound(const linkRep& x) const
-{return min(::starUpperBound(x, elemStars.size()), ::starUpperBound(~x,elemStars.size()));}
+{
+  unsigned ub=::starUpperBound(x, elemStars.size());
+  unsigned complementUb=::starUpperBound(~x, elemStars.size());
+  if (ub==0) return complementUb;
+  if (complementUb==0) return ub;
+  return min(::starUpperBound(x, elemStars.size()), ::starUpperBound(~x,elemStars.size()));
+}
