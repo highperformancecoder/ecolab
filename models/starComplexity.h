@@ -71,11 +71,7 @@ public:
       if (data[i]) return false;
     return true;
   }
-  bool operator==(const linkRepImpl& x) const {
-    for (unsigned i=0; i<size; ++i)
-      if (data[i]!=x.data[i]) return false;
-    return true;
-  }
+  bool operator==(const linkRepImpl& x) const {return operator<=>(x)==0;}
   auto operator<=>(const linkRepImpl& x) const {
     for (unsigned i=0; i<size; ++i)
       if (auto r=data[i]<=>x.data[i]; r!=0)
@@ -88,16 +84,16 @@ public:
     return std::vector<unsigned>(start,end);
   }
   void dataFromVector(const std::vector<unsigned>& x) {
-    memcpy(data,x.data(),std::min(size_t(size),x.size())*sizeof(Impl));
+    memcpy(data,x.data(),std::min(size_t(size)*sizeof(Impl),x.size()*sizeof(x[0])));
   }
 };
 
-#ifdef SYCL_LANGUAGE_VERSION
-using linkRep=linkRepImpl<VecBitSet<unsigned,4>>;
-#else
+//#ifdef SYCL_LANGUAGE_VERSION
+//using linkRep=linkRepImpl<VecBitSet<unsigned,4>>;
+//#else
 // on NUC, unsigned works best (32 bits)
 using linkRep=linkRepImpl<unsigned>;
-#endif
+//#endif
 
 // Convert to/from a JSON array for Python conversion
 #define CLASSDESC_json_pack___linkRep

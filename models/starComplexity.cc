@@ -352,8 +352,6 @@ void StarComplexityGen::fillStarMap(unsigned numStars)
           (compute,[block=&*block](){
             block->result.swap(block->backedResult);
           });
-        backedResultsReset=syclQ().parallel_for
-          (blockSize,resultSwapped,[block=&*block](auto i){block->backedResult[i].reset();});
         
         // accumulate starMap results on separate host thread
         starMapPopulated=syclQ().submit([&](auto& handler) {
@@ -375,6 +373,9 @@ void StarComplexityGen::fillStarMap(unsigned numStars)
             populating=false;
           });
         });
+
+        backedResultsReset=syclQ().parallel_for
+           (blockSize,starMapPopulated,[block=&*block](auto i){block->backedResult[i].reset();});
 
         Event::wait({resultSwapped,backedResultsReset});
         resultBufferConsumed=0;
