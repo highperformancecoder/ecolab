@@ -12,7 +12,7 @@ for l in range(L):
     maxStars=max(maxStars,v)
 
 print('maxStars=',maxStars)
-maxStars=9
+maxStars=10
 
 #starC.blockSize(256)
 starC.blockSize(4096)

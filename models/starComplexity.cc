@@ -438,6 +438,7 @@ NautyRep toNautyRep(linkRep g, unsigned nodes)
   for (unsigned i=0; i<nodes; ++i)
     for (unsigned j=0; j<i; ++j)
       if (!(g&(linkRep(1)<<(i*(i-1)/2+j))).empty())
+        //if (g(i,j))
         n(i,j)=n(j,i)=true;
   return n;
 }
@@ -575,7 +576,7 @@ unsigned starUpperBound(linkRep x, unsigned nodes)
 
   // calculate node degree
   map<unsigned,unsigned> nodeDegree;
-  for (unsigned i=0; i<maxNodes; ++i)
+  for (unsigned i=0; i<nodes; ++i)
     for (unsigned j=0; j<i; ++j)
       if (x(i,j))
         {
@@ -617,8 +618,9 @@ unsigned starUpperBound(linkRep x, unsigned nodes)
 
 unsigned StarComplexityGen::starUpperBound(const linkRep& x) const
 {
-  unsigned ub=::starUpperBound(x, elemStars.size());
-  unsigned complementUb=::starUpperBound(~x, elemStars.size());
+  unsigned n=elemStars.size();
+  unsigned ub=::starUpperBound(x, n);
+  unsigned complementUb=::starUpperBound((~x).maskOut(n), n);
   assert(ub>0 && complementUb>0);
   return min(ub, complementUb);
 }

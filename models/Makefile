@@ -44,6 +44,9 @@ $(MODELS:=.so): %.so: %.o ../lib/libecolab$(ECOLIBS_EXT).a
 $(MODELS:=.app): %.app: %
 	$(ECOLAB_HOME)/utils/mkmacapp $<
 
+# required because gcc builds do not inlcude vecBitSet.h
+starComplexity.o: vecBitSet.cd
+
 ifneq ($(MAKECMDGOALS),clean)
 include $(MODELS:=.d)
 endif

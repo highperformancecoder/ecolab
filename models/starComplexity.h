@@ -1,7 +1,5 @@
 // hard code maximum number of nodes
-constexpr unsigned maxNodes=10, maxStars=2*maxNodes-1;
-
-//using linkRep=unsigned long long;
+constexpr unsigned maxNodes=22, maxStars=2*maxNodes-1;
 
 #include "netcomplexity.h"
 
@@ -41,17 +39,32 @@ public:
     return r;
   }
   linkRepImpl operator<<(int n) {
-    linkRepImpl r;
+    linkRepImpl r(0);
     auto d=div(n, int(8*sizeof(Impl)));
     for (unsigned i=0; i<size-d.quot; ++i)
       r.data[i+d.quot]=data[i]<<d.rem;
     return r;
   }
+  /// mask out bits not used, give a node count
+  linkRepImpl& maskOut(unsigned nodes) {
+    unsigned numBits=nodes*(nodes-1)/2;
+    // divide data up into chunks of size of unsigned
+    auto d=div(numBits, int(8*sizeof(unsigned)));
+    auto uData=reinterpret_cast<unsigned*>(data);
+    uData[d.quot]&=(1<<d.rem)-1;
+    // check that data is a multiple of unsigned
+    static_assert(sizeof(data)%sizeof(unsigned)==0);
+    for (unsigned i=d.quot+1; i<sizeof(data)/(sizeof(unsigned)); ++i)
+      uData[i]=0;
+    return *this;
+  }
   // return true if there is a link between nodes i and j
   bool operator()(unsigned i,unsigned j) const {
-        if (i<j) std::swap(i,j);
-        auto d=div(i*(i-1)/2+j, int(8*sizeof(Impl)));
-        return Impl(data[d.quot] & (Impl(1)<<d.rem));
+    if (i==j) return false; // no self-links
+    if (i<j) std::swap(i,j);
+    auto d=div(i*(i-1)/2+j, int(8*sizeof(unsigned)));
+    auto uData=reinterpret_cast<const unsigned*>(data);
+    return uData[d.quot] & 1<<d.rem;
   }
   bool empty() const {
     for (unsigned i=0; i<size; ++i)
