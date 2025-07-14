@@ -625,3 +625,24 @@ unsigned StarComplexityGen::starUpperBound(const linkRep& x) const
   assert(ub>0 && complementUb>0);
   return min(ub, complementUb);
 }
+
+GraphComplexity StarComplexityGen::randomERGraph(unsigned nodes, unsigned links)
+{
+  linkRep g=0;
+  if (links>nodes*(nodes-1)/2)
+    throw runtime_error("links requested exceeds maximum possible: "+to_string(nodes*(nodes-1)/2));
+  for (unsigned l=0; l<links; ++l)
+    {
+      unsigned node1=nodes*uni.rand(), node2;
+      do
+        node2=nodes*uni.rand();
+      while (node1==node2);
+      g|=edge(node1,node2);
+    }
+
+  GraphComplexity r;
+  r.starComplexity=::starUpperBound(g,nodes);
+  NautyRep ng=toNautyRep(g, nodes);
+  r.complexity=ecolab::complexity(ng, true);
+  return r;
+}

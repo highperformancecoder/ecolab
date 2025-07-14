@@ -1,5 +1,5 @@
 // hard code maximum number of nodes
-constexpr unsigned maxNodes=22, maxStars=2*maxNodes-1;
+constexpr unsigned maxNodes=1000, maxStars=2*maxNodes-1;
 
 #include "netcomplexity.h"
 
@@ -156,5 +156,11 @@ struct StarComplexityGen
 
   /// return an upper bound on the number of stars in the link representation
   unsigned starUpperBound(const linkRep&) const;
+
+  /// random number generator
+  ecolab::urand uni;
+  
+  /// randomly generate an ER graph, and return the starUpperBound and complexity
+  GraphComplexity randomERGraph(unsigned nodes, unsigned links);
 };
 
