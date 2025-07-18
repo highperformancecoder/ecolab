@@ -21,7 +21,8 @@ starC.blockSize(4096)
 #starC.blockSize(40320)
 
 starC.generateElementaryStars(nodes)
-for numStars in range(1,maxStars+1):
+#for numStars in range(1,maxStars+1):
+for numStars in range(6,8):
     starC.fillStarMap(numStars)
     print('completed',numStars,datetime.now())
     starC.canonicaliseStarMap()
@@ -38,5 +39,6 @@ for numStars in range(1,maxStars+1):
                 num+=m*j
                 m*=1<<32
                 
-            print(id,bin(num),links,starC.symmStar(i)-1,starC.starUpperBound(i)-1,c.complexity(),c.starComplexity(),starC.counts[i],sep=',',file=out)
+            #print(id,bin(num),links,starC.symmStar(i)-1,starC.starUpperBound(i)-1,c.complexity(),c.starComplexity(),starC.counts[i],sep=',',file=out)
+            print(id,bin(num),links,starC.symmStar(i)-1,starC.starUpperBound(i)-1,sep=',',file=out)
             id+=1

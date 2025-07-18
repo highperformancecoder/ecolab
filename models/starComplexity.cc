@@ -334,6 +334,17 @@ void StarComplexityGen::fillStarMap(unsigned numStars)
       }
   };
 
+  auto checkBlown=[&]() {
+    if (blown)
+      {
+        cout<<"buffer blown, throwing"<<endl;
+#ifdef SYCL_LANGUAGE_VERSION
+        syclQ().wait(); // flush queue before destructors called
+#endif
+        throw runtime_error("Output buffer blown");
+      }
+  };
+  
   //int numLoops=3000;
   do
     {
@@ -377,8 +388,8 @@ void StarComplexityGen::fillStarMap(unsigned numStars)
         backedResultsReset=syclQ().parallel_for
            (blockSize,starMapPopulated,[block=&*block](auto i){block->backedResult[i].reset();});
 
-        Event::wait({resultSwapped,backedResultsReset});
-        resultBufferConsumed=0;
+        //Event::wait({backedResultsReset});
+        //resultBufferConsumed=0;
       };
         
       for (unsigned i=0; i<block->numGraphs; i+=blockSize)
@@ -390,6 +401,7 @@ void StarComplexityGen::fillStarMap(unsigned numStars)
           //                backedResultsReset.wait();
           ////                while (resultBufferConsumed)
           ////                  usleep(1000); // pause until results consumed
+
           //              }
           
           // compute a block of graphs
@@ -398,36 +410,35 @@ void StarComplexityGen::fillStarMap(unsigned numStars)
                                   [=,block=&*block](auto j){block->eval(i,j);}));
           resultBufferConsumed+=numOps;
           
-          if (eventStatus(starMapPopulated)==sycl::info::event_command_status::complete)
-            // throttle consuming thread
+          if (eventStatus(backedResultsReset)==sycl::info::event_command_status::complete)
+            // only queue consumeResult if previous one finished
             consumeResults(i+blockSize>=block->numGraphs);
         }
       // wait until all compute threads finish before bumping pos
       Event::wait(compute);
 #else
-      for (unsigned i=0; i<block->numGraphs; i+=block->size())
-        for (unsigned j=0; j<block->size(); ++j)
+      for (unsigned i=0; i<block->numGraphs; i+=blockSize)
+#pragma omp parallel for
+        for (unsigned j=0; j<blockSize; ++j)
           block->eval(i,j);
       populateStarMap();
+#pragma omp parallel for
+      for (unsigned j=0; j<blockSize; ++j)
+        block->result[j].reset();
 #endif
-      if (blown)
-        {
-          cout<<"buffer blown, throwing"<<endl;
-#ifdef SYCL_LANGUAGE_VERSION
-          syclQ().wait(); // flush queue before destructors called
-#endif
-          throw runtime_error("Output buffer blown");
-        }
 
-      //cout<<"loops rem="<<numLoops<<" resultBufferConsumed:"<<unsigned(resultBufferConsumed)<<" "<<(time(nullptr)-start)<<"secs\n";
+      checkBlown();
+
+     //cout<<"loops rem="<<numLoops<<" resultBufferConsumed:"<<unsigned(resultBufferConsumed)<<" "<<(time(nullptr)-start)<<"secs\n";
     } while (block->pos.next() /*&& --numLoops>0*/);
 #ifdef SYCL_LANGUAGE_VERSION
-  auto start=time(nullptr);
-  resultSwapped=syclQ().single_task
-    ([block=&*block](){
+  // final mop up
+  syclQ().single_task
+    (backedResultsReset,[block=&*block](){
       block->result.swap(block->backedResult);
-    });
+    }).wait();
   populateStarMap();
+  checkBlown();
   syclQ().wait_and_throw(); // flush queue before destructors called
 #endif
 
