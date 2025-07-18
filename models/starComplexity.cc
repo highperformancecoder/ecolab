@@ -312,7 +312,6 @@ void StarComplexityGen::fillStarMap(unsigned numStars)
 
   ecolab::DeviceType<BlockEvaluator> block(blockSize, numStars,elemStars);
   Event resultSwapped, alreadySeenSwapped, starMapPopulated,backedResultsReset;
-  atomic<bool> populating=false;
   atomic<unsigned> resultBufferConsumed=0;
   const unsigned numOps=1<<(numStars-1);
 
@@ -370,39 +369,23 @@ void StarComplexityGen::fillStarMap(unsigned numStars)
           handler.host_task([&]() {
             resultBufferConsumed=0;
             populateStarMap();
-            //              if (!lastLoop)
-            //                {
-            //                  block->alreadySeenBacked.clear();
-            //                  for (auto& k: starMap) block->alreadySeenBacked.push_back(k.first);
-            //                  // push update already seen vector to device
-            //                  alreadySeenSwapped=syclQ().single_task
-            //                    (compute,
-            //                     [=,block=&*block]{
-            //                       block->alreadySeen.swap(block->alreadySeenBacked);
-            //                     });
-            //                }
-            populating=false;
           });
         });
 
         backedResultsReset=syclQ().parallel_for
            (blockSize,starMapPopulated,[block=&*block](auto i){block->backedResult[i].reset();});
-
-        //Event::wait({backedResultsReset});
-        //resultBufferConsumed=0;
       };
         
       for (unsigned i=0; i<block->numGraphs; i+=blockSize)
         {
-          //            if (resultBufferConsumed+numOps>=OutputBuffer::maxQ)
-          //              {
-          //                consumeResults(i+blockSize>=block->numGraphs);
-          //                cout<<"pausing..."<<endl;
-          //                backedResultsReset.wait();
-          ////                while (resultBufferConsumed)
-          ////                  usleep(1000); // pause until results consumed
-
-          //              }
+          // if we're in danger of blowing the buffer, stop submitting compute tasks
+          if (resultBufferConsumed+numOps>=OutputBuffer::maxQ)
+            {
+              if (eventStatus(backedResultsReset)==sycl::info::event_command_status::complete)
+                consumeResults(i+blockSize>=block->numGraphs);
+              cout<<"pausing..."<<endl;
+              backedResultsReset.wait();
+            }
           
           // compute a block of graphs
           compute.push_back
