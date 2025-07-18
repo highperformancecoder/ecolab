@@ -367,10 +367,15 @@ void StarComplexityGen::fillStarMap(unsigned numStars)
         starMapPopulated=syclQ().submit([&](auto& handler) {
           handler.depends_on(resultSwapped);
           handler.host_task([&]() {
-            resultBufferConsumed=0;
             populateStarMap();
           });
         });
+
+        // reset resultBufferConsumed to number of compute threads outstanding
+        resultBufferConsumed=0;
+        for (auto& i: compute)
+          if (eventStatus(i)!=sycl::info::event_command_status::complete)
+            resultBufferConsumed+=numOps;
 
         backedResultsReset=syclQ().parallel_for
            (blockSize,starMapPopulated,[block=&*block](auto i){block->backedResult[i].reset();});
@@ -383,7 +388,7 @@ void StarComplexityGen::fillStarMap(unsigned numStars)
             {
               if (eventStatus(backedResultsReset)==sycl::info::event_command_status::complete)
                 consumeResults(i+blockSize>=block->numGraphs);
-              cout<<"pausing..."<<endl;
+              cout<<"."<<flush;
               backedResultsReset.wait();
             }
           

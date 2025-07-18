@@ -21,8 +21,7 @@ starC.blockSize(4096)
 #starC.blockSize(40320)
 
 starC.generateElementaryStars(nodes)
-#for numStars in range(1,maxStars+1):
-for numStars in range(6,8):
+for numStars in range(1,maxStars+1):
     starC.fillStarMap(numStars)
     print('completed',numStars,datetime.now())
     starC.canonicaliseStarMap()
