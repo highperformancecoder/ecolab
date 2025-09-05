@@ -335,13 +335,13 @@ namespace ecolab
     void groupedForAll(F f) {
 #ifdef SYCL_LANGUAGE_VERSION
       static size_t workGroupSize=syclQ().get_device().get_info<sycl::info::device::max_work_group_size>();
-      size_t range=this->size()/workGroupSize;
-      if (range*workGroupSize < this->size()) ++range;
+//      size_t range=this->size()/workGroupSize;
+//      if (range*workGroupSize < this->size()) ++range;
       syclQ().submit([&](auto& h) {
 #ifndef NDEBUG
         sycl::stream out(1000000,1000,h);
 #endif
-        h.parallel_for(sycl::nd_range<1>(range*workGroupSize, workGroupSize), [=,this](auto i) {
+        h.parallel_for(sycl::nd_range<1>(this->size()*workGroupSize, workGroupSize), [=,this](auto i) {
           auto idx=i.get_group_linear_id();
           if (idx<this->size()) {
             auto& cell=*(*this)[idx]->template as<Cell>();

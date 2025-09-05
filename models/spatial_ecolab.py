@@ -26,8 +26,8 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=64
-numY=64
+numX=2
+numY=1
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
@@ -53,13 +53,13 @@ from plot import plot
 from GUI import gui, statusBar, windows
 
 print(device())
-ecolab.setDensitiesDevice()
+#ecolab.setDensitiesDevice()
+ecolab.setDensitiesShared()
 print("Densities moved to device allocator")
-#ecolab.setDensitiesShared()
 
 def stepImpl():
     ecolab.generate(100)
-    #    ecolab.mutate()
+    #ecolab.mutate()
     #    ecolab.migrate()
     #    ecolab.condense()
     ecolab.syncThreads()
@@ -80,7 +80,7 @@ def step():
             for j in range(numY):
                 plot(f'Density({i},{j})',ecolab.tstep(),ecolab.cell(i,j).density(), pens=ecolab.species())
 
-#gui(step)
+gui(step)
 
 
 
