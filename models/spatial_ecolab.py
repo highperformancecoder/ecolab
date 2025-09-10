@@ -24,16 +24,12 @@ ecolab.sp_sep(0.1)
 def randomList(num, min, max):
     return [random()*(max-min)+min for i in range(num)]
 
-# initialises allocators and space on GPU, so that density arrays can be set
-#ecolab.makeConsistent()
 ecolab.species(range(nsp))
 
-numX=2
-numY=2
+numX=32
+numY=32
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
-
-#ecolab.setDensitiesShared()
 
 print("initialising density")
 for i in range(numX):
@@ -57,20 +53,20 @@ print(device())
 
 def stepImpl():
     #ecolab.setDensitiesDevice()
-    print(ecolab.nsp()())
+    #print(ecolab.nsp()())
     ecolab.generate(100)
     #    ecolab.mutate()
     #    ecolab.migrate()
     #    ecolab.condense()
-    print(ecolab.nsp()())
+    #print(ecolab.nsp()())
     ecolab.syncThreads()
-    print(ecolab.nsp()())
+    #print(ecolab.nsp()())
     #ecolab.setDensitiesShared()
     ecolab.gather()
 
 from timeit import timeit
 ecolab.syncThreads()
-print(timeit('stepImpl()', globals=globals(), number=1))
+print(timeit('stepImpl()', globals=globals(), number=10))
                 
 def step():
     stepImpl()

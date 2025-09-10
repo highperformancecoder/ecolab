@@ -1485,7 +1485,13 @@ namespace ecolab
         auto allocation=n + (sizeof(array_data<T>) + 16)/sizeof(T)+1-array_data<T>::debug_display;
         p = m_allocator.allocate(allocation);
       
-        if (!p) return nullptr; // SYCL allocator returns nullptr if not initialised
+        if (!p)
+          {
+#ifdef __SYCL_DEVICE_ONLY__
+            syclPrintf("failed to allocate %d bytes in array\n",sizeof(T)*n);
+#endif
+            return nullptr; // SYCL allocator returns nullptr if not initialised
+          }
 #ifdef __ICC
         // we need to align data onto 16 byte boundaries
         size_t d = (size_t)(reinterpret_cast<array_data<T>*>(p)->dt);

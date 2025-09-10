@@ -302,6 +302,7 @@ namespace ecolab
       (graphcode::Allocator<Cell>(syclQ(),sycl::usm::alloc::shared),
        graphcode::Allocator<graphcode::ObjRef>(syclQ(),sycl::usm::alloc::shared),
        graphcode::Allocator<graphcode::ObjectPtr<Cell>>(syclQ(),sycl::usm::alloc::shared)) {}
+    ~EcolabGraph() {syncThreads();}
 #endif
     /// apply a functional to all local cells of this processor in parallel
     /// @param f 
