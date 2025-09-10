@@ -409,6 +409,7 @@ namespace ecolab
   template <class T>
   class GroupLocal
   {
+#ifdef SYCL_LANGUAGE_VERSION
     using BufferType=char[sizeof(T)];
     using LocalBufferType=decltype(sycl::ext::oneapi::group_local_memory_for_overwrite<BufferType>(syclGroup()));
     LocalBufferType buffer=sycl::ext::oneapi::group_local_memory_for_overwrite<BufferType>(syclGroup());
@@ -425,8 +426,8 @@ namespace ecolab
         ref().~T();
     }
     T& ref() {return reinterpret_cast<T&>(**buffer);}
+#endif
   };
-  
 }
 
 namespace classdesc

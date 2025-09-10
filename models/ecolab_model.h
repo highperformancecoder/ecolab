@@ -78,7 +78,6 @@ public:
   int ROUND(Float x);
   template <class E> RoundArray<E,EcolabPoint> roundArray(const E& expr);
   Exclude<std::mt19937> rand; // random number generator
-  array<Float,Allocator<Float>> interactionResult{this->template allocator<Float>()};
 };
 
 // for the panmictic model, we need to use std::allocator

@@ -132,13 +132,19 @@ void setArray(array<int,ecolab::CellBase::CellAllocator<int>>& x, const array<in
 template <class B>
 void EcolabPoint<B>::generate(unsigned niter, const ModelData& model)
 {
+#ifdef __SYCL_DEVICE_ONLY__
+  GroupLocal<array<Float,Allocator<Float>>> interactionResultBuffer(this->template allocator<Float>());
+  auto& interactionResult=interactionResultBuffer.ref();
+#else
+  array<Float> interactionResult;
+#endif
   for (unsigned step=0; step<niter; step++)
     {
-      //interactionResult=model.interaction.diag*density;
-      array_ns::map(density.size(), [&](size_t i){
-        interactionResult[i]=model.interaction.diag[i]*density[i];
-      });
-      groupBarrier();
+      interactionResult=model.interaction.diag*density;
+//      array_ns::map(density.size(), [&](size_t i){
+//        interactionResult[i]=model.interaction.diag[i]*density[i];
+//      });
+//      groupBarrier();
       array_ns::map(model.interaction.row.size(), [&](size_t i){
 #ifdef SYCL_LANGUAGE_VERSION
         sycl::atomic_ref<Float, sycl::memory_order::relaxed, sycl::memory_scope::work_group> tmp
@@ -573,8 +579,6 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
 void SpatialModel::generate(unsigned niter)
 {
   if (tstep==0) makeConsistent();
-  for (auto& c: *this)
-    c->as<EcolabCell>()->interactionResult.resize(species.size());
   groupedForAll([=,this](EcolabCell& c) {
     c.generate(niter,*this);
   });
