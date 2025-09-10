@@ -104,6 +104,13 @@ namespace ecolab
     void restart(const char* fileName);
   };
 
+  struct OnExit
+  {
+    std::function<void()> f;
+    OnExit(const std::function<void()>& f): f(f) {}
+    ~OnExit() {f();}
+  };
+  
 #ifdef SYCL_LANGUAGE_VERSION
   extern bool syclQDestroyed;
   sycl::queue& syclQ();
@@ -257,8 +264,9 @@ namespace ecolab
   protected:
 #ifdef SYCL_LANGUAGE_VERSION
     using MemAllocator=CellBase::MemAllocator;
-    MemAllocator *sharedMemAlloc, *deviceMemAlloc;
+    MemAllocator *sharedMemAlloc=nullptr, *deviceMemAlloc=nullptr;
     SyclGraphBase() {
+      // for now, do not use on-device dynamic allocation
       sharedMemAlloc=sycl::malloc_shared<MemAllocator>(1, syclQ());
       new(sharedMemAlloc) MemAllocator;
       deviceMemAlloc=sycl::malloc_shared<MemAllocator>(1, syclQ());
@@ -335,8 +343,6 @@ namespace ecolab
     void groupedForAll(F f) {
 #ifdef SYCL_LANGUAGE_VERSION
       static size_t workGroupSize=syclQ().get_device().get_info<sycl::info::device::max_work_group_size>();
-//      size_t range=this->size()/workGroupSize;
-//      if (range*workGroupSize < this->size()) ++range;
       syclQ().submit([&](auto& h) {
 #ifndef NDEBUG
         sycl::stream out(1000000,1000,h);
@@ -361,6 +367,12 @@ namespace ecolab
 #endif
     }
 
+    static void groupBarrier() {
+#ifdef SYCL_LANGUAGE_VERSION
+      sycl::group_barrier(syclGroup());
+#endif
+    }
+    
     void syncThreads() {
 #ifdef SYCL_LANGUAGE_VERSION
       syclQ().wait();
@@ -391,6 +403,27 @@ namespace ecolab
     }
   };
 
+  template <class T>
+  class GroupLocal
+  {
+    using BufferType=char[sizeof(T)];
+    using LocalBufferType=decltype(sycl::ext::oneapi::group_local_memory_for_overwrite<BufferType>(syclGroup()));
+    LocalBufferType buffer=sycl::ext::oneapi::group_local_memory_for_overwrite<BufferType>(syclGroup());
+  public:
+    template <class... Args>
+    GroupLocal(Args&&... args) {
+      if (syclGroup().leader())
+        new (*buffer) T(args...);
+      sycl::group_barrier(syclGroup());
+    }
+    ~GroupLocal() {
+      sycl::group_barrier(syclGroup());
+      if (syclGroup().leader())
+        ref().~T();
+    }
+    T& ref() {return reinterpret_cast<T&>(**buffer);}
+  };
+  
 }
 
 namespace classdesc

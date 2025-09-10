@@ -39,9 +39,9 @@ struct ConnectionPlot: public Object<ConnectionPlot, ConnectionPlotBase>
 struct ModelData
 {
   using FAlloc=graphcode::Allocator<Float>;
-  array<int,graphcode::Allocator<int>> species;
-  array<Float,FAlloc> create;
-  array<Float,FAlloc> repro_rate, mutation, migration;
+  using IAlloc=graphcode::Allocator<int>;
+  array<int,IAlloc> species;
+  array<Float,FAlloc> create, repro_rate, mutation, migration;
   sparse_mat<Float,graphcode::Allocator> interaction;
   sparse_mat_graph foodweb;
   unsigned long long tstep=0, last_mut_tstep=0, last_mig_tstep=0;
@@ -104,6 +104,7 @@ struct PanmicticModel: public ModelData, public EcolabPoint<AllocatorBase>, publ
 struct EcolabCell: public EcolabPoint<ecolab::CellBase>, public graphcode::Object<EcolabCell>
 {
   unsigned id=0; // stash the graphcode node id here
+  array<int,EcolabPoint::Allocator<int>> delta{this->template allocator<int>()};
 };
 
 class SpatialModel: public ModelData, public EcolabGraph<EcolabCell>,

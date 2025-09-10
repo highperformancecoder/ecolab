@@ -132,37 +132,37 @@ void setArray(array<int,ecolab::CellBase::CellAllocator<int>>& x, const array<in
 template <class B>
 void EcolabPoint<B>::generate(unsigned niter, const ModelData& model)
 {
-#ifdef SYCL_LANGUAGE_VERSION
-  if constexpr (is_base_of<CellBase, B>::value)
+  for (unsigned step=0; step<niter; step++)
     {
-      auto group=this->desc->item.get_group();
-      auto idx=group.get_local_linear_id();
-      auto groupSz=group.get_local_linear_range();
-
-      // intialise temporary data array
-      if (group.leader()) interactionResult.resize(density.size());
-      sycl::group_barrier(group);
-
-      for (unsigned step=0; step<niter; step++)
-        {
-          for (auto i=idx; i<density.size(); i+=groupSz)
-            interactionResult[i]=model.interaction.diag[i]*density[i];
-          for (auto i=idx; i<model.interaction.row.size(); i+=groupSz)
-            {
-              sycl::atomic_ref<Float, sycl::memory_order::relaxed, sycl::memory_scope::work_group> tmp
-                (interactionResult[model.interaction.row[i]]);
-              tmp+=model.interaction.val[i]*density[model.interaction.col[i]];
-            }
-          sycl::group_barrier(group);
-          for (auto i=idx; i<density.size(); i+=groupSz)
-            density[i] = ROUND(density[i] + density[i] * (model.repro_rate[i] + interactionResult[i]));
-        }
-      return;
-    }
+      //interactionResult=model.interaction.diag*density;
+      array_ns::map(density.size(), [&](size_t i){
+        interactionResult[i]=model.interaction.diag[i]*density[i];
+      });
+#ifdef SYCL_LANGUAGE_VERSION
+      sycl::group_barrier(syclGroup());
 #endif
-  // sequential/non-GPU version
-  for (unsigned i=0; i<niter; i++)
-    {density = roundArray(density + density * (model.repro_rate + model.interaction*density));}
+      array_ns::map(model.interaction.row.size(), [&](size_t i){
+#ifdef SYCL_LANGUAGE_VERSION
+        sycl::atomic_ref<Float, sycl::memory_order::relaxed, sycl::memory_scope::work_group> tmp
+#else
+        Float& tmp
+#endif
+          (interactionResult[model.interaction.row[i]]);
+        tmp+=model.interaction.val[i]*density[model.interaction.col[i]];
+      });
+      
+#ifdef SYCL_LANGUAGE_VERSION
+      sycl::group_barrier(syclGroup());
+#endif
+      //density = roundArray(density + density * (model.repro_rate + interactionResult));
+      array_ns::map(density.size(), [&](size_t i){density[i] = ROUND(density[i] + density[i] * (model.repro_rate[i] + interactionResult[i]));});
+
+    }
+  return;
+  
+//  // sequential/non-GPU version
+//  for (unsigned i=0; i<niter; i++)
+//    {density = roundArray(density + density * (model.repro_rate + model.interaction*density));}
 }
 
 template <class B>
@@ -250,6 +250,8 @@ void SpatialModel::mutate()
 {
   last_mut_tstep=tstep;
 
+  
+  
   DeviceType<array<Float,graphcode::Allocator<Float>>> mut_scale;
 #ifdef SYCL_LANGUAGE_VERSION
   using ArrayAlloc=CellBase::CellAllocator<unsigned>;
@@ -575,6 +577,8 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
 void SpatialModel::generate(unsigned niter)
 {
   if (tstep==0) makeConsistent();
+  for (auto& c: *this)
+    c->as<EcolabCell>()->interactionResult.resize(species.size());
   groupedForAll([=,this](EcolabCell& c) {
     c.generate(niter,*this);
   });
@@ -583,45 +587,41 @@ void SpatialModel::generate(unsigned niter)
 
 void SpatialModel::migrate()
 {
-  /* each cell gets a distinct random salt value */
-  forAll([=,this](EcolabCell& c) {c.salt=c.rand();});
-  
-  prepareNeighbours();
-
-#ifdef SYCL_LANGUAGE_VERSION
-  using ArrayAlloc=graphcode::Allocator<int>;
-  using Array=vector<int,ArrayAlloc>;
-  using DeltaAlloc=graphcode::Allocator<Array>;
-  Array init(species.size(),0,ArrayAlloc(syclQ(),sycl::usm::alloc::device));
-  vector<Array,DeltaAlloc> delta(size(), init, DeltaAlloc(syclQ(),sycl::usm::alloc::device));
-#else
-  vector<array<int>> delta(size(), array<int>(species.size(),0));
-#endif
-
-  forAll([=,delta=delta.data(),this](EcolabCell& c) {
-    using FArray=array<Float,EcolabCell::CellAllocator<Float>>;
-    /* loop over neighbours */
-    for (auto& n: c) 
-      {
-        auto& nbr=*n->as<EcolabCell>();
-        FArray m( Float(tstep-last_mig_tstep) * migration * 
-                  (nbr.density - c.density), c.allocator<Float>());
-        Float salt=c.id<nbr.id? c.salt: nbr.salt;
-        // array::operator+= cannot be used in kernels
-        // delta[c.idx()]+=m + (m!=0.0)*(2*(m>0.0)-1)) * salt;
-        FArray tmp=(m + (m!=0.0)*(2*(m>0.0)-1)) * salt;
-        array_ns::asg_plus_v(delta[c.idx()].data(),m.size(), tmp);
-      }
-  });
-  last_mig_tstep=tstep;
-#ifdef SYCL_LANGUAGE_VERSION
-  syclQ().wait();
-#endif
-  forAll([=,delta=delta.data(),this](EcolabCell& c) {
-    // array::operator+= cannot be used in kernels
-    //c.density+=delta[c.idx()];
-    array_ns::asg_plus_v(c.density.data(), c.density.size(), delta[c.idx()]);
-  });
+//  /* each cell gets a distinct random salt value */
+//  forAll([=,this](EcolabCell& c) {c.salt=c.rand();});
+//  
+//  prepareNeighbours();
+//
+////#ifdef SYCL_LANGUAGE_VERSION
+////  using ArrayAlloc=graphcode::Allocator<int>;
+////  using Array=vector<int,ArrayAlloc>;
+////  using DeltaAlloc=graphcode::Allocator<Array>;
+////  Array init(species.size(),0,ArrayAlloc(syclQ(),sycl::usm::alloc::device));
+////  vector<Array,DeltaAlloc> delta(size(), init, DeltaAlloc(syclQ(),sycl::usm::alloc::device));
+////#else
+////  vector<array<int>> delta(size(), array<int>(species.size(),0));
+////#endif
+//
+//  for (auto& c: *this)
+//    c->as<EcolabCell>()->delta.resize(species.size());
+//
+//  groupedForAll([=,this](EcolabCell& c) {
+//    /* loop over neighbours */
+//    for (auto& n: c) 
+//      {
+//        auto& nbr=*n->as<EcolabCell>();
+//        Float salt=c.id<nbr.id? c.salt: nbr.salt;
+//        array_ns::groupAsg(species.size(), [&](size_t i) {
+//            Float m=(tstep-last_mig_tstep) * migration[i] * (nbr.density[i] - c.density[i]);
+//            c.delta[i]+=m + (m!=0.0)*(2*(m>0.0)-1) * salt;
+//        });
+//      }
+//  });
+//  last_mig_tstep=tstep;
+//  syncThreads();
+//  groupedForAll([=,this](EcolabCell& c) {
+//    c.density+=c.delta;
+//  });
 
   /* assertion testing that population numbers are conserved */
 #if !defined(NDEBUG) && !defined(SYCL_LANGUAGE_VERSION)
@@ -647,18 +647,22 @@ void SpatialModel::migrate()
 void ModelData::makeConsistent(size_t nsp)
 {
 #ifdef SYCL_LANGUAGE_VERSION
-  FAlloc falloc(syclQ(),sycl::usm::alloc::shared);
-  species.allocator(graphcode::Allocator<int>(syclQ(),sycl::usm::alloc::shared));
-  create.allocator(falloc);
-  repro_rate.allocator(falloc);
-  mutation.allocator(falloc);
-  migration.allocator(falloc);
-  interaction.setAllocators
-    (graphcode::Allocator<unsigned>(syclQ(),sycl::usm::alloc::shared),falloc);
+  if (sycl::get_pointer_type(species.data(),syclQ().get_context())!=sycl::usm::alloc::shared)
+    {
+      FAlloc falloc(syclQ(),sycl::usm::alloc::shared);
+      species.allocator(graphcode::Allocator<int>(syclQ(),sycl::usm::alloc::shared));
+      create.allocator(falloc);
+      repro_rate.allocator(falloc);
+      mutation.allocator(falloc);
+      migration.allocator(falloc);
+      interaction.setAllocators
+        (graphcode::Allocator<unsigned>(syclQ(),sycl::usm::alloc::shared),falloc);
+    }
 #endif
-  
   if (!species.size())
-    species=pcoord(nsp);
+    {
+      species=pcoord(nsp);
+    }
   
   if (!create.size()) create.resize(species.size(),0);
   if (!mutation.size()) mutation.resize(species.size(),0);
@@ -693,17 +697,17 @@ void SpatialModel::makeConsistent()
 #ifdef MPI_SUPPORT
   MPI_Allreduce(MPI_IN_PLACE,&nsp,1,MPI_UNSIGNED_LONG,MPI_MAX,MPI_COMM_WORLD);
 #endif
-  forAll([=,this](EcolabCell& c) {
-    if (nsp>c.density.size())
-      {
-#ifdef SYCL_LANGUAGE_VERSION
-        if (!c.memAlloc) c.memAlloc=sharedMemAlloc;
-#endif
-        array<int,EcolabCell::CellAllocator<int>> tmp(nsp,0,c.allocator<int>());
-        asg_v(tmp.data(),c.density.size(),c.density);
-        c.density.swap(tmp);
-      }
-  });
+//  forAll([=,this](EcolabCell& c) {
+//    if (nsp>c.density.size())
+//      {
+//#ifdef SYCL_LANGUAGE_VERSION
+//        if (!c.memAlloc) c.memAlloc=sharedMemAlloc;
+//#endif
+//        array<int,EcolabCell::CellAllocator<int>> tmp(nsp,0,c.allocator<int>());
+//        asg_v(tmp.data(),c.density.size(),c.density);
+//        c.density.swap(tmp);
+//      }
+//  });
   ModelData::makeConsistent(nsp);
   syncThreads();
 }

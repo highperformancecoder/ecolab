@@ -35,6 +35,12 @@
 
 #include "ecolab.h"
 
+#ifdef SYCL_LANGUAGE_VERSION
+#ifdef __INTEL_LLVM_COMPILER
+#include <sycl/ext/oneapi/group_local_memory.hpp>
+#endif
+#endif
+
 namespace ecolab
 {
 
@@ -328,6 +334,23 @@ namespace ecolab
     RESULTFIF(double,long long,double);
 #endif
 
+    template <class F>
+    inline void map(size_t sz, F f) {
+#ifdef  __SYCL_DEVICE_ONLY__
+    // SYCL support for array operations over a group (SIMD compute unit)
+      auto idx=syclGroup().get_local_linear_id();
+      auto groupSz=syclGroup().get_local_linear_range();
+      for (size_t i=idx; i<sz; i+=groupSz) f(i);
+#else
+#ifdef __ICC
+#pragma loop count(1000)
+#pragma ivdep
+#pragma vector aligned
+#endif
+      for (size_t i=0; i<sz; ++i) f(i);
+#endif      
+   }
+    
     /** at(x,i) = x[i] is an expression, otherwise just x */
     //@{
     template <class E> typename
@@ -1329,54 +1352,29 @@ namespace ecolab
     /* internal support */
     template <class T>
     void asg(T* dt, size_t sz, T x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]=x;
+      map(sz,[&](size_t i){dt[i]=x;});
     }
 
     template <class T>
     void asg_plus(T* dt, size_t sz, T x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]+=x;
+      map(sz,[&](size_t i){dt[i]+=x;});
     }
 
     /* internal support */
     template <class T>
     void asg_minus(T* dt, size_t sz, T x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]-=x;
+      map(sz,[&](size_t i){dt[i]-=x;});
     }
     /* internal support */
     template <class T>
     void asg_mul(T* dt, size_t sz, T x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]*=x;
+      map(sz,[&](size_t i){dt[i]*=x;});
     }
 
     /* internal support */
     template <class T>
     void asg_div(T* dt, size_t sz, T x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]/=x;
+      map(sz,[&](size_t i){dt[i]/=x;});
     }
 
 
@@ -1384,12 +1382,7 @@ namespace ecolab
     template <class T> typename
     enable_if< is_integer<T>, void >::T
     asg_mod(T* dt, size_t sz, T x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]%=x;
+      map(sz,[&](size_t i){dt[i]%=x;});
     }
 
 
@@ -1397,12 +1390,7 @@ namespace ecolab
     template <class T> typename
     enable_if< is_integer<T>, void >::T
     asg_and(T* dt, size_t sz, T x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]&=x;
+      map(sz,[&](size_t i){dt[i]&=x;});
     }
 
 
@@ -1410,101 +1398,56 @@ namespace ecolab
     template <class T> typename
     enable_if< is_integer<T>, void >::T
     asg_or(T* dt, size_t sz, T x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]|=x;
+      map(sz,[&](size_t i){dt[i]|=x;});
     }
 
 
     /* internal support */
     template <class T, class U>
     void asg_v(T * dt, size_t sz, const U& x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]=x[i];
+      map(sz,[&](size_t i){dt[i]=x[i];});
     }
 
     /* internal support */
     template <class T, class U>
     void asg_plus_v(T * dt, size_t sz, const U& x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]+=x[i];
+      map(sz,[&](size_t i){dt[i]+=x[i];});
     }
 
     /* internal support */
     template <class T, class U>
     void asg_minus_v(T * dt, size_t sz, const U& x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]-=x[i];
+      map(sz,[&](size_t i){dt[i]-=x[i];});
     }
 
     /* internal support */
     template <class T, class U>
     void asg_mul_v(T * dt, size_t sz, const U& x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]*=x[i];
+      map(sz,[&](size_t i){dt[i]*=x[i];});
     }
 
     /* internal support */
     template <class T, class U>
     void asg_div_v(T * dt, size_t sz, const U& x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]/=x[i];
+      map(sz,[&](size_t i){dt[i]/=x[i];});
     }
 
     /* internal support */
     template <class T, class U>
     void asg_mod_v(T * dt, size_t sz, const U& x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]%=x[i];
+      map(sz,[&](size_t i){dt[i]%=x[i];});
     }
 
     /* internal support */
     template <class T, class U>
     void asg_and_v(T * dt, size_t sz, const U& x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]&=x[i];
+      map(sz,[&](size_t i){dt[i]&=x[i];});
     }
 
     /* internal support */
     template <class T, class U>
     void asg_or_v(T * dt, size_t sz, const U& x) {
-#ifdef __ICC
-#pragma loop count(1000)
-#pragma ivdep
-#pragma vector aligned
-#endif
-      for (size_t i=0; i<sz; i++) dt[i]|=x[i];
+      map(sz,[&](size_t i){dt[i]|=x[i];});
     }
 
     /* layout of array data, including fixed fields */
@@ -1528,6 +1471,7 @@ namespace ecolab
     {
       array_data<T> *dt;
       A m_allocator;
+
       
       friend class WhereContext;
 
@@ -1596,7 +1540,9 @@ namespace ecolab
                 sycl::get_pointer_type(dt,syclQ().get_context())==sycl::usm::alloc::device) return;
 #endif
             if (ref()==1)
-              free(dt);
+              {
+                free(dt);
+              }
             else
               ref()--;
           }
@@ -1651,6 +1597,7 @@ namespace ecolab
 
       const Allocator& allocator() const {return m_allocator;}
       const Allocator& allocator(const Allocator& alloc) {
+        if (alloc==m_allocator) return m_allocator;
         array tmp(size(),alloc);
         asg_v(tmp.data(),size(),data());
         swap(tmp);
@@ -1708,7 +1655,12 @@ namespace ecolab
       operator=(const expr& x) {
         if ((void*)(&x)==(void*)(this)) return *this;
         // since expression x may contain a reference to this, assign to a temporary
+#ifdef __SYCL_DEVICE_ONLY__
+        GroupLocal<array> tmpLocal(x.size(),m_allocator);
+        auto& tmp=tmpLocal.ref();
+#else
         array tmp(x.size(),m_allocator);
+#endif
         array_ns::asg_v(tmp.data(),tmp.size(),x);
         swap(tmp);
         return *this;

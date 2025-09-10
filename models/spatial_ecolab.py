@@ -24,15 +24,16 @@ ecolab.sp_sep(0.1)
 def randomList(num, min, max):
     return [random()*(max-min)+min for i in range(num)]
 
+# initialises allocators and space on GPU, so that density arrays can be set
+#ecolab.makeConsistent()
 ecolab.species(range(nsp))
 
 numX=2
-numY=1
+numY=2
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
-# initialises allocators and space on GPU, so that density arrays can be set
-#ecolab.makeConsistent()
+#ecolab.setDensitiesShared()
 
 print("initialising density")
 for i in range(numX):
@@ -54,15 +55,17 @@ from GUI import gui, statusBar, windows
 
 print(device())
 #ecolab.setDensitiesDevice()
-ecolab.setDensitiesShared()
+#ecolab.setDensitiesShared()
 print("Densities moved to device allocator")
 
 def stepImpl():
+    ecolab.setDensitiesDevice()
     ecolab.generate(100)
-    #ecolab.mutate()
+    #    ecolab.mutate()
     #    ecolab.migrate()
     #    ecolab.condense()
     ecolab.syncThreads()
+    ecolab.setDensitiesShared()
     ecolab.gather()
 
 from timeit import timeit
