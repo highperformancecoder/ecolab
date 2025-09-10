@@ -138,9 +138,7 @@ void EcolabPoint<B>::generate(unsigned niter, const ModelData& model)
       array_ns::map(density.size(), [&](size_t i){
         interactionResult[i]=model.interaction.diag[i]*density[i];
       });
-#ifdef SYCL_LANGUAGE_VERSION
-      sycl::group_barrier(syclGroup());
-#endif
+      groupBarrier();
       array_ns::map(model.interaction.row.size(), [&](size_t i){
 #ifdef SYCL_LANGUAGE_VERSION
         sycl::atomic_ref<Float, sycl::memory_order::relaxed, sycl::memory_scope::work_group> tmp
@@ -151,11 +149,9 @@ void EcolabPoint<B>::generate(unsigned niter, const ModelData& model)
         tmp+=model.interaction.val[i]*density[model.interaction.col[i]];
       });
       
-#ifdef SYCL_LANGUAGE_VERSION
-      sycl::group_barrier(syclGroup());
-#endif
-      //density = roundArray(density + density * (model.repro_rate + interactionResult));
-      array_ns::map(density.size(), [&](size_t i){density[i] = ROUND(density[i] + density[i] * (model.repro_rate[i] + interactionResult[i]));});
+      groupBarrier();
+      density = roundArray(density + density * (model.repro_rate + interactionResult));
+      //array_ns::map(density.size(), [&](size_t i){density[i] = ROUND(density[i] + density[i] * (model.repro_rate[i] + interactionResult[i]));});
 
     }
   return;
@@ -697,17 +693,15 @@ void SpatialModel::makeConsistent()
 #ifdef MPI_SUPPORT
   MPI_Allreduce(MPI_IN_PLACE,&nsp,1,MPI_UNSIGNED_LONG,MPI_MAX,MPI_COMM_WORLD);
 #endif
-//  forAll([=,this](EcolabCell& c) {
-//    if (nsp>c.density.size())
-//      {
-//#ifdef SYCL_LANGUAGE_VERSION
-//        if (!c.memAlloc) c.memAlloc=sharedMemAlloc;
-//#endif
-//        array<int,EcolabCell::CellAllocator<int>> tmp(nsp,0,c.allocator<int>());
-//        asg_v(tmp.data(),c.density.size(),c.density);
-//        c.density.swap(tmp);
-//      }
-//  });
+  forAll([=,this](EcolabCell& c) {
+    //if (nsp>c.density.size())
+      {
+#ifdef SYCL_LANGUAGE_VERSION
+        if (!c.memAlloc) c.memAlloc=sharedMemAlloc;
+#endif
+        c.density.allocator(c.allocator<int>());
+      }
+  });
   ModelData::makeConsistent(nsp);
   syncThreads();
 }

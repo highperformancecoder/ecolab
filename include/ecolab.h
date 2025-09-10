@@ -116,6 +116,13 @@ namespace ecolab
   sycl::queue& syclQ();
   void* reallocSycl(void*,size_t);
 #endif
+
+  inline void groupBarrier()
+  {
+#ifdef __SYCL_DEVICE_ONLY__
+    sycl::group_barrier(syclGroup());
+#endif
+  }
   
   template <class T>
   struct SyclType: public T
@@ -223,6 +230,7 @@ namespace ecolab
 #ifdef  __SYCL_DEVICE_ONLY__
         if (memAlloc && *memAlloc && desc && *desc)  {
           auto r=reinterpret_cast<T*>((*memAlloc)->malloc(**desc,sz*sizeof(T)));
+          if (!r) syclPrintf("Mem allocation failed\n");
           return r;
         }
         return nullptr; // TODO raise an error??
@@ -367,12 +375,6 @@ namespace ecolab
 #endif
     }
 
-    static void groupBarrier() {
-#ifdef SYCL_LANGUAGE_VERSION
-      sycl::group_barrier(syclGroup());
-#endif
-    }
-    
     void syncThreads() {
 #ifdef SYCL_LANGUAGE_VERSION
       syclQ().wait();
@@ -413,7 +415,7 @@ namespace ecolab
     template <class... Args>
     GroupLocal(Args&&... args) {
       if (syclGroup().leader())
-        new (*buffer) T(args...);
+        new (*buffer) T(std::forward<Args>(args)...);
       sycl::group_barrier(syclGroup());
     }
     ~GroupLocal() {

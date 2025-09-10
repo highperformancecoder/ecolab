@@ -54,23 +54,23 @@ from plot import plot
 from GUI import gui, statusBar, windows
 
 print(device())
-#ecolab.setDensitiesDevice()
-#ecolab.setDensitiesShared()
-print("Densities moved to device allocator")
 
 def stepImpl():
-    ecolab.setDensitiesDevice()
+    #ecolab.setDensitiesDevice()
+    print(ecolab.nsp()())
     ecolab.generate(100)
     #    ecolab.mutate()
     #    ecolab.migrate()
     #    ecolab.condense()
+    print(ecolab.nsp()())
     ecolab.syncThreads()
-    ecolab.setDensitiesShared()
+    print(ecolab.nsp()())
+    #ecolab.setDensitiesShared()
     ecolab.gather()
 
 from timeit import timeit
 ecolab.syncThreads()
-print(timeit('stepImpl()', globals=globals(), number=10))
+print(timeit('stepImpl()', globals=globals(), number=1))
                 
 def step():
     stepImpl()

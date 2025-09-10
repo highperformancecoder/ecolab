@@ -1484,6 +1484,7 @@ namespace ecolab
         // over allocate to allow for alignment and metadata
         auto allocation=n + (sizeof(array_data<T>) + 16)/sizeof(T)+1-array_data<T>::debug_display;
         p = m_allocator.allocate(allocation);
+      
         if (!p) return nullptr; // SYCL allocator returns nullptr if not initialised
 #ifdef __ICC
         // we need to align data onto 16 byte boundaries
@@ -1527,18 +1528,18 @@ namespace ecolab
       {
         if (dt)
           {
-#if defined(SYCL_LANGUAGE_VERSION) && !defined(__SYCL_DEVICE_ONLY__)
-            // dt pointer may be allocated on device, or in device
-            // memory, and we may be running on the host, in which
-            // case just leak the memory, otherwise we'll have a crash
-            // TODO - call release on device in a single_task for the
-            // first situation
-            // TODO in second situation, update ref
-            // count in a single_task, and pass back value of
-            // allocated pointer for deallocation on host
-            if (is_same<A,typename CellBase::CellAllocator<T>>::value ||
-                sycl::get_pointer_type(dt,syclQ().get_context())==sycl::usm::alloc::device) return;
-#endif
+//#if defined(SYCL_LANGUAGE_VERSION) && !defined(__SYCL_DEVICE_ONLY__)
+//            // dt pointer may be allocated on device, or in device
+//            // memory, and we may be running on the host, in which
+//            // case just leak the memory, otherwise we'll have a crash
+//            // TODO - call release on device in a single_task for the
+//            // first situation
+//            // TODO in second situation, update ref
+//            // count in a single_task, and pass back value of
+//            // allocated pointer for deallocation on host
+//            if (is_same<A,typename CellBase::CellAllocator<T>>::value ||
+//                sycl::get_pointer_type(dt,syclQ().get_context())==sycl::usm::alloc::device) return;
+//#endif
             if (ref()==1)
               {
                 free(dt);
@@ -1656,13 +1657,15 @@ namespace ecolab
         if ((void*)(&x)==(void*)(this)) return *this;
         // since expression x may contain a reference to this, assign to a temporary
 #ifdef __SYCL_DEVICE_ONLY__
-        GroupLocal<array> tmpLocal(x.size(),m_allocator);
-        auto& tmp=tmpLocal.ref();
+        GroupLocal<array> tmp(x.size(),m_allocator);
+        array_ns::asg_v(tmp.ref().data(),x.size(),x);
+        groupBarrier();
+        if (syclGroup().leader()) swap(tmp.ref());
 #else
         array tmp(x.size(),m_allocator);
-#endif
         array_ns::asg_v(tmp.data(),tmp.size(),x);
         swap(tmp);
+#endif
         return *this;
       }
       template <class expr> typename
