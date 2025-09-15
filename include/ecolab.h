@@ -409,7 +409,7 @@ namespace ecolab
   template <class T>
   class GroupLocal
   {
-#ifdef SYCL_LANGUAGE_VERSION
+#ifdef __SYCL_DEVICE_ONLY__
     using BufferType=char[sizeof(T)];
     using LocalBufferType=decltype(sycl::ext::oneapi::group_local_memory_for_overwrite<BufferType>(syclGroup()));
     LocalBufferType buffer=sycl::ext::oneapi::group_local_memory_for_overwrite<BufferType>(syclGroup());
@@ -429,34 +429,50 @@ namespace ecolab
 #endif
   };
 
-  /// Return a buffer in group local memory, of at least n Ts.
+#ifdef __SYCL_DEVICE_ONLY__
+  template <class T, size_t N, size_t M>
+  T* getGroupBuffer()
+  {
+    if constexpr (N<=M)
+      return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[1<<N]>(syclGroup());
+    assert(false && "Group buffer limit exceeded");
+    return nullptr;
+  }  
+  
+  /// Return a buffer in group local memory, of at least \a n Ts.
+  /// @tparam T element type of buffer
+  /// @tparam N maximum buffer size supported is 2^N.
+  /// This method can only be called in kernel code
+  /// Increasing N hurts performance, or may exceed system limits.
   /// Individual elements are default initialised
   /// Buffer is destroyed once all threads in group have completed (not at scope exit)
-  template <class T>
+  template <class T, size_t N>
   T* groupBuffer(size_t n) {
     // work out power of two >= n
     switch (sizeof(size_t)*8-sycl::clz(n-1))
       {
-      case 0: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[1]>(syclGroup());
-      case 1: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[2]>(syclGroup());
-      case 2: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[4]>(syclGroup());
-      case 3: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[8]>(syclGroup());
-      case 4: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[16]>(syclGroup());
-      case 5: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[32]>(syclGroup());
-      case 6: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[64]>(syclGroup());
-      case 7: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[128]>(syclGroup());
-      case 8: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[256]>(syclGroup());
-      case 9: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[512]>(syclGroup());
-      case 10: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[1024]>(syclGroup());
-      case 11: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[2048]>(syclGroup());
-//      case 12: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[4096]>(syclGroup());
-//      case 13: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[8192]>(syclGroup());
-//      case 14: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[16384]>(syclGroup());
-//      case 15: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[32768]>(syclGroup());
-//      case 16: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[65536]>(syclGroup());
-      default: /*assert(false);*/ return nullptr;
+      case 0: return getGroupBuffer<T,0,N>();
+      case 1: return getGroupBuffer<T,1,N>();
+      case 2: return getGroupBuffer<T,2,N>();
+      case 3: return getGroupBuffer<T,3,N>();
+      case 4: return getGroupBuffer<T,4,N>();
+      case 5: return getGroupBuffer<T,5,N>();
+      case 6: return getGroupBuffer<T,6,N>();
+      case 7: return getGroupBuffer<T,7,N>();
+      case 8: return getGroupBuffer<T,8,N>();
+      case 9: return getGroupBuffer<T,9,N>();
+      case 10: return getGroupBuffer<T,10,N>();
+      case 11: return getGroupBuffer<T,11,N>();
+      case 12: return getGroupBuffer<T,12,N>();
+      case 13: return getGroupBuffer<T,13,N>();
+      case 14: return getGroupBuffer<T,14,N>();
+      case 15: return getGroupBuffer<T,15,N>();
+      case 16: return getGroupBuffer<T,16,N>();
+      default: assert(false && "Group buffer limit exceeded"); return nullptr;
       }
   }
+#endif
+
 }
 
 namespace classdesc

@@ -133,11 +133,7 @@ template <class B>
 void EcolabPoint<B>::generate(unsigned niter, const ModelData& model)
 {
 #ifdef __SYCL_DEVICE_ONLY__
-//  GroupLocal<array<Float,Allocator<Float>>> interactionResultBuffer(this->template allocator<Float>());
-//  auto& interactionResult=interactionResultBuffer.ref();
-//  if (syclGroup().leader()) interactionResult.resize(density.size());
-//  groupBarrier();
-  Float* interactionResult=groupBuffer<Float>(density.size());
+  Float* interactionResult=groupBuffer<Float,10>(density.size());
 #else
   array<Float> interactionResult(density.size());
 #endif

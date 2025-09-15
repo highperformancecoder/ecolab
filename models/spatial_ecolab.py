@@ -4,6 +4,8 @@ from random import random, seed as randomSeed
 
 from ecolab import array_urand, myid, device
 
+print(device())
+
 # we want initialisation to be identical across all processes
 randomSeed(1)
 
@@ -48,8 +50,6 @@ ecolab.migration(nsp*[1e-5])
                   
 from plot import plot
 from GUI import gui, statusBar, windows
-
-print(device())
 
 ecolab.setDensitiesDevice()
 
