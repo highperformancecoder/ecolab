@@ -133,35 +133,34 @@ template <class B>
 void EcolabPoint<B>::generate(unsigned niter, const ModelData& model)
 {
 #ifdef __SYCL_DEVICE_ONLY__
-  GroupLocal<array<Float,Allocator<Float>>> interactionResultBuffer(this->template allocator<Float>());
-  auto& interactionResult=interactionResultBuffer.ref();
+//  GroupLocal<array<Float,Allocator<Float>>> interactionResultBuffer(this->template allocator<Float>());
+//  auto& interactionResult=interactionResultBuffer.ref();
+//  if (syclGroup().leader()) interactionResult.resize(density.size());
+//  groupBarrier();
+  Float* interactionResult=groupBuffer<Float>(density.size());
 #else
-  array<Float> interactionResult;
+  array<Float> interactionResult(density.size());
 #endif
   for (unsigned step=0; step<niter; step++)
     {
-      interactionResult=model.interaction.diag*density;
-//      array_ns::map(density.size(), [&](size_t i){
-//        interactionResult[i]=model.interaction.diag[i]*density[i];
-//      });
-//      groupBarrier();
+      array_ns::map(density.size(),  [&](size_t i){
+        interactionResult[i]=model.interaction.diag[i]*density[i];
+      });
+      groupBarrier();
       array_ns::map(model.interaction.row.size(), [&](size_t i){
-#ifdef SYCL_LANGUAGE_VERSION
-        sycl::atomic_ref<Float, sycl::memory_order::relaxed, sycl::memory_scope::work_group> tmp
-#else
-        Float& tmp
+#ifdef __SYCL_DEVICE_ONLY__
+        sycl::atomic_ref<Float, sycl::memory_order::relaxed, sycl::memory_scope::work_group>
 #endif
-          (interactionResult[model.interaction.row[i]]);
-        tmp+=model.interaction.val[i]*density[model.interaction.col[i]];
+          (interactionResult[model.interaction.row[i]]) +=
+          model.interaction.val[i]*density[model.interaction.col[i]];
       });
       
       groupBarrier();
-      density = roundArray(density + density * (model.repro_rate + interactionResult));
-      //array_ns::map(density.size(), [&](size_t i){density[i] = ROUND(density[i] + density[i] * (model.repro_rate[i] + interactionResult[i]));});
-
+      array_ns::map(density.size(),  [&](size_t i){
+        density[i]=ROUND(density[i] + density[i] * (model.repro_rate[i] + interactionResult[i]));
+      });
+      groupBarrier();
     }
-  return;
-  
 //  // sequential/non-GPU version
 //  for (unsigned i=0; i<niter; i++)
 //    {density = roundArray(density + density * (model.repro_rate + model.interaction*density));}

@@ -351,7 +351,7 @@ namespace ecolab
     template <class F>
     void groupedForAll(F f) {
 #ifdef SYCL_LANGUAGE_VERSION
-      static size_t workGroupSize=syclQ().get_device().get_info<sycl::info::device::max_work_group_size>();
+      static size_t workGroupSize=32;//syclQ().get_device().get_info<sycl::info::device::max_work_group_size>();
       syclQ().submit([&](auto& h) {
 #ifndef NDEBUG
         sycl::stream out(1000000,1000,h);
@@ -428,6 +428,35 @@ namespace ecolab
     T& ref() {return reinterpret_cast<T&>(**buffer);}
 #endif
   };
+
+  /// Return a buffer in group local memory, of at least n Ts.
+  /// Individual elements are default initialised
+  /// Buffer is destroyed once all threads in group have completed (not at scope exit)
+  template <class T>
+  T* groupBuffer(size_t n) {
+    // work out power of two >= n
+    switch (sizeof(size_t)*8-sycl::clz(n-1))
+      {
+      case 0: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[1]>(syclGroup());
+      case 1: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[2]>(syclGroup());
+      case 2: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[4]>(syclGroup());
+      case 3: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[8]>(syclGroup());
+      case 4: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[16]>(syclGroup());
+      case 5: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[32]>(syclGroup());
+      case 6: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[64]>(syclGroup());
+      case 7: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[128]>(syclGroup());
+      case 8: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[256]>(syclGroup());
+      case 9: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[512]>(syclGroup());
+      case 10: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[1024]>(syclGroup());
+      case 11: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[2048]>(syclGroup());
+//      case 12: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[4096]>(syclGroup());
+//      case 13: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[8192]>(syclGroup());
+//      case 14: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[16384]>(syclGroup());
+//      case 15: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[32768]>(syclGroup());
+//      case 16: return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[65536]>(syclGroup());
+      default: /*assert(false);*/ return nullptr;
+      }
+  }
 }
 
 namespace classdesc

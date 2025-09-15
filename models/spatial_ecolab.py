@@ -51,6 +51,8 @@ from GUI import gui, statusBar, windows
 
 print(device())
 
+ecolab.setDensitiesDevice()
+
 def stepImpl():
     #ecolab.setDensitiesDevice()
     #print(ecolab.nsp()())
@@ -62,7 +64,7 @@ def stepImpl():
     ecolab.syncThreads()
     #print(ecolab.nsp()())
     #ecolab.setDensitiesShared()
-    ecolab.gather()
+    #ecolab.gather()
 
 from timeit import timeit
 ecolab.syncThreads()
