@@ -205,57 +205,52 @@ namespace ecolab
   
   struct CellBase
   {
+    size_t m_idx=0; // stash the position within the local node vector here
+    size_t idx() const {return m_idx;}
 #ifdef SYCL_LANGUAGE_VERSION
-    Ouro::SyclDesc<1>* desc=nullptr;
     using MemAllocator=Ouro::MultiOuroPQ;
     MemAllocator* memAlloc=nullptr;
-    const sycl::stream* out=nullptr;
-    size_t idx() const {
-      if (desc) return desc->item.get_global_linear_id();
-      else return 0;
-    }
     template <class T> class CellAllocator
     {
     public:
-      Ouro::SyclDesc<1>*const* desc=nullptr;
-      MemAllocator*const* memAlloc=nullptr;
+      MemAllocator* memAlloc=nullptr;
       template <class U> friend class Allocator;
       CellAllocator()=default;
-      CellAllocator(Ouro::SyclDesc<1>* const& desc, MemAllocator*const& memAlloc):
-        desc(&desc), memAlloc(&memAlloc) {
-      }
-      template <class U> CellAllocator(const CellAllocator<U>& x):
-        desc(x.desc), memAlloc(x.memAlloc) {}
+      CellAllocator(MemAllocator* memAlloc): memAlloc(memAlloc) {}
+      template <class U> CellAllocator(const CellAllocator<U>& x): memAlloc(x.memAlloc) {}
       T* allocate(size_t sz) {
 #ifdef  __SYCL_DEVICE_ONLY__
-        if (memAlloc && *memAlloc && desc && *desc)  {
-          auto r=reinterpret_cast<T*>((*memAlloc)->malloc(**desc,sz*sizeof(T)));
+        if (memAlloc)  {
+          auto r=reinterpret_cast<T*>(memAlloc->malloc(Ouro::SyclDesc<>(syclItem(),{}),sz*sizeof(T)));
           if (!r) syclPrintf("Mem allocation failed\n");
           return r;
         }
+        syclPrintf("Missing allocator memAlloc=%x\n",memAlloc);
         return nullptr; // TODO raise an error??
 #else
         return sycl::malloc_shared<T>(sz,syclQ());
 #endif
       }
-      void deallocate(T* p,size_t) {
+      void deallocate(T* p,size_t n) {
+        if (!p) return;
 #ifdef  __SYCL_DEVICE_ONLY__
-        if (memAlloc && *memAlloc && desc && *desc)
-          (*memAlloc)->free(**desc,p);
+        if (memAlloc && reinterpret_cast<Ouro::memory_t*>(p)>=memAlloc->memory.d_data &&
+            reinterpret_cast<Ouro::memory_t*>(p)<memAlloc->memory.d_data_end)
+          memAlloc->free(Ouro::SyclDesc<>(syclItem(),{}),p);
+        else
+          syclPrintf("leaked %d bytes\n",n*sizeof(T));
 #else
         sycl::free(p,syclQ());
 #endif
       }
-      bool operator==(const CellAllocator& x) const {return desc==x.desc && memAlloc==x.memAlloc;}
+      bool operator==(const CellAllocator& x) const {return memAlloc==x.memAlloc;}
     };
     template <class T> CellAllocator<T> allocator() const {
-      return CellAllocator<T>(desc,memAlloc);
+      return CellAllocator<T>(memAlloc);
     }
-#else
+#else //!SYCL
     template <class T> using CellAllocator=std::allocator<T>;
     template <class T> CellAllocator<T> allocator() const {return CellAllocator<T>();}
-    size_t m_idx=0; // stash the position within the local node vector here
-    size_t idx() const {return m_idx;}
 #endif
   };
 
@@ -304,34 +299,10 @@ namespace ecolab
        graphcode::Allocator<graphcode::ObjectPtr<Cell>>(syclQ(),sycl::usm::alloc::shared)) {}
     ~EcolabGraph() {syncThreads();}
 #endif
-    /// apply a functional to all local cells of this processor in parallel
+    /// apply a functional to all local cells of this processor using the host processor
     /// @param f 
     template <class F>
-    void forAll(F f) {
-#ifdef SYCL_LANGUAGE_VERSION
-      static size_t workGroupSize=syclQ().get_device().get_info<sycl::info::device::max_work_group_size>();
-      size_t range=this->size()/workGroupSize;
-      if (range*workGroupSize < this->size()) ++range;
-      syclQ().submit([&](auto& h) {
-#ifndef NDEBUG
-        sycl::stream out(1000000,1000,h);
-#endif
-        h.parallel_for(sycl::nd_range<1>(range*workGroupSize, workGroupSize), [=,this](auto i) {
-          auto idx=i.get_global_linear_id();
-          if (idx<this->size()) {
-            auto& cell=*(*this)[idx]->template as<Cell>();
-            Ouro::SyclDesc<> desc(i,{});
-            cell.desc=&desc;
-#ifndef NDEBUG
-            cell.out=&out;
-#endif
-            f(cell);
-            cell.desc=nullptr;
-            cell.out=nullptr;
-          }
-        });
-      });
-#else
+    void hostForAll(F f) {
       auto sz=this->size();
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -341,6 +312,28 @@ namespace ecolab
         cell.m_idx=idx;
         f(cell);
       }
+    }
+    
+    /// apply a functional to all local cells of this processor in parallel
+    /// @param f 
+    template <class F>
+    void forAll(F f) {
+#ifdef SYCL_LANGUAGE_VERSION
+      static size_t workGroupSize=syclQ().get_device().get_info<sycl::info::device::max_work_group_size>();
+      size_t range=this->size()/workGroupSize;
+      if (range*workGroupSize < this->size()) ++range;
+      syclQ().submit([&](auto& h) {
+        h.parallel_for(sycl::nd_range<1>(range*workGroupSize, workGroupSize), [=,this](auto i) {
+          auto idx=i.get_global_linear_id();
+          if (idx<this->size()) {
+            auto& cell=*(*this)[idx]->template as<Cell>();
+            cell.m_idx=idx;
+            f(cell);
+          }
+        });
+      });
+#else
+      hostForAll(f);
 #endif
     }
     
@@ -351,28 +344,20 @@ namespace ecolab
     template <class F>
     void groupedForAll(F f) {
 #ifdef SYCL_LANGUAGE_VERSION
+      // TODO - pass in workGroupSize as an optional parameter??
       static size_t workGroupSize=32;//syclQ().get_device().get_info<sycl::info::device::max_work_group_size>();
       syclQ().submit([&](auto& h) {
-#ifndef NDEBUG
-        sycl::stream out(1000000,1000,h);
-#endif
         h.parallel_for(sycl::nd_range<1>(this->size()*workGroupSize, workGroupSize), [=,this](auto i) {
           auto idx=i.get_group_linear_id();
           if (idx<this->size()) {
             auto& cell=*(*this)[idx]->template as<Cell>();
-            Ouro::SyclDesc<> desc(i,{});
-            cell.desc=&desc;
-#ifndef NDEBUG
-            cell.out=&out;
-#endif
+            cell.m_idx=idx;
             f(cell);
-            cell.desc=nullptr;
-            cell.out=nullptr;
           }
         });
       });
 #else
-      forAll(f);
+      hostForAll(f);
 #endif
     }
 
@@ -423,10 +408,17 @@ namespace ecolab
     ~GroupLocal() {
       sycl::group_barrier(syclGroup());
       if (syclGroup().leader())
-        ref().~T();
+        (**this).~T();
     }
-    T& ref() {return reinterpret_cast<T&>(**buffer);}
+    T& operator*() {return reinterpret_cast<T&>(**buffer);}
+#else
+    T buffer;
+  public:
+    template <class... Args>
+    GroupLocal(Args&&... args): buffer(std::forward<Args>(args)...) {}
+    T& operator*() {return buffer;}
 #endif
+    T* operator->() {return &**this;}
   };
 
 #ifdef __SYCL_DEVICE_ONLY__

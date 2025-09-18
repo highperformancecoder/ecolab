@@ -102,7 +102,7 @@ struct PanmicticModel: public ModelData, public EcolabPoint<AllocatorBase>, publ
 
 struct EcolabCell: public EcolabPoint<ecolab::CellBase>, public graphcode::Object<EcolabCell>
 {
-  unsigned id=0; // stash the graphcode node id here
+  unsigned id=0; // stash the graphcode node id here - TODO - why can't we call graphcode::Object<EcolabCell>::id()?
   array<int,EcolabPoint::Allocator<int>> delta{this->template allocator<int>()};
 };
 
@@ -112,6 +112,7 @@ class SpatialModel: public ModelData, public EcolabGraph<EcolabCell>,
   size_t numX=1, numY=1;
   CLASSDESC_ACCESS(SpatialModel);
 public:
+  static constexpr size_t log2MaxNsp=10;
   size_t makeId(size_t x, size_t y) const {return x%numX + numX*(y%numY);}
   void setGrid(size_t nx, size_t ny);
   EcolabCell& cell(size_t x, size_t y) {

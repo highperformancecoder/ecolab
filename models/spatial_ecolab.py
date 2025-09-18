@@ -13,14 +13,14 @@ randomSeed(1)
 array_urand.seed(10+myid())
 
 # initial number of species
-nsp=1000
+nsp=100
 
 ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
 ecolab.odiag_min(-1e-5)
 ecolab.odiag_max(1e-5)
-#ecolab.mut_max(1e-4)
-ecolab.mut_max(1e-3)
+ecolab.mut_max(1e-4)
+#ecolab.mut_max(1e-3)
 ecolab.sp_sep(0.1)
 
 def randomList(num, min, max):
@@ -28,8 +28,8 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=32
-numY=32
+numX=2
+numY=2
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
@@ -51,23 +51,25 @@ ecolab.migration(nsp*[1e-5])
 from plot import plot
 from GUI import gui, statusBar, windows
 
-ecolab.setDensitiesDevice()
 
 def stepImpl():
     #ecolab.setDensitiesDevice()
-    #print(ecolab.nsp()())
     ecolab.generate(100)
-    #    ecolab.mutate()
+    ecolab.mutate()
     #    ecolab.migrate()
     #    ecolab.condense()
-    #print(ecolab.nsp()())
-    ecolab.syncThreads()
+    #ecolab.syncThreads()
+    print("tstep=",ecolab.tstep())
     #print(ecolab.nsp()())
     #ecolab.setDensitiesShared()
     #ecolab.gather()
 
-from timeit import timeit
+print(ecolab.nsp()())
+ecolab.makeConsistent()
 ecolab.syncThreads()
+print(ecolab.nsp()())
+
+from timeit import timeit
 print(timeit('stepImpl()', globals=globals(), number=10))
                 
 def step():
