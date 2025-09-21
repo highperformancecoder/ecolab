@@ -7,7 +7,7 @@ from ecolab import array_urand, myid, device
 print(device())
 
 # we want initialisation to be identical across all processes
-randomSeed(1)
+randomSeed(10)
 
 # we want the array operations to have a different seed across processes
 array_urand.seed(10+myid())
@@ -28,14 +28,15 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=2
-numY=2
+numX=3
+numY=3
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
 print("initialising density")
 for i in range(numX):
     for j in range(numY):
+        #ecolab.cell(i,j).density([int(100*random()) for i in range(nsp)])
         ecolab.cell(i,j).density(nsp*[100])
 print("density initialised")
         
@@ -46,20 +47,30 @@ ecolab.random_interaction(3,0)
 ecolab.interaction.val(randomList(len(ecolab.interaction.val), ecolab.odiag_min(), ecolab.odiag_max()))
 
 ecolab.mutation(nsp*[ecolab.mut_max()])
-ecolab.migration(nsp*[1e-5])
+ecolab.migration(nsp*[1e-4])
                   
 from plot import plot
 from GUI import gui, statusBar, windows
 
+epoch=2000000
+mut_factor=1000
 
+extinctions=0
 def stepImpl():
     #ecolab.setDensitiesDevice()
     ecolab.generate(100)
     ecolab.mutate()
-    #    ecolab.migrate()
-    #    ecolab.condense()
+
+    epochTs=ecolab.tstep()%epoch
+    if (epochTs==0):
+        ecolab.migration([x*mut_factor for x in ecolab.migration()])
+    if (epochTs==epoch//2):
+        ecolab.migration([x/mut_factor for x in ecolab.migration()])
+
+    #ecolab.migrate()
+    global extinctions
+    extinctions+=ecolab.condense()
     #ecolab.syncThreads()
-    print("tstep=",ecolab.tstep())
     #print(ecolab.nsp()())
     #ecolab.setDensitiesShared()
     #ecolab.gather()
@@ -73,15 +84,20 @@ from timeit import timeit
 print(timeit('stepImpl()', globals=globals(), number=10))
                 
 def step():
-    stepImpl()
+    global extinctions
+    extinctions=0
+    for i in range(epoch//10000):
+        stepImpl()
     if myid()==0:
         nsp=len(ecolab.species)
         statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
-        plot('No. species',ecolab.tstep(),nsp)
+        plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))
+        #plot('No. species',ecolab.tstep(),nsp)
         plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())
-        for i in range(numX):
-            for j in range(numY):
-                plot(f'Density({i},{j})',ecolab.tstep(),ecolab.cell(i,j).density(), pens=ecolab.species())
+        plot('Extinctions',ecolab.tstep(),extinctions)
+#        for i in range(numX):
+#            for j in range(numY):
+#                plot(f'Density({i},{j})',ecolab.tstep(),ecolab.cell(i,j).density(), pens=ecolab.species())
 
 gui(step)
 

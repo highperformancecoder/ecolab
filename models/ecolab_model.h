@@ -95,7 +95,8 @@ struct PanmicticModel: public ModelData, public EcolabPoint<AllocatorBase>, publ
   void seed(unsigned x) {rand.seed(x);}
   void generate(unsigned niter);
   void generate() {generate(1);}
-  void condense();
+  /// returns number of extinctions
+  unsigned condense();
   void mutate();
   array<double> lifetimes();
 };
@@ -113,7 +114,8 @@ class SpatialModel: public ModelData, public EcolabGraph<EcolabCell>,
   CLASSDESC_ACCESS(SpatialModel);
 public:
   static constexpr size_t log2MaxNsp=10;
-  size_t makeId(size_t x, size_t y) const {return x%numX + numX*(y%numY);}
+  // function valid for x∈(-numX,∞], y∈(-numY,∞]
+  size_t makeId(size_t x, size_t y) const {return (x+numX)%numX + numX*((y+numY)%numY);}
   void setGrid(size_t nx, size_t ny);
   EcolabCell& cell(size_t x, size_t y) {
     return *objects[makeId(x,y)];
@@ -126,7 +128,8 @@ public:
   void seed(unsigned x) {forAll([=](EcolabCell& cell){cell.rand.seed(x);});}
   void generate(unsigned niter);
   void generate() {generate(1);}
-  void condense();
+  /// returns number of extinctions
+  unsigned condense();
   void mutate();
   void migrate();
 };

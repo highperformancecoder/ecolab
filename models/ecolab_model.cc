@@ -200,16 +200,17 @@ void ModelData::condense(const array<bool>& mask, size_t mask_true)   /* remove 
   foodweb = interaction;
 }
 
-void PanmicticModel::condense()
+unsigned PanmicticModel::condense()
 {
   auto mask=density != 0;
   size_t mask_true=sum(mask);
-  if (mask.size()==mask_true) return; /* no change ! */
+  if (mask.size()==mask_true) return 0; /* no change ! */
   ModelData::condense(mask,mask_true);
   EcolabPoint::condense(mask, mask_true);
+  return mask.size()-mask_true;
 }
 
-void SpatialModel::condense()
+unsigned SpatialModel::condense()
 {
   array<int> total_density(species.size());
   for (auto& i: *this) total_density+=i->as<EcolabCell>()->density; // TODO
@@ -221,9 +222,10 @@ void SpatialModel::condense()
   auto mask=total_density != 0;
   
   size_t mask_true=sum(mask);
-  if (mask.size()==mask_true) return; /* no change ! */
+  if (mask.size()==mask_true) return 0; /* no change ! */
   ModelData::condense(mask,mask_true);
   for (auto& i: *this) i->as<EcolabCell>()->condense(mask, mask_true);
+  return mask.size()-mask_true;
 }
 
 
@@ -633,59 +635,71 @@ void SpatialModel::generate(unsigned niter)
 
 void SpatialModel::migrate()
 {
-//  /* each cell gets a distinct random salt value */
-//  forAll([=,this](EcolabCell& c) {c.salt=c.rand();});
-//  
-//  prepareNeighbours();
-//
-////#ifdef SYCL_LANGUAGE_VERSION
-////  using ArrayAlloc=graphcode::Allocator<int>;
-////  using Array=vector<int,ArrayAlloc>;
-////  using DeltaAlloc=graphcode::Allocator<Array>;
-////  Array init(species.size(),0,ArrayAlloc(syclQ(),sycl::usm::alloc::device));
-////  vector<Array,DeltaAlloc> delta(size(), init, DeltaAlloc(syclQ(),sycl::usm::alloc::device));
-////#else
-////  vector<array<int>> delta(size(), array<int>(species.size(),0));
-////#endif
-//
+  /* each cell gets a distinct random salt value */
+  hostForAll([=,this](EcolabCell& c) {c.salt=c.rand();});
+  
+  prepareNeighbours();
+
+//#ifdef SYCL_LANGUAGE_VERSION
+//  using ArrayAlloc=graphcode::Allocator<int>;
+//  using Array=vector<int,ArrayAlloc>;
+//  using DeltaAlloc=graphcode::Allocator<Array>;
+//  Array init(species.size(),0,ArrayAlloc(syclQ(),sycl::usm::alloc::device));
+//  vector<Array,DeltaAlloc> delta(size(), init, DeltaAlloc(syclQ(),sycl::usm::alloc::device));
+//#else
+  vector<array<int>> delta(size(), array<int>(species.size(),0));
+//#endif
+
 //  for (auto& c: *this)
 //    c->as<EcolabCell>()->delta.resize(species.size());
-//
-//  groupedForAll([=,this](EcolabCell& c) {
-//    /* loop over neighbours */
-//    for (auto& n: c) 
-//      {
-//        auto& nbr=*n->as<EcolabCell>();
-//        Float salt=c.id<nbr.id? c.salt: nbr.salt;
-//        array_ns::groupAsg(species.size(), [&](size_t i) {
-//            Float m=(tstep-last_mig_tstep) * migration[i] * (nbr.density[i] - c.density[i]);
-//            c.delta[i]+=m + (m!=0.0)*(2*(m>0.0)-1) * salt;
-//        });
-//      }
-//  });
-//  last_mig_tstep=tstep;
-//  syncThreads();
-//  groupedForAll([=,this](EcolabCell& c) {
-//    c.density+=c.delta;
-//  });
+
+  hostForAll([&,this](EcolabCell& c) {
+    /* loop over neighbours */
+    for (auto& n: c) 
+      {
+        auto& nbr=*n->as<EcolabCell>();
+        Float salt=c.id<nbr.id? c.salt: nbr.salt;
+        array<Float> m=(tstep-last_mig_tstep) * migration * (nbr.density - c.density);
+        delta[c.idx()]+=m + array<Float>((m!=0.0)*(2*(m>0.0)-1)) * salt;
+      }
+  });
+
+  array<int> ssum(species.size(),0);
+  hostForAll([&,this](EcolabCell& c) {
+    c.density+=delta[c.idx()];
+#if !defined(NDEBUG)
+#pragma omp critical
+    ssum+=delta[c.idx()];
+#endif
+    });
+  last_mig_tstep=tstep;
 
   /* assertion testing that population numbers are conserved */
 #if !defined(NDEBUG) && !defined(SYCL_LANGUAGE_VERSION)
-  array<int> ssum(species.size()), s(species.size()); 
-  unsigned mig=0, i;
-  for (ssum=0, i=0; i<size(); i++)
-    {
-      ssum+=delta[i];
-      for (size_t j=0; j<delta[i].size(); j++)
-	mig+=abs(delta[i][j]);
-    }
 #ifdef MPI_SUPPORT
+  array<int> s(species.size()); 
   MPI_Reduce(ssum.data(),s.data(),s.size(),MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
   ssum=s;
-  int m;
-  MPI_Reduce(&mig,&m,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
-  mig=m;
 #endif
+  if (sum(ssum==0)!=int(ssum.size()))
+    {
+      for (size_t i=0; i<ssum.size(); ++i)
+        if (ssum[i])
+          {
+            cout<<"species "<<i<<":"<<endl;
+            for (size_t idx=0; idx<size(); ++idx)
+              if (delta[idx][i])
+                {
+                  auto& c=*(*this)[idx]->as<EcolabCell>();
+                  cout<<"  delta "<<c.id<<"="<<delta[idx][i]<<" n="<<c.density[i]<<endl;
+                  for (auto& n: c)
+                    {
+                      auto& nbr=*n->as<EcolabCell>();
+                      cout<<"    nbr:"<<nbr.id<<"="<<nbr.density[i]<<endl;
+                    }
+                }                    
+          }
+    }
   if (myid()==0) assert(sum(ssum==0)==int(ssum.size()));
 #endif
 }
