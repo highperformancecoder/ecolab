@@ -47,7 +47,7 @@ ecolab.random_interaction(3,0)
 ecolab.interaction.val(randomList(len(ecolab.interaction.val), ecolab.odiag_min(), ecolab.odiag_max()))
 
 ecolab.mutation(nsp*[ecolab.mut_max()])
-ecolab.migration(nsp*[1e-1])
+ecolab.migration(nsp*[1e-20])
                   
 from plot import plot
 from GUI import gui, statusBar, windows
@@ -56,6 +56,7 @@ epoch=2000000
 mut_factor=1000
 
 extinctions=0
+migrations=0
 def stepImpl():
     #ecolab.setDensitiesDevice()
     ecolab.generate(100)
@@ -67,8 +68,8 @@ def stepImpl():
     if (epochTs==epoch//2):
         ecolab.migration([x/mut_factor for x in ecolab.migration()])
 
-    #ecolab.migrate()
-    global extinctions
+    global extinctions, migrations
+    migrations+=ecolab.migrate()
     extinctions+=ecolab.condense()
     #ecolab.syncThreads()
     #print(ecolab.nsp()())
@@ -86,15 +87,18 @@ print(timeit('stepImpl()', globals=globals(), number=10))
 def step():
     global extinctions
     extinctions=0
+    migrations=0
     for i in range(epoch//10000):
         stepImpl()
     if myid()==0:
+        print(migrations)
         nsp=len(ecolab.species)
         statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
         plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))
         #plot('No. species',ecolab.tstep(),nsp)
         plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())
         plot('Extinctions',ecolab.tstep(),extinctions)
+        plot('Migration',ecolab.tstep(),migrations)
 #        for i in range(numX):
 #            for j in range(numY):
 #                plot(f'Density({i},{j})',ecolab.tstep(),ecolab.cell(i,j).density(), pens=ecolab.species())

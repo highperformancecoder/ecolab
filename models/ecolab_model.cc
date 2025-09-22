@@ -633,7 +633,7 @@ void SpatialModel::generate(unsigned niter)
   tstep+=niter;
 }
 
-void SpatialModel::migrate()
+unsigned SpatialModel::migrate()
 {
   /* each cell gets a distinct random salt value */
   hostForAll([=,this](EcolabCell& c) {c.salt=c.rand();});
@@ -665,29 +665,33 @@ void SpatialModel::migrate()
   });
 
   array<int> ssum(species.size(),0);
+  size_t totalMigration=0;
   hostForAll([&,this](EcolabCell& c) {
-    // adjust delta so that density remains +ve
-    array<int> adjust=delta[c.idx()]+c.density;
-    adjust*=-(adjust<0);
-    if (sum(adjust)>0)
-      {
-        // distribute adjust among neighbours
-        array<int> totalDiff(c.density.size(),0);
-        for (auto& n: c)
-          {
-            auto& nbr=*n->as<EcolabCell>();
-            totalDiff+=nbr.density-c.density;
-          }
-        // adjust adjust to be divisible by totalDiff
-        adjust-=adjust%totalDiff;
-        for (auto& n: c)
-          {
-            auto& nbr=*n->as<EcolabCell>();
-            delta[nbr.idx()]+=((nbr.density-c.density)/totalDiff)*adjust;
-          }
-        delta[c.idx()]-=adjust;        
-      }
-    c.density+=delta[c.idx()];
+//    // adjust delta so that density remains +ve
+//    array<int> adjust=delta[c.idx()]+c.density;
+//    adjust*=-(adjust<0);
+//    if (sum(adjust)>0)
+//      {
+//        // distribute adjust among neighbours
+//        array<int> totalDiff(c.density.size(),0);
+//        for (auto& n: c)
+//          {
+//            auto& nbr=*n->as<EcolabCell>();
+//            totalDiff+=nbr.density-c.density;
+//          }
+//        // adjust adjust to be divisible by totalDiff
+//        adjust-=adjust%totalDiff;
+//        for (auto& n: c)
+//          {
+//            auto& nbr=*n->as<EcolabCell>();
+//            delta[nbr.idx()]+=((nbr.density-c.density)/totalDiff)*adjust;
+//          }
+//        delta[c.idx()]-=adjust;        
+//      }
+
+    //c.density+=delta[c.idx()];
+    cout<<delta[c.idx()]<<endl;
+    totalMigration+=sum(abs(delta[c.idx()]));
 #if !defined(NDEBUG)
 #pragma omp critical
     ssum+=delta[c.idx()];
@@ -695,6 +699,13 @@ void SpatialModel::migrate()
     });
   last_mig_tstep=tstep;
 
+#ifdef MPI_SUPPORT
+  if (myid()==0)
+    MPI_Reduce(MPI_IN_PLACE, &totalMigration,1,MPI_UNSIGNED,MPI_SUM,0,MPI_COMM_WORLD);
+  else
+    MPI_Reduce(&totalMigration,nullptr,1,MPI_UNSIGNED,MPI_SUM,0,MPI_COMM_WORLD);
+#endif
+  
   /* assertion testing that population numbers are conserved */
 #if !defined(NDEBUG) && !defined(SYCL_LANGUAGE_VERSION)
 #ifdef MPI_SUPPORT
@@ -723,6 +734,7 @@ void SpatialModel::migrate()
     }
   if (myid()==0) assert(sum(ssum==0)==int(ssum.size()));
 #endif
+  return totalMigration;
 }
 
 void ModelData::makeConsistent(size_t nsp)

@@ -131,6 +131,6 @@ public:
   /// returns number of extinctions
   unsigned condense();
   void mutate();
-  void migrate();
+  unsigned migrate();
 };
 
