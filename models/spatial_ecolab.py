@@ -47,7 +47,7 @@ ecolab.random_interaction(3,0)
 ecolab.interaction.val(randomList(len(ecolab.interaction.val), ecolab.odiag_min(), ecolab.odiag_max()))
 
 ecolab.mutation(nsp*[ecolab.mut_max()])
-ecolab.migration(nsp*[1e-4])
+ecolab.migration(nsp*[1e-1])
                   
 from plot import plot
 from GUI import gui, statusBar, windows

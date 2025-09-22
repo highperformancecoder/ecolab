@@ -666,6 +666,27 @@ void SpatialModel::migrate()
 
   array<int> ssum(species.size(),0);
   hostForAll([&,this](EcolabCell& c) {
+    // adjust delta so that density remains +ve
+    array<int> adjust=delta[c.idx()]+c.density;
+    adjust*=-(adjust<0);
+    if (sum(adjust)>0)
+      {
+        // distribute adjust among neighbours
+        array<int> totalDiff(c.density.size(),0);
+        for (auto& n: c)
+          {
+            auto& nbr=*n->as<EcolabCell>();
+            totalDiff+=nbr.density-c.density;
+          }
+        // adjust adjust to be divisible by totalDiff
+        adjust-=adjust%totalDiff;
+        for (auto& n: c)
+          {
+            auto& nbr=*n->as<EcolabCell>();
+            delta[nbr.idx()]+=((nbr.density-c.density)/totalDiff)*adjust;
+          }
+        delta[c.idx()]-=adjust;        
+      }
     c.density+=delta[c.idx()];
 #if !defined(NDEBUG)
 #pragma omp critical
