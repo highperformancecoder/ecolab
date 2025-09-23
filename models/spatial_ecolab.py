@@ -13,7 +13,7 @@ randomSeed(10)
 array_urand.seed(10+myid())
 
 # initial number of species
-nsp=100
+nsp=30
 
 ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
@@ -28,8 +28,8 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=3
-numY=3
+numX=1
+numY=2
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
@@ -47,7 +47,7 @@ ecolab.random_interaction(3,0)
 ecolab.interaction.val(randomList(len(ecolab.interaction.val), ecolab.odiag_min(), ecolab.odiag_max()))
 
 ecolab.mutation(nsp*[ecolab.mut_max()])
-ecolab.migration(nsp*[1e-20])
+ecolab.migration(nsp*[1e-3])
                   
 from plot import plot
 from GUI import gui, statusBar, windows
@@ -91,7 +91,6 @@ def step():
     for i in range(epoch//10000):
         stepImpl()
     if myid()==0:
-        print(migrations)
         nsp=len(ecolab.species)
         statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
         plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))
