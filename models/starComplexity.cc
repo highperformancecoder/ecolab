@@ -5,6 +5,7 @@
 #include "ecolab_epilogue.h"
 
 #include <algorithm>
+#include <atomic>
 #include <assert.h>
 #include <time.h>
 
