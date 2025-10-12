@@ -10,10 +10,10 @@ import sys
 from math import sqrt
 
 # we want initialisation to be identical across all processes
-randomSeed(1)
+#randomSeed(1)
 
 # we want the array operations to have a different seed across processes
-array_urand.seed(10+myid())
+array_urand.seed(int(1024*random()))
 
 
 nsp=int(sys.argv[1])         # initial number of species
