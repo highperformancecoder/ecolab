@@ -282,9 +282,10 @@ void SpatialModel::mutate()
 
   
   // TODO - this is a kind of scan - can it be done on device?
+  size_t j=0;
   for (auto& i: *this)
     {
-      new_sp<<=newSp[i];
+      new_sp<<=newSp[j];
       (*cell_ids)<<= array<unsigned>(new_sp.size()-cell_ids->size(),i.id());
     }
   

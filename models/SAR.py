@@ -15,50 +15,10 @@ from math import sqrt
 # we want the array operations to have a different seed across processes
 array_urand.seed(int(1024*random()))
 
-
-nsp=int(sys.argv[1])         # initial number of species
-A=int(sys.argv[2])           # area
-mut_max=float(sys.argv[3])   # mutation rate
-migration=float(sys.argv[4]) # initial migration rate
-
-
-ecolab.repro_min(-0.1)
-ecolab.repro_max(0.1)
-ecolab.odiag_min(-1e-5)
-ecolab.odiag_max(1e-5)
-ecolab.mut_max(mut_max)
-ecolab.sp_sep(0.1)
-
 def randomList(num, min, max):
     return [random()*(max-min)+min for i in range(num)]
 
-ecolab.species(range(nsp))
-
-numX=int(sqrt(A))
-numY=A//numX
-ecolab.setGrid(numX,numY)
-ecolab.partitionObjects()
-
-# initialises allocators and space on GPU, so that density arrays can be set
-#ecolab.makeConsistent()
-
-for i in range(numX):
-    for j in range(numY):
-        ecolab.cell(i,j).density(nsp*[100])
-        
-ecolab.repro_rate(randomList(nsp, ecolab.repro_min(), ecolab.repro_max()))
-ecolab.interaction.diag(randomList(nsp, -1e-3, -1e-3))
-ecolab.random_interaction(3,0)
-              
-ecolab.interaction.val(randomList(len(ecolab.interaction.val), ecolab.odiag_min(), ecolab.odiag_max()))
-
-ecolab.mutation(nsp*[mut_max])
-ecolab.migration(nsp*[migration])
-                  
-from plot import plot
-from GUI import gui, statusBar, windows
-
-def stepImpl():
+def step():
     ecolab.generate(100)
     ecolab.mutate()
     ecolab.migrate()
@@ -67,15 +27,51 @@ def stepImpl():
     
 def av(x):
     return sum(x)/len(x) if len(x)>0 else 0
-    
-def step():
-    stepImpl()
-    # area, mutation, migration, no. species, connectivity
 
-for i in range(100):
-    step()
+#nsp=int(sys.argv[1])         # initial number of species
+#A=int(sys.argv[2])           # area
+#mut_max=float(sys.argv[3])   # mutation rate
+#migration=float(sys.argv[4]) # initial migration rate
 
-print(numX*numY, av(ecolab.mutation()), av(ecolab.migration()), len(ecolab.species), sum([x*x for x in ecolab.interaction.val()])/len(ecolab.species)**2)
+print("Area, Mutation rate, Migration rate, Number of species, Interaction strength^2")
+for A in [1, 2, 4, 9, 16]:
+    for mut_max in [1e-4, 1e-3, 1e-2]:
+        for migration in [1e-6, 1e-5, 1e-4, 1e-3]:
+            for nsp in [100, 200, 400]:
+                ecolab.tstep(0)
+                ecolab.repro_min(-0.1)
+                ecolab.repro_max(0.1)
+                ecolab.odiag_min(-1e-5)
+                ecolab.odiag_max(1e-5)
+                ecolab.mut_max(mut_max)
+                ecolab.sp_sep(0.1)
+                
+                ecolab.species(range(nsp))
+                ecolab.create(nsp*[0])
+                
+
+                numX=int(sqrt(A))
+                numY=A//numX
+                ecolab.setGrid(numX,numY)
+                ecolab.partitionObjects()
+
+                for i in range(numX):
+                    for j in range(numY):
+                        ecolab.cell(i,j).density(nsp*[100])
+        
+                ecolab.repro_rate(randomList(nsp, ecolab.repro_min(), ecolab.repro_max()))
+                ecolab.interaction.diag(randomList(nsp, -1e-3, -1e-3))
+                ecolab.random_interaction(3,0)
+              
+                ecolab.interaction.val(randomList(len(ecolab.interaction.val), ecolab.odiag_min(), ecolab.odiag_max()))
+
+                ecolab.mutation(nsp*[mut_max])
+                ecolab.migration(nsp*[migration])
+                  
+                for i in range(100):
+                    step()
+
+                print(numX*numY, av(ecolab.mutation()), av(ecolab.migration()), len(ecolab.species), sum([x*x for x in ecolab.interaction.val()])/len(ecolab.species)**2)
 
 
 
