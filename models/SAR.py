@@ -34,7 +34,7 @@ def av(x):
 #migration=float(sys.argv[4]) # initial migration rate
 
 print("Area, Mutation rate, Migration rate, Number of species, Interaction strength^2",flush=True)
-for A in [4, 9, 16]:
+for A in [1, 2, 4, 6, 9, 12, 16]:
     for mut_max in [1e-5, 1e-4, 1e-3]:
         for migration in [1e-6, 1e-5]:
             for nsp in [30, 100, 200]:
