@@ -12,6 +12,8 @@ from math import sqrt
 # we want initialisation to be identical across all processes
 #randomSeed(1)
 
+replicate=sys.argv[1] if len(sys.argv)>=2 else 1
+
 # we want the array operations to have a different seed across processes
 array_urand.seed(int(1024*random()))
 
@@ -33,7 +35,7 @@ def av(x):
 #mut_max=float(sys.argv[3])   # mutation rate
 #migration=float(sys.argv[4]) # initial migration rate
 
-print("Area, Mutation rate, Migration rate, Number of species, Interaction strength^2",flush=True)
+print("Replicate, Area, Mutation rate, Migration rate, Number of species, Interaction strength^2",flush=True)
 for A in [1, 2, 4, 6, 9, 12, 16]:
     for mut_max in [1e-5, 1e-4, 1e-3]:
         for migration in [1e-6, 1e-5]:
@@ -73,7 +75,7 @@ for A in [1, 2, 4, 6, 9, 12, 16]:
                     step()
 
                 conn=sum([x*x for x in ecolab.interaction.val()])/len(ecolab.species)**2 if len(ecolab.species)>0 else 0
-                print(numX*numY, av(ecolab.mutation()), av(ecolab.migration()), len(ecolab.species), conn, flush=True,sep=',')
+                print(replicate,numX*numY, av(ecolab.mutation()), av(ecolab.migration()), len(ecolab.species), conn, flush=True,sep=',')
 
 
 
