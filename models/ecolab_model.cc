@@ -608,6 +608,7 @@ bool ConnectionPlot::redraw(int x0, int y0, int width, int height)
 void SpatialModel::setGrid(size_t nx, size_t ny)
 {
   numX=nx; numY=ny;
+  objects.clear();
   for (size_t i=0; i<numX; ++i)
     for (size_t j=0; j<numY; ++j)
       {
@@ -617,10 +618,14 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
         c.rand.seed(o.id());
         o.proc(o.id() % nprocs()); // TODO can we get this to work without this.
         // wire up von Neumann neighborhood
-        o->neighbours.push_back(makeId(i-1,j));
-        o->neighbours.push_back(makeId(i+1,j)); 
-        o->neighbours.push_back(makeId(i,j-1)); 
-        o->neighbours.push_back(makeId(i,j+1)); 
+        if (i>0)
+          o->neighbours.push_back(makeId(i-1,j));
+        if (i<numX-1)
+          o->neighbours.push_back(makeId(i+1,j));
+        if (j>0)
+          o->neighbours.push_back(makeId(i,j-1));
+        if (j<numY-1)
+          o->neighbours.push_back(makeId(i,j+1)); 
       }
   rebuildPtrLists();
 }
@@ -641,64 +646,66 @@ unsigned SpatialModel::migrate()
   
   prepareNeighbours();
 
-//#ifdef SYCL_LANGUAGE_VERSION
-//  using ArrayAlloc=graphcode::Allocator<int>;
-//  using Array=vector<int,ArrayAlloc>;
-//  using DeltaAlloc=graphcode::Allocator<Array>;
-//  Array init(species.size(),0,ArrayAlloc(syclQ(),sycl::usm::alloc::device));
-//  vector<Array,DeltaAlloc> delta(size(), init, DeltaAlloc(syclQ(),sycl::usm::alloc::device));
-//#else
   vector<array<int>> delta(size(), array<int>(species.size(),0));
-//#endif
-
-//  for (auto& c: *this)
-//    c->as<EcolabCell>()->delta.resize(species.size());
 
   hostForAll([&,this](EcolabCell& c) {
     /* loop over neighbours */
     for (auto& n: c) 
       {
         auto& nbr=*n->as<EcolabCell>();
-        Float salt=c.id<nbr.id? c.salt: nbr.salt;
+        Float salt=c.idx()<nbr.idx()? c.salt: nbr.salt;
         array<Float> m=(tstep-last_mig_tstep) * migration * (nbr.density - c.density);
-        delta[c.idx()]+=m+ array<Float>((m!=0.0)*(2*(m>0.0)-1)) * salt;
+        delta[c.idx()]+=m*(1+salt*(m!=0.0));
       }
   });
 
   array<int> ssum(species.size(),0);
   size_t totalMigration=0;
-  hostForAll([&,this](EcolabCell& c) {
-    // adjust delta so that density remains +ve
-    array<int> adjust=delta[c.idx()]+c.density;
-    adjust*=-(adjust<0);
-    if (sum(adjust)>0)
-      {
-        // distribute adjust among neighbours
-        array<int> totalDiff(c.density.size(),0);
-        for (auto& n: c)
-          {
-            auto& nbr=*n->as<EcolabCell>();
-            totalDiff+=nbr.density-c.density;
-          }
-        // adjust adjust to be divisible by totalDiff
-        adjust-=adjust%totalDiff;
-        for (auto& n: c)
-          {
-            auto& nbr=*n->as<EcolabCell>();
-            delta[nbr.idx()]+=((nbr.density-c.density)/totalDiff)*adjust;
-          }
-        delta[c.idx()]-=adjust;        
-      }
 
-    c.density+=delta[c.idx()];
-    totalMigration+=sum(abs(delta[c.idx()]));
-#if !defined(NDEBUG)
-#pragma omp critical
-    ssum+=delta[c.idx()];
+  vector<size_t> negativeDensityIdx;
+  size_t numCells=size();
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:totalMigration)
 #endif
-    });
+  for (size_t i=0; i<numCells; ++i)
+    {
+      auto& c=*(*this)[i]->as<EcolabCell>();
+      c.density+=delta[c.idx()];
+      totalMigration+=sum(abs(delta[i]));
+      if (sum(c.density<0))
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+       negativeDensityIdx.push_back(c.idx());
+#if !defined(NDEBUG)
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+      ssum+=delta[c.idx()];
+#endif
+    }
   last_mig_tstep=tstep;
 
+  // if any density values are -ve, then adjust migration from neighbours.
+  // loop run sequentially to resolve race condition
+  for (auto i: negativeDensityIdx)
+    {
+      auto& c=*(*this)[i]->as<EcolabCell>();
+      for (auto j=0; j<c.density.size(); ++j)
+        while (c.density[j]<0)
+          {
+            assert(c.size()>0);
+            int adjust=-(c.density[j]+c.size()-1)/c.size();
+            for (auto& n: c)
+              {
+                auto& nbr=*n->as<EcolabCell>();
+                auto nbrAdjust=std::min(nbr.density[j], adjust);
+                c.density[j]+=nbrAdjust;
+                nbr.density[j]-=nbrAdjust;
+              }
+          }
+    }
+  
 #ifdef MPI_SUPPORT
   if (myid()==0)
     MPI_Reduce(MPI_IN_PLACE, &totalMigration,1,MPI_UNSIGNED,MPI_SUM,0,MPI_COMM_WORLD);
@@ -734,7 +741,7 @@ unsigned SpatialModel::migrate()
     }
   if (myid()==0) assert(sum(ssum==0)==int(ssum.size()));
 #endif
-  return totalMigration;
+  return totalMigration/2;
 }
 
 void ModelData::makeConsistent(size_t nsp)

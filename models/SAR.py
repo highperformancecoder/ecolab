@@ -33,12 +33,13 @@ def av(x):
 #mut_max=float(sys.argv[3])   # mutation rate
 #migration=float(sys.argv[4]) # initial migration rate
 
-print("Area, Mutation rate, Migration rate, Number of species, Interaction strength^2")
-for A in [1, 2, 4, 9, 16]:
-    for mut_max in [1e-4, 1e-3, 1e-2]:
-        for migration in [1e-6, 1e-5, 1e-4, 1e-3]:
-            for nsp in [100, 200, 400]:
+print("Area, Mutation rate, Migration rate, Number of species, Interaction strength^2",flush=True)
+for A in [4, 9, 16]:
+    for mut_max in [1e-5, 1e-4, 1e-3]:
+        for migration in [1e-6, 1e-5]:
+            for nsp in [30, 100, 200]:
                 ecolab.tstep(0)
+                ecolab.last_mig_tstep(0)
                 ecolab.repro_min(-0.1)
                 ecolab.repro_max(0.1)
                 ecolab.odiag_min(-1e-5)
@@ -71,7 +72,8 @@ for A in [1, 2, 4, 9, 16]:
                 for i in range(100):
                     step()
 
-                print(numX*numY, av(ecolab.mutation()), av(ecolab.migration()), len(ecolab.species), sum([x*x for x in ecolab.interaction.val()])/len(ecolab.species)**2)
+                conn=sum([x*x for x in ecolab.interaction.val()])/len(ecolab.species)**2 if len(ecolab.species)>0 else 0
+                print(numX*numY, av(ecolab.mutation()), av(ecolab.migration()), len(ecolab.species), conn, flush=True,sep=',')
 
 
 
