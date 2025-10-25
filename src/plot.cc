@@ -309,6 +309,13 @@ namespace ecolab
     penSide[pen]=side;
   }
 
+  void Plot::removePensFrom(unsigned pen)
+  {
+    if (x.size()>pen) x.resize(pen);
+    if (y.size()>pen) y.resize(pen);
+    redraw();
+  }
+  
   bool Plot::onlyMarkers() const
   {
     bool r=true;

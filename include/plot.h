@@ -180,6 +180,9 @@ namespace ecolab
       penLabel.clear(); penTextLabel.clear(); penSide.clear();
     }
 
+    /// remove all pens from pen and above from plot
+    void removePensFrom(unsigned pen);
+    
 //    //serialisation support (surface is not auto-serialisable)
 //    void pack(classdesc::pack_t& p) const override {p<<m_image<<x<<y<<minx<<maxx<<miny<<maxy;}
 //
