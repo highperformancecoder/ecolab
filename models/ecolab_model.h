@@ -53,6 +53,8 @@ struct ModelData
   void condense(const array<bool>& mask, size_t mask_true);
   void mutate(const array<int>&); 
   double complexity() {return ::complexity(foodweb);}
+  /// May criterion connectivity σ²
+  double connectivity() const;
 };
 
 template <class E, class P> struct RoundArray; 

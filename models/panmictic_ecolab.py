@@ -1,5 +1,6 @@
 from ecolab_model import panmictic_ecolab as ecolab
 from random import random
+import math
 # initial number of species
 nsp=100
 
@@ -41,7 +42,7 @@ windows.append(ref(connectionPlot))
 ecolab.updateConnectionPlot()
 
 def step():
-    ecolab.generate()
+    ecolab.generate(100)
     ecolab.mutate()
     ecolab.updateConnectionPlot()
     ecolab.condense()
@@ -49,6 +50,8 @@ def step():
     statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
     plot('No. species',ecolab.tstep(),nsp)
     plot('Density',ecolab.tstep(),ecolab.density(), pens=ecolab.species())
+    plot('Conn-Nsp',ecolab.connectivity(),nsp)
+    plot('Conn*density',ecolab.tstep(),ecolab.connectivity()*nsp)
 
 gui(step,ecolab)
 
