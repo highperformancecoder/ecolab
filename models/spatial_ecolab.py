@@ -13,7 +13,7 @@ randomSeed(10)
 array_urand.seed(10+myid())
 
 # initial number of species
-nsp=30
+nsp=100
 
 ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
@@ -28,8 +28,8 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=1
-numY=2
+numX=16
+numY=16
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
@@ -60,7 +60,7 @@ migrations=0
 def stepImpl():
     #ecolab.setDensitiesDevice()
     ecolab.generate(100)
-    ecolab.mutate()
+    #ecolab.mutate()
 
     epochTs=ecolab.tstep()%epoch
     if (epochTs==0):
@@ -82,17 +82,18 @@ ecolab.syncThreads()
 print(ecolab.nsp()())
 
 from timeit import timeit
-print(timeit('stepImpl()', globals=globals(), number=10))
+#print(timeit('stepImpl()', globals=globals(), number=10))
                 
 def step():
-    global extinctions
+    global extinctions, migrations
     extinctions=0
     migrations=0
-    for i in range(epoch//10000):
+    for i in range(epoch//epoch):
         stepImpl()
     if myid()==0:
         nsp=len(ecolab.species)
         statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
+        print(f't={ecolab.tstep()} nsp:{nsp} extinctions:{extinctions} migrations:{migrations}')
         plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))
         #plot('No. species',ecolab.tstep(),nsp)
         plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())

@@ -690,9 +690,14 @@ unsigned SpatialModel::migrate()
       }
 
     c.density+=delta[c.idx()];
+#ifdef _OPENMP
+#pragma omp atomic
+#endif
     totalMigration+=sum(abs(delta[c.idx()]));
 #if !defined(NDEBUG)
+#ifdef _OPENMP
 #pragma omp critical
+#endif
     ssum+=delta[c.idx()];
 #endif
     });
@@ -712,25 +717,6 @@ unsigned SpatialModel::migrate()
   MPI_Reduce(ssum.data(),s.data(),s.size(),MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
   ssum=s;
 #endif
-  if (sum(ssum==0)!=int(ssum.size()))
-    {
-      for (size_t i=0; i<ssum.size(); ++i)
-        if (ssum[i])
-          {
-            cout<<"species "<<i<<":"<<endl;
-            for (size_t idx=0; idx<size(); ++idx)
-              if (delta[idx][i])
-                {
-                  auto& c=*(*this)[idx]->as<EcolabCell>();
-                  cout<<"  delta "<<c.id<<"="<<delta[idx][i]<<" n="<<c.density[i]<<endl;
-                  for (auto& n: c)
-                    {
-                      auto& nbr=*n->as<EcolabCell>();
-                      cout<<"    nbr:"<<nbr.id<<"="<<nbr.density[i]<<endl;
-                    }
-                }                    
-          }
-    }
   if (myid()==0) assert(sum(ssum==0)==int(ssum.size()));
 #endif
   return totalMigration;
