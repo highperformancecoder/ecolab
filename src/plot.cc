@@ -251,21 +251,6 @@ namespace ecolab
   int PlotSurface::width() const {return surface? surface->width():0;}
   int PlotSurface::height() const {return surface? surface->height():0;}
 
-
-  string Plot::Image(const string& im, bool transparency)
-  {
-#if defined(TK)
-//    Tk_PhotoHandle photo = Tk_FindPhoto(interp(), im.c_str());
-//    if (photo)
-//      {
-//        surface.reset(new cairo::TkPhotoSurface(photo,transparency));
-//        cairo_surface_set_device_offset(surface->surface(),0.5*surface->width(),0.5*surface->height());
-//      }
-//    redraw();
-#endif
-    return m_image=im;
-  }
-
   string Plot::axisLabel(double x, double scale, bool percent) const
   {
     char label[30];
@@ -311,8 +296,10 @@ namespace ecolab
 
   void Plot::removePensFrom(unsigned pen)
   {
-    if (x.size()>pen) x.resize(pen);
-    if (y.size()>pen) y.resize(pen);
+    x.resize(pen);
+    y.resize(pen);
+    decimation.resize(pen);
+    decimate.resize(pen);
     redraw();
   }
   
@@ -1101,6 +1088,7 @@ namespace ecolab
   void Plot::clear()
   {
     x.clear(); y.clear();
+    decimation.clear(); decimate.clear();
     redraw();
   }
 
@@ -1167,13 +1155,25 @@ namespace ecolab
 
   void Plot::addPt(unsigned pen, double xx, double yy)
   {
-    if (pen>=x.size())
+    checkAddPen(pen);
+    if (decimate[pen]==0)
       {
-        x.resize(pen+1);
-        y.resize(pen+1);
+        x[pen].push_back(xx);
+        y[pen].push_back(yy);
+        if (x[pen].size()>maxPoints)
+          {
+            decimation[pen]*=2;
+            for (size_t i=0; i<x[pen].size(); i+=2)
+              {
+                x[pen][i/2]=x[pen][i];
+                y[pen][i/2]=y[pen][i];
+              }
+            x[pen].resize(x[pen].size()/2);
+            y[pen].resize(y[pen].size()/2);
+          }
       }
-    x[pen].push_back(xx);
-    y[pen].push_back(yy);
+    if (++decimate[pen]>=decimation[pen])
+      decimate[pen]=0;
   }
 
   void Plot::add(cairo::Surface& surf, unsigned pen, 
@@ -1189,33 +1189,17 @@ namespace ecolab
   {
     bool doRedraw=x1<minx||x1>maxx;
     unsigned maxPen=max(pens);
-    if (maxPen>=x.size())
-        {
-          x.resize(maxPen+1);
-          y.resize(maxPen+1);
-        }
-      for (size_t p=0; p<y1.size(); ++p)
-        {
-          unsigned pen=pens[p];
-          double yy=y1[pen];
-          doRedraw|=yy<miny || yy>maxy;
-          x[pen].push_back(x1);
-          y[pen].push_back(yy);
-        }
-      addNew(surf, doRedraw, pens.begin(), pens.end(), 1);
-    }      
-
-//  void Plot::plot(TCL_args args)
-//  {
-//    if (args.count>1) 
-//      {
-//        double x=args;
-//        array_ns::array<double> y; args>>y;
-//        assert(args.count==0);
-//        array_ns::array<unsigned> pens=pcoord(y.size());
-//        add(pens,x,y);
-//      }
-//  }
+    checkAddPen(maxPen);
+    for (size_t p=0; p<y1.size(); ++p)
+      {
+        unsigned pen=pens[p];
+        double yy=y1[pen];
+        doRedraw|=yy<miny || yy>maxy;
+        x[pen].push_back(x1);
+        y[pen].push_back(yy);
+      }
+    addNew(surf, doRedraw, pens.begin(), pens.end(), 1);
+  }      
 
   string stripPangoMarkup(const string& markedUptext)
   {

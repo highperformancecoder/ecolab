@@ -143,10 +143,6 @@ cdhdrs: $(CDHDRS:%=include/%) graphcode.cd $(CLASSDESC)
 
 include/graphcode.cd: graphcode/graphcode.h
 
-# newarrays needs to be preexpanded ...
-#include/newarrays.cd: include/newarrays.exh
-#	classdesc -I $(CDINCLUDE) -I $(ECOLAB_HOME)/include $(ACTIONS) <$< >$@
-
 include/newarrays.exh: include/newarrays.h utils/wrap
 	gcc -E -P $(CONT_FLAG) $< |wrap >$@
 

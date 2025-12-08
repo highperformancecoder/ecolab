@@ -69,16 +69,19 @@ namespace ecolab
     void extendPalette() {palette.push_back(LineStyle());}
 
   private:    
-    std::string m_image;
     std::vector<std::vector<double> > x;
     std::vector<std::vector<double> > y;
-
+    std::vector<unsigned> decimation, decimate;
+    const unsigned maxPoints=1000; ///< maximum number of points to plot without decimation
+    
     CLASSDESC_ACCESS(Plot);
 
     // internal common routine for add()
     void addNew(cairo::Surface& surf, bool doRedraw, 
                 const unsigned *startPen, const unsigned *finishPen, int numPt);
 
+    
+    
     double iflogx(double x) const {return logx? log10(x): x;}
     double iflogy(double y) const {return logy? log10(y): y;}
 
@@ -139,21 +142,6 @@ namespace ecolab
     /// set min/max to autoscale on contained data
     void setMinMax();
 
-    /// set/get the Tk image that this class writes to.
-    std::string Image() const {return m_image;}
-    std::string Image(const std::string& im, bool transparency=true);
-//    string image(TCL_args args) {
-//      if (args.count>0)
-//        {
-//          string imgName=args.str();
-//          bool transparency=true;
-//          if (args.count) transparency=args;
-//          return Image(imgName,transparency);
-//        }
-//      else
-//        return Image();
-//    }
-    
     /// draw the plot onto a given surface
     virtual void draw(cairo::Surface&);
     void draw(cairo_t*, double width, double height) const;
@@ -183,14 +171,6 @@ namespace ecolab
     /// remove all pens from pen and above from plot
     void removePensFrom(unsigned pen);
     
-//    //serialisation support (surface is not auto-serialisable)
-//    void pack(classdesc::pack_t& p) const override {p<<m_image<<x<<y<<minx<<maxx<<miny<<maxy;}
-//
-//    void unpack(classdesc::pack_t& p) override {
-//        p>>m_image>>x>>y>>minx>>maxx>>miny>>maxy;
-//        Image(m_image);
-//    }
-
     /// add a point to the graph withour redrwaing anything
     void addPt(unsigned pen, double x, double y);
 
@@ -222,16 +202,23 @@ namespace ecolab
                    const array_ns::array<unsigned>& pens, 
                    double x1, const array_ns::array<double>& y1);
 
+    void checkAddPen(unsigned pen)
+    {
+      if (pen>=x.size())
+        {
+          x.resize(pen+1);
+          y.resize(pen+1);
+          decimation.resize(pen+1,1);
+          decimate.resize(pen+1);
+        }
+    }
+    
     template <class C>
     void add(cairo::Surface& surf, unsigned pen, const C& x1, const C& y1)
     {
       assert(x1.size()==y1.size());
       bool doRedraw=false;
-      if (pen>=x.size())
-        {
-          x.resize(pen+1);
-          y.resize(pen+1);
-        }
+      checkAddPen(pen);
       for (size_t i=0; i<x1.size(); ++i)
         {
           doRedraw|=x1[i]<minx||x1[i]>maxx || y1[i]<miny||y1[i]>maxy;
@@ -245,11 +232,7 @@ namespace ecolab
     /// \a x and \a y should have the same size, if not, the larger is truncated
     void setPen(unsigned pen, const double* xx, const double* yy, size_t sz)
     {
-      if (pen>=x.size())
-        {
-          x.resize(pen+1);
-          y.resize(pen+1);
-        }
+      checkAddPen(pen);
       x[pen].assign(xx, xx+sz);
       y[pen].assign(yy, yy+sz);
     }
