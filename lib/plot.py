@@ -19,6 +19,7 @@ def getPlot(name):
 
 def plot(name,x,*y,pens=[]):
     plot=getPlot(name)
+    plot.fontScale(2)
     if hasattr(y,'__len__') and len(y)==1: y=y[0] # deal with an single array of values being passed
     if hasattr(y,'__len__'):
         for i in range(len(y)):

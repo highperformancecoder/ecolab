@@ -637,6 +637,8 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
           o->neighbours.push_back(makeId(i,j+1)); 
       }
   rebuildPtrLists();
+  for (auto& i: objects)
+    maxNbrs=std::max(maxNbrs, i->neighbours.size());
 }
 
 void SpatialModel::generate(unsigned niter)
@@ -655,16 +657,21 @@ unsigned SpatialModel::migrate()
   
   prepareNeighbours();
 
-  vector<array<int>> delta(size(), array<int>(species.size(),0));
-
+  vector<array<Float>> delta(size(), array<Float>(species.size(),0));
+  
   hostForAll([&,this](EcolabCell& c) {
+    auto mm=(tstep-last_mig_tstep) * migration;
+    // migration is capped by actual population levels
+    const Float cap=1.0/maxNbrs;
+    array<Float> capped_migration = merge(mm>cap,cap,mm);
     /* loop over neighbours */
     for (auto& n: c) 
       {
         auto& nbr=*n->as<EcolabCell>();
         Float salt=c.idx()<nbr.idx()? c.salt: nbr.salt;
-        array<Float> m=(tstep-last_mig_tstep) * migration * (nbr.density - c.density);
-        delta[c.idx()]+=m*(1+salt*(m!=0.0));
+        array<Float> m=capped_migration * (nbr.density-c.density);
+        delta[c.idx()]+=m*(1 + salt * (abs(m)<cap));
+        assert(all(c.density>=-delta[c.idx()]));
       }
   });
 
@@ -680,12 +687,13 @@ unsigned SpatialModel::migrate()
     {
       auto& c=*(*this)[i]->as<EcolabCell>();
       c.density+=delta[c.idx()];
-      totalMigration+=sum(abs(delta[i]));
-      if (sum(c.density<0))
-#ifdef _OPENMP
-#pragma omp critical
-#endif
-       negativeDensityIdx.push_back(c.idx());
+      assert(all(c.density>=0));
+      totalMigration+=sum(abs(delta[c.idx()]));
+      //      if (sum(c.density<0))
+      //#ifdef _OPENMP
+      //#pragma omp critical
+      //#endif
+      //       negativeDensityIdx.push_back(c.idx());
 #if !defined(NDEBUG)
 #ifdef _OPENMP
 #pragma omp critical
@@ -695,25 +703,25 @@ unsigned SpatialModel::migrate()
     }
   last_mig_tstep=tstep;
 
-  // if any density values are -ve, then adjust migration from neighbours.
-  // loop run sequentially to resolve race condition
-  for (auto i: negativeDensityIdx)
-    {
-      auto& c=*(*this)[i]->as<EcolabCell>();
-      for (auto j=0; j<c.density.size(); ++j)
-        while (c.density[j]<0)
-          {
-            assert(c.size()>0);
-            int adjust=-(c.density[j]+c.size()-1)/c.size();
-            for (auto& n: c)
-              {
-                auto& nbr=*n->as<EcolabCell>();
-                auto nbrAdjust=std::min(nbr.density[j], adjust);
-                c.density[j]+=nbrAdjust;
-                nbr.density[j]-=nbrAdjust;
-              }
-          }
-    }
+//  // if any density values are -ve, then adjust migration from neighbours.
+//  // loop run sequentially to resolve race condition
+//  for (auto i: negativeDensityIdx)
+//    {
+//      auto& c=*(*this)[i]->as<EcolabCell>();
+//      for (auto j=0; j<c.density.size(); ++j)
+//        while (c.density[j]<0)
+//          {
+//            assert(c.size()>0);
+//            int adjust=-(c.density[j]+c.size()-1)/c.size();
+//            for (auto& n: c)
+//              {
+//                auto& nbr=*n->as<EcolabCell>();
+//                auto nbrAdjust=std::min(nbr.density[j], adjust);
+//                c.density[j]+=nbrAdjust;
+//                nbr.density[j]-=nbrAdjust;
+//              }
+//          }
+//    }
   
 #ifdef MPI_SUPPORT
   if (myid()==0)

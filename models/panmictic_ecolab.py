@@ -2,7 +2,7 @@ from ecolab_model import panmictic_ecolab as ecolab
 from random import random
 import math
 # initial number of species
-nsp=100
+nsp=30
 
 ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
@@ -33,21 +33,22 @@ from GUI import gui, statusBar, windows
 from tkinter import Tk,ttk
 from weakref import ref
 from ecolab import ecolabHome
-connectionPlot=Tk()
-connectionPlot.wm_title('Connections')
-connectionPlot.eval('load '+ecolabHome()+'/lib/ecolab.so')
-connectionPlot.eval('image create cairoSurface connectionCanvas -surface ecolab_model panmictic_ecolab.connectionPlot')
-ttk.Label(connectionPlot, image='connectionCanvas').pack(fill='both',expand=True)
-windows.append(ref(connectionPlot))
-ecolab.updateConnectionPlot()
+#connectionPlot=Tk()
+#connectionPlot.wm_title('Connections')
+#connectionPlot.eval('load '+ecolabHome()+'/lib/ecolab.so')
+#connectionPlot.eval('image create cairoSurface connectionCanvas -surface ecolab_model panmictic_ecolab.connectionPlot')
+#ttk.Label(connectionPlot, image='connectionCanvas').pack(fill='both',expand=True)
+#windows.append(ref(connectionPlot))
+#ecolab.updateConnectionPlot()
 
 def step():
     ecolab.generate(100)
     ecolab.mutate()
-    ecolab.updateConnectionPlot()
+#    ecolab.updateConnectionPlot()
     ecolab.condense()
     nsp=len(ecolab.species)
     statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
+    if ecolab.tstep()<20000: return
     plot('No. species',ecolab.tstep(),nsp)
     #plot('Density',ecolab.tstep(),ecolab.density(), pens=ecolab.species())
     plot('Conn-Nsp',ecolab.connectivity(),nsp)
