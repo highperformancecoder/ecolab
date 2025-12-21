@@ -16,6 +16,9 @@
 
 #define ONE_WORD_SETS
 #include "nauty.h"
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
     /* macros for hash-codes: */
 #define MASH(l,i) ((((l) ^ 065435) + (i)) & 077777)
