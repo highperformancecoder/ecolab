@@ -78,7 +78,6 @@ for A in [1, 2, 4, 6, 9, 12, 16]:
 
                 for i in range(numReplicants):
                     step()
-                    conn=sum([x*x for x in ecolab.interaction.val()])/len(ecolab.species)**2 if len(ecolab.species)>0 else 0
-                    print(replicate+i,numX*numY, mut_max, migration, nsp, av(ecolab.mutation()), av(ecolab.migration()), len(ecolab.species), conn, flush=True,sep=',')
+                    print(replicate+i,numX*numY, mut_max, migration, nsp, av(ecolab.mutation()), av(ecolab.migration()), len(ecolab.species), ecolab.connectivity(), flush=True,sep=',')
 
 
