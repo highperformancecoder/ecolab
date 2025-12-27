@@ -16,6 +16,7 @@ private:
   Impl data[linkRepImpl<I>::size];
   CLASSDESC_ACCESS(linkRepImpl);
 public:
+  unsigned op=0, idx=0; // cached recipe parameters
   linkRepImpl()=default;
   linkRepImpl(unsigned x) {
     static_assert(sizeof(data)>=sizeof(x));
@@ -144,6 +145,7 @@ struct StarComplexityGen
   // star complexity registry
   std::map<linkRep,unsigned> starMap;
   std::map<linkRep,unsigned> counts; // counts the number of times linkRep is seen
+  std::map<linkRep,std::string> recipe; //stashed recipes
   ElemStars elemStars;
   void generateElementaryStars(unsigned nodes);
   // fills starMap with graphs of \a numStars

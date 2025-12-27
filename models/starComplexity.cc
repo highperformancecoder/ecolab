@@ -170,8 +170,54 @@ struct EvalStack
   const EvalStackData& data;
   EvalStack(const EvalStackData& data): data(data)  { }
 
+  /// return a string representation of the recipe
+  string recipe(unsigned op, unsigned idx) const {
+    unsigned stackTop=0;
+    auto nodes=data.elemStars.size();
+    auto numStars=data.pos.size();
+    auto recipeSize=2*numStars-1;
+
+    assert(nodes<=maxNodes);
+    auto elemStars=&data.elemStars[0];
+    auto pos=&data.pos[0];
+
+    string r;
+    for (unsigned p=0, opIdx=0, starIdx=2, range=3; p<recipeSize; ++p)
+      if (p<2)
+        {
+          r+=to_string(p)+";";
+          stackTop++;
+        }
+      else if (starIdx<numStars && pos[starIdx]==int(p)) // push a star, according to idx
+        {
+          assert(stackTop<numStars);
+          auto divResult=div(int(idx), int(range));
+          if (stackTop<numStars)
+            {
+              r+=to_string(divResult.rem)+";";
+              stackTop++;
+            }
+          idx=divResult.quot;
+          if (range<nodes) ++range;
+          ++starIdx;
+        }
+      else
+        {
+          if (stackTop>1 && stackTop<=numStars)
+            {
+              if (op&(1<<opIdx)) // set intersection
+                r+="&";
+              else                   // set union
+                r+="|";
+              --stackTop;
+            }
+          ++opIdx;
+        }
+    return r;
+  }
+  
   // evaluate recipe encoded by the op bitset and index \a idx within enumeration of numGraphs
-  linkRep evalRecipe(unsigned op, unsigned idx)
+  linkRep evalRecipe(unsigned op, unsigned idx) const
   {
     unsigned stackTop=0;
     auto nodes=data.elemStars.size();
@@ -182,16 +228,16 @@ struct EvalStack
     auto elemStars=&data.elemStars[0];
     auto pos=&data.pos[0];
     linkRep stack[maxStars];
-    for (unsigned p=0, opIdx=0, starIdx=2, range=3; p<recipeSize; ++p)
+    for (unsigned p=0, opIdx=0, starIdx=2, range=3, ii=idx; p<recipeSize; ++p)
       if (p<2)
         stack[stackTop++]=elemStars[p];
       else if (starIdx<numStars && pos[starIdx]==int(p)) // push a star, according to idx
         {
           assert(stackTop<numStars);
-          auto divResult=div(int(idx), int(range));
+          auto divResult=div(int(ii), int(range));
           if (stackTop<numStars)
             stack[stackTop++]=elemStars[divResult.rem];
-          idx=divResult.quot;
+          ii=divResult.quot;
           if (range<nodes) ++range;
           ++starIdx;
         }
@@ -214,6 +260,8 @@ struct EvalStack
         }
 
     assert(stackTop>=1);
+    stack[0].op=op;
+    stack[0].idx=idx;
     return stack[0];
   }
 };
@@ -318,18 +366,23 @@ void StarComplexityGen::fillStarMap(unsigned numStars)
 
   bool blown=false;
   auto populateStarMap=[&]() {
-    for (auto& j: block->getResults())
+    auto resultsBlock=block->getResults();
+    for (size_t j=0; j<resultsBlock.size(); ++j)
       {
-        if (j.blown())
+        auto& results=resultsBlock[j];
+        if (results.blown())
           {
             blown=true;
             return;
           }
-        for (auto k: j)
+        for (auto k: results)
           {
             auto res=starMap.emplace(k, numStars);
             if (res.first->second==numStars) // only count least star operations
-              counts[k]++;
+              {
+                counts[k]++;
+                recipe.emplace(k, block->block[j].recipe(k.op, k.idx));
+              }
           }
       }
   };
@@ -474,6 +527,7 @@ void StarComplexityGen::canonicaliseStarMap()
             {
               starC=i->second;
               counts[c]=counts[i->first];
+              recipe[c]=recipe[i->first];
             }
           else if (i->second==starC)
             counts[c]+=counts[i->first];
@@ -485,6 +539,7 @@ void StarComplexityGen::canonicaliseStarMap()
     {
       starMap.erase(i);
       counts.erase(i);
+      recipe.erase(i);
     }
 }
 
