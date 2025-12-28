@@ -37,6 +37,10 @@ for numStars in range(1,maxStars+1):
                 links+=bin(j).count('1')
                 num+=m*j
                 m*=1<<32
-                
-            print(id,bin(num),links,starC.symmStar(i)-1,starC.starUpperBound(i)-1,c.complexity(),c.starComplexity(),starC.counts[i],starC.recipe[i],sep=',',file=out)
+
+
+            symmStar=starC.symmStar(i)-1
+            starUpperBound=starC.starUpperBound(i)-1
+            print(id,bin(num),links,symmStar,starUpperBound,c.complexity(),c.starComplexity(),starC.counts[i],starC.recipe[i],sep=',',file=out)
+            if symmStar!=starUpperBound: print(symmStar,starUpperBound,starC.recipe[i])
             id+=1

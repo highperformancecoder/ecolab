@@ -609,48 +609,17 @@ GraphComplexity StarComplexityGen::complexity(linkRep g) const
   return r;
 }
 
-
-unsigned starUpperBound(linkRep x, unsigned nodes) 
+struct SecondLess
 {
-  if (x.empty()) return 3; // intersection of 3 stars is empty.
-  // Firstly remove those nodes that are full stars
-  vector<unsigned> fullStars;
-  for (unsigned i=0; i<nodes; ++i)
-    {
-      bool fullStar=true;
-      for (unsigned j=0; fullStar && j<nodes; ++j)
-        if (i!=j && !x(i,j))
-          fullStar=false;
-      if (fullStar) fullStars.push_back(i);
-    }
-
-  unsigned stars=fullStars.size();
-  for (auto i: fullStars)
-    for (unsigned j=0; j<nodes; ++j)
-      x&=~edge(i,j); // remove all edges to this node
-
-
-  // calculate node degree
-  map<unsigned,unsigned> nodeDegree;
-  for (unsigned i=0; i<nodes; ++i)
-    for (unsigned j=0; j<i; ++j)
-      if (x(i,j))
-        {
-          ++nodeDegree[i];
-          ++nodeDegree[j];
-        }
-
-
-  struct SecondLess
-  {
-    bool operator()(const pair<unsigned,unsigned>& x, const pair<unsigned,unsigned>& y)
-      const {return x.second < y.second;}
-  };
+  bool operator()(const pair<unsigned,unsigned>& x, const pair<unsigned,unsigned>& y)
+    const {return x.second < y.second;}
+};
   
-  // compute the number of operations xᵢ∪(xₖ∩xₗ…)
-  auto maxDegree=max_element(nodeDegree.begin(), nodeDegree.end(), SecondLess());
-
+unsigned combineTerms(unsigned centralNode, map<unsigned,unsigned> nodeDegree, const linkRep& x)
+{
   vector<unsigned> prevNbrs;
+  unsigned stars=0;
+  auto maxDegree=nodeDegree.find(centralNode);
   while (maxDegree->second>0)
     {
       vector<unsigned> neighbours;
@@ -668,8 +637,49 @@ unsigned starUpperBound(linkRep x, unsigned nodes)
       maxDegree->second=0; // accounted for all links to this node
       maxDegree=max_element(nodeDegree.begin(), nodeDegree.end(), SecondLess());
     }
-
   return stars;
+}
+
+unsigned starUpperBound(linkRep x, unsigned nodes) 
+{
+  if (x.empty()) return 3; // intersection of 3 stars is empty.
+  // Firstly remove those nodes that are full stars
+  vector<unsigned> fullStars;
+  for (unsigned i=0; i<nodes; ++i)
+    {
+      bool fullStar=true;
+      for (unsigned j=0; fullStar && j<nodes; ++j)
+        if (i!=j && !x(i,j))
+          fullStar=false;
+      if (fullStar) fullStars.push_back(i);
+    }
+
+  for (auto i: fullStars)
+    for (unsigned j=0; j<nodes; ++j)
+      x&=~edge(i,j); // remove all edges to this node
+
+
+  // calculate node degree
+  map<unsigned,unsigned> nodeDegree;
+  for (unsigned i=0; i<nodes; ++i)
+    for (unsigned j=0; j<i; ++j)
+      if (x(i,j))
+        {
+          ++nodeDegree[i];
+          ++nodeDegree[j];
+        }
+
+
+  // compute the number of operations xᵢ∪(xₖ∩xₗ…)
+  auto maxDegree=max_element(nodeDegree.begin(), nodeDegree.end(), SecondLess())->second;
+  if (!maxDegree) return fullStars.size();
+
+  unsigned stars=numeric_limits<unsigned>::max();
+  for (auto& n: nodeDegree)
+    if (n.second==maxDegree)
+      stars=min(stars, combineTerms(n.first, nodeDegree, x));
+  
+  return fullStars.size()+stars;
 }
 
 unsigned StarComplexityGen::starUpperBound(const linkRep& x) const
