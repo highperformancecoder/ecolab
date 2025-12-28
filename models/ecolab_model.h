@@ -114,6 +114,7 @@ class SpatialModel: public ModelData, public EcolabGraph<EcolabCell>,
 {
   size_t numX=1, numY=1;
   CLASSDESC_ACCESS(SpatialModel);
+  size_t maxNbrs=0;
 public:
   static constexpr size_t log2MaxNsp=10;
   // function valid for x∈(-numX,∞], y∈(-numY,∞]
