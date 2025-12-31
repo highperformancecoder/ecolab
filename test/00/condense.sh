@@ -17,7 +17,7 @@ ecolab.makeConsistent()
 ecolab.repro_rate([1, 1, 1, 1, 1])
 ecolab.interaction.diag([1, 1, 1, 1, 1])
 ecolab.condense()
-if ecolab.density()!=[1, 1, 1]: exit(1)
+assert ecolab.density()==[1, 1, 1]
 EOF
 
 $here/bin/ecolab input.py
