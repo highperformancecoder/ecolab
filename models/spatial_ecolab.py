@@ -28,7 +28,7 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=1
+numX=2
 numY=2
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()

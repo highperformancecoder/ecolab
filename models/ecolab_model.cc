@@ -657,20 +657,24 @@ unsigned SpatialModel::migrate()
   
   prepareNeighbours();
 
-  vector<array<Float>> delta(size(), array<Float>(species.size(),0));
+  vector<array<int>> delta(size(), array<int>(species.size(),0));
+  
+  auto mm=(tstep-last_mig_tstep) * migration;
+  // migration is capped by actual population levels
+  const Float cap=1.0/maxNbrs;
+  array<Float> capped_migration = merge(mm>cap,cap,mm);
   
   hostForAll([&,this](EcolabCell& c) {
-    auto mm=(tstep-last_mig_tstep) * migration;
-    // migration is capped by actual population levels
-    const Float cap=1.0/maxNbrs;
-    array<Float> capped_migration = merge(mm>cap,cap,mm);
     /* loop over neighbours */
     for (auto& n: c) 
       {
         auto& nbr=*n->as<EcolabCell>();
-        Float salt=c.idx()<nbr.idx()? c.salt: nbr.salt;
+        Float salt=&c<&nbr? c.salt: nbr.salt;
         array<Float> m=capped_migration * (nbr.density-c.density);
-        delta[c.idx()]+=m*(1 + salt * (abs(m)<cap));
+        delta[c.idx()]+=m;//*(1 + salt * (abs(m)<cap*array_ns::min(nbr.density,c.density)));
+        if (!all(c.density>=-delta[c.idx()]))
+          cout<<"density:"<<c.density<<endl<<"delta:"<<delta[c.idx()]<<endl;
+        cout<<c.idx()<<": "<<m<<endl;
         assert(all(c.density>=-delta[c.idx()]));
       }
   });
@@ -686,7 +690,7 @@ unsigned SpatialModel::migrate()
   for (size_t i=0; i<numCells; ++i)
     {
       auto& c=*(*this)[i]->as<EcolabCell>();
-      c.density+=delta[c.idx()];
+      //c.density+=delta[c.idx()];
       assert(all(c.density>=0));
       totalMigration+=sum(abs(delta[c.idx()]));
       //      if (sum(c.density<0))
@@ -737,7 +741,7 @@ unsigned SpatialModel::migrate()
   MPI_Reduce(ssum.data(),s.data(),s.size(),MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
   ssum=s;
 #endif
-  if (sum(ssum==0)!=int(ssum.size()))
+  if (any(ssum)!=0)
     {
       for (size_t i=0; i<ssum.size(); ++i)
         if (ssum[i])
@@ -756,7 +760,7 @@ unsigned SpatialModel::migrate()
                 }                    
           }
     }
-  if (myid()==0) assert(sum(ssum==0)==int(ssum.size()));
+  if (myid()==0) assert(all(ssum==0));
 #endif
   return totalMigration/2;
 }
