@@ -15,6 +15,7 @@
 #include "plot.h"
 #include "pythonBuffer.h"
 #include "ecolab.h"
+#include "random.h"
 #ifdef MPI_SUPPORT
 #include "graphcode.h"
 #endif
@@ -236,6 +237,10 @@ namespace ecolab
   {
     using Plot=PlotSurface;
     CLASSDESC_DECLARE_TYPE(Plot);
+    CLASSDESC_DECLARE_TYPE(urand);
+#ifdef UNURAN
+    CLASSDESC_DECLARE_TYPE(unuran);
+#endif
   }
 
   // device SYCL kernels are running on
