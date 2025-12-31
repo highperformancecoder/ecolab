@@ -11,7 +11,8 @@ nodes=4
 maxStars=6
 
 starC.generateElementaryStars(nodes)
-starC.fillStarMap(maxStars)
+for i in range(1,maxStars+1):
+    starC.fillStarMap(i)
 starC.canonicaliseStarMap();
 
 print('testing nodes=4')
@@ -25,7 +26,8 @@ maxStars=6
 starC.elemStars([])
 starC.starMap([])
 starC.generateElementaryStars(nodes)
-starC.fillStarMap(maxStars)
+for i in range(1,maxStars+1):
+    starC.fillStarMap(i)
 starC.canonicaliseStarMap();
 
 assert [i[0] for i in starC.starMap.keys()]==[0, 224, 424, 496, 504, 512, 516, 736, 768, 784, 788, 800, 896, 928, 944, 960, 992, 993, 1008, 1010, 1011, 1012, 1016, 1020, 1022, 1023]
