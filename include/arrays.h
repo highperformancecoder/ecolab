@@ -1320,6 +1320,7 @@ namespace ecolab
       /* use at function here, as E1 or E2 may be scalar */
       value_type operator[](size_t i) const {return array_ns::at(e1,i)*e2;}
 
+      using Allocator=typename Allocator<E1>::type;
       /// vector indexing
       template <class I> typename 
       enable_if< is_expression<I>, RVindex<binop,I> >::T
@@ -1343,6 +1344,7 @@ namespace ecolab
       /* use at function here, as E1 or E2 may be scalar */
       value_type operator[](size_t i) const {return array_ns::at(e1,i)*e2;}
 
+      using Allocator=typename Allocator<E1>::type;
       // vector indexing
       template <class I> typename 
       enable_if< is_expression<I>, RVindex<binop,I> >::T
