@@ -36,29 +36,15 @@ trap "fail" 1 2 3 15
 
 # check that all 3 random number libraries actually compile...
 
-# only run  test on parallel
-if [ `hostname` != "parallel" ]; then pass; fi
+INCLUDES="-I. -I$here/include -I$here -I$here/graphcode -I$here/classdesc -I$here/classdesc/json5_parser/json5_parser -I$HOME/usr/include `pkg-config --cflags python3`"
 
-# insert ecolab script code here
-if [ -n "$AEGIS_ARCH" ]; then
-  BL=`aegis -cd -bl`
-  BL1=$BL/../../baseline
-  RANDOMCC=`aefind -resolve $here/src -name random.cc -print`
-else #standalone test
-  BL=.
-  BL1=.
-  RANDOMCC=$here/src/random.cc
-fi
-
-cp $RANDOMCC .
+cp $here/src/random.cc .
 touch random_basic.cd random_unuran.cd random_gsl.cd
-g++ -DTR1 -w -c -DHAVE_LONGLONG -I. -I$here/include -I$BL/include -I$BL1/include -I$HOME/usr/include random.cc
+g++ -DTR1 -w -c -DHAVE_LONGLONG $INCLUDES random.cc
 if test $? -ne 0; then echo -n "Basic: "; fail; fi
-if [ "$TRAVIS" != 1 ]; then
-    g++ -DTR1 -w -c -DHAVE_LONGLONG -I. -I$here/include -I$BL/include -I$BL1/include -I$HOME/usr/include -DUNURAN random.cc
-    if test $? -ne 0; then echo -n "UNURAN: "; fail; fi
-fi
-g++ -DTR1 -w -c -DHAVE_LONGLONG -I. -I$here/include -I$BL/include -I$BL1/include -I$HOME/usr/include -DGNUSL random.cc
+g++ -DTR1 -w -c -DHAVE_LONGLONG $INCLUDES -DUNURAN random.cc
+if test $? -ne 0; then echo -n "UNURAN: "; fail; fi
+g++ -DTR1 -w -c -DHAVE_LONGLONG $INCLUDES -DGNUSL random.cc
 if test $? -ne 0; then echo -n "GNUSL: "; fail; fi
 
 pass

@@ -86,6 +86,7 @@ CDHDRS=
 
 # Clunky, but this extracts all .cd files mentioned in header files,
 CDHDRS+=$(shell bash extractCDHeaders.sh)
+CDHDRS+=graphcode.cd
 
 ifdef UNURAN
 CDHDRS+=random_unuran.cd
