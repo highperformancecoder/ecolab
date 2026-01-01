@@ -14,5 +14,6 @@
 
 using namespace ecolab;
 model cDB;
-make_model(cDB);
+CLASSDESC_ADD_GLOBAL(cDB);
+CLASSDESC_PYTHON_MODULE(testCacheDBM);
 

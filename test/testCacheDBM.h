@@ -7,8 +7,7 @@
 */
 
 struct model: 
-  public ecolab::cachedDBM<int,int>, 
-  public classdesc::TCL_obj_t 
+  public ecolab::cachedDBM<int,int>, public ecolab::Model<model>
 {
   // compile test
   void test1()
@@ -19,7 +18,7 @@ struct model:
     for (firstkey(); !eof(); nextkey()) ;
 
     for (KeyValueIterator i=begin(); i!=end(); ++i);
-    for (KeyIterator i=keys.begin(); i!=keys.end(); ++i);
+    for (KeyIterator i=keys().begin(); i!=keys().end(); ++i);
  
     // finally
     classdesc::pack_t b;

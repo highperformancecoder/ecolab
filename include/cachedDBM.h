@@ -106,6 +106,71 @@ namespace ecolab
     }
   };
 
+  /// iterator type for iterating over keys
+  template <class key, class val>
+  class KeyValueIterator
+  {
+    std::shared_ptr<Db> db;
+    std::pair<key,val> keyValue; 
+    void getKV(bool (Db::*op)(Datum&, Datum&) const)
+    {
+      Datum k,v;
+      if ((db.get()->*op)(k,v))
+        db.reset();
+      else
+        {
+          k>>keyValue.first;
+          v>>keyValue.second;
+        }
+    }
+  public:
+    /// initialises to an end() iterator
+    KeyValueIterator() {}
+    /// initialises to a begin() iterator of database \a fname
+    KeyValueIterator(const std::string& fname): db(new Db(fname.c_str(), Db::read)) 
+    {getKV(&Db::firstkey);}
+    KeyValueIterator& operator++() {getKV(&Db::nextkey); return *this;}
+    // iterator comparison is undefined when referring to different
+    // databases, and keys are unique within a given database, so we
+    // can use comparisons of keys
+    bool operator==(const KeyValueIterator& x) const
+    // TODO check whether operator< should be used here???
+    {return (!db && !x.db) || (db && x.db && keyValue.first==x.keyValue.first);}
+    bool operator!=(const KeyValueIterator& x) const
+    {return !operator==(x);}
+    const std::pair<key, val> operator*() const {return keyValue;}
+    const std::pair<key, val>* operator->() const {return &keyValue;}
+  };
+
+  template <class key, class val>
+  class KeyIterator: public KeyValueIterator<key,val>
+  {
+  public:
+    KeyIterator() {}
+    KeyIterator(const std::string& fname): KeyValueIterator<key,val>(fname) {}
+    const key operator*() const {return KeyValueIterator<key,val>::operator*().first;}
+    const key* operator->() const 
+    {return &KeyValueIterator<key,val>::operator*().first;}
+  };
+
+  template <class C>
+  struct Keys
+  {
+    C& _this;
+    Keys(C& _this): _this(_this) {}
+    C::KeyIterator begin()  
+    {_this.commit(); return typename C::KeyIterator(_this.filename());}
+    C::KeyIterator end() const {return typename C::KeyIterator();}
+  };
+  template <class C>
+  struct ConstKeys
+  {
+    const C& _this;
+    ConstKeys(const C& _this): _this(_this) {}
+    C::KeyIterator begin() const {return typename C::KeyIterator(_this.filename());}
+    C::KeyIterator end() const {return typename C::KeyIterator();}
+  };
+  
   /* make the main class a base class in order to derive a special case for 
      strings */
   /// implementation of cacheDBM common to all specialisations
@@ -115,7 +180,7 @@ namespace ecolab
     typedef base_map<key,val> Base;
     std::shared_ptr<Db> db;
     bool readonly;
-    classdesc::string filename;
+    classdesc::string m_filename;
     typedef std::map<key,size_t> TSMap;
     TSMap timestamp;
     size_t ts;
@@ -123,17 +188,17 @@ namespace ecolab
     mutable bool last;
   public:
     size_t max_elem;   /* limit number of elements to this value */
-    cachedDBM_base(): ts(1), max_elem(std::numeric_limits<int>::max()), 
-                      keys(*this) {}
+    cachedDBM_base(): ts(1), max_elem(std::numeric_limits<int>::max()) {}
     void init(const char *fname, char mode='w')
     {
       db.reset(new Db((char*)fname, (mode=='w')? Db::write: Db::read)); 
       readonly=mode=='r';
       if (!db->opened()) throw error("DBM file %s open failed",fname);
-      filename=fname;
+      m_filename=fname;
     }
     //  void init(const char *fname, char *mode="w") {init(fname,mode[0]);}
     void close() {if (db) {commit(); db->close(); db.reset();} clear();}
+    const std::string& filename() const {return m_filename;}
     ~cachedDBM_base() {close();}
     bool opened() const {return bool(db);}
     bool load(const key& k)
@@ -176,6 +241,10 @@ namespace ecolab
       return Base::get(k);
     }
 
+    // accessor routines, until we can make it easy to add operator[] to the python object
+    const val& elem(const key& k) {return operator[](k);}
+    const val& elem(const key& k, const val& v) {return operator[](k)=v;}
+    
     /// number of elements in cache
     size_t cacheSize() const {return Base::size();}
 
@@ -266,91 +335,48 @@ namespace ecolab
     }
     /// true if no further keys remain when iterating
     bool eof() const {return last || !db;}
-    void pack(classdesc::pack_t& b) {
+
+    void packConst(classdesc::pack_t& b) const {
       if (opened()) {
-        commit();
-        ::pack(b,"",filename);
+        ::pack(b,"",m_filename);
         ::pack(b,"",readonly);
-        ::pack(b,"",static_cast<Base&>(*this));
+        ::pack(b,"",static_cast<const Base&>(*this));
       } else {
         classdesc::string nullstring;
         ::pack(b,"",nullstring);
-        ::pack(b,"",static_cast<Base&>(*this));
+        ::pack(b,"",static_cast<const Base&>(*this));
       }
     }
+
+    void pack(classdesc::pack_t& b)  {
+      if (opened()) commit();
+      packConst(b);
+    }
+    void pack(classdesc::pack_t& b) const {packConst(b);}
+    
     void unpack(classdesc::pack_t& b) {
       close();
       classdesc::string fname;
       bool readonly;
-      ::unpack(b,"",filename);
-      if (filename!="") {
+      ::unpack(b,"",m_filename);
+      if (m_filename!="") {
         ::unpack(b,"",readonly);
-        init(filename.c_str(),readonly? 'r': 'w');
+        init(m_filename.c_str(),readonly? 'r': 'w');
       } 
       ::unpack(b,"",static_cast<Base&>(*this));
     }
 
-    /// iterator type for iterating over keys
-    class KeyValueIterator
-    {
-      std::shared_ptr<Db> db;
-      std::pair<key,val> keyValue; 
-      void getKV(bool (Db::*op)(Datum&, Datum&) const)
-      {
-        Datum k,v;
-        if ((db.get()->*op)(k,v))
-          db.reset();
-        else
-          {
-            k>>keyValue.first;
-            v>>keyValue.second;
-          }
-      }
-    public:
-      /// initialises to an end() iterator
-      KeyValueIterator() {}
-      /// initialises to a begin() iterator of database \a fname
-      KeyValueIterator(const std::string& fname): db(new Db(fname.c_str(), Db::read)) 
-      {getKV(&Db::firstkey);}
-      KeyValueIterator& operator++() {getKV(&Db::nextkey); return *this;}
-      // iterator comparison is undefined when referring to different
-      // databases, and keys are unique within a given database, so we
-      // can use comparisons of keys
-      bool operator==(const KeyValueIterator& x) const
-      // TODO check whether operator< should be used here???
-      {return (!db && !x.db) || (db && x.db && keyValue.first==x.keyValue.first);}
-      bool operator!=(const KeyValueIterator& x) const
-      {return !operator==(x);}
-      const std::pair<key, val> operator*() const {return keyValue;}
-      const std::pair<key, val>* operator->() const {return &keyValue;}
-    };
+    using KeyValueIterator=ecolab::KeyValueIterator<key,val>;
+    using KeyIterator=ecolab::KeyIterator<key,val>;
 
-    KeyValueIterator begin() const {return KeyValueIterator(filename);}
-    KeyValueIterator begin() 
-    {commit(); return KeyValueIterator(filename);}
-    KeyValueIterator end() const {return KeyValueIterator();}
+    ecolab::KeyValueIterator<key,val> begin() const {return KeyValueIterator(filename());}
+    ecolab::KeyValueIterator<key,val> begin() 
+    {commit(); return KeyValueIterator(filename());}
+    ecolab::KeyValueIterator<key,val> end() const {return KeyValueIterator();}
 
-    class KeyIterator: public KeyValueIterator
-    {
-    public:
-      KeyIterator() {}
-      KeyIterator(const std::string& fname): KeyValueIterator(fname) {}
-      const key operator*() const {return KeyValueIterator::operator*().first;}
-      const key* operator->() const 
-      {return &KeyValueIterator::operator*().first;}
-    };
-     
-    struct Keys
-    {
-      cachedDBM_base& _this;
-      Keys(cachedDBM_base& _this): _this(_this) {}
-      KeyIterator begin() const {return KeyIterator(_this.filename);}
-      KeyIterator begin()  
-      {_this.commit(); return KeyIterator(_this.filename);}
-      KeyIterator end() const {return KeyIterator();}
-    };
     /// access an iterator range of keys [keys.begin()...keys.end())
-    Keys keys;
+    ecolab::Keys<cachedDBM_base> keys() {return Keys(*this);}
+    ecolab::ConstKeys<cachedDBM_base> keys() const {return ConstKeys(*this);}
 
   };
 
@@ -462,9 +488,6 @@ namespace classdesc_access
   };
 }
 
-#ifdef _CLASSDESC
-#pragma omit TCL_obj ecolab::base_map
-#endif
 #include "cachedDBM.cd"
 #endif
 
