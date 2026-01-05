@@ -13,19 +13,18 @@ struct Testgraph
 {
   ConcreteGraph<DiGraph> g;
   ConcreteGraph<BiDirectionalGraph> dg;
-  void first(TCL_args args) { ///< create a graph with n nodes and l links
-    unsigned n=args, l=args;
-    g=BitRep(n,l); dg=BiDirectionalBitRep(n,l);}
-  void next(TCL_args) { ///< create a graph with n nodes and l links
-    BitRep b(g); b.next_perm(); g=b;
-    BiDirectionalBitRep db(dg); db.next_perm(); dg=db;
+  void first(unsigned n, unsigned l) { ///< create a graph with n nodes and l links
+    g.asg(BitRep(n,l)); dg.asg(BiDirectionalBitRep(n,l));}
+  void next() { ///< create a graph with n nodes and l links
+    BitRep b(g); b.next_perm(); g.asg(b);
+    BiDirectionalBitRep db(dg); db.next_perm(); dg.asg(db);
   }
   array<unsigned> degrees() {
     Degrees d=::degrees(g);
     return array<unsigned>(d.in_degree+d.out_degree);
   }
   urand uni;
-  void randGraph(TCL_args args) {ErdosRenyi_generate(g,args[0],args[1],uni,uni);
+  void randGraph(unsigned nodes, unsigned links) {ErdosRenyi_generate(g,nodes,links,uni,uni);
   }
-  void prefAttach(TCL_args args) {PreferentialAttach_generate(g,args,uni);}
+  void prefAttach(unsigned nodes) {PreferentialAttach_generate(g,nodes,uni);}
 };

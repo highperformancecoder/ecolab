@@ -8,17 +8,7 @@
 here=`pwd`
 . $here/test/common-test.sh
 
-$here/test/testCheckpointableFile
-if test $? -ne 0; then fail; fi
-
-diff whole.dat ckpt.dat
-if test $? -ne 0; then fail; fi
-
-cat >stream_good.dat <<EOF
-hello 123
-EOF
-
-diff stream.dat stream_good.dat
+python3 $here/test/testgraph.py
 if test $? -ne 0; then fail; fi
 
 pass

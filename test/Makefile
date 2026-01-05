@@ -20,7 +20,7 @@ endif
 GDBM+=-lgdbm
 
 #MODELS=testrefassign testref testgraph test_boostgraph testCacheDBM testCairo accessor vector-pair
-MODELS=testParallel testCacheDBM 
+MODELS=testParallel testCacheDBM testgraph
 # vector-pair - doesn't currently compile - see ticket #161
 #EXTRAMODELS=test_tcl_stl.exe tcl-arrays.exe complex_tcl_args.exe
 #EXES=test_omp_rw_lock testCheckpointableFile test_netcomplexity test_boostgraph test_ecostrstream posTest testarrays pangoTest testParallel

@@ -16,5 +16,9 @@
 using namespace ecolab;
 
 Testgraph tg;
-make_model(tg);
+CLASSDESC_ADD_GLOBAL(tg);
+using DiGraph1=DiGraph;
+CLASSDESC_DECLARE_TYPE(DiGraph1);
+CLASSDESC_PYTHON_MODULE(testgraph);
+
 

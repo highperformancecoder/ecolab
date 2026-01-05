@@ -67,6 +67,20 @@ namespace ecolab
     }
   };
 
+  template <class T>
+  struct DotConversion
+  {
+    std::string dot() const {
+      std::ostringstream os;
+      os<<static_cast<const T&>(*this);
+      return os.str();
+    }
+    void importDot(const std::string& dot) {
+      std::istringstream is(dot);
+      is>>static_cast<T&>(*this);
+    }
+  };
+  
   /// To support back_insert_iterators for Graph, define a special
   /// version that converts from BoostGraph edges
   template <class Graph, class BG>
@@ -90,7 +104,7 @@ namespace ecolab
   /**
      Abstract base class for graph algorithms. 
   */
-  struct Graph
+  struct Graph: public DotConversion<Graph>
   {
     typedef Edge value_type;
     typedef std::size_t size_type;
@@ -255,15 +269,12 @@ class ConcreteGraph: public GraphAdaptor<G>
 public:
   ConcreteGraph(unsigned nodes=0): GraphAdaptor<G>(g), g(nodes) {}
   template <class H> explicit ConcreteGraph(const H& g1): GraphAdaptor<G>(g), g(g1) {}
+  template <class H> void asg(const H& g) {operator=(ConcreteGraph(g));}
   bool operator==(const ConcreteGraph& x) {return x.g==g;}
   bool operator!=(const ConcreteGraph& x) {return x.g!=g;}
 };
 
-// default is not directed
-template <class G> bool GraphAdaptor<G>::directed() const
-{return true;}
-
-class DiGraph: private std::set<Edge>
+class DiGraph: private std::set<Edge>, public DotConversion<DiGraph>
 {
   unsigned num_nodes;
   CLASSDESC_ACCESS(DiGraph);
@@ -353,7 +364,7 @@ public:
 
 /// A graph in which each link is bidirectional
 // base class is protected, because viewing this thing as a Graph is not correct
-class BiDirectionalGraph
+class BiDirectionalGraph: public DotConversion<BiDirectionalGraph>
 {
   DiGraph graph; ///< the representation
   CLASSDESC_ACCESS(BiDirectionalGraph);
@@ -369,10 +380,9 @@ public:
     graph.push_back(e);
   }
   void clear(unsigned nodes=0) {graph.clear(nodes);}
-
   BiDirectionalGraph(unsigned nodes=0): graph(nodes) {}
   /// initialise Graph using Graph "duck-typed" object
-  template <class G> BiDirectionalGraph(const G& g) {asg(g);}
+  template <class G> explicit BiDirectionalGraph(const G& g) {asg(g);}
   template <class G> void asg(const G& g) {
     clear(g.nodes());
     for (typename G::const_iterator i=g.begin(); i!=g.end(); ++i) push_back(*i);
@@ -389,8 +399,20 @@ public:
   bool operator<(const BiDirectionalGraph& x) const {return graph<x.graph;}
 };
 
-template <> inline 
-bool GraphAdaptor<BiDirectionalGraph>::directed() const {return false;}
+template <class G>
+struct Directed{ const static bool value=true;};
+
+template <>
+struct Directed<ecolab::BiDirectionalGraph>{ const static bool value=false;};
+
+template <>
+struct Directed<const ecolab::BiDirectionalGraph>{ const static bool value=false;};
+
+template <class G> bool GraphAdaptor<G>::directed() const
+{
+  return Directed<G>::value;
+}
+
 
 // uses the sign of the off-diagonal term to indicate link
 // direction. Links point in the same direction have their weights
@@ -518,10 +540,13 @@ namespace classdesc_access
 
 namespace std
 {
-  /// for use with TCL_obj. Graphviz format is used with the netgraph command.
+  /// Graphviz format is used with the netgraph command.
   std::ostream& operator<<(std::ostream& s, const ecolab::Graph& x);
   template <class G>
   std::ostream& operator<<(std::ostream& s, const ecolab::ConcreteGraph<G>& x)
+  {return s<<static_cast<const ecolab::Graph&>(x);}
+  template <class G>
+  std::ostream& operator<<(std::ostream& s, const ecolab::GraphAdaptor<G>& x)
   {return s<<static_cast<const ecolab::Graph&>(x);}
 
   inline std::ostream& operator<<(std::ostream& s, const ecolab::DiGraph& x)
@@ -537,8 +562,9 @@ namespace std
 
   inline std::istream& operator>>(std::istream& s, ecolab::DiGraph& x)
   {ecolab::GraphAdaptor<ecolab::DiGraph> g(x); return s>>g;}
+
   inline std::istream& operator>>(std::istream& s, ecolab::BiDirectionalGraph& x)
-  {ecolab::GraphAdaptor<ecolab::BiDirectionalGraph> g(x); return s>>g;}
+  {ecolab::GraphAdaptor<ecolab::BiDirectionalGraph> g(x); std::cout<<g.directed()<<std::endl; return s>>g;}
 }
 
 #if defined(__GNUC__) && !defined(__ICC) && !defined(__clang__)
@@ -546,9 +572,15 @@ namespace std
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
 
+// override json_pack with above GraphViz serialiser
+//#define CLASSDESC_json_pack___ecolab__GraphAdaptor_G_
+//#define CLASSDESC_json_unpack___ecolab__GraphAdaptor_G_
+//#define CLASSDESC_json_pack___ecolab__DiGraph
+//#define CLASSDESC_json_unpack___ecolab__BiDirectionalGraph
 #include "graph.cd"
 
 #if defined(__GNUC__) && !defined(__ICC) && !defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
 #endif
+

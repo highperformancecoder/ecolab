@@ -16,6 +16,7 @@
 #include "pythonBuffer.h"
 #include "ecolab.h"
 #include "random.h"
+#include "graph.h"
 #ifdef MPI_SUPPORT
 #include "graphcode.h"
 #endif
@@ -241,6 +242,10 @@ namespace ecolab
 #ifdef UNURAN
     CLASSDESC_DECLARE_TYPE(unuran);
 #endif
+    using DiGraph=ConcreteGraph<ecolab::DiGraph>;
+    using BiDirectionalGraph=ConcreteGraph<ecolab::BiDirectionalGraph>;
+    CLASSDESC_DECLARE_TYPE(DiGraph);
+    CLASSDESC_DECLARE_TYPE(BiDirectionalGraph);
   }
 
   // device SYCL kernels are running on
