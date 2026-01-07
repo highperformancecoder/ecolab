@@ -16,7 +16,7 @@ here=`pwd`
 cat >input.py <<EOF
 from ecolab import unuran
 rand=unuran()
-rand.set_gen('distr=cont; pdf="x^2"; domain=(0,1)')
+rand.setGen('distr=cont; pdf="x^2"; domain=(0,1)')
 
 for i in range(10): rand.rand()
 EOF

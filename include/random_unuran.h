@@ -10,6 +10,7 @@
 \brief random generator based on the UNURAN library
 */
 
+#include "error.h"
 #include <unuran.h>
 
 /* dummy declaration to force classdesc to generate a dummy definition */
@@ -24,7 +25,7 @@ namespace ecolab
     UNUR_URNG *gen;
     friend class gaussrand;
     friend class unuran;
-    operator=(const urand&)=delete;
+    void operator=(const urand&)=delete;
     urand(const urand&)=delete;
     CLASSDESC_ACCESS(urand);
   public:
@@ -52,11 +53,11 @@ namespace ecolab
     {
       if (gen) unur_free(gen);
       gen=unur_str2gen(descr); 
-      if (gen==NULL) throw error("Cannot create generator %s",descr);
+      if (gen==NULL) throw ecolab::error("Cannot create generator %s",descr);
       unur_chg_urng(gen,uni.gen); 
     }
     unuran(): gen(NULL) {}
-    unuran(const char* descr): gen(NULL) {Set_gen(descr);}
+    unuran(const char* descr): gen(NULL) {setGen(descr);}
     ~unuran() {if (gen) unur_free(gen);}
     double rand();
   };
@@ -97,3 +98,12 @@ namespace classdesc_access
   template <> struct access_unpack<ecolab::unuran>:
     public cd::NullDescriptor<cd::unpack_t> {};
 }
+
+namespace classdesc
+{
+  template <> struct tn<unur_gen> {
+    static std::string name() {return "unur_gen";}
+  };
+}
+
+#include "random_unuran.cd"

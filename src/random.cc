@@ -19,7 +19,7 @@ double affinerand::rand() {return scale*gen->rand()+offset;}
 #ifdef PRNG
 #include <unuran_urng_prng.h>
 urand::urand(): gen(unur_urng_prng_new("mt19937(19863)")) {seed(1);}
-void urand::set_gen(const char* descr)
+void urand::setGen(const char* descr)
 {
   unur_urng_free(gen); gen=unur_urng_prng_new(descr);
   if (gen==NULL) throw error("Cannot create generator %s",descr);
@@ -28,7 +28,7 @@ urand:: ~urand() {unur_urng_free(gen);}
 
 #else
 urand::urand(): gen(unur_get_default_urng()) {}
-void urand::set_gen(const char* descr) {}
+void urand::setGen(const char* descr) {}
 urand:: ~urand() {}
 
 #endif

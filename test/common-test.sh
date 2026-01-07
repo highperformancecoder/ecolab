@@ -25,5 +25,5 @@ pass()
 }
 
 trap "fail" 1 2 3 15
-export LD_LIBRARY_PATH=$here/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$here/lib:/usr/local/lib64:$LD_LIBRARY_PATH
 export PYTHONPATH="$here/lib:$here/models:$here/test:$PYTHONPATH"
