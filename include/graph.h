@@ -121,8 +121,8 @@ namespace ecolab
     };
 
     /// iterator over edges
-    class const_iterator: public classdesc::poly<const_iterator_base> /*,
-                          public std::iterator<std::forward_iterator_tag,Edge>*/
+    class const_iterator: public classdesc::poly<const_iterator_base> /*
+                   public std::iterator<std::forward_iterator_tag,Edge>*/
     {
       typedef classdesc::poly<Graph::const_iterator_base> super;
       Graph::const_iterator_base& base() {return super::operator*();}
@@ -130,6 +130,11 @@ namespace ecolab
       CLASSDESC_ACCESS(const_iterator);
       mutable Edge edge; //used for operator->
     public:
+      using value_type=const Edge;
+      using difference_type=std::ptrdiff_t;
+      using pointer=const Edge*;
+      using reference=const Edge&;
+      using iterator_category=std::forward_iterator_tag;
       Edge operator*() const {
         return *base();
       }

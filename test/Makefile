@@ -19,12 +19,12 @@ GDBM=-lgdbm_compat
 endif
 GDBM+=-lgdbm
 
-#MODELS=testrefassign testref testgraph test_boostgraph testCacheDBM testCairo accessor vector-pair
+#MODELS=testrefassign testref testgraph testCacheDBM testCairo accessor vector-pair
 MODELS=testParallel testCacheDBM testgraph
 # vector-pair - doesn't currently compile - see ticket #161
 #EXTRAMODELS=test_tcl_stl.exe tcl-arrays.exe complex_tcl_args.exe
 #EXES=test_omp_rw_lock testCheckpointableFile test_netcomplexity test_boostgraph test_ecostrstream posTest testarrays pangoTest testParallel
-EXES=test_omp_rw_lock testCheckpointableFile test_netcomplexity test_ecostrstream posTest testarrays pangoTest 
+EXES=test_omp_rw_lock testCheckpointableFile test_netcomplexity test_ecostrstream posTest testarrays pangoTest test_boostgraph 
 SPECIALS=testNDBM testBDB
 
 LIBS+=-lboost_system
@@ -71,22 +71,7 @@ endif
 test_omp_rw_lock: test_omp_rw_lock.cc
 	-$(CPLUSPLUS) $(OMPOPT) $(FLAGS) $(CXXFLAGS) -o $@ $<
 
-testCheckpointableFile: testCheckpointableFile.o
-	$(LINK)  $(FLAGS) -o $@  $< $(LIBS)
-
-test_netcomplexity: test_netcomplexity.o
-	$(LINK)  $(FLAGS) -o $@  $< $(LIBS)
-
-test_ecostrstream: test_ecostrstream.o
-	$(LINK)  $(FLAGS) -o $@  $< $(LIBS)
-
-callTclArgsMethod: callTclArgsMethod.o
-	$(LINK)  $(FLAGS) -o $@  $< $(LIBS)
-
-posTest: posTest.o
-	$(LINK)  $(FLAGS) -o $@  $< $(LIBS)
-
-pangoTest: pangoTest.o
+$(EXES): %: %.o
 	$(LINK)  $(FLAGS) -o $@  $< $(LIBS)
 
 testNDBM: cachedDBM.o

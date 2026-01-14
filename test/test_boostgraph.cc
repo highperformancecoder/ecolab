@@ -15,7 +15,7 @@ using namespace std;
 using namespace boost;
 using namespace ecolab;
 
-NEWCMD(test_boostgraph,0)
+int main()
 {
   ConcreteGraph<DiGraph> g;
   urand uni;
