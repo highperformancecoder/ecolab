@@ -25,9 +25,9 @@ MODELS=ecolab_model starComplexity
 #chmod command is to counteract AEGIS removing execute privelege from scripts
 all: $(MODELS:=.so)
 # Stupid_Project takes ages to build, so only do on regression runs.
-ifdef AEGIS
-	$(MAKE) -C Stupid_Project
-endif
+#ifdef AEGIS
+#	$(MAKE) -C Stupid_Project
+#endif
 
 ifeq ($(OS),Darwin)
 all: $(MODELS:=.app)

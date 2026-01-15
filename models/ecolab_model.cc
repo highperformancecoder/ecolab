@@ -202,7 +202,7 @@ void ModelData::condense(const array<bool>& mask, size_t mask_true)   /* remove 
 
 unsigned PanmicticModel::condense()
 {
-  auto mask=density != 0;
+  array<bool> mask=density != 0;
   size_t mask_true=sum(mask);
   if (mask.size()==mask_true) return 0; /* no change ! */
   ModelData::condense(mask,mask_true);
@@ -219,7 +219,7 @@ unsigned SpatialModel::condense()
   MPI_Allreduce(total_density.data(),recv.data(),total_density.size(),MPI_INT,MPI_SUM,MPI_COMM_WORLD);
   total_density.swap(recv);
 #endif
-  auto mask=total_density != 0;
+  array<bool> mask=total_density != 0;
   
   size_t mask_true=sum(mask);
   if (mask.size()==mask_true) return 0; /* no change ! */
@@ -659,7 +659,7 @@ unsigned SpatialModel::migrate()
 
   vector<array<int>> delta(size(), array<int>(species.size(),0));
   
-  auto mm=(tstep-last_mig_tstep) * migration;
+  array<Float> mm=(tstep-last_mig_tstep) * migration;
   // migration is capped by actual population levels
   const Float cap=1.0/maxNbrs;
   array<Float> capped_migration = merge(mm>cap,cap,mm);

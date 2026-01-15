@@ -460,11 +460,15 @@ void StarComplexityGen::fillStarMap(unsigned numStars)
       Event::wait(compute);
 #else
       for (unsigned i=0; i<block->numGraphs; i+=blockSize)
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
         for (unsigned j=0; j<blockSize; ++j)
           block->eval(i,j);
       populateStarMap();
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
       for (unsigned j=0; j<blockSize; ++j)
         block->result[j].reset();
 #endif
