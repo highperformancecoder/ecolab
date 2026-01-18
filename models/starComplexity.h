@@ -158,7 +158,9 @@ struct StarComplexityGen
 
   /// return an upper bound on the number of stars in the link representation
   unsigned starUpperBound(const linkRep&) const;
-
+  /// star upper bound using ABC library
+  unsigned starUpperBoundABC(linkRep) const;
+  
   /// random number generator
   ecolab::urand uni;
   

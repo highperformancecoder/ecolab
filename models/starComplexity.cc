@@ -6,6 +6,7 @@
 #include "netcomplexity.h"
 #include "pythonBuffer.h"
 #include "ecolab_epilogue.h"
+#include "abc.h"
 
 #include <algorithm>
 #include <atomic>
@@ -693,6 +694,49 @@ unsigned StarComplexityGen::starUpperBound(const linkRep& x) const
   unsigned complementUb=::starUpperBound((~x).maskOut(n), n);
   assert(ub>0 && complementUb>0);
   return min(ub, complementUb);
+}
+
+unsigned StarComplexityGen::starUpperBoundABC(linkRep x) const
+{
+  if (x.empty()) return 3; // intersection of 3 stars is empty.
+  // Firstly remove those nodes that are full stars
+  vector<unsigned> fullStars;
+  const unsigned nodes=elemStars.size();
+  for (unsigned i=0; i<nodes; ++i)
+    {
+      bool fullStar=true;
+      for (unsigned j=0; fullStar && j<nodes; ++j)
+        if (i!=j && !x(i,j))
+          fullStar=false;
+      if (fullStar) fullStars.push_back(i);
+    }
+
+  for (auto i: fullStars)
+    for (unsigned j=0; j<nodes; ++j)
+      x&=~edge(i,j); // remove all edges to this node
+
+  AIG aig;
+  // build the remaining edges into an AIG
+  aig.setInputs(elemStars.size());
+  vector<abc::Abc_Obj_t*> edges;
+  for (unsigned i=0; i<nodes; ++i)
+    for (unsigned j=0; j<i; ++j)
+      if (x(i,j))
+        edges.push_back(&aig.addAnd(aig.input(i),aig.input(j)));
+  if (edges.empty()) return fulStars.size();
+  abc::Abc_Obj_t* graphRemainder=edges[0];
+  for (size_t i=1; i<edges.size(); ++i)
+    graphRemainder=aig.addOr(graphRemainder, edges[i]);
+  aig.cleanup();
+  for (unsigned i=0; i<3; ++i)
+    {
+      aig.balance();
+      aig.rewrite();
+      aig.refactor();
+    }
+  aig.balance();
+  aig.rewrite(true); // final zero-cost pass
+  return fullStars.size()+numGates()+1;
 }
 
 GraphComplexity StarComplexityGen::randomERGraph(unsigned nodes, unsigned links)

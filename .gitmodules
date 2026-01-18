@@ -7,3 +7,6 @@
 [submodule "Ouroboros-SYCL"]
 	path = Ouroboros-SYCL
 	url = https://github.com/highperformancecoder/Ouroboros-SYCL.git
+[submodule "models/abc"]
+	path = models/abc
+	url = https://github.com/berkeley-abc/abc.git

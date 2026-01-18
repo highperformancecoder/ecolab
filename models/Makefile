@@ -19,6 +19,8 @@ ifdef DPCPP
 FLAGS+=-DUSE_FLOAT
 endif
 
+FLAGS+=-Iabc/src -DABC_USE_STDINT_H -DABC_NAMESPACE=abc
+
 #MODELS=ecolab shadow newman jellyfish webworld netcomplexity
 MODELS=ecolab_model starComplexity
 
@@ -37,8 +39,11 @@ endif
 $(MODELS:=.o): %.o: %.cc 
 
 # how to build a model
-$(MODELS:=.so): %.so: %.o ../lib/libecolab$(ECOLIBS_EXT).a
+$(MODELS:=.so): %.so: %.o ../lib/libecolab$(ECOLIBS_EXT).a abc/libabc.so
 	$(LINK) $(FLAGS) -shared -Wl,-rpath $(ECOLAB_HOME)/lib $*.o $(LIBS) -o $@
+
+abc/libabc.so:
+	$(MAKE) -C abc ABC_USE_PIC=1 ABC_NAMESPACE=abc libabc.so
 
 #make MacOS application bundles
 $(MODELS:=.app): %.app: %

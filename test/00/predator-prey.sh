@@ -46,10 +46,10 @@ python3 input.py
 if test $? -ne 0; then fail; fi
 
 traceOption=0
-if uname -a|grep Ubuntu; then
-# for Travis
-    traceOption=1
-fi
+#if uname -a|grep Ubuntu; then
+## for Travis
+#    traceOption=1
+#fi
 
 case $traceOption in
     0)
