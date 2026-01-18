@@ -20,6 +20,7 @@ CLASSDESC_PYTHON_MODULE(starComplexity);
 using namespace std;
 using ecolab::NautyRep;
 using ecolab::USMAlloc;
+using ecolab::AIG;
 
 #ifdef SYCL_LANGUAGE_VERSION
 using ecolab::syclQ;
@@ -723,10 +724,10 @@ unsigned StarComplexityGen::starUpperBoundABC(linkRep x) const
     for (unsigned j=0; j<i; ++j)
       if (x(i,j))
         edges.push_back(&aig.addAnd(aig.input(i),aig.input(j)));
-  if (edges.empty()) return fulStars.size();
+  if (edges.empty()) return fullStars.size();
   abc::Abc_Obj_t* graphRemainder=edges[0];
   for (size_t i=1; i<edges.size(); ++i)
-    graphRemainder=aig.addOr(graphRemainder, edges[i]);
+    graphRemainder=&aig.addOr(*graphRemainder, *edges[i]);
   aig.cleanup();
   for (unsigned i=0; i<3; ++i)
     {
@@ -736,7 +737,7 @@ unsigned StarComplexityGen::starUpperBoundABC(linkRep x) const
     }
   aig.balance();
   aig.rewrite(true); // final zero-cost pass
-  return fullStars.size()+numGates()+1;
+  return fullStars.size()+aig.numGates()+1;
 }
 
 GraphComplexity StarComplexityGen::randomERGraph(unsigned nodes, unsigned links)
