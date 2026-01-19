@@ -715,7 +715,8 @@ unsigned StarComplexityGen::starUpperBoundABC(linkRep x) const
   for (auto i: fullStars)
     for (unsigned j=0; j<nodes; ++j)
       x&=~edge(i,j); // remove all edges to this node
-
+  if (x.empty()) return fullStars.size();
+  
   AIG aig;
   // build the remaining edges into an AIG
   aig.setInputs(elemStars.size());
@@ -724,10 +725,10 @@ unsigned StarComplexityGen::starUpperBoundABC(linkRep x) const
     for (unsigned j=0; j<i; ++j)
       if (x(i,j))
         edges.push_back(&aig.addAnd(aig.input(i),aig.input(j)));
-  if (edges.empty()) return fullStars.size();
   abc::Abc_Obj_t* graphRemainder=edges[0];
   for (size_t i=1; i<edges.size(); ++i)
     graphRemainder=&aig.addOr(*graphRemainder, *edges[i]);
+  aig.addOutputs(*graphRemainder);
   aig.cleanup();
   for (unsigned i=0; i<3; ++i)
     {

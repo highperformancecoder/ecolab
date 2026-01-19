@@ -39,11 +39,11 @@ endif
 $(MODELS:=.o): %.o: %.cc 
 
 # how to build a model
-$(MODELS:=.so): %.so: %.o ../lib/libecolab$(ECOLIBS_EXT).a abc/libabc.so
-	$(LINK) $(FLAGS) -shared -Wl,-rpath $(ECOLAB_HOME)/lib $*.o $(LIBS) -o $@
+$(MODELS:=.so): %.so: %.o ../lib/libecolab$(ECOLIBS_EXT).a abc/libabc.a
+	$(LINK) $(FLAGS) -shared -Wl,-rpath $(ECOLAB_HOME)/lib $*.o $(LIBS) abc/libabc.a -o $@
 
-abc/libabc.so:
-	$(MAKE) -C abc ABC_USE_PIC=1 ABC_NAMESPACE=abc libabc.so
+abc/libabc.a:
+	env CC=$(CPLUSPLUS) $(MAKE) -C abc ABC_USE_PIC=1 ABC_NAMESPACE=abc libabc.a
 
 #make MacOS application bundles
 $(MODELS:=.app): %.app: %

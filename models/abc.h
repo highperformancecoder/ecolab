@@ -1,4 +1,7 @@
+extern "C"
+{
 #include "abc/src/base/abc/abc.h"
+}
 
 #ifndef ECOLAB_ABC_H
 #define ECOLAB_ABC_H
