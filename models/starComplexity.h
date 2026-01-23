@@ -89,6 +89,16 @@ public:
   }
 };
 
+template <class I>
+std::ostream& operator<<(std::ostream& o, const linkRepImpl<I>& x)
+{
+  auto d=x.dataAsVector();
+  o<<"[";
+  for (auto& i:d) o<<i<<",";
+  o<<"]";
+  return o;
+}
+
 //#ifdef SYCL_LANGUAGE_VERSION
 //using linkRep=linkRepImpl<VecBitSet<unsigned,4>>;
 //#else
