@@ -697,12 +697,11 @@ unsigned StarComplexityGen::starUpperBound(const linkRep& x) const
   return min(ub, complementUb);
 }
 
-unsigned StarComplexityGen::starUpperBoundABC(linkRep x) const
+unsigned starUpperBoundABC(linkRep x, unsigned nodes)
 {
   if (x.empty()) return 3; // intersection of 3 stars is empty.
   // Firstly remove those nodes that are full stars
   vector<unsigned> fullStars;
-  const unsigned nodes=elemStars.size();
   for (unsigned i=0; i<nodes; ++i)
     {
       bool fullStar=true;
@@ -719,7 +718,7 @@ unsigned StarComplexityGen::starUpperBoundABC(linkRep x) const
   
   AIG aig;
   // build the remaining edges into an AIG
-  aig.setInputs(elemStars.size());
+  aig.setInputs(nodes);
   vector<abc::Abc_Obj_t*> edges;
   for (unsigned i=0; i<nodes; ++i)
     for (unsigned j=0; j<i; ++j)
@@ -739,6 +738,15 @@ unsigned StarComplexityGen::starUpperBoundABC(linkRep x) const
   aig.balance();
   aig.rewrite(true); // final zero-cost pass
   return fullStars.size()+aig.numGates()+1;
+}
+
+unsigned StarComplexityGen::starUpperBoundABC(const linkRep& x) const
+{
+  unsigned n=elemStars.size();
+  unsigned ub=::starUpperBoundABC(x, n);
+  unsigned complementUb=::starUpperBoundABC((~x).maskOut(n), n);
+  assert(ub>0 && complementUb>0);
+  return min(ub, complementUb);
 }
 
 GraphComplexity StarComplexityGen::randomERGraph(unsigned nodes, unsigned links)
