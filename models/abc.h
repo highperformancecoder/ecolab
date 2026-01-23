@@ -101,7 +101,7 @@ public:
       assert(numOutputs()==1);
       std::vector<I> workspace(Abc_NtkObjNumMax(aig));
       for (unsigned i=0; i<numInputs(); ++i)
-        workspace[abc::Abc_ObjId(&input(i))]=input[i];
+        workspace[abc::Abc_ObjId(&this->input(i))]=input[i];
       AbcNodes orderedNodes(aig);
       for (auto obj: orderedNodes)
         if (obj)
@@ -113,7 +113,7 @@ public:
             if (abc::Abc_ObjFaninC1(obj)) v1 = ~v1;
             workspace[abc::Abc_ObjId(obj)] = v0 & v1;
           }
-      auto r=workspace[abc::Abc_ObjId(&output(0))];
+      auto r=workspace[abc::Abc_ObjFaninId0(&output(0))];
       return abc::Abc_ObjFaninC0(&output(0))? ~r: r;
     }
   };
