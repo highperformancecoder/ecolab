@@ -1,6 +1,10 @@
 extern "C"
 {
+// ignore errors in abc.h
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #include "abc/src/base/abc/abc.h"
+#pragma GCC diagnostic pop
 }
 
 #ifndef ECOLAB_ABC_H
