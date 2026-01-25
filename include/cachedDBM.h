@@ -158,17 +158,17 @@ namespace ecolab
   {
     C& _this;
     Keys(C& _this): _this(_this) {}
-    C::KeyIterator begin()  
+    typename C::KeyIterator begin()  
     {_this.commit(); return typename C::KeyIterator(_this.filename());}
-    C::KeyIterator end() const {return typename C::KeyIterator();}
+    typename C::KeyIterator end() const {return typename C::KeyIterator();}
   };
   template <class C>
   struct ConstKeys
   {
     const C& _this;
     ConstKeys(const C& _this): _this(_this) {}
-    C::KeyIterator begin() const {return typename C::KeyIterator(_this.filename());}
-    C::KeyIterator end() const {return typename C::KeyIterator();}
+    typename C::KeyIterator begin() const {return typename C::KeyIterator(_this.filename());}
+    typename C::KeyIterator end() const {return typename C::KeyIterator();}
   };
   
   /* make the main class a base class in order to derive a special case for 
