@@ -19,10 +19,8 @@ ifdef DPCPP
 FLAGS+=-DUSE_FLOAT
 endif
 
-FLAGS+=-Iabc/src -DABC_USE_STDINT_H -DABC_NAMESPACE=abc
-
 #MODELS=ecolab shadow newman jellyfish webworld netcomplexity
-MODELS=ecolab_model starComplexity
+MODELS=ecolab_model
 
 #chmod command is to counteract AEGIS removing execute privelege from scripts
 all: $(MODELS:=.so)
@@ -39,18 +37,12 @@ endif
 $(MODELS:=.o): %.o: %.cc 
 
 # how to build a model
-$(MODELS:=.so): %.so: %.o ../lib/libecolab$(ECOLIBS_EXT).a abc/libabc.a
-	$(LINK) $(FLAGS) -shared -Wl,-rpath $(ECOLAB_HOME)/lib $*.o $(LIBS) abc/libabc.a -o $@
-
-abc/libabc.a:
-	env CC=$(CPLUSPLUS) $(MAKE) -C abc ABC_USE_PIC=1 ABC_NAMESPACE=abc libabc.a
+$(MODELS:=.so): %.so: %.o ../lib/libecolab$(ECOLIBS_EXT).a
+	$(LINK) $(FLAGS) -shared -Wl,-rpath $(ECOLAB_HOME)/lib $*.o $(LIBS) -o $@
 
 #make MacOS application bundles
 $(MODELS:=.app): %.app: %
 	$(ECOLAB_HOME)/utils/mkmacapp $<
-
-# required because gcc builds do not inlcude vecBitSet.h
-starComplexity.o: vecBitSet.cd
 
 ifneq ($(MAKECMDGOALS),clean)
 include $(MODELS:=.d)
