@@ -15,6 +15,8 @@
 #ifdef SYCL_LANGUAGE_VERSION
 #include <dpct/dpct.hpp>
 #define DPCT_COMPATIBILITY_TEMP 600
+#undef FALSE
+#undef TRUE
 #include "Utility.dp.hpp"
 #include "device/Ouroboros.dp.hpp"
 #include "device/Ouroboros_impl.dp.hpp"
