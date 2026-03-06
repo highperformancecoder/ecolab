@@ -448,12 +448,12 @@ void ModelData::mutate(const array<int>& new_sp)
   repro_rate <<= new_repro_rate;
 
   array<double> new_mutation(mutation[new_sp]);
-  lgspread( new_mutation, gdist );
+  //lgspread( new_mutation, gdist );
   /* limit mutation rate to mut_max */
   mutation <<=  merge( new_mutation < mut_max, new_mutation, mut_max);
 
   array<double> new_migration(migration[new_sp]);
-  lgspread( new_migration, gdist );
+  //lgspread( new_migration, gdist );
   /* limit mutation rate to mut_max */
   migration <<=  new_migration;
 
@@ -672,9 +672,6 @@ unsigned SpatialModel::migrate()
         Float salt=&c<&nbr? c.salt: nbr.salt;
         array<Float> m=capped_migration * (nbr.density-c.density);
         delta[c.idx()]+=m;//*(1 + salt * (abs(m)<cap*array_ns::min(nbr.density,c.density)));
-        if (!all(c.density>=-delta[c.idx()]))
-          cout<<"density:"<<c.density<<endl<<"delta:"<<delta[c.idx()]<<endl;
-        cout<<c.idx()<<": "<<m<<endl;
         assert(all(c.density>=-delta[c.idx()]));
       }
   });
@@ -690,14 +687,9 @@ unsigned SpatialModel::migrate()
   for (size_t i=0; i<numCells; ++i)
     {
       auto& c=*(*this)[i]->as<EcolabCell>();
-      //c.density+=delta[c.idx()];
+      c.density+=delta[c.idx()];
       assert(all(c.density>=0));
       totalMigration+=sum(abs(delta[c.idx()]));
-      //      if (sum(c.density<0))
-      //#ifdef _OPENMP
-      //#pragma omp critical
-      //#endif
-      //       negativeDensityIdx.push_back(c.idx());
 #if !defined(NDEBUG)
 #ifdef _OPENMP
 #pragma omp critical
@@ -707,26 +699,6 @@ unsigned SpatialModel::migrate()
     }
   last_mig_tstep=tstep;
 
-//  // if any density values are -ve, then adjust migration from neighbours.
-//  // loop run sequentially to resolve race condition
-//  for (auto i: negativeDensityIdx)
-//    {
-//      auto& c=*(*this)[i]->as<EcolabCell>();
-//      for (auto j=0; j<c.density.size(); ++j)
-//        while (c.density[j]<0)
-//          {
-//            assert(c.size()>0);
-//            int adjust=-(c.density[j]+c.size()-1)/c.size();
-//            for (auto& n: c)
-//              {
-//                auto& nbr=*n->as<EcolabCell>();
-//                auto nbrAdjust=std::min(nbr.density[j], adjust);
-//                c.density[j]+=nbrAdjust;
-//                nbr.density[j]-=nbrAdjust;
-//              }
-//          }
-//    }
-  
 #ifdef MPI_SUPPORT
   if (myid()==0)
     MPI_Reduce(MPI_IN_PLACE, &totalMigration,1,MPI_UNSIGNED,MPI_SUM,0,MPI_COMM_WORLD);

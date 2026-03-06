@@ -12,7 +12,7 @@ from math import sqrt
 # we want initialisation to be identical across all processes
 #randomSeed(1)
 
-numReplicants=100
+numReplicants=1000
 
 replicate=numReplicants*int(sys.argv[1]) if len(sys.argv)>=2 else numReplicants
 
@@ -40,7 +40,7 @@ def av(x):
 print("Replicate, Area, Max mutation, Init. Mig, Init. num sp, Mutation rate, Migration rate, Number of species, Interaction strength^2",flush=True)
 for A in [1, 2, 4, 6, 9, 12, 16]:
     for mut_max in [1e-5, 1e-4, 1e-3]:
-        for migration in [1e-6, 1e-5]:
+        for migration in [1e-5, 1e-4, 1e-3]:
             for nsp in [30, 100, 200]:
                 ecolab.tstep(0)
                 ecolab.last_mig_tstep(0)
@@ -78,6 +78,6 @@ for A in [1, 2, 4, 6, 9, 12, 16]:
 
                 for i in range(numReplicants):
                     step()
-                    print(replicate+i,numX*numY, mut_max, migration, nsp, av(ecolab.mutation()), av(ecolab.migration()), len(ecolab.species), ecolab.connectivity(), flush=True,sep=',')
+                    print(replicate+i, A, mut_max, migration, nsp, av(ecolab.mutation()), av(ecolab.migration()), len(ecolab.species), ecolab.connectivity(), flush=True,sep=',')
 
 
