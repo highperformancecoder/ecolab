@@ -380,9 +380,9 @@ EcolabPoint<B>::mutate(const E& mut_scale)
 double ModelData::connectivity() const
 {
   if (species.size()==0) return 0;
-  array<double> v=interaction.val/sqrt(interaction.diag[interaction.row]*interaction.diag[interaction.col]);
+  array<double> v=(interaction.val*interaction.val)/(interaction.diag[interaction.row]*interaction.diag[interaction.col]);
   // divide by total number of offdiagonal components, as the data is sparse
-  return sum(v*v)/(species.size()*(species.size()-1));
+  return sum(v)/(species.size()*(species.size()-1));
 }
 
 
