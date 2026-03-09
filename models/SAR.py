@@ -40,7 +40,7 @@ def av(x):
 print("Replicate, Area, Max mutation, Init. Mig, Init. num sp, Mutation rate, Migration rate, Number of species, Interaction strength^2",flush=True)
 for A in [1, 2, 4, 6, 9, 12, 16]:
     for mut_max in [1e-5, 1e-4, 1e-3]:
-        for migration in [1e-5, 1e-4, 1e-3]:
+        for migration in [0, 1e-5, 1e-4, 1e-3]:
             for nsp in [30, 100, 200]:
                 ecolab.tstep(0)
                 ecolab.last_mig_tstep(0)
