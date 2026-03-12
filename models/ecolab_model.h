@@ -46,8 +46,10 @@ struct ModelData
   sparse_mat_graph foodweb;
   unsigned long long tstep=0, last_mut_tstep=0, last_mig_tstep=0;
   //mutation parameters
-  float sp_sep=0.1, mut_max=0, repro_min=0, repro_max=1, odiag_min=0, odiag_max=1;
-
+  Float sp_sep=0.1, mut_max=0, repro_min=0, repro_max=1, odiag_min=0, odiag_max=1, gen_bias=0;
+  /// flags to disable mutation of mutation and migration rates
+  bool fixMutation=false, fixMigration=false;
+  
   void makeConsistent(size_t nsp);
   void random_interaction(unsigned conn, double sigma);
   void condense(const array<bool>& mask, size_t mask_true);

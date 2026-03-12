@@ -2,12 +2,12 @@ from ecolab_model import panmictic_ecolab as ecolab
 from random import random
 import math
 # initial number of species
-nsp=30
+nsp=100
 
 ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
-ecolab.odiag_min(-1e-5)
-ecolab.odiag_max(1e-5)
+ecolab.odiag_min(-1e-4)
+ecolab.odiag_max(1e-4)
 #ecolab.mut_max(1e-4)
 ecolab.mut_max(1e-3)
 ecolab.sp_sep(0.1)
@@ -52,7 +52,7 @@ def step():
     plot('No. species',ecolab.tstep(),nsp)
     #plot('Density',ecolab.tstep(),ecolab.density(), pens=ecolab.species())
     plot('Conn-Nsp',ecolab.connectivity(),nsp)
-    plot('Conn*density',ecolab.tstep(),ecolab.connectivity()*nsp)
+    plot('Conn*diversity',ecolab.tstep(),ecolab.connectivity()*nsp)
 
 gui(step,ecolab)
 

@@ -3,64 +3,64 @@
   <minskyVersion>3.22.0</minskyVersion>
   <wires>
    <Wire>
-    <id>46</id>
+    <id>49</id>
     <from>21</from>
     <to>19</to>
    </Wire>
    <Wire>
-    <id>47</id>
+    <id>50</id>
     <from>1</from>
     <to>24</to>
    </Wire>
    <Wire>
-    <id>48</id>
-    <from>23</from>
-    <to>12</to>
-   </Wire>
-   <Wire>
-    <id>49</id>
-    <from>23</from>
-    <to>18</to>
-   </Wire>
-   <Wire>
-    <id>50</id>
+    <id>51</id>
     <from>17</from>
     <to>27</to>
    </Wire>
    <Wire>
-    <id>51</id>
+    <id>52</id>
     <from>35</from>
     <to>33</to>
    </Wire>
    <Wire>
-    <id>52</id>
+    <id>53</id>
     <from>31</from>
     <to>38</to>
    </Wire>
    <Wire>
-    <id>53</id>
+    <id>54</id>
     <from>26</from>
     <to>39</to>
    </Wire>
    <Wire>
-    <id>54</id>
+    <id>55</id>
     <from>37</from>
     <to>42</to>
    </Wire>
    <Wire>
-    <id>55</id>
-    <from>44</from>
-    <to>12</to>
-   </Wire>
-   <Wire>
     <id>56</id>
-    <from>23</from>
-    <to>4</to>
+    <from>29</from>
+    <to>32</to>
    </Wire>
    <Wire>
     <id>57</id>
-    <from>29</from>
-    <to>32</to>
+    <from>23</from>
+    <to>48</to>
+   </Wire>
+   <Wire>
+    <id>58</id>
+    <from>47</from>
+    <to>4</to>
+   </Wire>
+   <Wire>
+    <id>59</id>
+    <from>47</from>
+    <to>18</to>
+   </Wire>
+   <Wire>
+    <id>60</id>
+    <from>47</from>
+    <to>12</to>
    </Wire>
   </wires>
   <items>
@@ -163,8 +163,8 @@
        <first>Mutation&#0032;rate</first>
        <second>
         <description>Mutation&#0032;rate</description>
-        <x>-30.9017</x>
-        <y>-95.1057</y>
+        <x>58.7785</x>
+        <y>-80.9017</y>
         <collapsed>false</collapsed>
         <displayFilterCaliper>false</displayFilterCaliper>
         <reductionOp>sum</reductionOp>
@@ -184,8 +184,8 @@
        <first>Replicate</first>
        <second>
         <description>Replicate</description>
-        <x>11.7557</x>
-        <y>-16.1803</y>
+        <x>-6.18034</x>
+        <y>-19.0211</y>
         <collapsed>true</collapsed>
         <displayFilterCaliper>false</displayFilterCaliper>
         <reductionOp>max</reductionOp>
@@ -209,7 +209,7 @@
         <y>58.7785</y>
         <collapsed>false</collapsed>
         <displayFilterCaliper>true</displayFilterCaliper>
-        <reductionOp>max</reductionOp>
+        <reductionOp>sum</reductionOp>
         <order>forward</order>
         <format></format>
         <customOrderIsInverted>false</customOrderIsInverted>
@@ -217,8 +217,8 @@
         </customOrder>
         <customOrderComplement>
         </customOrderComplement>
-        <minLabel>0.006685</minLabel>
-        <maxLabel>0.019880</maxLabel>
+        <minLabel>0.000001</minLabel>
+        <maxLabel>0.032921</maxLabel>
         <sliceLabel></sliceLabel>
        </second>
       </pair>
@@ -513,8 +513,8 @@
     <symbolEvery>1</symbolEvery>
     <id>16</id>
     <type>Operation:gather</type>
-    <x>535.793</x>
-    <y>417.47</y>
+    <x>589.793</x>
+    <y>389.47</y>
     <itemTabX>NaN</itemTabX>
     <itemTabY>NaN</itemTabY>
     <scaleFactor>1</scaleFactor>
@@ -541,8 +541,8 @@
     <symbolEvery>1</symbolEvery>
     <id>20</id>
     <type>VarConstant</type>
-    <x>494.419</x>
-    <y>436.588</y>
+    <x>547.419</x>
+    <y>398.588</y>
     <itemTabX>NaN</itemTabX>
     <itemTabY>NaN</itemTabY>
     <scaleFactor>1</scaleFactor>
@@ -573,8 +573,8 @@
     <symbolEvery>1</symbolEvery>
     <id>22</id>
     <type>Operation:mean</type>
-    <x>412.906</x>
-    <y>399.136</y>
+    <x>350.906</x>
+    <y>268.136</y>
     <itemTabX>NaN</itemTabX>
     <itemTabY>NaN</itemTabY>
     <scaleFactor>1</scaleFactor>
@@ -798,6 +798,39 @@
     <ports>
      <int>44</int>
      <int>45</int>
+    </ports>
+    <bookmark>false</bookmark>
+    <slider>
+     <stepRel>false</stepRel>
+     <visible>true</visible>
+     <min>-1</min>
+     <max>1</max>
+     <step>0.1</step>
+    </slider>
+    <miniPlot>false</miniPlot>
+   </Item>
+   <Item>
+    <name>:&lt;N_{sp}&gt;</name>
+    <xmin>NaN</xmin>
+    <xmax>NaN</xmax>
+    <ymin>NaN</ymin>
+    <ymax>NaN</ymax>
+    <y1min>NaN</y1min>
+    <y1max>NaN</y1max>
+    <symbolEvery>1</symbolEvery>
+    <id>46</id>
+    <type>Variable:flow</type>
+    <x>417</x>
+    <y>270</y>
+    <itemTabX>NaN</itemTabX>
+    <itemTabY>NaN</itemTabY>
+    <scaleFactor>1</scaleFactor>
+    <rotation>0</rotation>
+    <width>20</width>
+    <height>20</height>
+    <ports>
+     <int>47</int>
+     <int>48</int>
     </ports>
     <bookmark>false</bookmark>
     <slider>

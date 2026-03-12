@@ -387,17 +387,15 @@ double ModelData::connectivity() const
 
 
 /* do the offdiagonal mutations */
-void do_row_or_col(array<double>& tmp, double range, double minval, double gdist)
+void do_row_or_col(array<double>& tmp, Float range, Float minval, Float gdist, Float gen_bias)
 {
   double r;
   unsigned ntrue;
   int j, pos;
-  //tclvar gen_bias("generalization_bias"); /* gen \in [-1,1] */
-  double gen= /*exists(gen_bias)? (double)gen_bias:*/0.0;
 
   /* create or delete some connections */
-  r = (2.0*rand())/RAND_MAX - 1+gen;
-  r = (r>0)? r/(1+gen): r/(1-gen); 
+  r = (2.0*rand())/RAND_MAX - 1+gen_bias;
+  r = (r>0)? r/(1+gen_bias): r/(1-gen_bias); 
   if (r!=0) ntrue=(int)(1/fabs(r))-1;
   else ntrue = tmp.size();
 
@@ -448,12 +446,14 @@ void ModelData::mutate(const array<int>& new_sp)
   repro_rate <<= new_repro_rate;
 
   array<double> new_mutation(mutation[new_sp]);
-  //lgspread( new_mutation, gdist );
+  if (!fixMutation)
+    lgspread( new_mutation, gdist );
   /* limit mutation rate to mut_max */
   mutation <<=  merge( new_mutation < mut_max, new_mutation, mut_max);
 
   array<double> new_migration(migration[new_sp]);
-  //lgspread( new_migration, gdist );
+  if (!fixMigration)
+    lgspread( new_migration, gdist );
   /* limit mutation rate to mut_max */
   migration <<=  new_migration;
 
@@ -483,7 +483,7 @@ void ModelData::mutate(const array<int>& new_sp)
 	pack(interaction.val,mask,ntrue);
       tmp1[ new_sp[i] ] = interaction.diag[new_sp[i]];
 
-      do_row_or_col(tmp1,range,odiag_min,gdist[i]);
+      do_row_or_col(tmp1,range,odiag_min,gdist[i],gen_bias);
       
       /* project out connections for col[new_sp[i]] */
       mask = interaction.col==unsigned(new_sp[i]);
@@ -492,7 +492,7 @@ void ModelData::mutate(const array<int>& new_sp)
 	pack( interaction.val, mask, ntrue);
       tmp2[ new_sp[i] ] = interaction.diag[new_sp[i]];
 
-      do_row_or_col(tmp2,range,odiag_min,gdist[i]);
+      do_row_or_col(tmp2,range,odiag_min,gdist[i],gen_bias);
 
       /* adjust offdiag vals so that n.\beta n<0 for all positive n */
       /* construct list of offdiag vals that sum positively */
@@ -670,7 +670,7 @@ unsigned SpatialModel::migrate()
       {
         auto& nbr=*n->as<EcolabCell>();
         Float salt=&c<&nbr? c.salt: nbr.salt;
-        array<Float> m=capped_migration * (nbr.density-c.density);
+        array<int> m=capped_migration * (nbr.density-c.density);
         delta[c.idx()]+=m;//*(1 + salt * (abs(m)<cap*array_ns::min(nbr.density,c.density)));
         assert(all(c.density>=-delta[c.idx()]));
       }
