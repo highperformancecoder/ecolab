@@ -37,6 +37,10 @@ def av(x):
 #mut_max=float(sys.argv[3])   # mutation rate
 #migration=float(sys.argv[4]) # initial migration rate
 
+# for this experiment, do not mutate mutation or migration rates
+ecolab.fixMutation(True)
+ecolab.fixMigration(True)
+
 print("Replicate, Area, Max mutation, Init. Mig, Init. num sp, Mutation rate, Migration rate, Number of species, Interaction strength^2",flush=True)
 for A in [1, 2, 4, 6, 9, 12, 16]:
     for mut_max in [1e-5, 1e-4, 1e-3]:
