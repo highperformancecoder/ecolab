@@ -11,6 +11,7 @@ ecolab.odiag_max(1e-4)
 #ecolab.mut_max(1e-4)
 ecolab.mut_max(1e-3)
 ecolab.sp_sep(0.1)
+ecolab.gen_bias(0.5)
 
 def randomList(num, min, max):
     return [random()*(max-min)+min for i in range(num)]

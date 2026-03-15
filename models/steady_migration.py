@@ -60,32 +60,21 @@ extinctions=0
 migrations=0
 savedMig=ecolab.migration()
 def stepImpl():
-    #ecolab.setDensitiesDevice()
     ecolab.generate(100)
     ecolab.mutate()
 
     global savedMig
-    epochTs=ecolab.tstep()%epoch
-    if (epochTs==0):
-        ecolab.migration(savedMig)
-    if (epochTs==epoch//2):
-        savedMig=ecolab.migration()
-        ecolab.migration(len(ecolab.species)*[0])
 
     global extinctions, migrations
     migrations+=ecolab.migrate()
     extinctions+=ecolab.condense()
-    #ecolab.syncThreads()
-    #print(ecolab.nsp()())
-    #ecolab.setDensitiesShared()
-    #ecolab.gather()
 
 print(ecolab.nsp()())
 ecolab.makeConsistent()
 ecolab.syncThreads()
 print(ecolab.nsp()())
 
-out=open("pump.dat","w")
+out=open("steady.dat","w")
 print('tstep','nsp','connectivity','migrations','extinctions',file=out,flush=True)
 
 def step():
@@ -94,11 +83,11 @@ def step():
     migrations=0
     for i in range(epoch//10000):
         stepImpl()
-    print('migrations=',migrations,' extinctions=',extinctions)
+    #print('migrations=',migrations,' extinctions=',extinctions)
     if myid()==0:
         nsp=len(ecolab.species)
-        statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
         print(ecolab.tstep(),nsp,ecolab.connectivity(),migrations,extinctions,file=out,flush=True)
+        statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
 #        plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))
 #        #plot('No. species',ecolab.tstep(),nsp)
 #        plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())
@@ -110,7 +99,8 @@ def step():
 
 #gui(step)
 
-
-
 while ecolab.tstep()<5e6:
     step()
+
+
+
