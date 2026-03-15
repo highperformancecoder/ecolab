@@ -128,9 +128,8 @@ ifdef AEGIS
   # for now, we maintain the code for C++98 standard
   # noexcept-type is a warning about ABI changes coming in C++17
   # Travis complains about unused-local-typedefs, so shut it up.
-  CXXFLAGS+=-Wno-noexcept-type -Wno-unused-local-typedefs -Wno-class-memaccess 
+  CXXFLAGS+=-std=c++20 -Wno-noexcept-type -Wno-unused-local-typedefs -Wno-class-memaccess 
 endif
-CXXFLAGS+=-std=c++20
 
 ifndef MXE
   # needed for generating .so files
