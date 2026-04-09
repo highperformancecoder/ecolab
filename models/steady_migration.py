@@ -22,7 +22,8 @@ ecolab.odiag_max(1e-4)
 #ecolab.mut_max(1e-4)
 ecolab.mut_max(1e-3)
 ecolab.sp_sep(0.1)
-ecolab.gen_bias(0.5)
+ecolab.gen_bias(0.0)
+ecolab.fixMigration(True)
 
 def randomList(num, min, max):
     return [random()*(max-min)+min for i in range(num)]
@@ -75,7 +76,7 @@ ecolab.syncThreads()
 print(ecolab.nsp()())
 
 out=open("steady.dat","w")
-print('tstep','nsp','connectivity','migrations','extinctions',file=out,flush=True)
+print('#tstep','nsp','connectivity','migrations','extinctions',file=out,flush=True)
 
 def step():
     global extinctions,migrations
@@ -86,6 +87,7 @@ def step():
     #print('migrations=',migrations,' extinctions=',extinctions)
     if myid()==0:
         nsp=len(ecolab.species)
+        print('tstep=',ecolab.tstep(),'nsp=',nsp,'migrations=',migrations,' extinctions=',extinctions)
         print(ecolab.tstep(),nsp,ecolab.connectivity(),migrations,extinctions,file=out,flush=True)
         statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
 #        plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))

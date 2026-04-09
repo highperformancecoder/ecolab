@@ -22,7 +22,8 @@ ecolab.odiag_max(1e-4)
 #ecolab.mut_max(1e-4)
 ecolab.mut_max(1e-3)
 ecolab.sp_sep(0.1)
-ecolab.gen_bias(0.5)
+ecolab.gen_bias(0.0)
+ecolab.fixMigration(True)
 
 def randomList(num, min, max):
     return [random()*(max-min)+min for i in range(num)]
@@ -58,7 +59,6 @@ mut_factor=1000
 
 extinctions=0
 migrations=0
-savedMig=ecolab.migration()
 def stepImpl():
     #ecolab.setDensitiesDevice()
     ecolab.generate(100)
@@ -67,7 +67,7 @@ def stepImpl():
     global savedMig
     epochTs=ecolab.tstep()%epoch
     if (epochTs==0):
-        ecolab.migration(savedMig)
+        ecolab.migration(len(ecolab.species)*[1e-3])
     if (epochTs==epoch//2):
         savedMig=ecolab.migration()
         ecolab.migration(len(ecolab.species)*[0])
@@ -86,7 +86,7 @@ ecolab.syncThreads()
 print(ecolab.nsp()())
 
 out=open("pump.dat","w")
-print('tstep','nsp','connectivity','migrations','extinctions',file=out,flush=True)
+print('#tstep','nsp','connectivity','migrations','extinctions',file=out,flush=True)
 
 def step():
     global extinctions,migrations
@@ -94,9 +94,9 @@ def step():
     migrations=0
     for i in range(epoch//10000):
         stepImpl()
-    print('migrations=',migrations,' extinctions=',extinctions)
     if myid()==0:
         nsp=len(ecolab.species)
+        print('tstep=',ecolab.tstep(),'nsp=',nsp,'migrations=',migrations,' extinctions=',extinctions)
         statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
         print(ecolab.tstep(),nsp,ecolab.connectivity(),migrations,extinctions,file=out,flush=True)
 #        plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))

@@ -29,12 +29,6 @@ using array_ns::pcoord;
 
 using namespace classdesc;
 
-// TODO - move this into main library
-namespace
-{
-}
-
-
 namespace model
 {
   PanmicticModel panmictic_ecolab;

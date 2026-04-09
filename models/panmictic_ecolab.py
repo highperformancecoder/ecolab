@@ -11,7 +11,7 @@ ecolab.odiag_max(1e-4)
 #ecolab.mut_max(1e-4)
 ecolab.mut_max(1e-3)
 ecolab.sp_sep(0.1)
-ecolab.gen_bias(0.5)
+ecolab.gen_bias(0.0)
 
 def randomList(num, min, max):
     return [random()*(max-min)+min for i in range(num)]
@@ -42,6 +42,8 @@ from ecolab import ecolabHome
 #windows.append(ref(connectionPlot))
 #ecolab.updateConnectionPlot()
 
+out=open('nsp-connectivity',"w")
+print("#nsp connectivity",file=out,flush=True)
 def step():
     ecolab.generate(100)
     ecolab.mutate()
@@ -50,12 +52,15 @@ def step():
     nsp=len(ecolab.species)
     statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
     if ecolab.tstep()<20000: return
-    plot('No. species',ecolab.tstep(),nsp)
-    #plot('Density',ecolab.tstep(),ecolab.density(), pens=ecolab.species())
-    plot('Conn-Nsp',ecolab.connectivity(),nsp)
-    plot('Conn*diversity',ecolab.tstep(),ecolab.connectivity()*nsp)
+    print(ecolab.tstep(),nsp,ecolab.connectivity())
+    print(nsp,ecolab.connectivity(),file=out,flush=True)
+    #    plot('No. species',ecolab.tstep(),nsp)
+    #    #plot('Density',ecolab.tstep(),ecolab.density(), pens=ecolab.species())
+    #    plot('Conn-Nsp',ecolab.connectivity(),nsp)
+    #    plot('Conn*diversity',ecolab.tstep(),ecolab.connectivity()*nsp)
 
-gui(step,ecolab)
-
+#gui(step,ecolab)
+while ecolab.tstep()<1e7:
+    step()
 
 
