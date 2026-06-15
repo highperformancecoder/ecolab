@@ -2,7 +2,7 @@ from ecolab_model import spatial_ecolab as ecolab
 
 from random import random, seed as randomSeed
 
-from ecolab import array_urand, myid, device
+from ecolab import array_urand, myid, nprocs, device
 
 print(device())
 
@@ -103,7 +103,7 @@ def step():
 #            for j in range(numY):
 #                plot(f'Density({i},{j})',ecolab.tstep(),ecolab.cell(i,j).density(), pens=ecolab.species())
 
-gui(step)
+gui(step,ecolab)
 
 
 

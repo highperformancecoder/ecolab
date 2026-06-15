@@ -302,7 +302,7 @@ void SpatialModel::mutate()
 #else
   ModelData::mutate(new_sp);
 #endif
-  if (new_sp.size()==0) return;
+  if (cell_ids->size()==0) return;
   // set the new species density to 1 for those created on this cell
   hostForAll([=,cell_ids=&*cell_ids,this](EcolabCell& c) {
     //for (auto& i: *this) {
@@ -708,7 +708,7 @@ unsigned SpatialModel::migrate()
   MPI_Reduce(ssum.data(),s.data(),s.size(),MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
   ssum=s;
 #endif
-  if (any(ssum)!=0)
+  if (myid()==0 && any(ssum)!=0)
     {
       for (size_t i=0; i<ssum.size(); ++i)
         if (ssum[i])
