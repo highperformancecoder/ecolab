@@ -279,8 +279,9 @@ void SpatialModel::mutate()
   size_t j=0;
   for (auto& i: *this)
     {
-      new_sp<<=newSp[j];
-      (*cell_ids)<<= array<unsigned>(new_sp.size()-cell_ids->size(),i.id());
+      auto& nsp=newSp[j++];
+      new_sp<<=nsp;
+      (*cell_ids)<<= array<unsigned>(nsp.size(),i.id());
     }
   
 #ifdef MPI_SUPPORT
