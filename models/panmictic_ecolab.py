@@ -46,21 +46,25 @@ out=open('nsp-connectivity',"w")
 print("#nsp connectivity",file=out,flush=True)
 def step():
     ecolab.generate(100)
+    b4mutConn=ecolab.connectivity()
     ecolab.mutate()
+    b4ExtConn=ecolab.connectivity()
 #    ecolab.updateConnectionPlot()
     ecolab.condense()
+    conn=ecolab.connectivity()
     nsp=len(ecolab.species)
     statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
     if ecolab.tstep()<20000: return
-    print(ecolab.tstep(),nsp,ecolab.connectivity())
-    print(nsp,ecolab.connectivity(),file=out,flush=True)
-    #    plot('No. species',ecolab.tstep(),nsp)
+    print(ecolab.tstep(),nsp,conn,b4ExtConn-b4mutConn,conn-b4ExtConn)
+    print(ecolab.tstep(),nsp,conn,b4ExtConn-b4mutConn,b4ExtConn-conn,file=out,flush=True)
+    #plot('No. species',ecolab.tstep(),nsp)
+    #plot('Connectivity',ecolab.tstep(),[ecolab.connectivity(),mutConn-extConn])
     #    #plot('Density',ecolab.tstep(),ecolab.density(), pens=ecolab.species())
     #    plot('Conn-Nsp',ecolab.connectivity(),nsp)
     #    plot('Conn*diversity',ecolab.tstep(),ecolab.connectivity()*nsp)
 
-#gui(step,ecolab)
-while ecolab.tstep()<1e7:
-    step()
+gui(step,ecolab)
+#while ecolab.tstep()<1e7:
+#    step()
 
 

@@ -372,10 +372,10 @@ EcolabPoint<B>::mutate(const E& mut_scale)
 }
 
 // Given by the variance of the offdiagonal components, when each diagonal component is normalised to 1
-double ModelData::connectivity() const
+Float ModelData::connectivity() const
 {
   if (species.size()==0) return 0;
-  array<double> v=(interaction.val*interaction.val)/(interaction.diag[interaction.row]*interaction.diag[interaction.col]);
+  array<Float> v=(interaction.val*interaction.val)/(interaction.diag[interaction.row]*interaction.diag[interaction.col]);
   // divide by total number of offdiagonal components, as the data is sparse
   return sum(v)/(species.size()*(species.size()-1));
 }
@@ -529,9 +529,9 @@ void ModelData::mutate(const array<int>& new_sp)
 
 
 
-array<double> PanmicticModel::lifetimes() 
+array<Float> PanmicticModel::lifetimes() 
 { 
-  array<double> lifetimes; 
+  array<Float> lifetimes; 
 
   for (size_t i=0; i<species.size(); i++) 
     {
@@ -545,6 +545,32 @@ array<double> PanmicticModel::lifetimes()
 	}
     }
   return lifetimes;
+}
+
+
+Float PanmicticModel::mutantConnectivity(size_t beforeNsp) const
+{
+  //array<Float> v=merge(interaction.row>beforeNsp || interaction.col>beforeNsp, (interaction.val*interaction.val)/(interaction.diag[interaction.row]*interaction.diag[interaction.col]), 0);
+  auto n=species.size()-beforeNsp;
+  if (n>0)
+    return sum(
+               (interaction.val*interaction.val)/(interaction.diag[interaction.row]*interaction.diag[interaction.col]),
+               interaction.row>beforeNsp || interaction.col>beforeNsp
+               ) / (n*(species.size()-1));
+  return 0;
+}
+
+  /// returns connectivity of all species that have gone extinct
+Float PanmicticModel::extinctionConnectivity() const
+{
+  array<Float> v=merge(density[interaction.row]==0 || density[interaction.col]==0, (interaction.val*interaction.val)/(interaction.diag[interaction.row]*interaction.diag[interaction.col]), 0);
+  auto n=sum(density==0);
+  if (n>0)
+    return sum(
+               (interaction.val*interaction.val)/(interaction.diag[interaction.row]*interaction.diag[interaction.col]),
+               density[interaction.row]==0 || density[interaction.col]==0
+               ) / (n*(species.size()-1));
+  return 0;
 }
 
 

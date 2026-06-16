@@ -56,7 +56,7 @@ struct ModelData
   void mutate(const array<int>&); 
   double complexity() {return ::complexity(foodweb);}
   /// May criterion connectivity σ²
-  double connectivity() const;
+  Float connectivity() const;
 };
 
 template <class E, class P> struct RoundArray; 
@@ -102,7 +102,11 @@ struct PanmicticModel: public ModelData, public EcolabPoint<AllocatorBase>, publ
   /// returns number of extinctions
   unsigned condense();
   void mutate();
-  array<double> lifetimes();
+  array<Float> lifetimes();
+  /// returns the connectivity of species added in after \a beforeNsp
+  Float mutantConnectivity(size_t beforeNsp) const;
+  /// returns connectivity of all species that have gone extinct
+  Float extinctionConnectivity() const;
 };
 
 struct EcolabCell: public EcolabPoint<ecolab::CellBase>, public graphcode::Object<EcolabCell>
