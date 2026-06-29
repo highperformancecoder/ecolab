@@ -13,8 +13,8 @@
 #define ECOLAB_H
 
 #ifdef SYCL_LANGUAGE_VERSION
-#include <dpct/dpct.hpp>
-#define DPCT_COMPATIBILITY_TEMP 600
+//#include <dpct/dpct.hpp>
+//#define DPCT_COMPATIBILITY_TEMP 600
 #undef FALSE
 #undef TRUE
 #include "Utility.dp.hpp"
