@@ -667,6 +667,7 @@ ifdef DISTCC
 DCXX=distcc
 endif
 
+# TODO - can $(SYCL) be appended to CXXFLAGS?
 .cc.o: 
 	$(DCXX) -c $(FLAGS) $(SYCL) $(CXXFLAGS) $(OPT) -o $@ $<
 
@@ -684,7 +685,7 @@ $(UTILS): %: %.cc tokeninput.h
 	$(CC) $(FLAGS) -MM -MG  $< >$@
 
 %.d: %.cc  $(ECOLAB_HOME)/include/Makefile.config
-	$(CPLUSPLUS) $(FLAGS)  $(CXXFLAGS) -MM -MG $< >$@
+	$(CPLUSPLUS) $(FLAGS)  $(SYCL) $(CXXFLAGS) -MM -MG $< >$@
 
 .h.cd:
 	$(CLASSDESC) -nodef -typeName -i $< >$@

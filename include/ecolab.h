@@ -13,23 +13,14 @@
 #define ECOLAB_H
 
 #ifdef SYCL_LANGUAGE_VERSION
-//#include <dpct/dpct.hpp>
-//#define DPCT_COMPATIBILITY_TEMP 600
-#undef FALSE
-#undef TRUE
-#include "Utility.dp.hpp"
-#include "device/Ouroboros.dp.hpp"
-#include "device/Ouroboros_impl.dp.hpp"
-#include "InstanceDefinitions.dp.hpp"
-#include "device/MemoryInitialization.dp.hpp"
+#include "DeviceAllocator.h"
 #ifdef __INTEL_LLVM_COMPILER
 template <typename... Args>
-void syclPrintf(Args... args) {sycl::ext::oneapi::experimental::printf(args...);}
 inline sycl::nd_item<1> syclItem() {return sycl::ext::oneapi::this_work_item::get_nd_item<1>();}
 inline sycl::group<1> syclGroup() {return sycl::ext::oneapi::this_work_item::get_work_group<1>();}
 inline sycl::sub_group syclSubGroup() {return sycl::ext::oneapi::this_work_item::get_sub_group();}
 #else
-#define syclPrintf(...)
+#error "EcoLab requires OneAPI compiler for some experimental functions"
 #endif
 #endif
 
@@ -81,6 +72,10 @@ typedef classdesc::string eco_string;
 namespace ecolab
 {
   using namespace classdesc;
+  
+#if defined(__INTEL_LLVM_COMPILER) && defined(SYCL_LANGUAGE_VERSION)
+  using sycl::ext::oneapi::experimental::printf;
+#endif
   
   /* these are defined to default values, even if MPI is false */
   /// MPI process ID and number of processes
@@ -204,13 +199,14 @@ namespace ecolab
 #endif
     template<class U> struct rebind {using other=SyclQAllocator;};
   };
-  
+
+  class GlobalDeallocateKernelTag;
   struct CellBase
   {
     size_t m_idx=0; // stash the position within the local node vector here
     size_t idx() const {return m_idx;}
 #ifdef SYCL_LANGUAGE_VERSION
-    using MemAllocator=Ouro::MultiOuroPQ;
+    using MemAllocator=DeviceAllocator<>;
     MemAllocator* memAlloc=nullptr;
     template <class T> class CellAllocator
     {
@@ -223,25 +219,26 @@ namespace ecolab
       T* allocate(size_t sz) {
 #ifdef  __SYCL_DEVICE_ONLY__
         if (memAlloc)  {
-          auto r=reinterpret_cast<T*>(memAlloc->malloc(Ouro::SyclDesc<>(syclItem(),{}),sz*sizeof(T)));
-          if (!r) syclPrintf("Mem allocation failed\n");
+          auto r=reinterpret_cast<T*>(memAlloc->allocate(sz*sizeof(T)));
+          if (!r) printf("Mem allocation failed\n");
           return r;
         }
-        syclPrintf("Missing allocator memAlloc=%x\n",memAlloc);
-        return nullptr; // TODO raise an error??
+        printf("Missing allocator memAlloc=%x\n",memAlloc);
+        return nullptr; // TODO raise an error?? how? We can't throw an exception here
 #else
-        return sycl::malloc_shared<T>(sz,syclQ());
+        auto r=sycl::malloc_shared<T>(sz,syclQ());
+        return r;
 #endif
       }
       void deallocate(T* p,size_t n) {
         if (!p) return;
+        if (memAlloc && memAlloc->inAllocator(p)) {
+          memAlloc->deallocate(p,n);
+          return;
+        }
 #ifdef  __SYCL_DEVICE_ONLY__
-        if (memAlloc && reinterpret_cast<Ouro::memory_t*>(p)>=memAlloc->memory.d_data &&
-            reinterpret_cast<Ouro::memory_t*>(p)<memAlloc->memory.d_data_end)
-          memAlloc->free(Ouro::SyclDesc<>(syclItem(),{}),p);
-        else
-          syclPrintf("leaked %d bytes\n",n*sizeof(T));
-#else
+        printf("leaked %d bytes\n",n*sizeof(T));
+#else        
         sycl::free(p,syclQ());
 #endif
       }
@@ -261,7 +258,7 @@ namespace ecolab
   
   template <class T>
   void printAllocator(const char* prefix, const CellBase::CellAllocator<T>& x)
-  {syclPrintf("%s: allocator.desc=%p memAlloc=%p\n",prefix,x.desc,x.memAlloc);}
+  {printf("%s: allocator.desc=%p memAlloc=%p\n",prefix,x.desc,x.memAlloc);}
   
   
   class SyclGraphBase
@@ -274,16 +271,18 @@ namespace ecolab
       // for now, do not use on-device dynamic allocation
       sharedMemAlloc=sycl::malloc_shared<MemAllocator>(1, syclQ());
       new(sharedMemAlloc) MemAllocator;
-      deviceMemAlloc=sycl::malloc_shared<MemAllocator>(1, syclQ());
-      new(deviceMemAlloc) MemAllocator;
-      sharedMemAlloc->initialize(syclQ(), sycl::usm::alloc::shared, 512ULL * 1024ULL * 1024ULL); // TODO - expose this Python?
-      deviceMemAlloc->initialize(syclQ(), sycl::usm::alloc::device, 512ULL * 1024ULL * 1024ULL); // TODO - expose this Python?
+      sharedMemAlloc->init(syclQ());
+//      deviceMemAlloc=sycl::malloc_shared<MemAllocator>(1, syclQ());
+//      new(deviceMemAlloc) MemAllocator;
+//      deviceMemAlloc->init(syclQ()); // TODO - run this on device?
+//      sharedMemAlloc->initialize(syclQ(), sycl::usm::alloc::shared, 512ULL * 1024ULL * 1024ULL); // TODO - expose this Python?
+//      deviceMemAlloc->initialize(syclQ(), sycl::usm::alloc::device, 512ULL * 1024ULL * 1024ULL); // TODO - expose this Python?
     }
     ~SyclGraphBase() {
       sharedMemAlloc->~MemAllocator();
       sycl::free(sharedMemAlloc,syclQ());
-      deviceMemAlloc->~MemAllocator();
-      sycl::free(deviceMemAlloc,syclQ());
+//      deviceMemAlloc->~MemAllocator();
+//      sycl::free(deviceMemAlloc,syclQ());
     }
     // deleted because we're managing a resource here
     SyclGraphBase(const SyclGraphBase&)=delete;

@@ -1490,7 +1490,7 @@ namespace ecolab
         if (!p)
           {
 #ifdef __SYCL_DEVICE_ONLY__
-            syclPrintf("failed to allocate %d bytes in array\n",sizeof(T)*n);
+            printf("failed to allocate %d bytes in array\n",sizeof(T)*n);
 #endif
             return nullptr; // SYCL allocator returns nullptr if not initialised
           }
@@ -1525,7 +1525,7 @@ namespace ecolab
 
 #if defined(SYCL_LANGUAGE_VERSION)
       using AtomicUnsignedRef=sycl::atomic_ref
-        <unsigned,sycl::memory_order::relaxed,sycl::memory_scope::device>;
+        <unsigned,sycl::memory_order::relaxed,sycl::memory_scope::system>;
 #else
       using AtomicUnsignedRef=unsigned&;
 #endif
@@ -1584,9 +1584,9 @@ namespace ecolab
         if (dt && ref()>1)
           {
 #ifdef __SYCL_DEVICE_ONLY__
-            syclPrintf("b4 asgV in copy\n");
+            printf("b4 asgV in copy\n");
             asgV(m_allocator, size(), dt->dt);
-            syclPrintf("after asgV in copy\n");
+            printf("after asgV in copy\n");
 #else
             array_data<T>* oldData=dt;
             bool freeMem = ref()-- == 0;
@@ -1616,6 +1616,9 @@ namespace ecolab
 
       array(const array& x): m_allocator(x.m_allocator) 
       {
+//#ifdef __SYCL_DEVICE_ONLY__
+//        syclPrintf("creating array on group %u, thread  %u with dt=%x\n",syclGroup().get_group_linear_id(), syclGroup().get_local_linear_id(),x.dt);
+//#endif
         dt=x.dt;
         if (dt) ref()++;
       }
@@ -1650,7 +1653,7 @@ namespace ecolab
         if (dt) dt->sz=s; // in case s is smaller
       } 
 
-      void clear() {resize(0);}
+      void clear() {release(); dt=nullptr;}
       
       /// resize array to \a s elements, and initialise to \a val
       template <class V>

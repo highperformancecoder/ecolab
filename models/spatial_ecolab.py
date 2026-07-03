@@ -13,7 +13,7 @@ randomSeed(10)
 array_urand.seed(10+myid())
 
 # initial number of species
-nsp=10
+nsp=30
 
 ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
@@ -28,12 +28,13 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=2
-numY=2
+numX=8
+numY=8
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
 print("initialising density")
+ecolab.makeConsistent()
 for i in range(numX):
     for j in range(numY):
         #ecolab.cell(i,j).density([int(100*random()) for i in range(nsp)])

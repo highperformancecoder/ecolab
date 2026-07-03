@@ -59,7 +59,7 @@ int EcolabPoint<B>::ROUND(Float x)
   const Float maxInt=Float(std::numeric_limits<int>::max()-1);
   if (x<0) x=0;
   if (x>maxInt) x=maxInt;
-  //syclPrintf("ROUND inner x=%g, modf=%g, rand()=%g, rand.max=%g, rand.min=%g\n",x,std::fabs(std::modf(x,&dum)),rand(),rand.max(),rand.min());
+  //syclPrintff("ROUND inner x=%g, modf=%g, rand()=%g, rand.max=%g, rand.min=%g\n",x,std::fabs(std::modf(x,&dum)),rand(),rand.max(),rand.min());
   return std::fabs(std::modf(x,&dum))*(rand.max()-rand.min()) > (rand()-rand.min()) ?
     (int)x+1 : (int)x;
 }
@@ -75,7 +75,7 @@ struct RoundArray
   int operator[](size_t i) const //{return point.ROUND(expr[i]);}
   {
     auto r=point.ROUND(expr[i]);
-    //syclPrintf("ROUND: %d, %g=%d\n",i,expr[i],r);
+    //syclPrintff("ROUND: %d, %g=%d\n",i,expr[i],r);
     return r;
   }
 };
@@ -258,18 +258,16 @@ void SpatialModel::mutate()
   last_mut_tstep=tstep;
 
   groupedForAll([newSp=newSp.data(),mut_scale=&*mut_scale,this](EcolabCell& c) {
-    auto tmp=c.mutate(*mut_scale);
+    auto tmp{c.mutate(*mut_scale)};
 #ifdef __SYCL_DEVICE_ONLY__
-    if (syclGroup().get_local_linear_id()==0 && tmp.size())
+    if (syclGroup().leader() && tmp.size())
 #endif
       newSp[c.idx()]=tmp;
   });
 
   array<unsigned> new_sp;
-  //DeviceType<array<unsigned,graphcode::Allocator<unsigned>>> cell_ids;
-  auto cell_ids=make_unique<array<unsigned>>();
+  DeviceType<array<unsigned,graphcode::Allocator<unsigned>>> cell_ids;
 #ifdef SYCL_LANGUAGE_VERSION
-//  cell_ids->allocator(graphcode::Allocator<unsigned>(syclQ(),sycl::usm::alloc::shared));
   syncThreads();
 #endif
 
@@ -283,6 +281,11 @@ void SpatialModel::mutate()
       new_sp<<=nsp;
       (*cell_ids)<<= array<unsigned>(nsp.size(),i.id());
     }
+
+  // deallocate on device
+  groupedForAll([newSp=newSp.data()](EcolabCell& c) {
+    newSp[c.idx()].clear();
+  });
   
 #ifdef MPI_SUPPORT
   MPIbuf b; b<<new_sp<<(*cell_ids); b.gather(0);
@@ -304,11 +307,9 @@ void SpatialModel::mutate()
 #endif
   if (cell_ids->size()==0) return;
   // set the new species density to 1 for those created on this cell
-  hostForAll([=,cell_ids=&*cell_ids,this](EcolabCell& c) {
-    //for (auto& i: *this) {
-    //auto& c=*i->as<Cell>();
+  //groupedForAll([cell_ids=&*cell_ids](EcolabCell& c) {
+  hostForAll([cell_ids=&*cell_ids](EcolabCell& c) {
     c.density <<= (*cell_ids)==c.id;
-    //}
   });
 }
 
@@ -325,10 +326,9 @@ EcolabPoint<B>::mutate(const E& mut_scale)
   asg_v(speciations, nsp, roundArray(mut_scale * density));
 
   auto numNewSp=groupBuffer<unsigned,SpatialModel::log2MaxNsp>(syclGroup().get_group_linear_range());
-  numNewSp[syclGroup().get_local_linear_id()]=0;
-
   auto myId=syclGroup().get_local_linear_id();
   
+  numNewSp[myId]=0;
   array_ns::map(nsp, [&](size_t i) {
     numNewSp[myId]+=speciations[i];
   });
@@ -358,10 +358,7 @@ EcolabPoint<B>::mutate(const E& mut_scale)
   });
 
   groupBarrier();
-  if (syclGroup().get_local_linear_id()==0)
-    return *new_sp;
-  else
-    return {};
+  return *new_sp;
 #else
   array<unsigned> speciations=roundArray(mut_scale * density);
   auto new_sp = gen_index(speciations);
@@ -816,7 +813,7 @@ void SpatialModel::makeConsistent()
         if (!c.memAlloc) c.memAlloc=sharedMemAlloc;
 #endif
         // not needed, as we're not resizing density on device
-        //if (nsp>c.density.size()) c.density.allocator(c.allocator<int>());
+        if (nsp>c.density.size()) c.density.allocator(c.allocator<int>());
   });
   ModelData::makeConsistent(nsp);
   syncThreads();
