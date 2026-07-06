@@ -125,34 +125,34 @@ void setArray(array<int,ecolab::CellBase::CellAllocator<int>>& x, const array<in
 
 void EcolabPoint::generate(unsigned niter, const ModelData& model)
 {
-//#ifdef __SYCL_DEVICE_ONLY__
-//  Float* interactionResult=groupBuffer<Float,SpatialModel::log2MaxNsp>(density.size());
-//#else
-//  array<Float> interactionResult(density.size());
-//#endif
-//  for (unsigned step=0; step<niter; step++)
-//    {
-//      array_ns::map(density.size(),  [&](size_t i){
-//        interactionResult[i]=model.interaction.diag[i]*density[i];
-//      });
-//      groupBarrier();
-//      array_ns::map(model.interaction.row.size(), [&](size_t i){
-//#ifdef __SYCL_DEVICE_ONLY__
-//        sycl::atomic_ref<Float, sycl::memory_order::relaxed, sycl::memory_scope::work_group>
-//#endif
-//          (interactionResult[model.interaction.row[i]]) +=
-//          model.interaction.val[i]*density[model.interaction.col[i]];
-//      });
-//      
-//      groupBarrier();
-//      array_ns::map(density.size(),  [&](size_t i){
-//        density[i]=ROUND(density[i] + density[i] * (model.repro_rate[i] + interactionResult[i]));
-//      });
-//      groupBarrier();
-//    }
-  // sequential/non-GPU version
-  for (unsigned i=0; i<niter; i++)
-    {density = roundArray(density + density * (model.repro_rate + model.interaction*density));}
+#ifdef __SYCL_DEVICE_ONLY__
+  Float* interactionResult=groupBuffer<Float,SpatialModel::log2MaxNsp>(density.size());
+#else
+  array<Float> interactionResult(density.size());
+#endif
+  for (unsigned step=0; step<niter; step++)
+    {
+      array_ns::map(density.size(),  [&](size_t i){
+        interactionResult[i]=model.interaction.diag[i]*density[i];
+      });
+      groupBarrier();
+      array_ns::map(model.interaction.row.size(), [&](size_t i){
+#ifdef __SYCL_DEVICE_ONLY__
+        sycl::atomic_ref<Float, sycl::memory_order::relaxed, sycl::memory_scope::work_group>
+#endif
+          (interactionResult[model.interaction.row[i]]) +=
+          model.interaction.val[i]*density[model.interaction.col[i]];
+      });
+      
+      groupBarrier();
+      array_ns::map(density.size(),  [&](size_t i){
+        density[i]=ROUND(density[i] + density[i] * (model.repro_rate[i] + interactionResult[i]));
+      });
+      groupBarrier();
+    }
+//  // sequential/non-GPU version
+//  for (unsigned i=0; i<niter; i++)
+//    {density = roundArray(density + density * (model.repro_rate + model.interaction*density));}
 }
 
 unsigned EcolabPoint::nsp() const
