@@ -12,16 +12,9 @@
 #ifndef ECOLAB_H
 #define ECOLAB_H
 
+#include "sycl.h"
 #ifdef SYCL_LANGUAGE_VERSION
 #include "DeviceAllocator.h"
-#ifdef __INTEL_LLVM_COMPILER
-template <typename... Args>
-inline sycl::nd_item<1> syclItem() {return sycl::ext::oneapi::this_work_item::get_nd_item<1>();}
-inline sycl::group<1> syclGroup() {return sycl::ext::oneapi::this_work_item::get_work_group<1>();}
-inline sycl::sub_group syclSubGroup() {return sycl::ext::oneapi::this_work_item::get_sub_group();}
-#else
-#error "EcoLab requires OneAPI compiler for some experimental functions"
-#endif
 #endif
 
 #include <stdlib.h>
@@ -42,7 +35,7 @@ namespace classdesc
   class pack_t;
 //class unpack_t;
   typedef pack_t unpack_t;
-  class TCL_obj_t;
+  //  class TCL_obj_t;
 }
 
 #define THROW_PTR_EXCEPTION  //Allows more generously for types containing pointers
@@ -72,10 +65,6 @@ typedef classdesc::string eco_string;
 namespace ecolab
 {
   using namespace classdesc;
-  
-#if defined(__INTEL_LLVM_COMPILER) && defined(SYCL_LANGUAGE_VERSION)
-  using sycl::ext::oneapi::experimental::printf;
-#endif
   
   /* these are defined to default values, even if MPI is false */
   /// MPI process ID and number of processes
@@ -108,98 +97,6 @@ namespace ecolab
     ~OnExit() {f();}
   };
   
-#ifdef SYCL_LANGUAGE_VERSION
-  extern bool syclQDestroyed;
-  sycl::queue& syclQ();
-  void* reallocSycl(void*,size_t);
-#endif
-
-  inline void groupBarrier()
-  {
-#ifdef __SYCL_DEVICE_ONLY__
-    sycl::group_barrier(syclGroup());
-#endif
-  }
-  
-  template <class T>
-  struct SyclType: public T
-  {
-    template <class... A> SyclType(A... args): T(std::forward<A>(args)...) {}
-#ifdef SYCL_LANGUAGE_VERSION
-    void* operator new(size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete(void* p) {reallocSycl(p,0);}
-    void* operator new[](size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete[](void* p) {reallocSycl(p,0);}
-#endif
-  };
-
-  template <>
-  struct SyclType<size_t>
-  {
-    size_t data;
-    operator size_t() const {return data;}
-    operator size_t&() {return data;}
-    size_t operator=(size_t x) {return data=x;}
-#ifdef SYCL_LANGUAGE_VERSION
-    void* operator new(size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete(void* p) {reallocSycl(p,0);}
-    void* operator new[](size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete[](void* p) {reallocSycl(p,0);}
-#endif
-  };
-
-  template <class T>
-  struct SyclType<T*>
-  {
-    T* data;
-    operator T*() const {return data;}
-    operator T*&() {return data;}
-    T* operator=(T* x) {return data=x;}
-#ifdef SYCL_LANGUAGE_VERSION
-    void* operator new(size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete(void* p) {reallocSycl(p,0);}
-    void* operator new[](size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete[](void* p) {reallocSycl(p,0);}
-#endif
-  };
-
-
-  
-  template <class M>
-  class DeviceType
-  {
-    SyclType<M>* const model;
-  public:
-    using element_type=M;
-    template <class... A>
-    DeviceType(A... args): model(new SyclType<M>(std::forward<A>(args)...)) {}
-    DeviceType(const DeviceType& x): model(new SyclType<M>(*x.model)) {}
-    DeviceType& operator=(const DeviceType& x) {*model=*x.model; return *this;}
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-    // gcc incorrectly infers SyclType is polymorphic, which is quite plainly is not
-#pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
-#endif
-    ~DeviceType() {delete model;}
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
-    M& operator*() {return *model;}
-    const M& operator*() const {return *model;}
-    M* operator->() {return model;}
-    const M* operator->() const {return model;}
-    operator bool() const {return true;} // always defined
-  };
-
-  template <class T, ecolab::USMAlloc UA>
-  struct SyclQAllocator: public graphcode::Allocator<T>
-  {
-#ifdef SYCL_LANGUAGE_VERSION
-    SyclQAllocator(): graphcode::Allocator<T>(syclQ(), UA) {}
-#endif
-    template<class U> struct rebind {using other=SyclQAllocator;};
-  };
-
   class GlobalDeallocateKernelTag;
   struct CellBase
   {
@@ -217,7 +114,7 @@ namespace ecolab
       CellAllocator(MemAllocator* memAlloc): memAlloc(memAlloc) {}
       template <class U> CellAllocator(const CellAllocator<U>& x): memAlloc(x.memAlloc) {}
       T* allocate(size_t sz) {
-#ifdef  __SYCL_DEVICE_ONLY__
+        //#ifdef  __SYCL_DEVICE_ONLY__
         if (memAlloc)  {
           auto r=reinterpret_cast<T*>(memAlloc->allocate(sz*sizeof(T)));
           if (!r) printf("Mem allocation failed\n");
@@ -225,10 +122,10 @@ namespace ecolab
         }
         printf("Missing allocator memAlloc=%x\n",memAlloc);
         return nullptr; // TODO raise an error?? how? We can't throw an exception here
-#else
-        auto r=sycl::malloc_shared<T>(sz,syclQ());
-        return r;
-#endif
+//#else
+//        auto r=sycl::malloc_shared<T>(sz,syclQ());
+//        return r;
+//#endif
       }
       void deallocate(T* p,size_t n) {
         if (!p) return;
@@ -236,11 +133,11 @@ namespace ecolab
           memAlloc->deallocate(p,n);
           return;
         }
-#ifdef  __SYCL_DEVICE_ONLY__
+        //#ifdef  __SYCL_DEVICE_ONLY__
         printf("leaked %d bytes\n",n*sizeof(T));
-#else        
-        sycl::free(p,syclQ());
-#endif
+//#else        
+//        sycl::free(p,syclQ());
+//#endif
       }
       bool operator==(const CellAllocator& x) const {return memAlloc==x.memAlloc;}
     };
@@ -310,8 +207,7 @@ namespace ecolab
 #endif
       for (size_t idx=0; idx<sz; ++idx) {
         auto& cell=*(*this)[idx]->template as<Cell>();
-        cell.m_idx=idx;
-        f(cell);
+        f(cell,idx);
       }
     }
     
@@ -328,8 +224,7 @@ namespace ecolab
           auto idx=i.get_global_linear_id();
           if (idx<this->size()) {
             auto& cell=*(*this)[idx]->template as<Cell>();
-            cell.m_idx=idx;
-            f(cell);
+            f(cell,idx);
           }
         });
       });
@@ -352,8 +247,7 @@ namespace ecolab
           auto idx=i.get_group_linear_id();
           if (idx<this->size()) {
             auto& cell=*(*this)[idx]->template as<Cell>();
-            cell.m_idx=idx;
-            f(cell);
+            f(cell,idx);
           }
         });
       });
@@ -362,12 +256,6 @@ namespace ecolab
 #endif
     }
 
-    void syncThreads() {
-#ifdef SYCL_LANGUAGE_VERSION
-      syclQ().wait();
-#endif
-    }
-    
     template <class T, class F> T max(T x, F f) {
 #ifdef SYCL_LANGUAGE_VERSION
       DeviceType<T> r(x);
@@ -390,6 +278,7 @@ namespace ecolab
       return x;
 #endif
     }
+    void syncThreads() {ecolab::syncThreads();}
   };
 
   template <class T>
