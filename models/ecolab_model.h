@@ -88,7 +88,12 @@ public:
   /// Rounding function, randomly round up or down, in the range 0..INT_MAX
   int ROUND(Float x);
   template <class E> RoundArray<E,EcolabPoint> roundArray(const E& expr);
+#ifdef SYCL_LANGUAGE_VERSION
+  Exclude<SyclRandomEngine<std::mt19937,USMAlloc::shared>> rand
+    {syclQ().get_device().get_info<sycl::info::device::max_work_group_size>()}; // TODO make configurable?
+#else
   Exclude<std::mt19937> rand; // random number generator
+#endif
 };
 
 struct PanmicticModel: public ModelData, public EcolabPoint, public ecolab::Model<PanmicticModel>
@@ -122,7 +127,7 @@ class SpatialModel: public ModelData, public EcolabGraph<EcolabCell>,
   CLASSDESC_ACCESS(SpatialModel);
   size_t maxNbrs=0;
 public:
-  static constexpr size_t log2MaxNsp=10;
+  static constexpr size_t log2MaxNsp=11;
   // function valid for x∈(-numX,∞], y∈(-numY,∞]
   size_t makeId(size_t x, size_t y) const {return (x+numX)%numX + numX*((y+numY)%numY);}
   void setGrid(size_t nx, size_t ny);

@@ -76,7 +76,7 @@ namespace ecolab
     }
     void deallocate(void* p, size_t size) {
       if (!p) return;
-      if (p>=memory && p<memory+numPages*pageSize) {
+      if (p>=memory && p<memory+poolSize) {
         queue.enqueue((reinterpret_cast<char*>(p)-memory)>>order);
         return;
       }

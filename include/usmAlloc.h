@@ -8,6 +8,10 @@
 
 #ifndef ECOLAB_USMALLOC_H
 #define ECOLAB_USMALLOC_H
+#ifdef SYCL_LANGUAGE_VERSION
+#include <sycl/sycl.hpp>
+#endif
+
 namespace ecolab
 {
   // this type of macro stuff doesn't play nice with classdesc, hence why

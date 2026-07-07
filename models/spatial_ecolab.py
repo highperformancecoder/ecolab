@@ -13,14 +13,14 @@ randomSeed(10)
 array_urand.seed(10+myid())
 
 # initial number of species
-nsp=30
+nsp=100
 
 ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
 ecolab.odiag_min(-1e-5)
 ecolab.odiag_max(1e-5)
-#ecolab.mut_max(1e-4)
-ecolab.mut_max(1e-3)
+ecolab.mut_max(1e-5)
+#ecolab.mut_max(1e-3)
 ecolab.sp_sep(0.1)
 
 def randomList(num, min, max):
@@ -30,6 +30,8 @@ ecolab.species(range(nsp))
 
 numX=12
 numY=12
+#numX=2
+#numY=2
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
@@ -89,7 +91,7 @@ def step():
     global extinctions,migrations
     extinctions=0
     migrations=0
-    for i in range(epoch//10000):
+    for i in range(epoch//1000000):
         stepImpl()
     print('migrations=',migrations,' extinctions=',extinctions)
     if myid()==0:

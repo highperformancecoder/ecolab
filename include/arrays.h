@@ -1480,6 +1480,7 @@ namespace ecolab
       ///allocate \a n variables of type \a T 
       array_data<T> *alloc(std::size_t n)
       {
+        if (n==0) return nullptr;
         T *p; 
         array_data<T> *r;
         //p = (char*)std::malloc((n-array_data<T>::debug_display) * sizeof(T) + sizeof(array_data<T>) + 16);
@@ -2399,8 +2400,8 @@ namespace ecolab
     return o;
   }
 
-  template <class T>
-  std::ostream& operator<<(std::ostream& o, const array<T>& x)
+  template <class T, class A>
+  std::ostream& operator<<(std::ostream& o, const array<T,A>& x)
   {return put(o,x);}
 
   /// ostream putter

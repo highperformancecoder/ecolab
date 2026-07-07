@@ -60,7 +60,7 @@ int EcolabPoint::ROUND(Float x)
   const Float maxInt=Float(std::numeric_limits<int>::max()-1);
   if (x<0) x=0;
   if (x>maxInt) x=maxInt;
-  //syclPrintff("ROUND inner x=%g, modf=%g, rand()=%g, rand.max=%g, rand.min=%g\n",x,std::fabs(std::modf(x,&dum)),rand(),rand.max(),rand.min());
+  //printf("ROUND inner x=%g, modf=%g, rand()=%u, rand.max=%u, rand.min=%u\n",x,std::fabs(std::modf(x,&dum)),rand(),rand.max(),rand.min());
   return std::fabs(std::modf(x,&dum))*(rand.max()-rand.min()) > (rand()-rand.min()) ?
     (int)x+1 : (int)x;
 }
@@ -76,7 +76,6 @@ struct RoundArray
   int operator[](size_t i) const //{return point.ROUND(expr[i]);}
   {
     auto r=point.ROUND(expr[i]);
-    //syclPrintff("ROUND: %d, %g=%d\n",i,expr[i],r);
     return r;
   }
 };
@@ -239,11 +238,11 @@ void PanmicticModel::mutate()
 void SpatialModel::mutate()
 {
   DeviceType<array<Float,ModelData::Allocator<Float>>> mut_scale(species.size());
-  using Array=array<unsigned,GlobalDeviceAllocator<unsigned>>;
-  vector<Array,ModelData::Allocator<Array>> newSp(size());
   *mut_scale=sp_sep * repro_rate * mutation * int(tstep - last_mut_tstep);
   last_mut_tstep=tstep;
-  
+
+  vector<EcolabPoint::UnsignedArray,ModelData::Allocator<EcolabPoint::UnsignedArray>> newSp(size());
+
   groupedForAll([newSp=newSp.data(),mut_scale=&*mut_scale,this](EcolabCell& c,size_t i) {
     auto tmp{c.mutate(*mut_scale)};
 #ifdef __SYCL_DEVICE_ONLY__
@@ -254,11 +253,7 @@ void SpatialModel::mutate()
 
   array<unsigned> new_sp;
   DeviceType<array<unsigned,ModelData::Allocator<unsigned>>> cell_ids;
-#ifdef SYCL_LANGUAGE_VERSION
   syncThreads();
-#endif
-
-
   
   // TODO - this is a kind of scan - can it be done on device?
   size_t j=0;
@@ -271,12 +266,17 @@ void SpatialModel::mutate()
 
   // deallocate on device
   groupedForAll([newSp=newSp.data()](EcolabCell& c,size_t i) {
-    newSp[i].clear();
+ #ifdef __SYCL_DEVICE_ONLY__
+    if (syclGroup().leader())
+#endif
+      {
+        newSp[i].clear();
+        assert(newSp[i].refCnt()==0);
+      }
   });
-  
+   
   if (new_sp.size()==0) return;
 
-  cout<<new_sp.size()<<" speciations"<<endl;
 #ifdef MPI_SUPPORT
   MPIbuf b; b<<new_sp<<(*cell_ids); b.gather(0);
   if (myid()==0)
@@ -313,40 +313,29 @@ EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
   groupBarrier();
   asg_v(speciations, nsp, roundArray(mut_scale * density));
 
-  auto numNewSp=groupBuffer<unsigned,SpatialModel::log2MaxNsp>(syclGroup().get_group_linear_range());
+  auto numWorkItems=syclGroup().get_group_linear_range();
   auto myId=syclGroup().get_local_linear_id();
-  
-  numNewSp[myId]=0;
-  array_ns::map(nsp, [&](size_t i) {
-    numNewSp[myId]+=speciations[i];
-  });
 
-  auto offsets=groupBuffer<unsigned,SpatialModel::log2MaxNsp>(syclGroup().get_group_linear_range()+1);
+  auto offsets=groupBuffer<unsigned,SpatialModel::log2MaxNsp>(nsp+1);
+  sycl::joint_exclusive_scan(syclGroup(),speciations,speciations+nsp,offsets,sycl::plus<unsigned>());
+  groupBarrier();
   if (syclGroup().leader())
-    {
-      offsets[0]=0;
-      for (size_t i=1; i<=syclGroup().get_group_linear_range(); ++i)
-        offsets[i]=offsets[i-1]+numNewSp[i-1];
-    }
+    offsets[nsp]=offsets[nsp-1]+speciations[nsp-1];
   groupBarrier();
-  if (offsets[syclGroup().get_group_linear_range()])
+  if (offsets[nsp])
     array_ns::asg_minus_v(density.data(), nsp, speciations);
-  GroupLocal<UnsignedArray> new_sp(offsets[syclGroup().get_group_linear_range()],
-                                   density.allocator());
-  groupBarrier();
 
+  GroupLocal<UnsignedArray> new_sp(offsets[nsp], density.allocator());
 
-  // gen_index
-  auto p=offsets[myId];
-  auto n=new_sp->data();
+  //gen_index
   array_ns::map(nsp, [&](size_t i) {
-    for (size_t j=0; j<speciations[i]; ++j) {
-      n[p++]=i;
-    }
+    auto p=new_sp->data()+offsets[i];
+    for (auto j=0; j<offsets[i+1]; ++j)
+      p[j]=i;
   });
 
-  groupBarrier();
   return *new_sp;
+ 
 #else
   array<unsigned> speciations=roundArray(mut_scale * density);
   auto new_sp = gen_index(speciations);
