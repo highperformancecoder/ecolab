@@ -58,8 +58,8 @@ int EcolabPoint::ROUND(Float x)
 {
   Float dum;
   const Float maxInt=Float(std::numeric_limits<int>::max()-1);
-  if (x<0) x=0;
-  if (x>maxInt) x=maxInt;
+  if (x<=0) return 0;
+  if (x>=maxInt) return maxInt;
   //printf("ROUND inner x=%g, modf=%g, rand()=%u, rand.max=%u, rand.min=%u\n",x,std::fabs(std::modf(x,&dum)),rand(),rand.max(),rand.min());
   return std::fabs(std::modf(x,&dum))*(rand.max()-rand.min()) > (rand()-rand.min()) ?
     (int)x+1 : (int)x;
@@ -124,11 +124,12 @@ void setArray(array<int,ecolab::CellBase::CellAllocator<int>>& x, const array<in
 
 void EcolabPoint::generate(unsigned niter, const ModelData& model)
 {
-#ifdef __SYCL_DEVICE_ONLY__
-  Float* interactionResult=groupBuffer<Float,SpatialModel::log2MaxNsp>(density.size());
-#else
-  array<Float> interactionResult(density.size());
-#endif
+//#ifdef __SYCL_DEVICE_ONLY__
+//  //Float* interactionResult=groupBuffer<Float,SpatialModel::log2MaxNsp>(density.size());
+//  array<Float,LocalAllocator> interactionResult(density.size());
+//#else
+  array<Float,LocalAllocator<Float>> interactionResult(density.size());
+  //#endif
   for (unsigned step=0; step<niter; step++)
     {
       array_ns::map(density.size(),  [&](size_t i){
@@ -149,6 +150,7 @@ void EcolabPoint::generate(unsigned niter, const ModelData& model)
       });
       groupBarrier();
     }
+  assert(all(density>=0));
 //  // sequential/non-GPU version
 //  for (unsigned i=0; i<niter; i++)
 //    {density = roundArray(density + density * (model.repro_rate + model.interaction*density));}
@@ -239,11 +241,17 @@ void SpatialModel::mutate()
 {
   DeviceType<array<Float,ModelData::Allocator<Float>>> mut_scale(species.size());
   *mut_scale=sp_sep * repro_rate * mutation * int(tstep - last_mut_tstep);
+  assert(all(*mut_scale<=1));
   last_mut_tstep=tstep;
 
   vector<EcolabPoint::UnsignedArray,ModelData::Allocator<EcolabPoint::UnsignedArray>> newSp(size());
 
+  hostForAll([](EcolabCell& c,size_t) {
+    assert(all(c.density>=0));
+  });
+  
   groupedForAll([newSp=newSp.data(),mut_scale=&*mut_scale,this](EcolabCell& c,size_t i) {
+    assert(all(c.density>=0));
     auto tmp{c.mutate(*mut_scale)};
 #ifdef __SYCL_DEVICE_ONLY__
     if (syclGroup().leader() && tmp.size())
@@ -251,6 +259,10 @@ void SpatialModel::mutate()
       newSp[i]=tmp;
   });
 
+  hostForAll([](EcolabCell& c,size_t) {
+    assert(all(c.density>=0));
+  });
+  
   array<unsigned> new_sp;
   DeviceType<array<unsigned,ModelData::Allocator<unsigned>>> cell_ids;
   syncThreads();
@@ -299,42 +311,83 @@ void SpatialModel::mutate()
   // set the new species density to 1 for those created on this cell
   //groupedForAll([cell_ids=&*cell_ids](EcolabCell& c) {
   hostForAll([cell_ids=&*cell_ids](EcolabCell& c,size_t) {
+    assert(all(c.density>=0));
     c.density <<= (*cell_ids)==c.id;
   });
 }
 
 template <class E>
-EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
+EcolabPoint::LocalArray EcolabPoint::mutate(const E& mut_scale)
 {
   /* calculate the number of mutants each species produces */
 #ifdef __SYCL_DEVICE_ONLY__
+  array<unsigned,LocalAllocator<unsigned>> speciations=roundArray(mut_scale * density);
   auto nsp=density.size();
-  auto speciations=groupBuffer<unsigned,SpatialModel::log2MaxNsp>(nsp);
-  groupBarrier();
-  asg_v(speciations, nsp, roundArray(mut_scale * density));
-
-  auto numWorkItems=syclGroup().get_group_linear_range();
-  auto myId=syclGroup().get_local_linear_id();
-
-  auto offsets=groupBuffer<unsigned,SpatialModel::log2MaxNsp>(nsp+1);
-  sycl::joint_exclusive_scan(syclGroup(),speciations,speciations+nsp,offsets,sycl::plus<unsigned>());
+  //  auto new_sp = gen_index(speciations);
+  array<unsigned,LocalAllocator<unsigned>> offsets(density.size()+1);
+  sycl::joint_exclusive_scan(syclGroup(),speciations.data(),speciations.data()+nsp,
+                             offsets.data(),sycl::plus<unsigned>());
   groupBarrier();
   if (syclGroup().leader())
     offsets[nsp]=offsets[nsp-1]+speciations[nsp-1];
-  groupBarrier();
-  if (offsets[nsp])
-    array_ns::asg_minus_v(density.data(), nsp, speciations);
 
-  GroupLocal<UnsignedArray> new_sp(offsets[nsp], density.allocator());
+  if (offsets[nsp]==0) return {};
 
-  //gen_index
+  density-=speciations;
+
+  vector<LocalArray,LocalAllocator<LocalArray>> new_sp{offsets[nsp]};
   array_ns::map(nsp, [&](size_t i) {
-    auto p=new_sp->data()+offsets[i];
+    auto p=new_sp[0].data()+offsets[i];
     for (auto j=0; j<offsets[i+1]; ++j)
       p[j]=i;
   });
+  
+  return new_sp[0];
 
-  return *new_sp;
+  //  auto nsp=density.size();
+//  auto speciations=groupBuffer<unsigned,SpatialModel::log2MaxNsp>(nsp);
+//  groupBarrier();
+//  //asg_v(speciations, nsp, roundArray(mut_scale * density));
+//  array_ns::map(nsp,[&](size_t i){
+//    auto r=roundArray(mut_scale * density)[i];
+//    speciations[i]=r;
+//    if (density[i]==0 && speciations[i]!=0) printf("aa %u %g %d\n",i,(mut_scale * density)[i],r);
+//    assert(density[i]>0 || r==0);
+//  });
+//  groupBarrier();
+//  array_ns::map(nsp, [&](size_t i){
+//    if (density[i]<speciations[i]) {
+//      printf("%u %d %d\n",i,density[i],speciations[i]);
+//      printf("%g %g\n",mut_scale[i]*density[i],roundArray(mut_scale * density)[i]);
+//    }
+//  });
+//  
+//  auto offsets=groupBuffer<unsigned,SpatialModel::log2MaxNsp>(nsp+1);
+//  sycl::joint_exclusive_scan(syclGroup(),speciations,speciations+nsp,offsets,sycl::plus<unsigned>());
+//  array_ns::map(nsp, [&](size_t i){
+//    if (density[i]<speciations[i]) {
+//      printf("1:%u %d %d\n",i,density[i],speciations[i]);
+//      printf("1:%g %g\n",mut_scale[i]*density[i],roundArray(mut_scale * density)[i]);
+//    }
+//  });
+//  groupBarrier();
+//  if (syclGroup().leader())
+//    offsets[nsp]=offsets[nsp-1]+speciations[nsp-1];
+//  if (offsets[nsp])
+//    array_ns::asg_minus_v(density.data(), nsp, speciations);
+//  assert(all(density>=0));
+//
+//  groupBarrier();
+//  GroupLocal<UnsignedArray> new_sp(offsets[nsp], density.allocator());
+//
+//  //gen_index
+//  array_ns::map(nsp, [&](size_t i) {
+//    auto p=new_sp->data()+offsets[i];
+//    for (auto j=0; j<offsets[i+1]; ++j)
+//      p[j]=i;
+//  });
+//
+//  return *new_sp;
  
 #else
   array<unsigned> speciations=roundArray(mut_scale * density);
@@ -661,6 +714,7 @@ unsigned SpatialModel::migrate()
   array<Float> capped_migration = merge(mm>cap,cap,mm);
   
   hostForAll([&,this](EcolabCell& c, size_t i) {
+    assert(all(c.density>=0));
     /* loop over neighbours */
     for (auto& n: c) 
       {

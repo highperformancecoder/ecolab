@@ -1568,33 +1568,31 @@ namespace ecolab
       template <class E>
       void asgV(const A& alloc, size_t size, const E& x)
       {
-#ifdef __SYCL_DEVICE_ONLY__
-        GroupLocal<array> tmp(size,alloc);
-        array_ns::asg_v(tmp->dt->dt,size,x);
-        groupBarrier();
-        if (syclGroup().leader()) swap(*tmp);
-#else
+//#ifdef __SYCL_DEVICE_ONLY__
+//        GroupLocal<array> tmp(size,alloc);
+//        array_ns::asg_v(tmp->dt->dt,size,x);
+//        groupBarrier();
+//        if (syclGroup().leader()) swap(*tmp);
+//#else
         array tmp(size,alloc);
         asg_v(tmp.data(),size,x);
         swap(tmp);
-#endif
+        //#endif
       }
       
       void copy() //any nonconst method needs to call this
       {           // to implement copy-on-write semantics
         if (dt && ref()>1)
           {
-#ifdef __SYCL_DEVICE_ONLY__
-            printf("b4 asgV in copy\n");
-            asgV(m_allocator, size(), dt->dt);
-            printf("after asgV in copy\n");
-#else
             array_data<T>* oldData=dt;
             bool freeMem = ref()-- == 0;
             dt=alloc(size());
+#ifdef __SYCL_DEVICE_ONLY__
+            asg_v(dt->dt,size(),oldData->dt);
+#else
             memcpy(dt->dt,oldData->dt,size()*sizeof(T));
-            if (freeMem) free(oldData);
 #endif
+            if (freeMem) free(oldData);
           }
       }
 
@@ -1642,7 +1640,7 @@ namespace ecolab
       }
 
       /// current value of the reference counter
-      unsigned refCnt() const {return dt->cnt;}
+      unsigned refCnt() const {return dt? dt->cnt: 0;}
       
       /// resize array to \a s elements
       void resize(size_t s) {

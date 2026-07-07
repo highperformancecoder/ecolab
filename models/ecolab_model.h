@@ -83,7 +83,8 @@ public:
   void generate(unsigned niter, const ModelData&);
   void condense(const array<bool>& mask, size_t mask_true);
   using UnsignedArray=array<unsigned,Allocator<unsigned>>;
-  template <class E> UnsignedArray mutate(const E&);
+  using LocalArray=array<unsigned,LocalAllocator<unsigned>>;
+  template <class E> LocalArray mutate(const E&);
   unsigned nsp() const; ///< number of living species in this cell
   /// Rounding function, randomly round up or down, in the range 0..INT_MAX
   int ROUND(Float x);

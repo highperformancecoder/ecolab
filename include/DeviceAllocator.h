@@ -121,6 +121,53 @@ namespace ecolab
     HostSharedAllocator(): graphcode::Allocator<T>(syclQ(), sycl::usm::alloc::shared) {}
     template<class U> struct rebind {using other=HostSharedAllocator<U>;};
   };
-    
+
+#ifdef __SYCL_DEVICE_ONLY__
+  template <size_t size>
+  class LocalAllocatorImpl
+  {
+    static_assert((size&(size-1))==0); // assert power of 2
+    unsigned next=0;
+    char buffer[size-1];
+  public:
+    void* allocate(size_t n) {
+      unsigned offs=next;
+      sycl::group_barrier(syclGroup());
+      if (syclGroup().leader()) next+=n;
+      return buffer+offs;
+    }
+  };
+
+  template <class T>
+  class LocalAllocator
+  {
+    constexpr static unsigned size=32*1024;
+    using BufferType=char[sizeof(LocalAllocatorImpl<size>)];
+    using LocalBufferType=decltype(sycl::ext::oneapi::group_local_memory_for_overwrite<BufferType>(syclGroup()));
+    // pointer is same for all instantiations in this group
+    LocalBufferType buffer=sycl::ext::oneapi::group_local_memory_for_overwrite<BufferType>(syclGroup());
+    LocalAllocatorImpl<size>& impl() const
+    {return reinterpret_cast<LocalAllocatorImpl<size>&>(**buffer);}
+  public:
+    using value_type=T;
+    using pointer=T*;
+    using reference=T&;
+    using difference_type=std::ptrdiff_t;
+    using propagate_on_container_move_assignment=std::true_type;
+
+    LocalAllocator() {
+      if (syclGroup().leader())
+        new (*buffer) LocalAllocatorImpl<size>();
+      sycl::group_barrier(syclGroup());
+    }
+    // no need for destructor, as Impl has nothing to tear down
+    T* allocate(size_t n) {return reinterpret_cast<T*>(impl().allocate(n*sizeof(T)));}
+    void deallocate(T*,size_t) {} // cleaned up when group exits
+    template<class U> struct rebind {using other=LocalAllocator<U>;};
+  };
+#else
+  template <class T> using LocalAllocator=std::allocator<T>;
+#endif
+   
 }
 #endif
