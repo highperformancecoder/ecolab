@@ -1477,7 +1477,10 @@ namespace ecolab
       
       friend class WhereContext;
 
-      ///allocate \a n variables of type \a T 
+      ///allocate \a n variables of type \a T
+#ifdef __SYCL_DEVICE_ONLY__
+      __attribute__((always_inline))
+#endif
       array_data<T> *alloc(std::size_t n)
       {
         if (n==0) return nullptr;
@@ -1495,9 +1498,6 @@ namespace ecolab
 #endif
             return nullptr; // SYCL allocator returns nullptr if not initialised
           }
-// #ifdef __SYCL_DEVICE_ONLY__
-//            syclPrintf("succeeded in allocating %d bytes in array\n",sizeof(T)*n);
-//#endif
        
 #ifdef __ICC
         // we need to align data onto 16 byte boundaries
@@ -1615,9 +1615,6 @@ namespace ecolab
 
       array(const array& x): m_allocator(x.m_allocator) 
       {
-//#ifdef __SYCL_DEVICE_ONLY__
-//        syclPrintf("creating array on group %u, thread  %u with dt=%x\n",syclGroup().get_group_linear_id(), syclGroup().get_local_linear_id(),x.dt);
-//#endif
         dt=x.dt;
         if (dt) ref()++;
       }

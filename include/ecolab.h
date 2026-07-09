@@ -240,17 +240,57 @@ namespace ecolab
     template <class F>
     void groupedForAll(F f) {
 #ifdef SYCL_LANGUAGE_VERSION
-      // TODO - pass in workGroupSize as an optional parameter??
-      static size_t workGroupSize=32;//syclQ().get_device().get_info<sycl::info::device::max_work_group_size>();
-      syclQ().submit([&](auto& h) {
-        h.parallel_for(sycl::nd_range<1>(this->size()*workGroupSize, workGroupSize), [=,this](auto i) {
-          auto idx=i.get_group_linear_id();
-          if (idx<this->size()) {
-            auto& cell=*(*this)[idx]->template as<Cell>();
-            f(cell,idx);
-          }
+      auto dev=syclQ().get_device();
+      // 1. Max threads per single work-group
+      size_t max_wg_size = dev.get_info<sycl::info::device::max_work_group_size>();
+
+      // 2. Hardware SIMD width (Sub-group size, usually 8, 16, or 32 on Intel)
+      std::vector<size_t> sg_sizes = dev.get_info<sycl::info::device::sub_group_sizes>();
+      size_t native_sg_size = sg_sizes.back(); // Usually 16 or 32 is best for compute
+
+      // 3. Total physical SLM available per hardware compute unit (DSS)
+      size_t max_slm_size = dev.get_info<sycl::info::device::local_mem_size>(); 
+
+      // 4. Maximum number of compute units (Execution units / DSS count)
+      uint32_t max_compute_units = dev.get_info<sycl::info::device::max_compute_units>();
+
+      size_t workGroupSize=native_sg_size;
+//      if (workGroupSize > max_wg_size) 
+//        workGroupSize = max_wg_size; // Fallback for limited devices
+//      
+//      // Ensure it aligns perfectly with hardware SIMD lanes
+//      workGroupSize = (workGroupSize / native_sg_size) * native_sg_size;
+
+      size_t wg_per_compute_unit = max_slm_size / LocalAllocatorSize;
+      // To maximize latency hiding, it's often beneficial to double or triple this 
+      // so the GPU can switch to a waiting wave while another wave is blocked by a barrier.
+      size_t num_work_groups = max_compute_units * wg_per_compute_unit;
+
+      num_work_groups=std::min(num_work_groups,this->size());
+      std::cout<<max_slm_size<<" max_slm_size "<<max_compute_units<<" max_compute_units "<<num_work_groups<<" work groups of "<<workGroupSize<<" threads"<<std::endl;
+
+      DeviceType<bool> fatalError(false);
+      for (size_t cellStart=0; cellStart<this->size() && !*fatalError; cellStart+=num_work_groups)
+        syclQ().submit([&](auto& h) {
+          h.parallel_for(sycl::nd_range<1>(num_work_groups*workGroupSize, workGroupSize), [=,this,fatalError=&*fatalError](auto i) {
+            auto next=sycl::ext::oneapi::group_local_memory_for_overwrite<unsigned>(syclGroup());
+            if (syclGroup().leader()) {*next = 0;} // reset local memory allocation
+            sycl::group_barrier(syclGroup()); 
+            //sycl::ext::oneapi::group_local_memory_for_overwrite<char[LocalAllocatorSize]>(syclGroup());
+
+            auto idx = cellStart+i.get_group_linear_id();
+            auto stride = i.get_group_range(0);
+            if (idx < this->size()) {
+              auto& cell=*(*this)[idx]->template as<Cell>();
+              f(cell,idx);
+            }
+            // flag fatal error to throw afterwards.
+            if (syclGroup().leader() && *next==~0U) *fatalError=true;
+          });
         });
-      }).wait_and_throw();
+      syclQ().wait_and_throw();
+      if (*fatalError)
+        throw std::runtime_error("Local Allocator Exhausted");
 #else
       hostForAll(f);
 #endif

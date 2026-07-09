@@ -18,6 +18,11 @@ namespace ecolab
   /// memory allocated to each order, total memory allocated on device=poolSize*(maxOrder-minOrder)
   constexpr unsigned poolSize=32*1024*1024;
 
+  void setFatalError() {
+    *sycl::ext::oneapi::group_local_memory_for_overwrite<unsigned>(syclGroup())=~0U;
+    sycl::group_barrier(syclGroup());
+  }
+  
   // Lock free circular buffer queue for SYCL
   template <unsigned size>
   class Queue
@@ -47,7 +52,7 @@ namespace ecolab
   template <> class DeviceAllocator<maxOrder> {
   public:
     void init(sycl::queue& q) {}
-    void* allocate(size_t sz) {return nullptr;}
+    void* allocate(size_t sz) {setFatalError(); return nullptr;}
     void deallocate(void* p, size_t) {sycl::ext::oneapi::experimental::printf("%x leaked on device\n",p);}
   };
 
@@ -122,32 +127,23 @@ namespace ecolab
     template<class U> struct rebind {using other=HostSharedAllocator<U>;};
   };
 
+  constexpr static unsigned LocalAllocatorSize=30*1024; // 32KiB = half typical local storage
 #ifdef __SYCL_DEVICE_ONLY__
-  template <size_t size>
-  class LocalAllocatorImpl
-  {
-    static_assert((size&(size-1))==0); // assert power of 2
-    unsigned next=0;
-    char buffer[size-1];
-  public:
-    void* allocate(size_t n) {
-      unsigned offs=next;
-      sycl::group_barrier(syclGroup());
-      if (syclGroup().leader()) next+=n;
-      return buffer+offs;
-    }
-  };
-
+  /**
+     A Local allocator allocates memory from device local memory,
+     which is shared between threads of a work group, and has the same
+     lifetime as the kernel
+  */
   template <class T>
   class LocalAllocator
   {
-    constexpr static unsigned size=32*1024;
-    using BufferType=char[sizeof(LocalAllocatorImpl<size>)];
-    using LocalBufferType=decltype(sycl::ext::oneapi::group_local_memory_for_overwrite<BufferType>(syclGroup()));
-    // pointer is same for all instantiations in this group
-    LocalBufferType buffer=sycl::ext::oneapi::group_local_memory_for_overwrite<BufferType>(syclGroup());
-    LocalAllocatorImpl<size>& impl() const
-    {return reinterpret_cast<LocalAllocatorImpl<size>&>(**buffer);}
+//  private:
+//    using LocalIndex=decltype(sycl::ext::oneapi::group_local_memory<unsigned>(syclGroup(),0));
+//    //LocalIndex next=sycl::ext::oneapi::group_local_memory<unsigned>(syclGroup(),0);
+//    using BufferType=char[size];
+//    using LocalBufferType=decltype(sycl::ext::oneapi::group_local_memory_for_overwrite<char[16*1024]>(syclGroup()));
+//    // pointer is same for all instantiations in this group
+//    //LocalBufferType buffer=sycl::ext::oneapi::group_local_memory_for_overwrite<char[16*1024]>(syclGroup());
   public:
     using value_type=T;
     using pointer=T*;
@@ -155,13 +151,23 @@ namespace ecolab
     using difference_type=std::ptrdiff_t;
     using propagate_on_container_move_assignment=std::true_type;
 
-    LocalAllocator() {
-      if (syclGroup().leader())
-        new (*buffer) LocalAllocatorImpl<size>();
-      sycl::group_barrier(syclGroup());
-    }
     // no need for destructor, as Impl has nothing to tear down
-    T* allocate(size_t n) {return reinterpret_cast<T*>(impl().allocate(n*sizeof(T)));}
+    __attribute__((always_inline)) T* allocate(size_t n) {
+      unsigned& next=*sycl::ext::oneapi::group_local_memory_for_overwrite<unsigned>(syclGroup());
+      unsigned offs=next;
+      if (next==~0U) return nullptr;
+      if (offs+n*sizeof(T)>LocalAllocatorSize)
+        {
+          setFatalError(); 
+          return nullptr;
+        }
+      //assert(offs+n*sizeof(T)<=LocalAllocatorSize);
+      sycl::group_barrier(syclGroup());
+      if (syclGroup().leader()) next+=n*sizeof(T);
+      sycl::group_barrier(syclGroup());
+      return reinterpret_cast<T*>
+        ((*sycl::ext::oneapi::group_local_memory_for_overwrite<char[LocalAllocatorSize]>(syclGroup()))+offs);
+    }
     void deallocate(T*,size_t) {} // cleaned up when group exits
     template<class U> struct rebind {using other=LocalAllocator<U>;};
   };

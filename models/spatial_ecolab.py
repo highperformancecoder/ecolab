@@ -61,7 +61,6 @@ mut_factor=1000
 extinctions=0
 migrations=0
 def stepImpl():
-    #ecolab.setDensitiesDevice()
     ecolab.generate(100)
     ecolab.mutate()
 
@@ -75,8 +74,6 @@ def stepImpl():
     migrations+=ecolab.migrate()
     extinctions+=ecolab.condense()
     #ecolab.syncThreads()
-    #print(ecolab.nsp()())
-    #ecolab.setDensitiesShared()
     #ecolab.gather()
 
 print(ecolab.nsp()())
