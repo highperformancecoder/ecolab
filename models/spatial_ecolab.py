@@ -30,8 +30,8 @@ ecolab.species(range(nsp))
 
 numX=12
 numY=12
-#numX=2
-#numY=2
+#numX=1
+#numY=1
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 

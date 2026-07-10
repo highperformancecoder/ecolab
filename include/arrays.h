@@ -1494,7 +1494,8 @@ namespace ecolab
         if (!p)
           {
 #ifdef __SYCL_DEVICE_ONLY__
-            printf("failed to allocate %d bytes in array\n",sizeof(T)*n);
+            printf("failed to allocate %d bytes in array on group %u, thread %u\n",
+                   sizeof(T)*n,syclGroup().get_group_linear_id(),syclGroup().get_local_linear_id());
 #endif
             return nullptr; // SYCL allocator returns nullptr if not initialised
           }

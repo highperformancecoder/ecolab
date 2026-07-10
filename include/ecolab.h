@@ -267,16 +267,19 @@ namespace ecolab
       size_t num_work_groups = max_compute_units * wg_per_compute_unit;
 
       num_work_groups=std::min(num_work_groups,this->size());
-      std::cout<<max_slm_size<<" max_slm_size "<<max_compute_units<<" max_compute_units "<<num_work_groups<<" work groups of "<<workGroupSize<<" threads"<<std::endl;
+      //std::cout<<max_slm_size<<" max_slm_size "<<max_compute_units<<" max_compute_units "<<num_work_groups<<" work groups of "<<workGroupSize<<" threads"<<std::endl;
 
       DeviceType<bool> fatalError(false);
       for (size_t cellStart=0; cellStart<this->size() && !*fatalError; cellStart+=num_work_groups)
         syclQ().submit([&](auto& h) {
           h.parallel_for(sycl::nd_range<1>(num_work_groups*workGroupSize, workGroupSize), [=,this,fatalError=&*fatalError](auto i) {
-            auto next=sycl::ext::oneapi::group_local_memory_for_overwrite<unsigned>(syclGroup());
-            if (syclGroup().leader()) {*next = 0;} // reset local memory allocation
-            sycl::group_barrier(syclGroup()); 
+            //auto next=sycl::ext::oneapi::group_local_memory_for_overwrite<unsigned>(syclGroup());
+            auto fatalErrorFlag=sycl::ext::oneapi::group_local_memory<FatalErrorFlag>(syclGroup(),false);
             //sycl::ext::oneapi::group_local_memory_for_overwrite<char[LocalAllocatorSize]>(syclGroup());
+            if (syclGroup().leader()) {
+              localAllocatorBuffer().next = 0;
+            } // reset local memory allocation
+            sycl::group_barrier(syclGroup()); 
 
             auto idx = cellStart+i.get_group_linear_id();
             auto stride = i.get_group_range(0);
@@ -285,7 +288,7 @@ namespace ecolab
               f(cell,idx);
             }
             // flag fatal error to throw afterwards.
-            if (syclGroup().leader() && *next==~0U) *fatalError=true;
+            if (syclGroup().leader() && fatalErrorFlag->flag) *fatalError=true;
           });
         });
       syclQ().wait_and_throw();

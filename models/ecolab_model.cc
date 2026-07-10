@@ -124,12 +124,7 @@ void setArray(array<int,ecolab::CellBase::CellAllocator<int>>& x, const array<in
 
 void EcolabPoint::generate(unsigned niter, const ModelData& model)
 {
-//#ifdef __SYCL_DEVICE_ONLY__
-//  //Float* interactionResult=groupBuffer<Float,SpatialModel::log2MaxNsp>(density.size());
-//  array<Float,LocalAllocator> interactionResult(density.size());
-//#else
   array<Float,LocalAllocator<Float>> interactionResult(density.size());
-  //#endif
   for (unsigned step=0; step<niter; step++)
     {
       array_ns::map(density.size(),  [&](size_t i){
@@ -330,6 +325,7 @@ EcolabPoint::LocalArray EcolabPoint::mutate(const E& mut_scale)
   groupBarrier();
   if (syclGroup().leader())
     offsets[nsp]=offsets[nsp-1]+speciations[nsp-1];
+  groupBarrier();
 
   if (offsets[nsp]==0) return {};
   
