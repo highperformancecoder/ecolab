@@ -186,8 +186,6 @@ namespace ecolab
     void deallocate(T*,size_t) {} // cleaned up when group exits
     template<class U> struct rebind {using other=LocalAllocator<U>;};
   };
-#else
-  template <class T> using LocalAllocator=std::allocator<T>;
 #endif
    
 }
