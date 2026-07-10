@@ -118,7 +118,6 @@ struct PanmicticModel: public ModelData, public EcolabPoint, public ecolab::Mode
 struct EcolabCell: public EcolabPoint, public graphcode::Object<EcolabCell>
 {
   unsigned id=0; // stash the graphcode node id here so it is accessible from within the cell, rather than its pointer wrapper
-//  array<int,GlobalDeviceAllocator<int>> delta;
 };
 
 class SpatialModel: public ModelData, public EcolabGraph<EcolabCell>,
@@ -135,9 +134,6 @@ public:
   EcolabCell& cell(size_t x, size_t y) {
     return *objects[makeId(x,y)];
   }
-  /// on GPUs, set the 
-//  void setDensitiesShared();
-//  void setDensitiesDevice();
   array<unsigned> nsp() const;
   void makeConsistent();
   void seed(unsigned x) {forAll([=](EcolabCell& cell,size_t){cell.rand.seed(x);});}

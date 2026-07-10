@@ -87,41 +87,10 @@ template <class E>
 RoundArray<E,EcolabPoint> EcolabPoint::roundArray(const E& expr)
 {return RoundArray<E,EcolabPoint>(*this,expr);}
 
-template <> void setArray(array<int,std::allocator<int>>& x, const array<int>& y)
-{x=y;}
-template <> array<int> getArray(const array<int,std::allocator<int>>& x) {return x;}
-
-#ifdef SYCL_LANGUAGE_VERSION
-template <>
-array<int> getArray(const array<int,ecolab::CellBase::CellAllocator<int>>& x) 
-{
-  DeviceType<size_t> size;
-  DeviceType<const int*> xData;
-  syclQ().single_task([size=&*size,xData=&*xData,x=&x](){
-    *size=x->size();
-    *xData=x->data();
-  }).wait();
-  array<int> r(*size);
-  syclQ().copy(*xData,r.data(),*size);
-  return r;
-}
-
-template <>
-void setArray(array<int,ecolab::CellBase::CellAllocator<int>>& x, const array<int>& y)
-{
-  auto size=y.size();
-  DeviceType<int*> xData;
-  syclQ().single_task([size,x=&x,xData=&*xData](){
-    //array<int,typename B::template CellAllocator<int>> tmp(size,this->template allocator<int>());
-    //m_density.swap(tmp);
-    x->resize(size);
-    *xData=x->data(); //return allocated data pointer to host
-  }).wait();
-  syclQ().copy(y.data(),*xData,size);
-}
-#endif
-
-
+//template <> void setArray(array<int,std::allocator<int>>& x, const array<int>& y)
+//{x=y;}
+//template <> array<int> getArray(const array<int,std::allocator<int>>& x) {return x;}
+//
 void EcolabPoint::generate(unsigned niter, const ModelData& model)
 {
   array<Float,LocalAllocator<Float>> interactionResult(density.size());

@@ -102,93 +102,9 @@ namespace ecolab
   {
     size_t m_idx=0; // stash the position within the local node vector here
     size_t idx() const {return m_idx;}
-#ifdef SYCL_LANGUAGE_VERSION
-    using MemAllocator=DeviceAllocator<>;
-    MemAllocator* memAlloc=nullptr;
-    template <class T> class CellAllocator
-    {
-    public:
-      MemAllocator* memAlloc=nullptr;
-      template <class U> friend class Allocator;
-      CellAllocator()=default;
-      CellAllocator(MemAllocator* memAlloc): memAlloc(memAlloc) {}
-      template <class U> CellAllocator(const CellAllocator<U>& x): memAlloc(x.memAlloc) {}
-      T* allocate(size_t sz) {
-        //#ifdef  __SYCL_DEVICE_ONLY__
-        if (memAlloc)  {
-          auto r=reinterpret_cast<T*>(memAlloc->allocate(sz*sizeof(T)));
-          if (!r) printf("Mem allocation failed\n");
-          return r;
-        }
-        printf("Missing allocator memAlloc=%x\n",memAlloc);
-        return nullptr; // TODO raise an error?? how? We can't throw an exception here
-//#else
-//        auto r=sycl::malloc_shared<T>(sz,syclQ());
-//        return r;
-//#endif
-      }
-      void deallocate(T* p,size_t n) {
-        if (!p) return;
-        if (memAlloc && memAlloc->inAllocator(p)) {
-          memAlloc->deallocate(p,n);
-          return;
-        }
-        //#ifdef  __SYCL_DEVICE_ONLY__
-        printf("leaked %d bytes\n",n*sizeof(T));
-//#else        
-//        sycl::free(p,syclQ());
-//#endif
-      }
-      bool operator==(const CellAllocator& x) const {return memAlloc==x.memAlloc;}
-    };
-    template <class T> CellAllocator<T> allocator() const {
-      return CellAllocator<T>(memAlloc);
-    }
-#else //!SYCL
-    template <class T> using CellAllocator=std::allocator<T>;
-    template <class T> CellAllocator<T> allocator() const {return CellAllocator<T>();}
-#endif
   };
 
-  template <class T>
-  void printAllocator(const char* prefix, const T&) {}
-  
-  template <class T>
-  void printAllocator(const char* prefix, const CellBase::CellAllocator<T>& x)
-  {printf("%s: allocator.desc=%p memAlloc=%p\n",prefix,x.desc,x.memAlloc);}
-  
-  
-  class SyclGraphBase
-  {
-  protected:
-#ifdef SYCL_LANGUAGE_VERSION
-    using MemAllocator=CellBase::MemAllocator;
-    MemAllocator *sharedMemAlloc=nullptr, *deviceMemAlloc=nullptr;
-    SyclGraphBase() {
-      // for now, do not use on-device dynamic allocation
-      sharedMemAlloc=sycl::malloc_shared<MemAllocator>(1, syclQ());
-      new(sharedMemAlloc) MemAllocator;
-      sharedMemAlloc->init(syclQ());
-//      deviceMemAlloc=sycl::malloc_shared<MemAllocator>(1, syclQ());
-//      new(deviceMemAlloc) MemAllocator;
-//      deviceMemAlloc->init(syclQ()); // TODO - run this on device?
-//      sharedMemAlloc->initialize(syclQ(), sycl::usm::alloc::shared, 512ULL * 1024ULL * 1024ULL); // TODO - expose this Python?
-//      deviceMemAlloc->initialize(syclQ(), sycl::usm::alloc::device, 512ULL * 1024ULL * 1024ULL); // TODO - expose this Python?
-    }
-    ~SyclGraphBase() {
-      sharedMemAlloc->~MemAllocator();
-      sycl::free(sharedMemAlloc,syclQ());
-//      deviceMemAlloc->~MemAllocator();
-//      sycl::free(deviceMemAlloc,syclQ());
-    }
-    // deleted because we're managing a resource here
-    SyclGraphBase(const SyclGraphBase&)=delete;
-    void operator=(const SyclGraphBase&)=delete;
-#endif      
-  };
-
-  template <class Cell> struct EcolabGraph:
-    public Exclude<SyclGraphBase>, public graphcode::Graph<Cell>
+  template <class Cell> struct EcolabGraph: public graphcode::Graph<Cell>
   {
 #ifdef SYCL_LANGUAGE_VERSION
     EcolabGraph(): graphcode::Graph<Cell>
@@ -273,9 +189,6 @@ namespace ecolab
       for (size_t cellStart=0; cellStart<this->size() && !*fatalError; cellStart+=num_work_groups)
         syclQ().submit([&](auto& h) {
           h.parallel_for(sycl::nd_range<1>(num_work_groups*workGroupSize, workGroupSize), [=,this,fatalError=&*fatalError](auto i) {
-            //auto next=sycl::ext::oneapi::group_local_memory_for_overwrite<unsigned>(syclGroup());
-            auto fatalErrorFlag=sycl::ext::oneapi::group_local_memory<FatalErrorFlag>(syclGroup(),false);
-            //sycl::ext::oneapi::group_local_memory_for_overwrite<char[LocalAllocatorSize]>(syclGroup());
             if (syclGroup().leader()) {
               localAllocatorBuffer().next = 0;
             } // reset local memory allocation
@@ -288,7 +201,7 @@ namespace ecolab
               f(cell,idx);
             }
             // flag fatal error to throw afterwards.
-            if (syclGroup().leader() && fatalErrorFlag->flag) *fatalError=true;
+            *fatalError=fatalErrorFlag();
           });
         });
       syclQ().wait_and_throw();

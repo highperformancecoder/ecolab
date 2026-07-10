@@ -23,10 +23,8 @@ namespace ecolab
     bool flag;
   };
   
-  void setFatalError() {
-    printf("setting fatal error\n");
-    sycl::ext::oneapi::group_local_memory_for_overwrite<FatalErrorFlag>(syclGroup())->flag=true;
-    sycl::group_barrier(syclGroup());
+  inline __attribute__((noinline)) bool& fatalErrorFlag() {
+    return sycl::ext::oneapi::group_local_memory<FatalErrorFlag>(syclGroup(),false)->flag;
   }
   
   // Lock free circular buffer queue for SYCL
@@ -59,7 +57,7 @@ namespace ecolab
   public:
     void init(sycl::queue& q) {}
     void* allocate(size_t sz) {
-      setFatalError();
+      fatalErrorFlag()=true;
       return nullptr;
     }
     void deallocate(void* p, size_t) {sycl::ext::oneapi::experimental::printf("%x leaked on device\n",p);}
@@ -174,7 +172,7 @@ namespace ecolab
       unsigned offs=b.next;
       if (offs+n*sizeof(T)>LocalAllocatorSize)
         {
-          setFatalError();
+          fatalErrorFlag()=true;
           return nullptr;
         }
       sycl::group_barrier(syclGroup());
