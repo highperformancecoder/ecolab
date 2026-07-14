@@ -94,10 +94,12 @@ RoundArray<E,EcolabPoint> EcolabPoint::roundArray(const E& expr)
 void EcolabPoint::generate(unsigned niter, const ModelData& model)
 {
   array<Float,LocalAllocator<Float>> interactionResult(density.size());
+  array<int,LocalAllocator<int>> lDensity(density);
+
   for (unsigned step=0; step<niter; step++)
     {
-      array_ns::map(density.size(),  [&](size_t i){
-        interactionResult[i]=model.interaction.diag[i]*density[i];
+      array_ns::map(lDensity.size(),  [&](size_t i){
+        interactionResult[i]=model.interaction.diag[i]*lDensity[i];
       });
       groupBarrier();
       array_ns::map(model.interaction.row.size(), [&](size_t i){
@@ -105,15 +107,15 @@ void EcolabPoint::generate(unsigned niter, const ModelData& model)
         sycl::atomic_ref<Float, sycl::memory_order::relaxed, sycl::memory_scope::work_group>
 #endif
           (interactionResult[model.interaction.row[i]]) +=
-          model.interaction.val[i]*density[model.interaction.col[i]];
+          model.interaction.val[i]*lDensity[model.interaction.col[i]];
       });
       
       groupBarrier();
-      array_ns::map(density.size(),  [&](size_t i){
-        density[i]=ROUND(density[i] + density[i] * (model.repro_rate[i] + interactionResult[i]));
+      array_ns::map(lDensity.size(),  [&](size_t i){
+        lDensity[i]=ROUND(lDensity[i] + lDensity[i] * (model.repro_rate[i] + interactionResult[i]));
       });
-      groupBarrier();
     }
+  density=lDensity;
   assert(all(density>=0));
 //  // sequential/non-GPU version
 //  for (unsigned i=0; i<niter; i++)

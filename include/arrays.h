@@ -1569,16 +1569,11 @@ namespace ecolab
       template <class E>
       void asgV(const A& alloc, size_t size, const E& x)
       {
-//#ifdef __SYCL_DEVICE_ONLY__
-//        GroupLocal<array> tmp(size,alloc);
-//        array_ns::asg_v(tmp->dt->dt,size,x);
-//        groupBarrier();
-//        if (syclGroup().leader()) swap(*tmp);
-//#else
-        array tmp(size,alloc);
-        asg_v(tmp.data(),size,x);
-        swap(tmp);
-        //#endif
+#ifdef __SYCL_DEVICE_ONLY__
+        if (syclGroup().leader())
+#endif
+          resize(size);
+        asg_v(data(),size,x);
       }
       
       void copy() //any nonconst method needs to call this

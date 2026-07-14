@@ -82,7 +82,7 @@ ecolab.syncThreads()
 print(ecolab.nsp()())
 
 from timeit import timeit
-print(timeit('stepImpl()', globals=globals(), number=10))
+print(timeit('stepImpl()', globals=globals(), number=100))
                 
 def step():
     global extinctions,migrations

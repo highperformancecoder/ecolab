@@ -170,7 +170,7 @@ namespace ecolab
       // 4. Maximum number of compute units (Execution units / DSS count)
       uint32_t max_compute_units = dev.get_info<sycl::info::device::max_compute_units>();
 
-      size_t workGroupSize=native_sg_size;
+      size_t workGroupSize=256;
 //      if (workGroupSize > max_wg_size) 
 //        workGroupSize = max_wg_size; // Fallback for limited devices
 //      
