@@ -218,11 +218,7 @@ void SpatialModel::mutate()
   
   groupedForAll([newSp=newSp.data(),mut_scale=&*mut_scale,this](EcolabCell& c,size_t i) {
     assert(all(c.density>=0));
-    auto tmp{c.mutate(*mut_scale)};
-#ifdef __SYCL_DEVICE_ONLY__
-    if (syclGroup().leader() && tmp.size())
-#endif
-      newSp[i]=tmp;
+    newSp[i]=c.mutate(*mut_scale);
   });
 
   hostForAll([](EcolabCell& c,size_t) {
