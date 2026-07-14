@@ -1573,6 +1573,7 @@ namespace ecolab
         if (syclGroup().leader())
 #endif
           resize(size);
+        //groupBarrier();
         asg_v(data(),size,x);
       }
       

@@ -33,7 +33,11 @@ namespace ecolab
   sycl::queue& syclQ();
   void* reallocSycl(void*,size_t);
 
-  inline void groupBarrier() {sycl::group_barrier(syclGroup());}
+  inline void groupBarrier() {
+#ifdef __SYCL_DEVICE_ONLY__
+    sycl::group_barrier(syclGroup());
+#endif
+  }
 
   inline void syncThreads() {syclQ().wait_and_throw();}
 
