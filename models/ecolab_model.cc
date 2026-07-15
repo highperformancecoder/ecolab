@@ -170,7 +170,7 @@ unsigned PanmicticModel::condense()
 
 unsigned SpatialModel::condense()
 {
-  array<int> total_density(species.size());
+  array<int> total_density(species.size(),0);
   for (auto& i: *this) total_density+=i->as<EcolabCell>()->density; // TODO
 #ifdef MPI_SUPPORT
   array<int> recv(total_density.size());
@@ -240,16 +240,10 @@ void SpatialModel::mutate()
 
   // deallocate on device
   groupedForAll([newSp=newSp.data()](EcolabCell& c,size_t i) {
- #ifdef __SYCL_DEVICE_ONLY__
-    if (syclGroup().leader())
-#endif
-      {
-        newSp[i].clear();
-        assert(newSp[i].refCnt()==0);
-      }
+    newSp[i].clear();
+    assert(newSp[i].refCnt()==0);
   });
    
-  if (new_sp.size()==0) return;
 
 #ifdef MPI_SUPPORT
   MPIbuf b; b<<new_sp<<(*cell_ids); b.gather(0);
@@ -266,15 +260,18 @@ void SpatialModel::mutate()
     }
   MPIbuf() << (*cell_ids) << *(ModelData*)this << bcast(0)
            >> (*cell_ids) >> *(ModelData*)this;
+  if (cell_ids->size()==0) return;
 #else
+  if (new_sp.size()==0) return;
   ModelData::mutate(new_sp);
 #endif
-  if (cell_ids->size()==0) return;
+
   // set the new species density to 1 for those created on this cell
   //groupedForAll([cell_ids=&*cell_ids](EcolabCell& c) {
-  hostForAll([cell_ids=&*cell_ids](EcolabCell& c,size_t) {
+  hostForAll([cell_ids=&*cell_ids,this](EcolabCell& c,size_t) {
     assert(all(c.density>=0));
     c.density <<= (*cell_ids)==c.id;
+    assert(c.density.size()==this->species.size());
   });
 }
 
@@ -290,7 +287,7 @@ EcolabPoint::LocalArray EcolabPoint::mutate(const E& mut_scale)
   sycl::joint_exclusive_scan(syclGroup(),speciations.data(),speciations.data()+nsp,
                              offsets.data(),sycl::plus<unsigned>());
   groupBarrier();
-  if (syclGroup().leader())
+  if (groupLeader())
     offsets[nsp]=offsets[nsp-1]+speciations[nsp-1];
   groupBarrier();
 
@@ -305,6 +302,7 @@ EcolabPoint::LocalArray EcolabPoint::mutate(const E& mut_scale)
       p[j]=i;
   });
   
+  groupBarrier();
   return new_sp;
 #else
   array<unsigned> speciations=roundArray(mut_scale * density);

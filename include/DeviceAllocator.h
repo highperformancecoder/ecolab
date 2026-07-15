@@ -77,10 +77,15 @@ namespace ecolab
       });
       nextAllocator.init(q);
     }
+    // all members of group get the same pointer
     void* allocate(size_t size) {
       if (size==0) return nullptr;
       if (size<=pageSize) {
-        auto offs=queue.dequeue();
+        unsigned offs;
+        if (groupLeader()) offs=queue.dequeue();
+#ifdef __SYCL_DEVICE_ONLY__
+        offs=sycl::group_broadcast(syclGroup(),offs);
+#endif
         if (offs!=~0U)
           return memory+offs;
       }
@@ -89,7 +94,9 @@ namespace ecolab
     void deallocate(void* p, size_t size) {
       if (!p) return;
       if (p>=memory && p<memory+poolSize) {
-        queue.enqueue((reinterpret_cast<char*>(p)-memory)>>order);
+        groupBarrier();
+        if (groupLeader())
+          queue.enqueue((reinterpret_cast<char*>(p)-memory)>>order);
         return;
       }
       nextAllocator.deallocate(p,size);

@@ -33,12 +33,6 @@ namespace ecolab
   sycl::queue& syclQ();
   void* reallocSycl(void*,size_t);
 
-  inline void groupBarrier() {
-#ifdef __SYCL_DEVICE_ONLY__
-    sycl::group_barrier(syclGroup());
-#endif
-  }
-
   inline void syncThreads() {syclQ().wait_and_throw();}
 
   /// SyclType is a pointer type, that when allocated via new is allocated from USM
@@ -134,6 +128,20 @@ namespace ecolab
 #ifndef __SYCL_DEVICE_ONLY__
   template <class T> using LocalAllocator=std::allocator<T>;
 #endif
+  
+  inline void groupBarrier() {
+#ifdef __SYCL_DEVICE_ONLY__
+    sycl::group_barrier(syclGroup());
+#endif
+  }
+
+  inline bool groupLeader() {
+#ifdef __SYCL_DEVICE_ONLY__
+    return syclGroup().leader();
+#endif
+    return true;
+  }
+
 
 }
 
