@@ -1137,8 +1137,8 @@ namespace ecolab
     template <class E, class I>
     class RVindex 
     {
-      E expr;
-      I idx;
+      const E& expr;
+      const I& idx;
       void operator=(const RVindex&);
     public:
       typedef typename E::value_type value_type;
@@ -1246,7 +1246,7 @@ namespace ecolab
     class unop
     {
     public:
-      E e;
+      const E& e;
       Op op;
 
       unop(const E& expr): e(expr) {}
@@ -1270,8 +1270,8 @@ namespace ecolab
     class binop
     {
     public:
-      E1 e1;
-      E2 e2;
+      const E1& e1;
+      const E2& e2;
       Op op;
 
       binop(const E1& ex1, const E2& ex2): e1(ex1), e2(ex2) {conformance_check(e1,e2);}
@@ -1571,8 +1571,10 @@ namespace ecolab
       template <class E>
       void asgV(size_t size, const E& x)
       {
-        resize(size);
-        asg_v(data(),size,x);
+        // copy into temporary data, as E may contain references to this
+        array tmp(size);
+        asg_v(tmp.data(),size,x);
+        swap(tmp);
       }
       
       void copy() //any nonconst method needs to call this
