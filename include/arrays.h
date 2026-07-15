@@ -1630,7 +1630,8 @@ namespace ecolab
             typename enable_if< is_expression<expr>, void*>::T dummy=0): m_allocator(alloc)
       {
         set_size(e.size());
-        operator=(e);
+        asg_v(data(),e.size(),e);
+        //operator=(e);
       }
 
       ~array() {release();}
