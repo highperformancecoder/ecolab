@@ -1137,8 +1137,8 @@ namespace ecolab
     template <class E, class I>
     class RVindex 
     {
-      const E& expr;
-      const I& idx;
+      E expr;
+      I idx;
       void operator=(const RVindex&);
     public:
       typedef typename E::value_type value_type;
@@ -1246,7 +1246,7 @@ namespace ecolab
     class unop
     {
     public:
-      const E& e;
+      E e;
       Op op;
 
       unop(const E& expr): e(expr) {}
@@ -1270,8 +1270,8 @@ namespace ecolab
     class binop
     {
     public:
-      const E1& e1;
-      const E2& e2;
+      E1 e1;
+      E2 e2;
       Op op;
 
       binop(const E1& ex1, const E2& ex2): e1(ex1), e2(ex2) {conformance_check(e1,e2);}

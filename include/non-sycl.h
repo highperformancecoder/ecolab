@@ -11,7 +11,6 @@ namespace ecolab
 {
   template <class T, ecolab::USMAlloc U> struct SyclQAllocator: public std::allocator<T> {};
   
-  inline void groupBarrier() {}
   inline void syncThreads() {}
 
   /// Non SYCL version of SyclType
