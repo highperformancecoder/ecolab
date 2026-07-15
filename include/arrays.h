@@ -1572,9 +1572,16 @@ namespace ecolab
       void asgV(size_t size, const E& x)
       {
         // copy into temporary data, as E may contain references to this
+#ifdef __SYCL_DEVICE_ONLY__
+        array<T,LocalAllocator<T>> tmp(size);
+        asg_v(tmp.data(),size,x);
+        resize(size);
+        asg_v(data(),size,tmp);
+#else
         array tmp(size);
         asg_v(tmp.data(),size,x);
         swap(tmp);
+#endif
       }
       
       void copy() //any nonconst method needs to call this
