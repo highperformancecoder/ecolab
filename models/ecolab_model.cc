@@ -93,27 +93,36 @@ RoundArray<E,EcolabPoint> EcolabPoint::roundArray(const E& expr)
 //
 void EcolabPoint::generate(unsigned niter, const ModelData& model)
 {
-  array<Float,LocalAllocator<Float>> interactionResult(density.size());
+  //array<Float,LocalAllocator<Float>> interactionResult(density.size());
   array<int,LocalAllocator<int>> lDensity(density);
-
+  
   for (unsigned step=0; step<niter; step++)
     {
       array_ns::map(lDensity.size(),  [&](size_t i){
-        interactionResult[i]=model.interaction.diag[i]*lDensity[i];
+        Float ir=model.interaction.diag[i]*lDensity[i];
+        for (auto& j: model.oDiagIdx[i])
+          ir+=model.interaction.val[j]*lDensity[model.interaction.col[j]];
+//        for (unsigned k=0; k<odiagIdx[i].size(); ++k) 
+//          {
+//            auto j=odiagIdx[i][k];
+//            ir+=model.interaction.val[j]*lDensity[model.interaction.col[j]];
+//          }
+        lDensity[i]=ROUND(lDensity[i] + lDensity[i] * (model.repro_rate[i] + ir));
       });
-      groupBarrier();
-      array_ns::map(model.interaction.row.size(), [&](size_t i){
-#ifdef __SYCL_DEVICE_ONLY__
-        sycl::atomic_ref<Float, sycl::memory_order::relaxed, sycl::memory_scope::work_group>
-#endif
-          (interactionResult[model.interaction.row[i]]) +=
-          model.interaction.val[i]*lDensity[model.interaction.col[i]];
-      });
+//      groupBarrier();
+//      array_ns::map(model.interaction.row.size(), [&](size_t i){
+//#ifdef __SYCL_DEVICE_ONLY__
+//        sycl::atomic_ref<Float, sycl::memory_order::relaxed, sycl::memory_scope::work_group>
+//#endif
+//          (interactionResult[model.interaction.row[i]]) +=
+//          model.interaction.val[i]*lDensity[model.interaction.col[i]];
+//      });
+//      
+//      groupBarrier();
       
-      groupBarrier();
-      array_ns::map(lDensity.size(),  [&](size_t i){
-        lDensity[i]=ROUND(lDensity[i] + lDensity[i] * (model.repro_rate[i] + interactionResult[i]));
-      });
+//      array_ns::map(lDensity.size(),  [&](size_t i){
+//        lDensity[i]=ROUND(lDensity[i] + lDensity[i] * (model.repro_rate[i] + interactionResult[i]));
+//      });
     }
   density=lDensity;
   assert(all(density>=0));
@@ -266,6 +275,8 @@ void SpatialModel::mutate()
   ModelData::mutate(new_sp);
 #endif
 
+  computeODiagIdx();
+  
   // set the new species density to 1 for those created on this cell
   //groupedForAll([cell_ids=&*cell_ids](EcolabCell& c) {
   hostForAll([cell_ids=&*cell_ids,this](EcolabCell& c,size_t) {
@@ -712,6 +723,14 @@ void ModelData::makeConsistent(size_t nsp)
   if (!create.size()) create.resize(species.size(),0);
   if (!mutation.size()) mutation.resize(species.size(),0);
   if (!migration.size()) migration.resize(species.size(),0);
+  computeODiagIdx();
+}
+
+void ModelData::computeODiagIdx()
+{
+  oDiagIdx.clear(); oDiagIdx.resize(species.size());
+  for (unsigned i=0; i<interaction.row.size(); ++i)
+    oDiagIdx[interaction.row[i]]<<=i;
 }
 
 void SpatialModel::makeConsistent()

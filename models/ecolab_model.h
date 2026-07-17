@@ -47,6 +47,8 @@ struct ModelData
   array<int,Allocator<int>> species;
   array<Float,Allocator<Float>> create, repro_rate, mutation, migration;
   sparse_mat<Float,Allocator> interaction;
+  using UnsignedArray=array<unsigned,Allocator<unsigned>>;
+  std::vector<UnsignedArray,Allocator<UnsignedArray>> oDiagIdx;
   sparse_mat_graph foodweb;
   unsigned long long tstep=0, last_mut_tstep=0, last_mig_tstep=0;
   //mutation parameters
@@ -55,6 +57,7 @@ struct ModelData
   bool fixMutation=false, fixMigration=false;
   
   void makeConsistent(size_t nsp);
+  void computeODiagIdx();
   void random_interaction(unsigned conn, double sigma);
   void condense(const array<bool>& mask, size_t mask_true);
   void mutate(const array<int>&); 
@@ -72,18 +75,19 @@ template <class T,class A> array<T> getArray(const array<T,A>&);
 class EcolabPoint
 {
 public:
-  Float salt;  /* random no. used for migration */
 #ifdef SYCL_LANGUAGE_VERSION
   template <class T> using Allocator=GlobalDeviceAllocator<T>;
 #else
   template <class T> using Allocator=std::allocator<T>;
 #endif
+  using UnsignedArray=array<unsigned,Allocator<unsigned>>;
+  using LocalArray=array<unsigned,LocalAllocator<unsigned>>;
+
+  Float salt;  /* random no. used for migration */
   array<int,Allocator<int>> density;
   
   void generate(unsigned niter, const ModelData&);
   void condense(const array<bool>& mask, size_t mask_true);
-  using UnsignedArray=array<unsigned,Allocator<unsigned>>;
-  using LocalArray=array<unsigned,LocalAllocator<unsigned>>;
   template <class E> LocalArray mutate(const E&);
   unsigned nsp() const; ///< number of living species in this cell
   /// Rounding function, randomly round up or down, in the range 0..INT_MAX
