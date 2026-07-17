@@ -28,8 +28,8 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=8
-numY=8
+numX=12
+numY=12
 #numX=2
 #numY=2
 ecolab.setGrid(numX,numY)
@@ -71,7 +71,7 @@ def stepImpl():
         ecolab.migration([x/mut_factor for x in ecolab.migration()])
 
     global extinctions, migrations
-    #migrations+=ecolab.migrate()
+    migrations+=ecolab.migrate()
     extinctions+=ecolab.condense()
     #ecolab.syncThreads()
     #ecolab.gather()
@@ -96,7 +96,7 @@ def step():
         statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
         plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))
         #plot('No. species',ecolab.tstep(),nsp)
-        #plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())
+        plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())
         plot('Extinctions',ecolab.tstep(),extinctions)
         plot('Migration',ecolab.tstep(),migrations)
 #        for i in range(numX):

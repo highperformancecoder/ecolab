@@ -58,6 +58,11 @@ namespace ecolab
     void init(sycl::queue& q) {}
     void* allocate(size_t sz) {
       fatalErrorFlag()=true;
+      if (groupLeader())
+        sycl::ext::oneapi::experimental::printf("failed to allocate %ul bytes\n",sz);
+#ifndef __SYCL_DEVICE_ONLY__
+      throw std::bad_alloc();
+#endif
       return nullptr;
     }
     void deallocate(void* p, size_t) {sycl::ext::oneapi::experimental::printf("%x leaked on device\n",p);}
@@ -73,7 +78,8 @@ namespace ecolab
   public:
     void init(sycl::queue& q) {
       q.parallel_for(numPages, [this](auto i) {
-        queue.enqueue(i<<order);
+        for (unsigned j=i; j<numPages; j+=i.get_range(0))
+          queue.enqueue(j<<order);
       });
       nextAllocator.init(q);
     }
@@ -96,7 +102,7 @@ namespace ecolab
       if (p>=memory && p<memory+poolSize) {
         groupBarrier();
         if (groupLeader())
-          queue.enqueue((reinterpret_cast<char*>(p)-memory)>>order);
+          queue.enqueue(reinterpret_cast<char*>(p)-memory);
         return;
       }
       nextAllocator.deallocate(p,size);
