@@ -123,7 +123,7 @@ namespace
   // magnitude if log
   string logAxisLabel(double x)
   {
-    char label[30];
+    char label[64];
     if (x<=0) return ""; // -ve values meaningless
         if (x>=0.01 && x<1)
           {
