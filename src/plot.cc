@@ -123,7 +123,7 @@ namespace
   // magnitude if log
   string logAxisLabel(double x)
   {
-    char label[30];
+    char label[64];
     if (x<=0) return ""; // -ve values meaningless
         if (x>=0.01 && x<1)
           {
@@ -138,9 +138,9 @@ namespace
             int omag=int(log10(x));
             int lead=x*pow(10,-omag);
 #if defined(PANGO) && !defined(_WIN32)
-           snprintf(label,sizeof(label),"%d×10<sup>%d</sup>",lead,omag);
+           sprintf(label,"%d×10<sup>%d</sup>",lead,omag);
 #else
-           snprintf(label,sizeof(label),"%dE%d",lead,omag);
+           sprintf(label,"%dE%d",lead,omag);
 #endif
           }
         return label;
