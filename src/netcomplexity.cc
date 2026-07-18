@@ -334,7 +334,7 @@ namespace ecolab
     const int read_pipe=0, write_pipe=1;
     int pipes[2];
     if (pipe(pipes)!=0)
-      throw error(strerror(errno));
+      throw error("%s", strerror(errno));
 
     // now fork child processes to try Nauty and SuperNOVA simultaneously
     vector<pid_t> children;
@@ -347,18 +347,18 @@ namespace ecolab
         // TODO: not sure that throwing an exception in these
         // circumstances helps much
         if (write(pipes[write_pipe], &r, sizeof(r))==-1)
-          throw error(strerror(errno));
+          throw error("%s", strerror(errno));
  
         int w=0;
         if (write(pipes[write_pipe], &w, sizeof(w))==-1)
-          throw error(strerror(errno));
+          throw error("%s", strerror(errno));
 
         close(pipes[write_pipe]);
         close(pipes[0]); close(pipes[1]);
         exit(0);
       }
     else if (children.back() == -1)
-      throw error(strerror(errno));
+      throw error("%s", strerror(errno));
 
     children.push_back(fork());
     if (children.back()==0)
@@ -366,15 +366,15 @@ namespace ecolab
         BitRep canon;
         double r=canonical(canon,g); //SuperNOVA version
         if (write(pipes[write_pipe], &r, sizeof(r))==-1)
-          throw error(strerror(errno));
+          throw error("%s", strerror(errno));
         int w=1;
         if (write(pipes[write_pipe], &w, sizeof(w))==-1)
-          throw error(strerror(errno));
+          throw error("%s", strerror(errno));
         close(pipes[0]); close(pipes[1]);
         exit(0);
       }
     else if (children.back() == -1)
-      throw error(strerror(errno));
+      throw error("%s", strerror(errno));
 
     // Bliss (from igraph) produces errors occasionally. Until this is
     // resolved, disable from the complexity calculation
@@ -387,15 +387,15 @@ namespace ecolab
 //          {
 //            double r=igraph_lnomega(g, method);
 //            if (write(pipes[write_pipe], &r, sizeof(r))==-1)
-//              throw error(strerror(errno));
+//              throw error("%s", strerror(errno));
 //            int w=1;
 //            if (write(pipes[write_pipe], &w, sizeof(w))==-1)
-//              throw error(strerror(errno));
+//              throw error("%s", strerror(errno));
 //            close(pipes[0]); close(pipes[1]);
 //            exit(0);
 //          }
 //        else if (children.back() == -1)
-//          throw error(strerror(errno));
+//          throw error("%s", strerror(errno));
 //      }
 //#endif
 
@@ -403,7 +403,7 @@ namespace ecolab
     int winner;
     if (read(pipes[read_pipe],&r,sizeof(r))==-1 ||
         read(pipes[read_pipe],&winner,sizeof(winner))==-1)
-      throw error(strerror(errno));
+      throw error("%s", strerror(errno));
     for (size_t i=0; i<children.size(); ++i)
       {
         //      cout << "killing pid: "<<children[i]<<endl;
