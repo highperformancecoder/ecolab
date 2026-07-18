@@ -1493,7 +1493,7 @@ namespace ecolab
         if (!p)
           {
             if (groupLeader())
-              printf("failed to allocate %d bytes in array\n",sizeof(T)*n);
+              printf("failed to allocate %zu bytes in array\n",sizeof(T)*n);
             return nullptr; // SYCL allocator returns nullptr if not initialised
           }
        
