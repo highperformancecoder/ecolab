@@ -138,9 +138,9 @@ namespace
             int omag=int(log10(x));
             int lead=x*pow(10,-omag);
 #if defined(PANGO) && !defined(_WIN32)
-           sprintf(label,"%d×10<sup>%d</sup>",lead,omag);
+           snprintf(label,sizeof(label),"%d×10<sup>%d</sup>",lead,omag);
 #else
-           sprintf(label,"%dE%d",lead,omag);
+           snprintf(label,sizeof(label),"%dE%d",lead,omag);
 #endif
           }
         return label;
