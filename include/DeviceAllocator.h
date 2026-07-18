@@ -27,27 +27,84 @@ namespace ecolab
     return sycl::ext::oneapi::group_local_memory<FatalErrorFlag>(syclGroup(),false)->flag;
   }
   
-  // Lock free circular buffer queue for SYCL
+  // Bounded MPMC circular buffer queue for SYCL using per-slot sequence numbers.
+  // dequeue() returns ~0U when queue appears empty (non-blocking empty signal).
   template <unsigned size>
   class Queue
   {
     static_assert((size&(size-1))==0,"size must be power of two");
     constexpr static unsigned mask=size-1;
-    unsigned queue[size];
+
+    struct Slot
+    {
+      unsigned seq;
+      unsigned value;
+    };
+
+    Slot slots[size];
     unsigned head=0, tail=0;
+
     using Atomic=sycl::atomic_ref<unsigned,sycl::memory_order::relaxed,sycl::memory_scope::system>;
+    using AtomicAcquire=sycl::atomic_ref<unsigned,sycl::memory_order::acquire,sycl::memory_scope::system>;
+    using AtomicRelease=sycl::atomic_ref<unsigned,sycl::memory_order::release,sycl::memory_scope::system>;
 
   public:
+    Queue()
+    {
+      for (unsigned i=0; i<size; ++i)
+        slots[i].seq=i;
+    }
+
     void enqueue(unsigned x)
     {
-      Atomic h(head);
-      queue[h++ & mask]=x;
+      while (true)
+      {
+        Atomic headAtomic(head);
+        unsigned pos=headAtomic.load();
+        Slot& slot=slots[pos & mask];
+        AtomicAcquire seqAtomic(slot.seq);
+        unsigned seq=seqAtomic.load();
+        int diff=int(seq)-int(pos);
+
+        if (diff==0)
+        {
+          if (headAtomic.compare_exchange_strong(pos,pos+1))
+          {
+            slot.value=x;
+            AtomicRelease publish(slot.seq);
+            publish.store(pos+1);
+            return;
+          }
+        }
+      }
     }
+
     unsigned dequeue()
     {
-      Atomic h(head), t(tail);
-      if (h==t) return ~0U; // signal buffer empty, don't wait
-      return queue[t++ & mask];
+      while (true)
+      {
+        Atomic tailAtomic(tail);
+        unsigned pos=tailAtomic.load();
+        Slot& slot=slots[pos & mask];
+        AtomicAcquire seqAtomic(slot.seq);
+        unsigned seq=seqAtomic.load();
+        int diff=int(seq)-int(pos+1);
+
+        if (diff==0)
+        {
+          if (tailAtomic.compare_exchange_strong(pos,pos+1))
+          {
+            unsigned v=slot.value;
+            AtomicRelease release(slot.seq);
+            release.store(pos+size);
+            return v;
+          }
+        }
+        else if (diff<0)
+        {
+          return ~0U; // signal buffer empty, don't wait
+        }
+      }
     }
   };
 
@@ -156,7 +213,7 @@ namespace ecolab
   };
 
   /*
-    group_local_memory is a weird beast. The address returned is tied to the line of code in which it instantiated, so we need to specify noinline to prevent it from being inlined, and inline to avoid multiply defined symbols
+    group_local_memory is a weird beast. The address returned is tied to the line of code in which it instantiated, so we need to specify noinline to prevent it from being inlined, and inline to ensure single definition
   */
   inline __attribute__((noinline)) LocalAllocatorBuffer& localAllocatorBuffer()
    {return *sycl::ext::oneapi::group_local_memory_for_overwrite<LocalAllocatorBuffer>(syclGroup());}
