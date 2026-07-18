@@ -144,6 +144,7 @@ void ModelData::condense(const array<bool>& mask, size_t mask_true)   /* remove 
   interaction.row = map[pack(interaction.row, mask_off,mask_off_true)];
   interaction.col = map[pack(interaction.col, mask_off,mask_off_true)];
 
+  computeODiagIdx();
   foodweb = interaction;
 }
 
@@ -201,19 +202,11 @@ void SpatialModel::mutate()
 
   vector<EcolabPoint::UnsignedArray,ModelData::Allocator<EcolabPoint::UnsignedArray>> newSp(size());
 
-  hostForAll([](EcolabCell& c,size_t) {
-    assert(all(c.density>=0));
-  });
-  
   groupedForAll([newSp=newSp.data(),mut_scale=&*mut_scale,this](EcolabCell& c,size_t i) {
     assert(all(c.density>=0));
     newSp[i]=c.mutate(*mut_scale);
   });
 
-  hostForAll([](EcolabCell& c,size_t) {
-    assert(all(c.density>=0));
-  });
-  
   array<unsigned> new_sp;
   DeviceType<array<unsigned,ModelData::Allocator<unsigned>>> cell_ids;
   syncThreads();
