@@ -93,7 +93,7 @@ RoundArray<E,EcolabPoint> EcolabPoint::roundArray(const E& expr)
 //
 void EcolabPoint::generate(unsigned niter, const ModelData& model)
 {
-  array<int,LocalAllocator<int>> lDensity(density);
+  array<int,LocalAllocator<int>> lDensity(density), tmp(density.size());
   
   for (unsigned step=0; step<niter; step++)
     {
@@ -101,8 +101,10 @@ void EcolabPoint::generate(unsigned niter, const ModelData& model)
         Float ir=model.interaction.diag[i]*lDensity[i];
         for (auto& j: model.oDiagIdx[i])
           ir+=model.interaction.val[j]*lDensity[model.interaction.col[j]];
-        lDensity[i]=ROUND(lDensity[i] + lDensity[i] * (model.repro_rate[i] + ir));
+        tmp[i]=ROUND(lDensity[i] + lDensity[i] * (model.repro_rate[i] + ir));
       });
+      lDensity.swap(tmp);
+      groupBarrier(); // synchronises threads on each iteration
     }
   density=lDensity;
   assert(all(density>=0));
