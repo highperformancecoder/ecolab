@@ -185,8 +185,8 @@ namespace ecolab
       num_work_groups=std::min(num_work_groups,this->size());
       //std::cout<<max_slm_size<<" max_slm_size "<<max_compute_units<<" max_compute_units "<<num_work_groups<<" work groups of "<<workGroupSize<<" threads"<<std::endl;
 
-      DeviceType<bool> fatalError(false);
-      for (size_t cellStart=0; cellStart<this->size() && !*fatalError; cellStart+=num_work_groups)
+      DeviceType<int> fatalError(0);
+      for (size_t cellStart=0; cellStart<this->size(); cellStart+=num_work_groups)
         syclQ().submit([&](auto& h) {
           h.parallel_for(sycl::nd_range<1>(num_work_groups*workGroupSize, workGroupSize), [=,this,fatalError=&*fatalError](auto i) {
             if (syclGroup().leader()) {
@@ -201,7 +201,8 @@ namespace ecolab
               f(cell,idx);
             }
             // flag fatal error to throw afterwards.
-            *fatalError=fatalErrorFlag();
+            if (fatalErrorFlag())
+              sycl::atomic_ref<int,sycl::memory_order::relaxed,sycl::memory_scope::device>(*fatalError).fetch_or(1);
           });
         });
       syclQ().wait_and_throw();
