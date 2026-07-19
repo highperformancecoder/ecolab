@@ -1636,7 +1636,9 @@ namespace ecolab
       const Allocator& allocator() const {return m_allocator;}
       const Allocator& allocator(const Allocator& alloc) {
         if (alloc==m_allocator) return m_allocator;
-        asgV(size(), data());
+        array tmp(size(),alloc);
+        tmp.asgV(size(), data());
+        swap(tmp);
         return m_allocator;
       }
 

@@ -140,7 +140,7 @@ public:
   }
   array<unsigned> nsp() const;
   void makeConsistent();
-  void seed(unsigned x) {forAll([=](EcolabCell& cell,size_t){cell.rand.seed(x);});}
+  void seed(unsigned x) {groupedForAll([=](EcolabCell& cell,size_t){cell.rand.seed(x);});}
   void generate(unsigned niter);
   void generate() {generate(1);}
   /// returns number of extinctions

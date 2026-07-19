@@ -45,8 +45,8 @@ namespace ecolab
     unsigned head=0, tail=0;
 
     using Atomic=sycl::atomic_ref<unsigned,sycl::memory_order::relaxed,sycl::memory_scope::system>;
-    using AtomicAcquire=sycl::atomic_ref<unsigned,sycl::memory_order::acquire,sycl::memory_scope::system>;
-    using AtomicRelease=sycl::atomic_ref<unsigned,sycl::memory_order::release,sycl::memory_scope::system>;
+    using AtomicAcquire=sycl::atomic_ref<unsigned,sycl::memory_order::acq_rel,sycl::memory_scope::system>;
+    using AtomicRelease=sycl::atomic_ref<unsigned,sycl::memory_order::acq_rel,sycl::memory_scope::system>;
 
   public:
     Queue()
@@ -116,13 +116,13 @@ namespace ecolab
     void* allocate(size_t sz) {
       fatalErrorFlag()=true;
       if (groupLeader())
-        sycl::ext::oneapi::experimental::printf("failed to allocate %ul bytes\n",sz);
+        sycl::ext::oneapi::experimental::printf("failed to allocate %zu bytes\n",sz);
 #ifndef __SYCL_DEVICE_ONLY__
       throw std::bad_alloc();
 #endif
       return nullptr;
     }
-    void deallocate(void* p, size_t) {sycl::ext::oneapi::experimental::printf("%x leaked on device\n",p);}
+    void deallocate(void* p, size_t) {sycl::ext::oneapi::experimental::printf("%p leaked on device\n",p);}
   };
 
   template <unsigned order=minOrder> class DeviceAllocator
@@ -170,7 +170,10 @@ namespace ecolab
   
   inline DeviceAllocator<>& deviceAllocator() {
     static DeviceType<DeviceAllocator<>> deviceAllocator;
-    static int initialised=(deviceAllocator->init(syclQ()),0);
+    static int initialised=(
+          deviceAllocator->init(syclQ()),
+          syclQ().wait_and_throw(),
+          0);
     return *deviceAllocator;
   }
 

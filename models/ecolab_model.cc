@@ -263,6 +263,7 @@ template <class E>
 EcolabPoint::LocalArray EcolabPoint::mutate(const E& mut_scale)
 {
   /* calculate the number of mutants each species produces */
+  if (density.size()==0) return {};
 #ifdef __SYCL_DEVICE_ONLY__
   LocalArray speciations=roundArray(mut_scale * density);
   auto nsp=density.size();
@@ -281,9 +282,8 @@ EcolabPoint::LocalArray EcolabPoint::mutate(const E& mut_scale)
 
   LocalArray new_sp(offsets[nsp]);
   array_ns::map(nsp, [offsets=offsets.data(),new_sp=new_sp.data()](size_t i) {
-    auto p=new_sp+offsets[i];
-    for (auto j=0; j<offsets[i+1]; ++j)
-      p[j]=i;
+    for (auto j=offsets[i]; j<offsets[i+1]; ++j)
+      new_sp[j]=i;
   });
   
   groupBarrier();

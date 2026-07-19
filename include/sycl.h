@@ -21,6 +21,10 @@
 #error "EcoLab requires OneAPI compiler for some experimental functions"
 #endif
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace ecolab
 {
   using sycl::ext::oneapi::experimental::printf;
@@ -53,7 +57,7 @@ namespace ecolab
   struct SyclQAllocator: public graphcode::Allocator<T>
   {
     SyclQAllocator(): graphcode::Allocator<T>(syclQ(), UA) {}
-    template<class U> struct rebind {using other=SyclQAllocator;};
+    template<class U> struct rebind {using other=SyclQAllocator<U,UA>;};
   };
   
   // random numbers
@@ -79,7 +83,7 @@ namespace ecolab
 #ifdef __SYCL_DEVICE_ONLY__
       return rngs[syclItem().get_global_linear_id() % rngs.size()]();
 #elif defined(_OPENMP)
-      return rngs[omp_get_thread_num()%numRngs]();
+      return rngs[omp_get_thread_num()%rngs.size()]();
 #else
       return rngs[0]();
 #endif
