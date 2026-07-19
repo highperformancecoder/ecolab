@@ -42,17 +42,17 @@ namespace ecolab
     };
 
     Slot slots[size];
-    unsigned head=0, tail=0;
+    unsigned head=size, tail=0;
 
-    using Atomic=sycl::atomic_ref<unsigned,sycl::memory_order::relaxed,sycl::memory_scope::system>;
-    using AtomicAcquire=sycl::atomic_ref<unsigned,sycl::memory_order::acq_rel,sycl::memory_scope::system>;
-    using AtomicRelease=sycl::atomic_ref<unsigned,sycl::memory_order::acq_rel,sycl::memory_scope::system>;
+    using Atomic=sycl::atomic_ref<unsigned,sycl::memory_order::relaxed,sycl::memory_scope::device>;
 
   public:
     Queue()
     {
-      for (unsigned i=0; i<size; ++i)
-        slots[i].seq=i;
+      for (unsigned i=0; i<size; ++i) {
+        slots[i].value=i;
+        slots[i].seq=i+1;
+      }
     }
 
     void enqueue(unsigned x)
@@ -62,8 +62,8 @@ namespace ecolab
         Atomic headAtomic(head);
         unsigned pos=headAtomic.load();
         Slot& slot=slots[pos & mask];
-        AtomicAcquire seqAtomic(slot.seq);
-        unsigned seq=seqAtomic.load();
+        Atomic seqAtomic(slot.seq);
+        unsigned seq=seqAtomic.load(sycl::memory_order::acquire);
         int diff=int(seq)-int(pos);
 
         if (diff==0)
@@ -71,8 +71,8 @@ namespace ecolab
           if (headAtomic.compare_exchange_strong(pos,pos+1))
           {
             slot.value=x;
-            AtomicRelease publish(slot.seq);
-            publish.store(pos+1);
+            Atomic publish(slot.seq);
+            publish.store(pos+1,sycl::memory_order::release);
             return;
           }
         }
@@ -86,8 +86,8 @@ namespace ecolab
         Atomic tailAtomic(tail);
         unsigned pos=tailAtomic.load();
         Slot& slot=slots[pos & mask];
-        AtomicAcquire seqAtomic(slot.seq);
-        unsigned seq=seqAtomic.load();
+        Atomic seqAtomic(slot.seq);
+        unsigned seq=seqAtomic.load(sycl::memory_order::acquire);
         int diff=int(seq)-int(pos+1);
 
         if (diff==0)
@@ -95,8 +95,8 @@ namespace ecolab
           if (tailAtomic.compare_exchange_strong(pos,pos+1))
           {
             unsigned v=slot.value;
-            AtomicRelease release(slot.seq);
-            release.store(pos+size);
+            Atomic release(slot.seq);
+            release.store(pos+size,sycl::memory_order::release);
             return v;
           }
         }
@@ -112,12 +112,12 @@ namespace ecolab
   /// empty allocator to terminate template recursion
   template <> class DeviceAllocator<maxOrder> {
   public:
-    void init(sycl::queue& q) {}
     void* allocate(size_t sz) {
-      fatalErrorFlag()=true;
       if (groupLeader())
         sycl::ext::oneapi::experimental::printf("failed to allocate %zu bytes\n",sz);
-#ifndef __SYCL_DEVICE_ONLY__
+#ifdef __SYCL_DEVICE_ONLY__
+      fatalErrorFlag()=true;
+#else
       throw std::bad_alloc();
 #endif
       return nullptr;
@@ -133,13 +133,6 @@ namespace ecolab
     char memory[poolSize];
     DeviceAllocator<order+1> nextAllocator; // next size up allocator
   public:
-    void init(sycl::queue& q) {
-      q.parallel_for(numPages, [this](auto i) {
-        for (unsigned j=i; j<numPages; j+=i.get_range(0))
-          queue.enqueue(j<<order);
-      });
-      nextAllocator.init(q);
-    }
     // all members of group get the same pointer
     void* allocate(size_t size) {
       if (size==0) return nullptr;
@@ -150,7 +143,7 @@ namespace ecolab
         offs=sycl::group_broadcast(syclGroup(),offs);
 #endif
         if (offs!=~0U)
-          return memory+offs;
+          return memory+(offs<<order);
       }
       return nextAllocator.allocate(size);
     }
@@ -159,7 +152,7 @@ namespace ecolab
       if (p>=memory && p<memory+poolSize) {
         groupBarrier();
         if (groupLeader())
-          queue.enqueue(reinterpret_cast<char*>(p)-memory);
+          queue.enqueue((reinterpret_cast<char*>(p)-memory)>>order);
         return;
       }
       nextAllocator.deallocate(p,size);
@@ -170,10 +163,6 @@ namespace ecolab
   
   inline DeviceAllocator<>& deviceAllocator() {
     static DeviceType<DeviceAllocator<>> deviceAllocator;
-    static int initialised=(
-          deviceAllocator->init(syclQ()),
-          syclQ().wait_and_throw(),
-          0);
     return *deviceAllocator;
   }
 
