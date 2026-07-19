@@ -12,16 +12,9 @@
 #ifndef ECOLAB_H
 #define ECOLAB_H
 
+#include "sycl.h"
 #ifdef SYCL_LANGUAGE_VERSION
 #include "DeviceAllocator.h"
-#ifdef __INTEL_LLVM_COMPILER
-template <typename... Args>
-inline sycl::nd_item<1> syclItem() {return sycl::ext::oneapi::this_work_item::get_nd_item<1>();}
-inline sycl::group<1> syclGroup() {return sycl::ext::oneapi::this_work_item::get_work_group<1>();}
-inline sycl::sub_group syclSubGroup() {return sycl::ext::oneapi::this_work_item::get_sub_group();}
-#else
-#error "EcoLab requires OneAPI compiler for some experimental functions"
-#endif
 #endif
 
 #include <stdlib.h>
@@ -42,7 +35,7 @@ namespace classdesc
   class pack_t;
 //class unpack_t;
   typedef pack_t unpack_t;
-  class TCL_obj_t;
+  //  class TCL_obj_t;
 }
 
 #define THROW_PTR_EXCEPTION  //Allows more generously for types containing pointers
@@ -72,10 +65,6 @@ typedef classdesc::string eco_string;
 namespace ecolab
 {
   using namespace classdesc;
-  
-#if defined(__INTEL_LLVM_COMPILER) && defined(SYCL_LANGUAGE_VERSION)
-  using sycl::ext::oneapi::experimental::printf;
-#endif
   
   /* these are defined to default values, even if MPI is false */
   /// MPI process ID and number of processes
@@ -108,190 +97,14 @@ namespace ecolab
     ~OnExit() {f();}
   };
   
-#ifdef SYCL_LANGUAGE_VERSION
-  extern bool syclQDestroyed;
-  sycl::queue& syclQ();
-  void* reallocSycl(void*,size_t);
-#endif
-
-  inline void groupBarrier()
-  {
-#ifdef __SYCL_DEVICE_ONLY__
-    sycl::group_barrier(syclGroup());
-#endif
-  }
-  
-  template <class T>
-  struct SyclType: public T
-  {
-    template <class... A> SyclType(A... args): T(std::forward<A>(args)...) {}
-#ifdef SYCL_LANGUAGE_VERSION
-    void* operator new(size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete(void* p) {reallocSycl(p,0);}
-    void* operator new[](size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete[](void* p) {reallocSycl(p,0);}
-#endif
-  };
-
-  template <>
-  struct SyclType<size_t>
-  {
-    size_t data;
-    operator size_t() const {return data;}
-    operator size_t&() {return data;}
-    size_t operator=(size_t x) {return data=x;}
-#ifdef SYCL_LANGUAGE_VERSION
-    void* operator new(size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete(void* p) {reallocSycl(p,0);}
-    void* operator new[](size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete[](void* p) {reallocSycl(p,0);}
-#endif
-  };
-
-  template <class T>
-  struct SyclType<T*>
-  {
-    T* data;
-    operator T*() const {return data;}
-    operator T*&() {return data;}
-    T* operator=(T* x) {return data=x;}
-#ifdef SYCL_LANGUAGE_VERSION
-    void* operator new(size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete(void* p) {reallocSycl(p,0);}
-    void* operator new[](size_t s) {return reallocSycl(nullptr,s);}
-    void operator delete[](void* p) {reallocSycl(p,0);}
-#endif
-  };
-
-
-  
-  template <class M>
-  class DeviceType
-  {
-    SyclType<M>* const model;
-  public:
-    using element_type=M;
-    template <class... A>
-    DeviceType(A... args): model(new SyclType<M>(std::forward<A>(args)...)) {}
-    DeviceType(const DeviceType& x): model(new SyclType<M>(*x.model)) {}
-    DeviceType& operator=(const DeviceType& x) {*model=*x.model; return *this;}
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-    // gcc incorrectly infers SyclType is polymorphic, which is quite plainly is not
-#pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
-#endif
-    ~DeviceType() {delete model;}
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
-    M& operator*() {return *model;}
-    const M& operator*() const {return *model;}
-    M* operator->() {return model;}
-    const M* operator->() const {return model;}
-    operator bool() const {return true;} // always defined
-  };
-
-  template <class T, ecolab::USMAlloc UA>
-  struct SyclQAllocator: public graphcode::Allocator<T>
-  {
-#ifdef SYCL_LANGUAGE_VERSION
-    SyclQAllocator(): graphcode::Allocator<T>(syclQ(), UA) {}
-#endif
-    template<class U> struct rebind {using other=SyclQAllocator;};
-  };
-
   class GlobalDeallocateKernelTag;
   struct CellBase
   {
     size_t m_idx=0; // stash the position within the local node vector here
     size_t idx() const {return m_idx;}
-#ifdef SYCL_LANGUAGE_VERSION
-    using MemAllocator=DeviceAllocator<>;
-    MemAllocator* memAlloc=nullptr;
-    template <class T> class CellAllocator
-    {
-    public:
-      MemAllocator* memAlloc=nullptr;
-      template <class U> friend class Allocator;
-      CellAllocator()=default;
-      CellAllocator(MemAllocator* memAlloc): memAlloc(memAlloc) {}
-      template <class U> CellAllocator(const CellAllocator<U>& x): memAlloc(x.memAlloc) {}
-      T* allocate(size_t sz) {
-#ifdef  __SYCL_DEVICE_ONLY__
-        if (memAlloc)  {
-          auto r=reinterpret_cast<T*>(memAlloc->allocate(sz*sizeof(T)));
-          if (!r) printf("Mem allocation failed\n");
-          return r;
-        }
-        printf("Missing allocator memAlloc=%x\n",memAlloc);
-        return nullptr; // TODO raise an error?? how? We can't throw an exception here
-#else
-        auto r=sycl::malloc_shared<T>(sz,syclQ());
-        return r;
-#endif
-      }
-      void deallocate(T* p,size_t n) {
-        if (!p) return;
-        if (memAlloc && memAlloc->inAllocator(p)) {
-          memAlloc->deallocate(p,n);
-          return;
-        }
-#ifdef  __SYCL_DEVICE_ONLY__
-        printf("leaked %d bytes\n",n*sizeof(T));
-#else        
-        sycl::free(p,syclQ());
-#endif
-      }
-      bool operator==(const CellAllocator& x) const {return memAlloc==x.memAlloc;}
-    };
-    template <class T> CellAllocator<T> allocator() const {
-      return CellAllocator<T>(memAlloc);
-    }
-#else //!SYCL
-    template <class T> using CellAllocator=std::allocator<T>;
-    template <class T> CellAllocator<T> allocator() const {return CellAllocator<T>();}
-#endif
   };
 
-  template <class T>
-  void printAllocator(const char* prefix, const T&) {}
-  
-  template <class T>
-  void printAllocator(const char* prefix, const CellBase::CellAllocator<T>& x)
-  {printf("%s: allocator.desc=%p memAlloc=%p\n",prefix,x.desc,x.memAlloc);}
-  
-  
-  class SyclGraphBase
-  {
-  protected:
-#ifdef SYCL_LANGUAGE_VERSION
-    using MemAllocator=CellBase::MemAllocator;
-    MemAllocator *sharedMemAlloc=nullptr, *deviceMemAlloc=nullptr;
-    SyclGraphBase() {
-      // for now, do not use on-device dynamic allocation
-      sharedMemAlloc=sycl::malloc_shared<MemAllocator>(1, syclQ());
-      new(sharedMemAlloc) MemAllocator;
-      sharedMemAlloc->init(syclQ());
-//      deviceMemAlloc=sycl::malloc_shared<MemAllocator>(1, syclQ());
-//      new(deviceMemAlloc) MemAllocator;
-//      deviceMemAlloc->init(syclQ()); // TODO - run this on device?
-//      sharedMemAlloc->initialize(syclQ(), sycl::usm::alloc::shared, 512ULL * 1024ULL * 1024ULL); // TODO - expose this Python?
-//      deviceMemAlloc->initialize(syclQ(), sycl::usm::alloc::device, 512ULL * 1024ULL * 1024ULL); // TODO - expose this Python?
-    }
-    ~SyclGraphBase() {
-      sharedMemAlloc->~MemAllocator();
-      sycl::free(sharedMemAlloc,syclQ());
-//      deviceMemAlloc->~MemAllocator();
-//      sycl::free(deviceMemAlloc,syclQ());
-    }
-    // deleted because we're managing a resource here
-    SyclGraphBase(const SyclGraphBase&)=delete;
-    void operator=(const SyclGraphBase&)=delete;
-#endif      
-  };
-
-  template <class Cell> struct EcolabGraph:
-    public Exclude<SyclGraphBase>, public graphcode::Graph<Cell>
+  template <class Cell> struct EcolabGraph: public graphcode::Graph<Cell>
   {
 #ifdef SYCL_LANGUAGE_VERSION
     EcolabGraph(): graphcode::Graph<Cell>
@@ -310,8 +123,7 @@ namespace ecolab
 #endif
       for (size_t idx=0; idx<sz; ++idx) {
         auto& cell=*(*this)[idx]->template as<Cell>();
-        cell.m_idx=idx;
-        f(cell);
+        f(cell,idx);
       }
     }
     
@@ -328,8 +140,7 @@ namespace ecolab
           auto idx=i.get_global_linear_id();
           if (idx<this->size()) {
             auto& cell=*(*this)[idx]->template as<Cell>();
-            cell.m_idx=idx;
-            f(cell);
+            f(cell,idx);
           }
         });
       });
@@ -345,29 +156,63 @@ namespace ecolab
     template <class F>
     void groupedForAll(F f) {
 #ifdef SYCL_LANGUAGE_VERSION
-      // TODO - pass in workGroupSize as an optional parameter??
-      static size_t workGroupSize=32;//syclQ().get_device().get_info<sycl::info::device::max_work_group_size>();
-      syclQ().submit([&](auto& h) {
-        h.parallel_for(sycl::nd_range<1>(this->size()*workGroupSize, workGroupSize), [=,this](auto i) {
-          auto idx=i.get_group_linear_id();
-          if (idx<this->size()) {
-            auto& cell=*(*this)[idx]->template as<Cell>();
-            cell.m_idx=idx;
-            f(cell);
-          }
+      auto dev=syclQ().get_device();
+      // 1. Max threads per single work-group
+      size_t max_wg_size = dev.get_info<sycl::info::device::max_work_group_size>();
+
+      // 2. Hardware SIMD width (Sub-group size, usually 8, 16, or 32 on Intel)
+      std::vector<size_t> sg_sizes = dev.get_info<sycl::info::device::sub_group_sizes>();
+      size_t native_sg_size = sg_sizes.back(); // Usually 16 or 32 is best for compute
+
+      // 3. Total physical SLM available per hardware compute unit (DSS)
+      size_t max_slm_size = dev.get_info<sycl::info::device::local_mem_size>(); 
+
+      // 4. Maximum number of compute units (Execution units / DSS count)
+      uint32_t max_compute_units = dev.get_info<sycl::info::device::max_compute_units>();
+
+      size_t workGroupSize=native_sg_size;//256;
+//      if (workGroupSize > max_wg_size) 
+//        workGroupSize = max_wg_size; // Fallback for limited devices
+//      
+//      // Ensure it aligns perfectly with hardware SIMD lanes
+//      workGroupSize = (workGroupSize / native_sg_size) * native_sg_size;
+
+      size_t wg_per_compute_unit = max_slm_size / LocalAllocatorSize;
+      // To maximize latency hiding, it's often beneficial to double or triple this 
+      // so the GPU can switch to a waiting wave while another wave is blocked by a barrier.
+      size_t num_work_groups = max_compute_units * wg_per_compute_unit;
+
+      num_work_groups=std::min(num_work_groups,this->size());
+      //std::cout<<max_slm_size<<" max_slm_size "<<max_compute_units<<" max_compute_units "<<num_work_groups<<" work groups of "<<workGroupSize<<" threads"<<std::endl;
+
+      DeviceType<int> fatalError(0);
+      for (size_t cellStart=0; cellStart<this->size(); cellStart+=num_work_groups)
+        syclQ().submit([&](auto& h) {
+          h.parallel_for(sycl::nd_range<1>(num_work_groups*workGroupSize, workGroupSize), [=,this,fatalError=&*fatalError](auto i) {
+            if (syclGroup().leader()) {
+              localAllocatorBuffer().next = 0;
+            } // reset local memory allocation
+            sycl::group_barrier(syclGroup()); 
+
+            auto idx = cellStart+i.get_group_linear_id();
+            auto stride = i.get_group_range(0);
+            if (idx < this->size()) {
+              auto& cell=*(*this)[idx]->template as<Cell>();
+              f(cell,idx);
+            }
+            // flag fatal error to throw afterwards.
+            if (fatalErrorFlag())
+              sycl::atomic_ref<int,sycl::memory_order::relaxed,sycl::memory_scope::device>(*fatalError).fetch_or(1);
+          });
         });
-      });
+      syclQ().wait_and_throw();
+      if (*fatalError)
+        throw std::runtime_error("Local Allocator Exhausted");
 #else
       hostForAll(f);
 #endif
     }
 
-    void syncThreads() {
-#ifdef SYCL_LANGUAGE_VERSION
-      syclQ().wait();
-#endif
-    }
-    
     template <class T, class F> T max(T x, F f) {
 #ifdef SYCL_LANGUAGE_VERSION
       DeviceType<T> r(x);
@@ -384,88 +229,13 @@ namespace ecolab
 #endif
       for (size_t idx=0; idx<sz; ++idx) {
         auto& cell=*(*this)[idx]->template as<Cell>();
-        cell.m_idx=idx;
         x=std::max(x,f(cell));
       }
       return x;
 #endif
     }
+    void syncThreads() {ecolab::syncThreads();}
   };
-
-  template <class T>
-  class GroupLocal
-  {
-#ifdef __SYCL_DEVICE_ONLY__
-    using BufferType=char[sizeof(T)];
-    using LocalBufferType=decltype(sycl::ext::oneapi::group_local_memory_for_overwrite<BufferType>(syclGroup()));
-    LocalBufferType buffer=sycl::ext::oneapi::group_local_memory_for_overwrite<BufferType>(syclGroup());
-  public:
-    template <class... Args>
-    GroupLocal(Args&&... args) {
-      if (syclGroup().leader())
-        new (*buffer) T(std::forward<Args>(args)...);
-      sycl::group_barrier(syclGroup());
-    }
-    ~GroupLocal() {
-      sycl::group_barrier(syclGroup());
-      if (syclGroup().leader())
-        (**this).~T();
-    }
-    T& operator*() {return reinterpret_cast<T&>(**buffer);}
-#else
-    T buffer;
-  public:
-    template <class... Args>
-    GroupLocal(Args&&... args): buffer(std::forward<Args>(args)...) {}
-    T& operator*() {return buffer;}
-#endif
-    T* operator->() {return &**this;}
-  };
-
-#ifdef __SYCL_DEVICE_ONLY__
-  template <class T, size_t N, size_t M>
-  T* getGroupBuffer()
-  {
-    if constexpr (N<=M)
-      return *sycl::ext::oneapi::group_local_memory_for_overwrite<T[1<<N]>(syclGroup());
-    assert(false && "Group buffer limit exceeded");
-    return nullptr;
-  }  
-  
-  /// Return a buffer in group local memory, of at least \a n Ts.
-  /// @tparam T element type of buffer
-  /// @tparam N maximum buffer size supported is 2^N.
-  /// This method can only be called in kernel code
-  /// Increasing N hurts performance, or may exceed system limits.
-  /// Individual elements are default initialised
-  /// Buffer is destroyed once all threads in group have completed (not at scope exit)
-  template <class T, size_t N>
-  T* groupBuffer(size_t n) {
-    // work out power of two >= n
-    switch (sizeof(size_t)*8-sycl::clz(n-1))
-      {
-      case 0: return getGroupBuffer<T,0,N>();
-      case 1: return getGroupBuffer<T,1,N>();
-      case 2: return getGroupBuffer<T,2,N>();
-      case 3: return getGroupBuffer<T,3,N>();
-      case 4: return getGroupBuffer<T,4,N>();
-      case 5: return getGroupBuffer<T,5,N>();
-      case 6: return getGroupBuffer<T,6,N>();
-      case 7: return getGroupBuffer<T,7,N>();
-      case 8: return getGroupBuffer<T,8,N>();
-      case 9: return getGroupBuffer<T,9,N>();
-      case 10: return getGroupBuffer<T,10,N>();
-      case 11: return getGroupBuffer<T,11,N>();
-      case 12: return getGroupBuffer<T,12,N>();
-      case 13: return getGroupBuffer<T,13,N>();
-      case 14: return getGroupBuffer<T,14,N>();
-      case 15: return getGroupBuffer<T,15,N>();
-      case 16: return getGroupBuffer<T,16,N>();
-      default: assert(false && "Group buffer limit exceeded"); return nullptr;
-      }
-  }
-#endif
-
 }
 
 namespace classdesc

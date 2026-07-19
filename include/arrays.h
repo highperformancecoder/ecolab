@@ -1477,26 +1477,25 @@ namespace ecolab
       
       friend class WhereContext;
 
-      ///allocate \a n variables of type \a T 
+      ///allocate \a n variables of type \a T
+#ifdef __SYCL_DEVICE_ONLY__
+      __attribute__((always_inline))
+#endif
       array_data<T> *alloc(std::size_t n)
       {
+        if (n==0) return nullptr;
         T *p; 
         array_data<T> *r;
-        //p = (char*)std::malloc((n-array_data<T>::debug_display) * sizeof(T) + sizeof(array_data<T>) + 16);
         // over allocate to allow for alignment and metadata
         auto allocation=n + (sizeof(array_data<T>) + 16)/sizeof(T)+1-array_data<T>::debug_display;
         p = m_allocator.allocate(allocation);
       
         if (!p)
           {
-#ifdef __SYCL_DEVICE_ONLY__
-            printf("failed to allocate %d bytes in array\n",sizeof(T)*n);
-#endif
+            if (groupLeader())
+              printf("failed to allocate %zu bytes in array\n",sizeof(T)*n);
             return nullptr; // SYCL allocator returns nullptr if not initialised
           }
-// #ifdef __SYCL_DEVICE_ONLY__
-//            syclPrintf("succeeded in allocating %d bytes in array\n",sizeof(T)*n);
-//#endif
        
 #ifdef __ICC
         // we need to align data onto 16 byte boundaries
@@ -1517,47 +1516,49 @@ namespace ecolab
       void free(array_data<T> *p)
       {
         assert(p);
-        //std::free(p->allocated_pointer);
         m_allocator.deallocate(p->allocated_pointer,p->allocation);
       }
 
       void set_size(size_t s) {dt = alloc(s);}
 
-#if defined(SYCL_LANGUAGE_VERSION)
-      using AtomicUnsignedRef=sycl::atomic_ref
-        <unsigned,sycl::memory_order::relaxed,sycl::memory_scope::system>;
-#else
-      using AtomicUnsignedRef=unsigned&;
-#endif
-      
-      AtomicUnsignedRef ref() // access reference counter
+      unsigned& ref() // access reference counter
       {
         assert(dt);
-        return AtomicUnsignedRef(dt->cnt);
+        return dt->cnt;
       }
 
+      // increment reference counter
+      void incrRef()
+      {
+        if (dt)
+          {
+            groupBarrier();
+            if (groupLeader()) ref()++;
+            groupBarrier();
+          }
+      }
+
+      // decrement reference counter
+      void decrRef()
+      {
+        if (dt)
+          {
+            groupBarrier();
+            if (groupLeader()) ref()--;
+            groupBarrier();
+          }
+       }
+      
       void release()
       {
         if (dt)
           {
-//#if defined(SYCL_LANGUAGE_VERSION) && !defined(__SYCL_DEVICE_ONLY__)
-//            // dt pointer may be allocated on device, or in device
-//            // memory, and we may be running on the host, in which
-//            // case just leak the memory, otherwise we'll have a crash
-//            // TODO - call release on device in a single_task for the
-//            // first situation
-//            // TODO in second situation, update ref
-//            // count in a single_task, and pass back value of
-//            // allocated pointer for deallocation on host
-//            if (is_same<A,typename CellBase::CellAllocator<T>>::value ||
-//                sycl::get_pointer_type(dt,syclQ().get_context())==sycl::usm::alloc::device) return;
-//#endif
             if (ref()==1)
               {
                 free(dt);
+                return;
               }
-            else
-              ref()--;
+            decrRef();
           }
       }
 
@@ -1565,15 +1566,16 @@ namespace ecolab
 
       // implements copying data from x to this in a GPU friendly way
       template <class E>
-      void asgV(const A& alloc, size_t size, const E& x)
+      void asgV(size_t size, const E& x)
       {
+        // copy into temporary data, as E may contain references to this
 #ifdef __SYCL_DEVICE_ONLY__
-        GroupLocal<array> tmp(size,alloc);
-        array_ns::asg_v(tmp->dt->dt,size,x);
-        groupBarrier();
-        if (syclGroup().leader()) swap(*tmp);
+        array<T,LocalAllocator<T>> tmp(size);
+        asg_v(tmp.data(),size,x);
+        resize(size);
+        asg_v(data(),size,tmp);
 #else
-        array tmp(size,alloc);
+        array tmp(size);
         asg_v(tmp.data(),size,x);
         swap(tmp);
 #endif
@@ -1583,17 +1585,16 @@ namespace ecolab
       {           // to implement copy-on-write semantics
         if (dt && ref()>1)
           {
-#ifdef __SYCL_DEVICE_ONLY__
-            printf("b4 asgV in copy\n");
-            asgV(m_allocator, size(), dt->dt);
-            printf("after asgV in copy\n");
-#else
             array_data<T>* oldData=dt;
-            bool freeMem = ref()-- == 0;
+            decrRef();
+            bool freeMem=ref()==0;
             dt=alloc(size());
+#ifdef __SYCL_DEVICE_ONLY__
+            asg_v(dt->dt,size(),oldData->dt);
+#else
             memcpy(dt->dt,oldData->dt,size()*sizeof(T));
-            if (freeMem) free(oldData);
 #endif
+            if (freeMem) free(oldData);
           }
       }
 
@@ -1616,11 +1617,9 @@ namespace ecolab
 
       array(const array& x): m_allocator(x.m_allocator) 
       {
-//#ifdef __SYCL_DEVICE_ONLY__
-//        syclPrintf("creating array on group %u, thread  %u with dt=%x\n",syclGroup().get_group_linear_id(), syclGroup().get_local_linear_id(),x.dt);
-//#endif
         dt=x.dt;
-        if (dt) ref()++;
+        incrRef();
+          
       }
 
       template <class expr>
@@ -1628,7 +1627,8 @@ namespace ecolab
             typename enable_if< is_expression<expr>, void*>::T dummy=0): m_allocator(alloc)
       {
         set_size(e.size());
-        operator=(e);
+        asg_v(data(),e.size(),e);
+        //operator=(e);
       }
 
       ~array() {release();}
@@ -1636,12 +1636,14 @@ namespace ecolab
       const Allocator& allocator() const {return m_allocator;}
       const Allocator& allocator(const Allocator& alloc) {
         if (alloc==m_allocator) return m_allocator;
-        asgV(alloc, size(), data());
+        array tmp(size(),alloc);
+        tmp.asgV(size(), data());
+        swap(tmp);
         return m_allocator;
       }
 
       /// current value of the reference counter
-      unsigned refCnt() const {return dt->cnt;}
+      unsigned refCnt() const {return dt? dt->cnt: 0;}
       
       /// resize array to \a s elements
       void resize(size_t s) {
@@ -1680,7 +1682,7 @@ namespace ecolab
         release();
         m_allocator=x.m_allocator;
         dt=x.dt;
-        if (dt) ref()++;
+        incrRef();
         return *this;
       }
 
@@ -1688,7 +1690,7 @@ namespace ecolab
       enable_if<is_expression<expr>, array&>::T 
       operator=(const expr& x) {
         if ((void*)(&x)==(void*)(this)) return *this;
-        asgV(m_allocator, x.size(), x);
+        asgV(x.size(), x);
         return *this;
       }
       template <class expr> typename
@@ -2399,8 +2401,8 @@ namespace ecolab
     return o;
   }
 
-  template <class T>
-  std::ostream& operator<<(std::ostream& o, const array<T>& x)
+  template <class T, class A>
+  std::ostream& operator<<(std::ostream& o, const array<T,A>& x)
   {return put(o,x);}
 
   /// ostream putter

@@ -27,21 +27,15 @@ namespace ecolab
     array_ns::array<F, A<F>> diag, val;
     /*row and columns of offdiagonal elements*/
     array_ns::array<unsigned, A<unsigned>> row, col;
-    sparse_mat(int s=0, int o=0, const A<F>& falloc={},
-               const A<unsigned>& ialloc={}): rowsz(s), colsz(s),
-                                              diag(s,falloc), val(o,falloc),
-                                              row(o,ialloc), col(o,ialloc) {} 
-    sparse_mat(const sparse_mat& x) 
+    sparse_mat(int s=0, int o=0): rowsz(s), colsz(s),
+                                              diag(s), val(o),
+                                              row(o), col(o) {} 
+    template <template<class> class A1>
+      sparse_mat(const sparse_mat<F,A1>& x) 
     {
       rowsz=x.rowsz; colsz=x.colsz; 
       diag=x.diag; val=x.val; 
       row=x.row; col=x.col;
-    }
-    void setAllocators(const A<unsigned>& ialloc, const A<F>& falloc) {
-      diag.allocator(falloc);
-      val.allocator(falloc);
-      row.allocator(ialloc);
-      col.allocator(ialloc);
     }
 
     /*matrix multiplication*/
@@ -97,7 +91,7 @@ namespace ecolab
     assert(sigma>=0);
     assert(conn<diag.size());
 
-    array<int,A<int>> rsize(diag.size(),row.allocator());
+    array<unsigned,A<unsigned>> rsize(diag.size(),row.allocator());
     array<F,A<F>> tmp(diag.size(),diag.allocator());
     fillgrand(tmp);
     tmp=tmp*sigma+(double)conn;

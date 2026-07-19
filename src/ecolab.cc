@@ -49,7 +49,9 @@ namespace
   
   struct SyclQ: public queue
   {
-    SyclQ(): queue(default_selector_v, errHandler) {}
+    // in_order version for debugging purposes
+    SyclQ(): queue(default_selector_v, errHandler, sycl::property::queue::in_order{}) {}
+    //SyclQ(): queue(default_selector_v, errHandler) {}
     ~SyclQ() {syclQDestroyed=true;}
   };
 }

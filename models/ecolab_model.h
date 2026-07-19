@@ -38,11 +38,17 @@ struct ConnectionPlot: public Object<ConnectionPlot, ConnectionPlotBase>
 
 struct ModelData
 {
-  using FAlloc=graphcode::Allocator<Float>;
-  using IAlloc=graphcode::Allocator<int>;
-  array<int,IAlloc> species;
-  array<Float,FAlloc> create, repro_rate, mutation, migration;
-  sparse_mat<Float,graphcode::Allocator> interaction;
+#ifdef SYCL_LANGUAGE_VERSION
+  template <class T> using Allocator=HostSharedAllocator<T>;
+#else
+  template <class T> using Allocator=std::allocator<T>;
+#endif
+
+  array<int,Allocator<int>> species;
+  array<Float,Allocator<Float>> create, repro_rate, mutation, migration;
+  sparse_mat<Float,Allocator> interaction;
+  using UnsignedArray=array<unsigned,Allocator<unsigned>>;
+  std::vector<UnsignedArray,Allocator<UnsignedArray>> oDiagIdx;
   sparse_mat_graph foodweb;
   unsigned long long tstep=0, last_mut_tstep=0, last_mig_tstep=0;
   //mutation parameters
@@ -51,6 +57,7 @@ struct ModelData
   bool fixMutation=false, fixMigration=false;
   
   void makeConsistent(size_t nsp);
+  void computeODiagIdx();
   void random_interaction(unsigned conn, double sigma);
   void condense(const array<bool>& mask, size_t mask_true);
   void mutate(const array<int>&); 
@@ -65,33 +72,36 @@ template <class T,class A> void setArray(array<T,A>&, const array<T>&);
 template <class T,class A> array<T> getArray(const array<T,A>&);
 
 /* ecolab cell  */
-template <class CellBase>
-class EcolabPoint: public Exclude<CellBase>
+class EcolabPoint
 {
 public:
+#ifdef SYCL_LANGUAGE_VERSION
+  template <class T> using Allocator=GlobalDeviceAllocator<T>;
+#else
+  template <class T> using Allocator=std::allocator<T>;
+#endif
+  using UnsignedArray=array<unsigned,Allocator<unsigned>>;
+  using LocalArray=array<unsigned,LocalAllocator<unsigned>>;
+
   Float salt;  /* random no. used for migration */
-  template <class T> using Allocator=typename CellBase::template CellAllocator<T>;
-  array<int,Allocator<int>> density{this->template allocator<int>()};
+  array<int,Allocator<int>> density;
   
   void generate(unsigned niter, const ModelData&);
   void condense(const array<bool>& mask, size_t mask_true);
-  template <class E>
-  array<unsigned,Allocator<unsigned>> mutate(const E&);
+  template <class E> LocalArray mutate(const E&);
   unsigned nsp() const; ///< number of living species in this cell
   /// Rounding function, randomly round up or down, in the range 0..INT_MAX
   int ROUND(Float x);
   template <class E> RoundArray<E,EcolabPoint> roundArray(const E& expr);
+#ifdef SYCL_LANGUAGE_VERSION
+  Exclude<SyclRandomEngine<std::mt19937,USMAlloc::shared>> rand
+    {syclQ().get_device().get_info<sycl::info::device::max_work_group_size>()}; // TODO make configurable?
+#else
   Exclude<std::mt19937> rand; // random number generator
+#endif
 };
 
-// for the panmictic model, we need to use std::allocator
-struct AllocatorBase
-{
-  template <class T> using CellAllocator=std::allocator<T>;
-  template <class T> CellAllocator<T> allocator() const {return CellAllocator<T>();}
-};
-
-struct PanmicticModel: public ModelData, public EcolabPoint<AllocatorBase>, public ecolab::Model<PanmicticModel>
+struct PanmicticModel: public ModelData, public EcolabPoint, public ecolab::Model<PanmicticModel>
 {
   ConnectionPlot connectionPlot;
   void updateConnectionPlot() {connectionPlot.update(this->density,interaction);}
@@ -109,10 +119,9 @@ struct PanmicticModel: public ModelData, public EcolabPoint<AllocatorBase>, publ
   Float extinctionConnectivity() const;
 };
 
-struct EcolabCell: public EcolabPoint<ecolab::CellBase>, public graphcode::Object<EcolabCell>
+struct EcolabCell: public EcolabPoint, public graphcode::Object<EcolabCell>
 {
-  unsigned id=0; // stash the graphcode node id here - TODO - why can't we call graphcode::Object<EcolabCell>::id()?
-  array<int,EcolabPoint::Allocator<int>> delta{this->template allocator<int>()};
+  unsigned id=0; // stash the graphcode node id here so it is accessible from within the cell, rather than its pointer wrapper
 };
 
 class SpatialModel: public ModelData, public EcolabGraph<EcolabCell>,
@@ -122,19 +131,16 @@ class SpatialModel: public ModelData, public EcolabGraph<EcolabCell>,
   CLASSDESC_ACCESS(SpatialModel);
   size_t maxNbrs=0;
 public:
-  static constexpr size_t log2MaxNsp=10;
+  static constexpr size_t log2MaxNsp=11;
   // function valid for x∈(-numX,∞], y∈(-numY,∞]
   size_t makeId(size_t x, size_t y) const {return (x+numX)%numX + numX*((y+numY)%numY);}
   void setGrid(size_t nx, size_t ny);
   EcolabCell& cell(size_t x, size_t y) {
     return *objects[makeId(x,y)];
   }
-  /// on GPUs, set the 
-  void setDensitiesShared();
-  void setDensitiesDevice();
   array<unsigned> nsp() const;
   void makeConsistent();
-  void seed(unsigned x) {forAll([=](EcolabCell& cell){cell.rand.seed(x);});}
+  void seed(unsigned x) {groupedForAll([=](EcolabCell& cell,size_t){cell.rand.seed(x);});}
   void generate(unsigned niter);
   void generate() {generate(1);}
   /// returns number of extinctions
