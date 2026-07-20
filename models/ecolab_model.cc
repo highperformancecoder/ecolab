@@ -244,11 +244,10 @@ void SpatialModel::mutate()
     }
   MPIbuf() << (*cell_ids) << *(ModelData*)this << bcast(0)
            >> (*cell_ids) >> *(ModelData*)this;
-  if (cell_ids->size()==0) return;
 #else
-  if (new_sp.size()==0) return;
   ModelData::mutate(new_sp);
 #endif
+  if (new_sp.size()==0) return;
 
   computeODiagIdx();
   
@@ -347,7 +346,7 @@ void do_row_or_col(array<double>& tmp, Float range, Float minval, Float gdist, F
 /* only run on processor 0 */
 void ModelData::mutate(const array<int>& new_sp)
 {
-
+  if (new_sp.size()==0) return;
 
   static int sp_cntr=-1;    /* used to label newly created species */
   if (sp_cntr==-1)
