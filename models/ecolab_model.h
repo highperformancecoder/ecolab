@@ -59,7 +59,8 @@ struct ModelData
   void makeConsistent(size_t nsp);
   void computeODiagIdx();
   void random_interaction(unsigned conn, double sigma);
-  void condense(const array<bool>& mask, size_t mask_true);
+  using BoolArray=array<bool,ModelData::Allocator<bool>>;
+  void condense(const ModelData::BoolArray& mask, size_t mask_true);
   void mutate(const array<int>&); 
   double complexity() {return ::complexity(foodweb);}
   /// May criterion connectivity σ²
@@ -87,7 +88,7 @@ public:
   array<int,Allocator<int>> density;
   
   void generate(unsigned niter, const ModelData&);
-  void condense(const array<bool>& mask, size_t mask_true);
+  void condense(const ModelData::BoolArray& mask, size_t mask_true);
   template <class E> LocalArray mutate(const E&);
   unsigned nsp() const; ///< number of living species in this cell
   /// Rounding function, randomly round up or down, in the range 0..INT_MAX

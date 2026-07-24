@@ -2,12 +2,14 @@ from ecolab_model import spatial_ecolab as ecolab
 
 from random import random, seed as randomSeed
 
-from ecolab import array_urand, myid, nprocs, device
+from ecolab import array_urand, myid, nprocs, device, workGroupSize
 
 print(device())
 
 # we want initialisation to be identical across all processes
 randomSeed(10)
+
+workGroupSize(256)
 
 # we want the array operations to have a different seed across processes
 array_urand.seed(10+myid())
@@ -28,10 +30,10 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=12
-numY=12
-#numX=2
-#numY=2
+#numX=12
+#numY=12
+numX=2
+numY=2
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
@@ -41,6 +43,7 @@ for i in range(numX):
     for j in range(numY):
         #ecolab.cell(i,j).density([int(100*random()) for i in range(nsp)])
         ecolab.cell(i,j).density(nsp*[100])
+print(ecolab.nsp()())
 print("density initialised")
         
 ecolab.repro_rate(randomList(nsp, ecolab.repro_min(), ecolab.repro_max()))
@@ -71,8 +74,9 @@ def stepImpl():
         ecolab.migration([x/mut_factor for x in ecolab.migration()])
 
     global extinctions, migrations
-    migrations+=ecolab.migrate()
+    #migrations+=ecolab.migrate()
     extinctions+=ecolab.condense()
+    #print(ecolab.nsp()())
     #ecolab.syncThreads()
     #ecolab.gather()
 

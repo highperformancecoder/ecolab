@@ -229,11 +229,13 @@ namespace ecolab
   }
   CLASSDESC_ADD_FUNCTION(registerParallel);
 
+  unsigned workGroupSize=256;
  
   std::string ecolabHome=ECOLAB_HOME;
   CLASSDESC_ADD_GLOBAL(ecolabHome);
   CLASSDESC_ADD_GLOBAL(array_urand);
   CLASSDESC_ADD_GLOBAL(array_grand);
+  CLASSDESC_ADD_GLOBAL(workGroupSize);
   CLASSDESC_ADD_FUNCTION(myid);
   CLASSDESC_ADD_FUNCTION(nprocs);
   namespace python

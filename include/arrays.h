@@ -1473,7 +1473,9 @@ namespace ecolab
     {
       array_data<T> *dt=nullptr;
       A m_allocator;
-
+#ifdef SYCL_LANGUAGE_VERSION
+      bool onDevice=ecolab::onDevice(); // true if created in a parallel section
+#endif
       
       friend class WhereContext;
 
@@ -1572,10 +1574,10 @@ namespace ecolab
 #ifdef __SYCL_DEVICE_ONLY__
         array<T,LocalAllocator<T>> tmp(size);
         asg_v(tmp.data(),size,x);
-        resize(size);
+        resize(size, false);
         asg_v(data(),size,tmp);
 #else
-        array tmp(size);
+        array tmp(size,m_allocator);
         asg_v(tmp.data(),size,x);
         swap(tmp);
 #endif
@@ -1645,27 +1647,51 @@ namespace ecolab
       /// current value of the reference counter
       unsigned refCnt() const {return dt? dt->cnt: 0;}
       
-      /// resize array to \a s elements
-      void resize(size_t s) {
+      /// resize array to \a s elements. Id \a copy is true, then ensure data is retained
+      void resize(size_t s, bool copy) {
         if (!dt || s>dt->sz || ref()>1)
           {
-            release();
-            dt = alloc(s);
+//            array tmp(*this);
+//            release();
+//            dt = alloc(s);
+//            if (dt && copy) asg_v(dt->dt,std::min(s,tmp.size()),tmp.data());
+            array tmp(s,m_allocator);
+            if (copy) asg_v(tmp.dt->dt,std::min(s,tmp.size()),dt->dt);
+            swap(tmp);
           } 
         if (dt) dt->sz=s; // in case s is smaller
       } 
 
+      // note using default argument for copy above breaks classdesc::has_resize.
+      void resize(size_t s) {resize(s,true);}
       void clear() {release(); dt=nullptr;}
       
       /// resize array to \a s elements, and initialise to \a val
       template <class V>
-      void resize(size_t s, const V& val) {resize(s); operator=(val);}
+      void resizeAndInit(size_t s, const V& val) {resize(s,false); operator=(val);}
 
       void swap(array& x) {
+#ifndef __SYCL_DEVICE_ONLY__
         std::swap(dt, x.dt);
         std::swap(m_allocator,x.m_allocator);
+#else
+        if (onDevice && x.onDevice) {
+          std::swap(dt, x.dt);
+          std::swap(m_allocator,x.m_allocator);
+        } else {
+          // assumption here is these array may be per thread, or
+          // maybe shared by all threads in a group, hence std::swap as above won't work
+          auto lhs=dt, rhs=x.dt;
+          auto lalloc=m_allocator, ralloc=x.m_allocator;
+          groupBarrier();
+          dt=rhs;
+          x.dt=lhs;
+          m_allocator=ralloc;
+          x.m_allocator=lalloc;
+        }
+#endif
       }
-
+    
       T& operator[](size_t i) {assert(i<size()); copy(); return data()[i];}
       T operator[](size_t i) const {assert(i<size()); return data()[i];}
 
@@ -1679,10 +1705,14 @@ namespace ecolab
 
       array& operator=(const array& x) {
         if (x.dt==dt) return *this;
-        release();
-        m_allocator=x.m_allocator;
-        dt=x.dt;
-        incrRef();
+        if (m_allocator==x.m_allocator) {
+          release();
+          if (groupLeader()||onDevice) {
+            dt=x.dt;
+            incrRef();
+          }
+        } else
+          asgV(x.size(), x);
         return *this;
       }
 
@@ -1754,20 +1784,18 @@ namespace ecolab
       template <class E> 
       typename enable_if<is_expression<E>,array&>::T
       operator<<=(const E& x) {
-        array orig(*this);
-        resize(orig.size()+x.size());
-        asg_v(data(),orig.size(),orig);
-        asg_v(data()+orig.size(),x.size(),x);
+        auto origSize=size();
+        resize(origSize+x.size());
+        asg_v(data()+origSize,x.size(),x);
         return *this;
       }
 
       template <class S> 
       typename enable_if<is_scalar<S>,array&>::T
       operator<<=(S x) {
-        array orig(*this);
-        resize(orig.size()+1);
-        asg_v(data(),orig.size(),orig);
-        data()[orig.size()]=x;
+        auto origSize=size();
+        resize(origSize+1);
+        data()[origSize]=x;
         return *this;
       }
 
@@ -1817,14 +1845,10 @@ namespace ecolab
       /// number of elements
       size_t size() const {return dt? dt->sz: 0;}
       /// obtain raw pointer to data
-      T* data() {copy(); return dt? dt->dt: 0;}
+      T* data() {copy(); return dt? dt->dt: nullptr;}
       /// obtain raw pointer to data
-      const T* data() const {return dt? dt->dt: 0;}
+      const T* data() const {return dt? dt->dt: nullptr;}
 
-      /// returns a writeable pointer to data without copy-on-write semantics
-      /// dangerous, but needed to run array expressions on GPU
-      //T* dataNoCow() {return dt? dt->dt: 0;}
-      
       typedef T *iterator;
       typedef const T *const_iterator;
     
@@ -2418,7 +2442,7 @@ namespace ecolab
   template <class T>
   std::istream& get(std::istream& s, T& x)
   {
-    typename T::value_type v; x.resize(0);
+    typename T::value_type v; x.clear();
     while (s>>v) {x<<=v;}
     return s;
   }
@@ -2555,7 +2579,7 @@ namespace classdesc_access
     {
       size_t size;
       unpack(targ,desc,size);
-      arg.resize(size);
+      arg.resize(size,false);
       unpack(targ,desc,classdesc::is_array(),*arg.data(),1,size);
     }
   };

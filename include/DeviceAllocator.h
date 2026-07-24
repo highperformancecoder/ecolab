@@ -18,6 +18,9 @@ namespace ecolab
   /// memory allocated to each order, total memory allocated on device=poolSize*(maxOrder-minOrder)
   constexpr unsigned poolSize=32*1024*1024;
 
+  /// size of work groups when running on GPU
+  extern unsigned workGroupSize;
+
   struct FatalErrorFlag
   {
     bool flag;
@@ -47,14 +50,14 @@ namespace ecolab
     using Atomic=sycl::atomic_ref<unsigned,sycl::memory_order::relaxed,sycl::memory_scope::device>;
 
   public:
-    Queue()
-    {
-      for (unsigned i=0; i<size; ++i) {
+    void init() {
+      for (unsigned i=syclItem().get_global_linear_id(); i<size;
+           i+=syclItem().get_global_range().size()) {
         slots[i].value=i;
         slots[i].seq=i+1;
       }
     }
-
+    
     void enqueue(unsigned x)
     {
       while (true)
@@ -66,16 +69,13 @@ namespace ecolab
         unsigned seq=seqAtomic.load(sycl::memory_order::acquire);
         int diff=int(seq)-int(pos);
 
-        if (diff==0)
-        {
-          if (headAtomic.compare_exchange_strong(pos,pos+1))
+        if (diff==0 && headAtomic.compare_exchange_strong(pos,pos+1))
           {
             slot.value=x;
             Atomic publish(slot.seq);
             publish.store(pos+1,sycl::memory_order::release);
             return;
           }
-        }
       }
     }
 
@@ -90,17 +90,14 @@ namespace ecolab
         unsigned seq=seqAtomic.load(sycl::memory_order::acquire);
         int diff=int(seq)-int(pos+1);
 
-        if (diff==0)
-        {
-          if (tailAtomic.compare_exchange_strong(pos,pos+1))
+        if (diff==0 && tailAtomic.compare_exchange_strong(pos,pos+1))
           {
             unsigned v=slot.value;
             Atomic release(slot.seq);
             release.store(pos+size,sycl::memory_order::release);
             return v;
           }
-        }
-        else if (diff<0)
+        if (diff<0)
         {
           return ~0U; // signal buffer empty, don't wait
         }
@@ -123,6 +120,7 @@ namespace ecolab
       return nullptr;
     }
     void deallocate(void* p, size_t) {sycl::ext::oneapi::experimental::printf("%p leaked on device\n",p);}
+    void init() {}
   };
 
   template <unsigned order=minOrder> class DeviceAllocator
@@ -131,8 +129,14 @@ namespace ecolab
     constexpr static unsigned numPages=poolSize/pageSize;
     Queue<numPages> queue;
     char memory[poolSize];
-    DeviceAllocator<order+1> nextAllocator; // next size up allocator
+    DeviceAllocator<order+2> nextAllocator; // next size up allocator
   public:
+    void init() {
+      for (int pagesLeftToInit=numPages; pagesLeftToInit>0; pagesLeftToInit-=workGroupSize) 
+        syclQ().parallel_for(std::min(workGroupSize,unsigned(pagesLeftToInit)),
+                             [this](size_t) {queue.init();});
+      nextAllocator.init();
+    }
     // all members of group get the same pointer
     void* allocate(size_t size) {
       if (size==0) return nullptr;
@@ -163,6 +167,8 @@ namespace ecolab
   
   inline DeviceAllocator<>& deviceAllocator() {
     static DeviceType<DeviceAllocator<>> deviceAllocator;
+    static int dummy=
+      (deviceAllocator->init(), syclQ().wait_and_throw(), 0);      
     return *deviceAllocator;
   }
 
@@ -187,6 +193,8 @@ namespace ecolab
     {return reinterpret_cast<T*>(allocator->allocate(n*sizeof(T)));}
     void deallocate(T* p, size_t n){allocator->deallocate(p,n*sizeof(T));}
     template<class U> struct rebind {using other=GlobalDeviceAllocator<U>;};
+    // allocator is stateless
+    bool operator==(const GlobalDeviceAllocator&) const {return true;}
   };
 
   template <class T>
@@ -194,6 +202,8 @@ namespace ecolab
   {
     HostSharedAllocator(): graphcode::Allocator<T>(syclQ(), sycl::usm::alloc::shared) {}
     template<class U> struct rebind {using other=HostSharedAllocator<U>;};
+    // allocator is stateless
+    bool operator==(const HostSharedAllocator&) const {return true;}
   };
 
   constexpr static unsigned LocalAllocatorSize=30*1024; // 32KiB = half typical local storage
@@ -245,6 +255,8 @@ namespace ecolab
     }
     void deallocate(T*,size_t) {} // cleaned up when group exits
     template<class U> struct rebind {using other=LocalAllocator<U>;};
+    // allocator is stateless
+    bool operator==(const LocalAllocator&) const {return true;}
   };
 #endif
    

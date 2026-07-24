@@ -579,12 +579,16 @@ endif
 endif
 
 ifdef OPENMP
-ifeq ($(CC),gcc)
-OPT+=-fopenmp
-endif
-ifeq ($(CC),icc)
-OPT+=-openmp
-endif
+  ifdef DPCPP
+  OPT+=-qopenmp
+  else
+    ifeq ($(CC),gcc)
+    OPT+=-fopenmp
+    endif
+    ifeq ($(CC),icc)
+    OPT+=-openmp
+    endif
+  endif
 endif
 
 # prefer to usde -f flag if available

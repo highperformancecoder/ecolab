@@ -71,6 +71,9 @@ namespace ecolab
   unsigned myid();
   unsigned nprocs();
 
+  /// size of work groups when running on GPU
+  extern unsigned workGroupSize;
+  
   /// adds the EcoLab module path to the python interpreter
   int addEcoLabPath();
   /// initialisation of the parallel type object
@@ -170,7 +173,6 @@ namespace ecolab
       // 4. Maximum number of compute units (Execution units / DSS count)
       uint32_t max_compute_units = dev.get_info<sycl::info::device::max_compute_units>();
 
-      size_t workGroupSize=native_sg_size;//256;
 //      if (workGroupSize > max_wg_size) 
 //        workGroupSize = max_wg_size; // Fallback for limited devices
 //      

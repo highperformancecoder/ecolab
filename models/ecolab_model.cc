@@ -87,13 +87,11 @@ template <class E>
 RoundArray<E,EcolabPoint> EcolabPoint::roundArray(const E& expr)
 {return RoundArray<E,EcolabPoint>(*this,expr);}
 
-//template <> void setArray(array<int,std::allocator<int>>& x, const array<int>& y)
-//{x=y;}
-//template <> array<int> getArray(const array<int,std::allocator<int>>& x) {return x;}
-//
 void EcolabPoint::generate(unsigned niter, const ModelData& model)
 {
   array<int,LocalAllocator<int>> lDensity(density), tmp(density.size());
+  //auto& lDensity=density;
+  //array<int,GlobalDeviceAllocator<int>> tmp(density.size(), density.allocator());
   
   for (unsigned step=0; step<niter; step++)
     {
@@ -103,8 +101,8 @@ void EcolabPoint::generate(unsigned niter, const ModelData& model)
           ir+=model.interaction.val[j]*lDensity[model.interaction.col[j]];
         tmp[i]=ROUND(lDensity[i] + lDensity[i] * (model.repro_rate[i] + ir));
       });
-      lDensity.swap(tmp);
       groupBarrier(); // synchronises threads on each iteration
+      lDensity.swap(tmp);
     }
   density=lDensity;
   assert(all(density>=0));
@@ -123,12 +121,22 @@ array<unsigned> SpatialModel::nsp() const
   return nsp;
 }
 
-void EcolabPoint::condense(const array<bool>& mask, size_t mask_true)
+void EcolabPoint::condense(const ModelData::BoolArray& mask, size_t mask_true)
 {
-  density = pack( density, mask, mask_true); 
+  if (mask_true==0) {
+    density.clear();
+    return;
+  }
+  LocalArray tmp(mask_true);
+  if (groupLeader())
+    for (size_t i=0, j=0; i<density.size(); ++i)
+      if (mask[i] && j<mask_true) 
+        tmp[j++] = density[i];
+  groupBarrier();
+  density=tmp;
 }
 
-void ModelData::condense(const array<bool>& mask, size_t mask_true)   /* remove extinct species */
+void ModelData::condense(const ModelData::BoolArray& mask, size_t mask_true)   /* remove extinct species */
 {
   auto map = enumerate( mask );
   array<bool> mask_off = mask[ interaction.row ] && mask[ interaction.col ];
@@ -162,20 +170,29 @@ unsigned PanmicticModel::condense()
 
 unsigned SpatialModel::condense()
 {
-  array<int> total_density(species.size(),0);
-  for (auto& i: *this) total_density+=i->as<EcolabCell>()->density; // TODO
-#ifdef MPI_SUPPORT
-  array<int> recv(total_density.size());
-  MPI_Allreduce(total_density.data(),recv.data(),total_density.size(),MPI_INT,MPI_SUM,MPI_COMM_WORLD);
-  total_density.swap(recv);
-#endif
-  array<bool> mask=total_density != 0;
+  DeviceType<BoolArray> mask(species.size(),false);
+  groupedForAll([mask=mask->data()](const EcolabCell& c,size_t){
+    array_ns::map(c.density.size(),[&](size_t i) {
+      if (c.density[i]) 
+        mask[i]=true;
+    });
+  });
   
-  size_t mask_true=sum(mask);
-  if (mask.size()==mask_true) return 0; /* no change ! */
-  ModelData::condense(mask,mask_true);
-  for (auto& i: *this) i->as<EcolabCell>()->condense(mask, mask_true);
-  return mask.size()-mask_true;
+  
+#ifdef MPI_SUPPORT
+  decltype(mask) recv(mask->size());
+  MPI_Allreduce(mask->data(),recv.data(),mask->size(),MPI_C_BOOL,MPI_LOR,MPI_COMM_WORLD);
+  mask->swap(recv);
+#endif
+  
+  size_t mask_true=sum(*mask);
+  if (mask->size()==mask_true) return 0; /* no change ! */
+  ModelData::condense(*mask,mask_true);
+
+  groupedForAll([mask=&*mask, mask_true](EcolabCell& c,size_t){
+    c.condense(*mask, mask_true);
+  });
+  return mask->size()-mask_true;
 }
 
 
@@ -210,7 +227,7 @@ void SpatialModel::mutate()
   });
 
   array<unsigned> new_sp;
-  DeviceType<array<unsigned,ModelData::Allocator<unsigned>>> cell_ids;
+  DeviceType<EcolabPoint::UnsignedArray> cell_ids;
   syncThreads();
   
   // TODO - this is a kind of scan - can it be done on device?
@@ -252,11 +269,9 @@ void SpatialModel::mutate()
   computeODiagIdx();
   
   // set the new species density to 1 for those created on this cell
-  //groupedForAll([cell_ids=&*cell_ids](EcolabCell& c) {
-  hostForAll([cell_ids=&*cell_ids,this](EcolabCell& c,size_t) {
-    assert(all(c.density>=0));
+  groupedForAll([cell_ids=&*cell_ids](EcolabCell& c,size_t) {
+    //hostForAll([cell_ids=&*cell_ids,this](EcolabCell& c,size_t) {
     c.density <<= (*cell_ids)==c.id;
-    assert(c.density.size()==this->species.size());
   });
 }
 
@@ -694,9 +709,9 @@ void ModelData::makeConsistent(size_t nsp)
       species=pcoord(nsp);
     }
   
-  if (!create.size()) create.resize(species.size(),0);
-  if (!mutation.size()) mutation.resize(species.size(),0);
-  if (!migration.size()) migration.resize(species.size(),0);
+  if (!create.size()) create.resizeAndInit(species.size(),0);
+  if (!mutation.size()) mutation.resizeAndInit(species.size(),0);
+  if (!migration.size()) migration.resizeAndInit(species.size(),0);
   computeODiagIdx();
 }
 
