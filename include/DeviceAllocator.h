@@ -74,6 +74,7 @@ namespace ecolab
             slot.value=x;
             Atomic publish(slot.seq);
             publish.store(pos+1,sycl::memory_order::release);
+            printf("dealloc: %zu\n",size-head+tail);
             return;
           }
       }
@@ -95,6 +96,7 @@ namespace ecolab
             unsigned v=slot.value;
             Atomic release(slot.seq);
             release.store(pos+size,sycl::memory_order::release);
+            printf("alloc: %zu\n",size-head+tail);
             return v;
           }
         if (diff<0)
@@ -132,9 +134,14 @@ namespace ecolab
     DeviceAllocator<order+2> nextAllocator; // next size up allocator
   public:
     void init() {
-      for (int pagesLeftToInit=numPages; pagesLeftToInit>0; pagesLeftToInit-=workGroupSize) 
-        syclQ().parallel_for(std::min(workGroupSize,unsigned(pagesLeftToInit)),
-                             [this](size_t) {queue.init();});
+      auto chunkOWork=syclQ().get_device().
+        get_info<sycl::info::device::max_compute_units>()*workGroupSize;
+      for (int pagesLeftToInit=numPages; pagesLeftToInit>0; )
+        {
+          syclQ().parallel_for(std::min(chunkOWork,unsigned(pagesLeftToInit)),
+                               [this](size_t) {queue.init();});
+          pagesLeftToInit-=chunkOWork;
+        }
       nextAllocator.init();
     }
     // all members of group get the same pointer
@@ -155,8 +162,9 @@ namespace ecolab
       if (!p) return;
       if (p>=memory && p<memory+poolSize) {
         groupBarrier();
-        if (groupLeader())
+        if (groupLeader()) {
           queue.enqueue((reinterpret_cast<char*>(p)-memory)>>order);
+        }
         return;
       }
       nextAllocator.deallocate(p,size);
@@ -253,11 +261,13 @@ namespace ecolab
       char* alloc=b.buffer+offs;
       return reinterpret_cast<T*>(alloc);
     }
-    void deallocate(T*,size_t) {} // cleaned up when group exits
+    void deallocate(T*p,size_t) {if (groupLeader()) printf("local dealloc %p\n",p);} // cleaned up when group exits
     template<class U> struct rebind {using other=LocalAllocator<U>;};
     // allocator is stateless
     bool operator==(const LocalAllocator&) const {return true;}
   };
+#else
+  template <class T> using LocalAllocator=std::allocator<T>;
 #endif
    
 }

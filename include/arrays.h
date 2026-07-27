@@ -1523,10 +1523,15 @@ namespace ecolab
 
       void set_size(size_t s) {dt = alloc(s);}
 
-      unsigned& ref() // access reference counter
+#ifdef __SYCL_DEVICE_ONLY__
+      using Ref=sycl::atomic_ref<unsigned,sycl::memory_order::relaxed,sycl::memory_scope::work_group>;
+#else
+      using Ref=unsigned&;
+#endif
+      Ref ref() // access reference counter
       {
         assert(dt);
-        return dt->cnt;
+        return Ref(dt->cnt);
       }
 
       // increment reference counter
@@ -1649,15 +1654,14 @@ namespace ecolab
       
       /// resize array to \a s elements. Id \a copy is true, then ensure data is retained
       void resize(size_t s, bool copy) {
+        if (s==size()) return;
+        groupBarrier();
         if (!dt || s>dt->sz || ref()>1)
           {
-//            array tmp(*this);
-//            release();
-//            dt = alloc(s);
-//            if (dt && copy) asg_v(dt->dt,std::min(s,tmp.size()),tmp.data());
             array tmp(s,m_allocator);
-            if (copy) asg_v(tmp.dt->dt,std::min(s,tmp.size()),dt->dt);
+            if (dt && copy) asg_v(tmp.dt->dt,std::min(s,tmp.size()),dt->dt);
             swap(tmp);
+            if (groupLeader()) printf("resize: deallocating %p, refCnt=%u\n",tmp.dt,tmp.refCnt());
           } 
         if (dt) dt->sz=s; // in case s is smaller
       } 
@@ -1672,10 +1676,12 @@ namespace ecolab
 
       void swap(array& x) {
 #ifndef __SYCL_DEVICE_ONLY__
+        printf("host swapping %p & %p\n",dt, x.dt);
         std::swap(dt, x.dt);
         std::swap(m_allocator,x.m_allocator);
 #else
         if (onDevice && x.onDevice) {
+          if (groupLeader()) printf("on device swapping %p & %p\n",dt, x.dt);
           std::swap(dt, x.dt);
           std::swap(m_allocator,x.m_allocator);
         } else {
@@ -1684,10 +1690,12 @@ namespace ecolab
           auto lhs=dt, rhs=x.dt;
           auto lalloc=m_allocator, ralloc=x.m_allocator;
           groupBarrier();
+          if (groupLeader()) printf("swapping %p & %p\n",lhs,rhs);
           dt=rhs;
           x.dt=lhs;
           m_allocator=ralloc;
           x.m_allocator=lalloc;
+          groupBarrier();
         }
 #endif
       }
@@ -1785,7 +1793,17 @@ namespace ecolab
       typename enable_if<is_expression<E>,array&>::T
       operator<<=(const E& x) {
         auto origSize=size();
+#ifdef __SYCL_DEVICE_ONLY__
+        if (groupLeader()) printf("<<= resize from %zu to %zu\n",origSize,origSize+x.size());
+#else
+        printf("<<= host resize from %zu to %zu\n",origSize,origSize+x.size());
+#endif
         resize(origSize+x.size());
+#ifdef __SYCL_DEVICE_ONLY__
+        if (groupLeader()) printf("<<= after resize from %zu to %zu\n",origSize,origSize+x.size());
+#else
+        printf("<<= host after resize from %zu to %zu\n",origSize,origSize+x.size());
+#endif
         asg_v(data()+origSize,x.size(),x);
         return *this;
       }

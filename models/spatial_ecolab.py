@@ -21,7 +21,7 @@ ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
 ecolab.odiag_min(-1e-5)
 ecolab.odiag_max(1e-5)
-ecolab.mut_max(1e-5)
+ecolab.mut_max(1000)
 #ecolab.mut_max(1e-3)
 ecolab.sp_sep(0.1)
 
@@ -32,8 +32,8 @@ ecolab.species(range(nsp))
 
 #numX=12
 #numY=12
-numX=2
-numY=2
+numX=1
+numY=1
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
@@ -64,7 +64,7 @@ mut_factor=1000
 extinctions=0
 migrations=0
 def stepImpl():
-    ecolab.generate(100)
+    #ecolab.generate(100)
     ecolab.mutate()
 
     epochTs=ecolab.tstep()%epoch
@@ -75,34 +75,36 @@ def stepImpl():
 
     global extinctions, migrations
     #migrations+=ecolab.migrate()
-    extinctions+=ecolab.condense()
+    #extinctions+=ecolab.condense()
     #print(ecolab.nsp()())
     #ecolab.syncThreads()
     #ecolab.gather()
 
-print(ecolab.nsp()())
+#print(ecolab.nsp()())
 ecolab.makeConsistent()
 ecolab.syncThreads()
-print(ecolab.nsp()())
+#print(ecolab.nsp()())
 
 from timeit import timeit
-print(timeit('stepImpl()', globals=globals(), number=100))
-                
+print('-----')
+print(timeit('ecolab.mutate()', globals=globals(), number=1))
+print('-----')
+               
 def step():
     global extinctions,migrations
     extinctions=0
     migrations=0
     for i in range(epoch//1000000):
         stepImpl()
-    #print('migrations=',migrations,' extinctions=',extinctions)
-    if myid()==0:
-        nsp=len(ecolab.species)
-        statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
-        plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))
-        #plot('No. species',ecolab.tstep(),nsp)
-        plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())
-        plot('Extinctions',ecolab.tstep(),extinctions)
-        plot('Migration',ecolab.tstep(),migrations)
+#    #print('migrations=',migrations,' extinctions=',extinctions)
+#    if myid()==0:
+#        nsp=len(ecolab.species)
+#        statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
+#        plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))
+#        #plot('No. species',ecolab.tstep(),nsp)
+#        plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())
+#        plot('Extinctions',ecolab.tstep(),extinctions)
+#        plot('Migration',ecolab.tstep(),migrations)
 #        for i in range(numX):
 #            for j in range(numY):
 #                plot(f'Density({i},{j})',ecolab.tstep(),ecolab.cell(i,j).density(), pens=ecolab.species())

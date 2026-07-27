@@ -129,10 +129,6 @@ namespace ecolab
     operator bool() const {return true;} // always defined
   };
 
-#ifndef __SYCL_DEVICE_ONLY__
-  template <class T> using LocalAllocator=std::allocator<T>;
-#endif
-  
   inline void groupBarrier() {
 #ifdef __SYCL_DEVICE_ONLY__
     sycl::group_barrier(syclGroup());

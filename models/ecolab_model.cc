@@ -223,7 +223,8 @@ void SpatialModel::mutate()
 
   groupedForAll([newSp=newSp.data(),mut_scale=&*mut_scale,this](EcolabCell& c,size_t i) {
     assert(all(c.density>=0));
-    newSp[i]=c.mutate(*mut_scale);
+    EcolabPoint::UnsignedArray tmp(c.mutate(*mut_scale),c.density.allocator());
+    newSp[i]=tmp;
   });
 
   array<unsigned> new_sp;
@@ -240,7 +241,7 @@ void SpatialModel::mutate()
     }
 
   // deallocate on device
-  groupedForAll([newSp=newSp.data()](EcolabCell& c,size_t i) {
+  hostForAll([newSp=newSp.data()](EcolabCell& c,size_t i) {
     newSp[i].clear();
     assert(newSp[i].refCnt()==0);
   });
@@ -264,19 +265,24 @@ void SpatialModel::mutate()
 #else
   ModelData::mutate(new_sp);
 #endif
-  if (new_sp.size()==0) return;
+  //if (new_sp.size()==0) return;
 
-  computeODiagIdx();
-  
+  //  computeODiagIdx();
+  mut_scale->clear();
+  newSp.clear();
+
+  (*cell_ids)<<=0;
+  cout<<"b4 append:"<<endl;
   // set the new species density to 1 for those created on this cell
   groupedForAll([cell_ids=&*cell_ids](EcolabCell& c,size_t) {
     //hostForAll([cell_ids=&*cell_ids,this](EcolabCell& c,size_t) {
     c.density <<= (*cell_ids)==c.id;
   });
+  cout<<"after append:"<<endl;
 }
 
 template <class E>
-EcolabPoint::LocalArray EcolabPoint::mutate(const E& mut_scale)
+EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
 {
   /* calculate the number of mutants each species produces */
   if (density.size()==0) return {};
@@ -296,7 +302,7 @@ EcolabPoint::LocalArray EcolabPoint::mutate(const E& mut_scale)
   
   density-=speciations;
 
-  LocalArray new_sp(offsets[nsp]);
+  UnsignedArray new_sp(offsets[nsp], density.allocator());
   array_ns::map(nsp, [offsets=offsets.data(),new_sp=new_sp.data()](size_t i) {
     for (auto j=offsets[i]; j<offsets[i+1]; ++j)
       new_sp[j]=i;
