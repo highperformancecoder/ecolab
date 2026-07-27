@@ -74,7 +74,7 @@ namespace ecolab
             slot.value=x;
             Atomic publish(slot.seq);
             publish.store(pos+1,sycl::memory_order::release);
-            printf("dealloc: %zu\n",size-head+tail);
+            printf("dealloc: %zu, pageSize=%zu\n",size-pos+Atomic(tail),poolSize/size);
             return;
           }
       }
@@ -96,7 +96,7 @@ namespace ecolab
             unsigned v=slot.value;
             Atomic release(slot.seq);
             release.store(pos+size,sycl::memory_order::release);
-            printf("alloc: %zu\n",size-head+tail);
+            printf("alloc: %zu, pageSize=%zu\n",size-Atomic(head)+pos,poolSize/size);
             return v;
           }
         if (diff<0)
@@ -149,6 +149,7 @@ namespace ecolab
       if (size==0) return nullptr;
       if (size<=pageSize) {
         unsigned offs;
+        groupBarrier();
         if (groupLeader()) offs=queue.dequeue();
 #ifdef __SYCL_DEVICE_ONLY__
         offs=sycl::group_broadcast(syclGroup(),offs);
@@ -174,10 +175,15 @@ namespace ecolab
   };
   
   inline DeviceAllocator<>& deviceAllocator() {
+//#ifdef __SYCL_DEVICE_ONLY__
+//    printf("deviceAllocator() illegally called on device\n",0);
+//    return *reinterpret_cast<DeviceAllocator<>*>(0);
+//#else
     static DeviceType<DeviceAllocator<>> deviceAllocator;
     static int dummy=
       (deviceAllocator->init(), syclQ().wait_and_throw(), 0);      
     return *deviceAllocator;
+    //#endif
   }
 
   /// Allocator wrapping the DeviceAllocator singleton
@@ -190,9 +196,14 @@ namespace ecolab
     using difference_type=std::ptrdiff_t;
     using propagate_on_container_move_assignment=std::true_type;
 
-    DeviceAllocator<>* allocator=&deviceAllocator();
+    DeviceAllocator<>* allocator;
     
-    GlobalDeviceAllocator() = default; // note: default constructor must be called on host
+#ifdef __SYCL_DEVICE_ONLY__
+    GlobalDeviceAllocator() = delete;
+#else
+    GlobalDeviceAllocator() // note: default constructor must be called on host
+    {allocator=&deviceAllocator();}
+#endif
     template <class U>
     GlobalDeviceAllocator(const GlobalDeviceAllocator<U>& other):
       allocator(other.allocator) {}

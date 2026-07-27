@@ -1610,7 +1610,8 @@ namespace ecolab
       typedef size_t size_type; 
       using Allocator=A;
 
-      array(const Allocator& alloc={}): m_allocator(alloc) {}
+      array()=default;
+      array(const Allocator& alloc): m_allocator(alloc) {}
       explicit array(size_t s, const Allocator& alloc=Allocator()): m_allocator(alloc)
       {
         set_size(s);

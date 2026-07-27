@@ -219,16 +219,17 @@ void SpatialModel::mutate()
   assert(all(*mut_scale<=1));
   last_mut_tstep=tstep;
 
-  vector<EcolabPoint::UnsignedArray,ModelData::Allocator<EcolabPoint::UnsignedArray>> newSp(size());
-
+  auto deviceAllocator=cell(0,0).density.allocator();
+  vector<EcolabPoint::UnsignedArray,ModelData::Allocator<EcolabPoint::UnsignedArray>>
+    newSp(size(),{deviceAllocator});
+  
   groupedForAll([newSp=newSp.data(),mut_scale=&*mut_scale,this](EcolabCell& c,size_t i) {
     assert(all(c.density>=0));
-    EcolabPoint::UnsignedArray tmp(c.mutate(*mut_scale),c.density.allocator());
-    newSp[i]=tmp;
+    newSp[i]=c.mutate(*mut_scale);
   });
 
   array<unsigned> new_sp;
-  DeviceType<EcolabPoint::UnsignedArray> cell_ids;
+  DeviceType<EcolabPoint::UnsignedArray> cell_ids(deviceAllocator);
   syncThreads();
   
   // TODO - this is a kind of scan - can it be done on device?
@@ -285,7 +286,7 @@ template <class E>
 EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
 {
   /* calculate the number of mutants each species produces */
-  if (density.size()==0) return {};
+  if (density.size()==0) return {density.allocator()};
 #ifdef __SYCL_DEVICE_ONLY__
   LocalArray speciations=roundArray(mut_scale * density);
   auto nsp=density.size();
@@ -298,7 +299,7 @@ EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
     offsets[nsp]=offsets[nsp-1]+speciations[nsp-1];
   groupBarrier();
 
-  if (offsets[nsp]==0) return {};
+  if (offsets[nsp]==0) return {density.allocator()};
   
   density-=speciations;
 
@@ -583,6 +584,7 @@ bool ConnectionPlot::redraw(int x0, int y0, int width, int height)
   return true;
 }
 
+#ifndef __SYCL_DEVICE_ONLY__
 void SpatialModel::setGrid(size_t nx, size_t ny)
 {
   numX=nx; numY=ny;
@@ -609,6 +611,7 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
   for (auto& i: objects)
     maxNbrs=std::max(maxNbrs, i->neighbours.size());
 }
+#endif
 
 void SpatialModel::generate(unsigned niter)
 {
