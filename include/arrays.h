@@ -1569,7 +1569,6 @@ namespace ecolab
               {
                 free(dt);
                 dt=nullptr;
-                return;
               } else
               decrRef();
             groupBarrier();
@@ -1602,11 +1601,12 @@ namespace ecolab
             array_data<T>* oldData=dt;
             decrRef();
             //bool freeMem=ref()==0;
-            dt=alloc(size());
+            auto sz=size();
+            dt=alloc(sz);
 #ifdef __SYCL_DEVICE_ONLY__
-            asg_v(dt->dt,size(),oldData->dt);
+            asg_v(dt->dt,sz,oldData->dt);
 #else
-            memcpy(dt->dt,oldData->dt,size()*sizeof(T));
+            memcpy(dt->dt,oldData->dt,sz*sizeof(T));
 #endif
             //if (freeMem) free(oldData);
           }
