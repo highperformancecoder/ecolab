@@ -74,7 +74,7 @@ namespace ecolab
             slot.value=x;
             Atomic publish(slot.seq);
             publish.store(pos+1,sycl::memory_order::release);
-            printf("dealloc: %zu, pageSize=%zu\n",size-pos+Atomic(tail),poolSize/size);
+            printf("dealloc: %zu, pageSize=%zu\n",size-headAtomic+Atomic(tail),poolSize/size);
             return;
           }
       }
@@ -96,7 +96,7 @@ namespace ecolab
             unsigned v=slot.value;
             Atomic release(slot.seq);
             release.store(pos+size,sycl::memory_order::release);
-            printf("alloc: %zu, pageSize=%zu\n",size-Atomic(head)+pos,poolSize/size);
+            printf("alloc: %zu, pageSize=%zu\n",size-Atomic(head)+tailAtomic,poolSize/size);
             return v;
           }
         if (diff<0)
@@ -148,7 +148,7 @@ namespace ecolab
     void* allocate(size_t size) {
       if (size==0) return nullptr;
       if (size<=pageSize) {
-        unsigned offs;
+        unsigned offs=~0U;
         groupBarrier();
         if (groupLeader()) offs=queue.dequeue();
 #ifdef __SYCL_DEVICE_ONLY__

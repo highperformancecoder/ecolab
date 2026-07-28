@@ -1524,7 +1524,7 @@ namespace ecolab
       void set_size(size_t s) {dt = alloc(s);}
 
 #ifdef __SYCL_DEVICE_ONLY__
-      using Ref=sycl::atomic_ref<unsigned,sycl::memory_order::relaxed,sycl::memory_scope::work_group>;
+      using Ref=sycl::atomic_ref<unsigned,sycl::memory_order::acq_rel,sycl::memory_scope::work_group>;
 #else
       using Ref=unsigned&;
 #endif
@@ -1558,11 +1558,17 @@ namespace ecolab
       
       void release()
       {
+        groupBarrier();
         if (dt)
           {
-            if (ref()==1)
+            bool freeMem=ref()==1;
+#ifdef __SYCL_DEVICE_ONLY__
+            freeMem=sycl::group_broadcast(syclGroup(),freeMem);
+#endif
+            if (freeMem)
               {
                 free(dt);
+                dt=nullptr;
                 return;
               }
             decrRef();
@@ -1594,14 +1600,14 @@ namespace ecolab
           {
             array_data<T>* oldData=dt;
             decrRef();
-            bool freeMem=ref()==0;
+            //bool freeMem=ref()==0;
             dt=alloc(size());
 #ifdef __SYCL_DEVICE_ONLY__
             asg_v(dt->dt,size(),oldData->dt);
 #else
             memcpy(dt->dt,oldData->dt,size()*sizeof(T));
 #endif
-            if (freeMem) free(oldData);
+            //if (freeMem) free(oldData);
           }
       }
 
@@ -1664,7 +1670,9 @@ namespace ecolab
             swap(tmp);
             if (groupLeader()) printf("resize: deallocating %p, refCnt=%u\n",tmp.dt,tmp.refCnt());
           } 
-        if (dt) dt->sz=s; // in case s is smaller
+        groupBarrier();
+        if (groupLeader() && dt) dt->sz=s; // in case s is smaller
+        groupBarrier();
       } 
 
       // note using default argument for copy above breaks classdesc::has_resize.
@@ -1718,8 +1726,8 @@ namespace ecolab
           release();
           if (groupLeader()||onDevice) {
             dt=x.dt;
-            incrRef();
           }
+          incrRef();
         } else
           asgV(x.size(), x);
         return *this;
