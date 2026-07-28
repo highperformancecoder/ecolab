@@ -1582,16 +1582,16 @@ namespace ecolab
       void asgV(size_t size, const E& x)
       {
         // copy into temporary data, as E may contain references to this
-#ifdef __SYCL_DEVICE_ONLY__
-        array<T,LocalAllocator<T>> tmp(size);
-        asg_v(tmp.data(),size,x);
-        resize(size, false);
-        asg_v(data(),size,tmp);
-#else
+//#ifdef __SYCL_DEVICE_ONLY__
+//        array tmp(size,m_allocator);
+//        asg_v(tmp.data(),size,x);
+//        resize(size, false);
+//        asg_v(data(),size,tmp);
+//#else
         array tmp(size,m_allocator);
         asg_v(tmp.data(),size,x);
         swap(tmp);
-#endif
+        //#endif
       }
       
       void copy() //any nonconst method needs to call this
@@ -1701,9 +1701,9 @@ namespace ecolab
           // maybe shared by all threads in a group, hence std::swap as above won't work
           auto lhs=dt, rhs=x.dt;
           auto lalloc=m_allocator, ralloc=x.m_allocator;
-          //groupBarrier();
-          lhs=sycl::group_broadcast(syclGroup(),lhs);
-          rhs=sycl::group_broadcast(syclGroup(),rhs);
+          groupBarrier();
+          //lhs=sycl::group_broadcast(syclGroup(),lhs);
+          //rhs=sycl::group_broadcast(syclGroup(),rhs);
           if (groupLeader()) printf("swapping %p & %p\n",lhs,rhs);
           dt=rhs;
           x.dt=lhs;

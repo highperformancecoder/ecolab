@@ -143,6 +143,14 @@ namespace ecolab
     return true;
   }
 
+  inline size_t localThreadId() {
+#ifdef __SYCL_DEVICE_ONLY__
+    return syclGroup().get_local_linear_id();
+#else
+    return 0;
+#endif
+  }
+  
   inline bool onDevice() {
 #ifdef __SYCL_DEVICE_ONLY__
     return true;

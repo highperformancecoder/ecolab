@@ -89,7 +89,8 @@ RoundArray<E,EcolabPoint> EcolabPoint::roundArray(const E& expr)
 
 void EcolabPoint::generate(unsigned niter, const ModelData& model)
 {
-  array<int,LocalAllocator<int>> lDensity(density), tmp(density.size());
+  //array<int,LocalAllocator<int>> lDensity(density), tmp(density.size());
+  array<int,Allocator<int>> lDensity(density), tmp(density.size(), density.allocator());
   //auto& lDensity=density;
   //array<int,GlobalDeviceAllocator<int>> tmp(density.size(), density.allocator());
   
@@ -127,7 +128,8 @@ void EcolabPoint::condense(const ModelData::BoolArray& mask, size_t mask_true)
     density.clear();
     return;
   }
-  LocalArray tmp(mask_true);
+  //LocalArray tmp(mask_true);
+  UnsignedArray tmp(mask_true,density.allocator());
   if (groupLeader())
     for (size_t i=0, j=0; i<density.size(); ++i)
       if (mask[i] && j<mask_true) 
@@ -272,10 +274,10 @@ void SpatialModel::mutate()
   mut_scale->clear();
   newSp.clear();
 
-  (*cell_ids)<<=0;
+  //(*cell_ids)<<=0;
   cout<<"b4 append:"<<endl;
   // set the new species density to 1 for those created on this cell
-  groupedForAll([cell_ids=&*cell_ids](EcolabCell& c,size_t) {
+  hostForAll([cell_ids=&*cell_ids](EcolabCell& c,size_t) {
     //hostForAll([cell_ids=&*cell_ids,this](EcolabCell& c,size_t) {
     c.density <<= (*cell_ids)==c.id;
   });
@@ -288,10 +290,12 @@ EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
   /* calculate the number of mutants each species produces */
   if (density.size()==0) return {density.allocator()};
 #ifdef __SYCL_DEVICE_ONLY__
-  LocalArray speciations=roundArray(mut_scale * density);
+  //LocalArray speciations=roundArray(mut_scale * density);
+  UnsignedArray speciations(roundArray(mut_scale * density), density.allocator());
   auto nsp=density.size();
   //  auto new_sp = gen_index(speciations);
-  LocalArray offsets(nsp+1);
+  //LocalArray offsets(nsp+1);
+  UnsignedArray offsets(nsp+1,density.allocator());
   sycl::joint_exclusive_scan(syclGroup(),speciations.data(),speciations.data()+nsp,
                              offsets.data(),sycl::plus<unsigned>());
   groupBarrier();
