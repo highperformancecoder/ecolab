@@ -1561,7 +1561,7 @@ namespace ecolab
         groupBarrier();
         if (dt)
           {
-            bool freeMem=ref()==1;
+            bool freeMem=true; //ref()==1;
 #ifdef __SYCL_DEVICE_ONLY__
             freeMem=sycl::group_broadcast(syclGroup(),freeMem);
 #endif
@@ -1596,7 +1596,7 @@ namespace ecolab
       
       void copy() //any nonconst method needs to call this
       {           // to implement copy-on-write semantics
-        if (dt && ref()>1)
+        if (dt /*&& ref()>1*/)
           {
             array_data<T>* oldData=dt;
             decrRef();
@@ -1608,7 +1608,8 @@ namespace ecolab
 #else
             memcpy(dt->dt,oldData->dt,sz*sizeof(T));
 #endif
-            //if (freeMem) free(oldData);
+            //if (freeMem)
+            free(oldData);
           }
       }
 
@@ -1632,9 +1633,10 @@ namespace ecolab
 
       array(const array& x): m_allocator(x.m_allocator) 
       {
-        dt=x.dt;
-        incrRef();
-          
+        //dt=x.dt;
+        //incrRef();
+        set_size(x.size());
+        asg_v(data(),x.size(),x);
       }
 
       template <class expr>
@@ -1664,7 +1666,7 @@ namespace ecolab
       void resize(size_t s, bool copy) {
         if (s==size()) return;
         groupBarrier();
-        if (!dt || s>dt->sz || ref()>1)
+        if (!dt || s>dt->sz /*|| ref()>1*/)
           {
             array tmp(s,m_allocator);
             if (dt && copy) asg_v(tmp.dt->dt,std::min(s,tmp.size()),dt->dt);
@@ -1725,13 +1727,13 @@ namespace ecolab
 
       array& operator=(const array& x) {
         if (x.dt==dt) return *this;
-        if (m_allocator==x.m_allocator) {
-          release();
-          /*if (groupLeader()||onDevice)*/ {
-            dt=x.dt;
-          }
-          incrRef();
-        } else
+//        if (m_allocator==x.m_allocator) {
+//          release();
+//          /*if (groupLeader()||onDevice)*/ {
+//            dt=x.dt;
+//          }
+//          incrRef();
+//        } else
           asgV(x.size(), x);
         return *this;
       }
