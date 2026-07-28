@@ -1570,8 +1570,9 @@ namespace ecolab
                 free(dt);
                 dt=nullptr;
                 return;
-              }
-            decrRef();
+              } else
+              decrRef();
+            groupBarrier();
           }
       }
 
@@ -1689,23 +1690,25 @@ namespace ecolab
         std::swap(dt, x.dt);
         std::swap(m_allocator,x.m_allocator);
 #else
-        if (onDevice && x.onDevice) {
-          if (groupLeader()) printf("on device swapping %p & %p\n",dt, x.dt);
-          std::swap(dt, x.dt);
-          std::swap(m_allocator,x.m_allocator);
-        } else {
+//        if (onDevice && x.onDevice) {
+//          if (groupLeader()) printf("on device swapping %p & %p\n",dt, x.dt);
+//          std::swap(dt, x.dt);
+//          std::swap(m_allocator,x.m_allocator);
+//        } else {
           // assumption here is these array may be per thread, or
           // maybe shared by all threads in a group, hence std::swap as above won't work
           auto lhs=dt, rhs=x.dt;
           auto lalloc=m_allocator, ralloc=x.m_allocator;
-          groupBarrier();
+          //groupBarrier();
+          lhs=sycl::group_broadcast(syclGroup(),lhs);
+          rhs=sycl::group_broadcast(syclGroup(),rhs);
           if (groupLeader()) printf("swapping %p & %p\n",lhs,rhs);
           dt=rhs;
           x.dt=lhs;
           m_allocator=ralloc;
           x.m_allocator=lalloc;
           groupBarrier();
-        }
+          //        }
 #endif
       }
     
@@ -1724,7 +1727,7 @@ namespace ecolab
         if (x.dt==dt) return *this;
         if (m_allocator==x.m_allocator) {
           release();
-          if (groupLeader()||onDevice) {
+          /*if (groupLeader()||onDevice)*/ {
             dt=x.dt;
           }
           incrRef();
