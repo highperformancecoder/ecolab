@@ -224,7 +224,7 @@ namespace ecolab
     bool operator==(const HostSharedAllocator&) const {return true;}
   };
 
-  constexpr static unsigned LocalAllocatorSize=30*1024; // 32KiB = half typical local storage
+  constexpr static unsigned LocalAllocatorSize=8*1024; // 32KiB = half typical local storage
 
   struct LocalAllocatorBuffer
   {
