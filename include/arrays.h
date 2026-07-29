@@ -1561,11 +1561,12 @@ namespace ecolab
         groupBarrier();
         if (dt)
           {
-            bool freeMem=true; //ref()==1;
+            unsigned refCnt=ref();
 #ifdef __SYCL_DEVICE_ONLY__
-            freeMem=sycl::group_broadcast(syclGroup(),freeMem);
+            // ensure absolute consistency of the reference count
+            refCnt=sycl::reduce_over_group(syclGroup(),refCnt,sycl::minimum<unsigned>());
 #endif
-            if (freeMem)
+            if (refCnt==1)
               {
                 free(dt);
                 dt=nullptr;
@@ -1596,11 +1597,10 @@ namespace ecolab
       
       void copy() //any nonconst method needs to call this
       {           // to implement copy-on-write semantics
-        if (dt /*&& ref()>1*/)
+        if (dt && ref()>1)
           {
             array_data<T>* oldData=dt;
             decrRef();
-            //bool freeMem=ref()==0;
             auto sz=size();
             dt=alloc(sz);
 #ifdef __SYCL_DEVICE_ONLY__
@@ -1608,7 +1608,6 @@ namespace ecolab
 #else
             memcpy(dt->dt,oldData->dt,sz*sizeof(T));
 #endif
-            //if (freeMem)
             free(oldData);
           }
       }
@@ -1633,10 +1632,8 @@ namespace ecolab
 
       array(const array& x): m_allocator(x.m_allocator) 
       {
-        //dt=x.dt;
-        //incrRef();
-        set_size(x.size());
-        asg_v(data(),x.size(),x);
+        dt=x.dt;
+        incrRef();
       }
 
       template <class expr>
@@ -1669,9 +1666,8 @@ namespace ecolab
         if (!dt || s>dt->sz /*|| ref()>1*/)
           {
             array tmp(s,m_allocator);
-            if (dt && copy) asg_v(tmp.dt->dt,std::min(s,tmp.size()),dt->dt);
+            if (dt && copy) asg_v(tmp.dt->dt,std::min(s,dt->sz),dt->dt);
             swap(tmp);
-            if (groupLeader()) printf("resize: deallocating %p, refCnt=%u\n",tmp.dt,tmp.refCnt());
           } 
         groupBarrier();
         if (groupLeader() && dt) dt->sz=s; // in case s is smaller
@@ -1688,29 +1684,24 @@ namespace ecolab
 
       void swap(array& x) {
 #ifndef __SYCL_DEVICE_ONLY__
-        printf("host swapping %p & %p\n",dt, x.dt);
         std::swap(dt, x.dt);
         std::swap(m_allocator,x.m_allocator);
 #else
-//        if (onDevice && x.onDevice) {
-//          if (groupLeader()) printf("on device swapping %p & %p\n",dt, x.dt);
-//          std::swap(dt, x.dt);
-//          std::swap(m_allocator,x.m_allocator);
-//        } else {
+        if (onDevice && x.onDevice) {
+          std::swap(dt, x.dt);
+          std::swap(m_allocator,x.m_allocator);
+        } else {
           // assumption here is these array may be per thread, or
           // maybe shared by all threads in a group, hence std::swap as above won't work
           auto lhs=dt, rhs=x.dt;
           auto lalloc=m_allocator, ralloc=x.m_allocator;
           groupBarrier();
-          //lhs=sycl::group_broadcast(syclGroup(),lhs);
-          //rhs=sycl::group_broadcast(syclGroup(),rhs);
-          if (groupLeader()) printf("swapping %p & %p\n",lhs,rhs);
           dt=rhs;
           x.dt=lhs;
           m_allocator=ralloc;
           x.m_allocator=lalloc;
           groupBarrier();
-          //        }
+        }
 #endif
       }
     
@@ -1727,13 +1718,13 @@ namespace ecolab
 
       array& operator=(const array& x) {
         if (x.dt==dt) return *this;
-//        if (m_allocator==x.m_allocator) {
-//          release();
-//          /*if (groupLeader()||onDevice)*/ {
-//            dt=x.dt;
-//          }
-//          incrRef();
-//        } else
+        if (m_allocator==x.m_allocator) {
+          release();
+          if (groupLeader()||onDevice) {
+            dt=x.dt;
+          }
+          incrRef();
+        } else
           asgV(x.size(), x);
         return *this;
       }
@@ -1807,17 +1798,7 @@ namespace ecolab
       typename enable_if<is_expression<E>,array&>::T
       operator<<=(const E& x) {
         auto origSize=size();
-#ifdef __SYCL_DEVICE_ONLY__
-        if (groupLeader()) printf("<<= resize from %zu to %zu\n",origSize,origSize+x.size());
-#else
-        printf("<<= host resize from %zu to %zu\n",origSize,origSize+x.size());
-#endif
         resize(origSize+x.size());
-#ifdef __SYCL_DEVICE_ONLY__
-        if (groupLeader()) printf("<<= after resize from %zu to %zu\n",origSize,origSize+x.size());
-#else
-        printf("<<= host after resize from %zu to %zu\n",origSize,origSize+x.size());
-#endif
         asg_v(data()+origSize,x.size(),x);
         return *this;
       }

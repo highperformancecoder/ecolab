@@ -82,7 +82,7 @@ public:
   template <class T> using Allocator=std::allocator<T>;
 #endif
   using UnsignedArray=array<unsigned,Allocator<unsigned>>;
-  //using LocalArray=array<unsigned,LocalAllocator<unsigned>>;
+  using LocalArray=array<unsigned,LocalAllocator<unsigned>>;
 
   Float salt;  /* random no. used for migration */
   array<int,Allocator<int>> density;

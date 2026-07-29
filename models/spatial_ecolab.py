@@ -21,8 +21,7 @@ ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
 ecolab.odiag_min(-1e-5)
 ecolab.odiag_max(1e-5)
-ecolab.mut_max(1000)
-#ecolab.mut_max(1e-3)
+ecolab.mut_max(1e-3)
 ecolab.sp_sep(0.1)
 
 def randomList(num, min, max):
@@ -30,10 +29,10 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-#numX=12
-#numY=12
-numX=1
-numY=1
+numX=12
+numY=12
+numX=2
+numY=2
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
@@ -64,7 +63,9 @@ mut_factor=1000
 extinctions=0
 migrations=0
 def stepImpl():
-    #ecolab.generate(100)
+    #print("b4 generate")
+    ecolab.generate(100)
+    #print("b4 mutate")
     ecolab.mutate()
 
     epochTs=ecolab.tstep()%epoch
@@ -75,7 +76,8 @@ def stepImpl():
 
     global extinctions, migrations
     #migrations+=ecolab.migrate()
-    #extinctions+=ecolab.condense()
+    #print("b4 condense")
+    extinctions+=ecolab.condense()
     #print(ecolab.nsp()())
     #ecolab.syncThreads()
     #ecolab.gather()
@@ -87,7 +89,7 @@ ecolab.syncThreads()
 
 from timeit import timeit
 print('-----')
-print(timeit('ecolab.mutate()', globals=globals(), number=1))
+print(timeit('stepImpl()', globals=globals(), number=1))
 print('-----')
                
 def step():
@@ -97,9 +99,9 @@ def step():
     for i in range(epoch//1000000):
         stepImpl()
 #    #print('migrations=',migrations,' extinctions=',extinctions)
-#    if myid()==0:
-#        nsp=len(ecolab.species)
-#        statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
+    if myid()==0:
+        nsp=len(ecolab.species)
+        statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
 #        plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))
 #        #plot('No. species',ecolab.tstep(),nsp)
 #        plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())

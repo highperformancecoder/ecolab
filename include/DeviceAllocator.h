@@ -60,6 +60,8 @@ namespace ecolab
     
     void enqueue(unsigned x)
     {
+//      Atomic t(tail);
+//      slots[--t].value=x;
       while (true)
       {
         Atomic headAtomic(head);
@@ -74,7 +76,6 @@ namespace ecolab
             slot.value=x;
             Atomic publish(slot.seq);
             publish.store(pos+1,sycl::memory_order::release);
-            printf("dealloc: %zu, pageSize=%zu\n",size-headAtomic+Atomic(tail),poolSize/size);
             return;
           }
       }
@@ -82,6 +83,9 @@ namespace ecolab
 
     unsigned dequeue()
     {
+//      Atomic t(tail);
+//      if (t>=size) return ~0;
+//      return slots[t++].value;
       while (true)
       {
         Atomic tailAtomic(tail);
@@ -96,7 +100,6 @@ namespace ecolab
             unsigned v=slot.value;
             Atomic release(slot.seq);
             release.store(pos+size,sycl::memory_order::release);
-            printf("alloc: %zu, pageSize=%zu\n",size-Atomic(head)+tailAtomic,poolSize/size);
             return v;
           }
         if (diff<0)
@@ -236,46 +239,46 @@ namespace ecolab
    {return *sycl::ext::oneapi::group_local_memory_for_overwrite<LocalAllocatorBuffer>(syclGroup());}
 
   
-//#ifdef __SYCL_DEVICE_ONLY__
-//  
-//  /**
-//     A Local allocator allocates memory from device local memory,
-//     which is shared between threads of a work group, and has the same
-//     lifetime as the kernel
-//  */
-//  template <class T>
-//  class LocalAllocator
-//  {
-//  public:
-//    using value_type=T;
-//    using pointer=T*;
-//    using reference=T&;
-//    using difference_type=std::ptrdiff_t;
-//    using propagate_on_container_move_assignment=std::true_type;
-//
-//    // no need for destructor, as Impl has nothing to tear down
-//    T* allocate(size_t n) {
-//      auto& b=localAllocatorBuffer();
-//      unsigned offs=b.next;
-//      if (offs+n*sizeof(T)>LocalAllocatorSize)
-//        {
-//          fatalErrorFlag()=true;
-//          return nullptr;
-//        }
-//      sycl::group_barrier(syclGroup());
-//      if (syclGroup().leader()) b.next+=n*sizeof(T);
-//      sycl::group_barrier(syclGroup());
-//      char* alloc=b.buffer+offs;
-//      return reinterpret_cast<T*>(alloc);
-//    }
-//    void deallocate(T*p,size_t) {if (groupLeader()) printf("local dealloc %p\n",p);} // cleaned up when group exits
-//    template<class U> struct rebind {using other=LocalAllocator<U>;};
-//    // allocator is stateless
-//    bool operator==(const LocalAllocator&) const {return true;}
-//  };
-//#else
-//  template <class T> using LocalAllocator=std::allocator<T>;
-//#endif
+#ifdef __SYCL_DEVICE_ONLY__
+  
+  /**
+     A Local allocator allocates memory from device local memory,
+     which is shared between threads of a work group, and has the same
+     lifetime as the kernel
+  */
+  template <class T>
+  class LocalAllocator
+  {
+  public:
+    using value_type=T;
+    using pointer=T*;
+    using reference=T&;
+    using difference_type=std::ptrdiff_t;
+    using propagate_on_container_move_assignment=std::true_type;
+
+    // no need for destructor, as Impl has nothing to tear down
+    T* allocate(size_t n) {
+      auto& b=localAllocatorBuffer();
+      unsigned offs=b.next;
+      if (offs+n*sizeof(T)>LocalAllocatorSize)
+        {
+          fatalErrorFlag()=true;
+          return nullptr;
+        }
+      sycl::group_barrier(syclGroup());
+      if (syclGroup().leader()) b.next+=n*sizeof(T);
+      sycl::group_barrier(syclGroup());
+      char* alloc=b.buffer+offs;
+      return reinterpret_cast<T*>(alloc);
+    }
+    void deallocate(T*p,size_t) {} // cleaned up when group exits
+    template<class U> struct rebind {using other=LocalAllocator<U>;};
+    // allocator is stateless
+    bool operator==(const LocalAllocator&) const {return true;}
+  };
+#else
+  template <class T> using LocalAllocator=std::allocator<T>;
+#endif
    
 }
 #endif

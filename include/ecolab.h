@@ -147,6 +147,7 @@ namespace ecolab
           }
         });
       });
+      syclQ().wait_and_throw();
 #else
       hostForAll(f);
 #endif
