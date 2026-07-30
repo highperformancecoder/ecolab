@@ -205,7 +205,7 @@ namespace ecolab
             }
             // flag fatal error to throw afterwards.
             if (fatalErrorFlag())
-              sycl::atomic_ref<int,sycl::memory_order::relaxed,sycl::memory_scope::device>(*fatalError).fetch_or(1);
+              sycl::atomic_ref<int,sycl::memory_order::seq_cst,sycl::memory_scope::device>(*fatalError).fetch_or(1);
           });
         });
       syclQ().wait_and_throw();

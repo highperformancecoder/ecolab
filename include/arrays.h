@@ -1591,6 +1591,7 @@ namespace ecolab
 //#else
         array tmp(size,m_allocator);
         asg_v(tmp.data(),size,x);
+        groupBarrier();
         swap(tmp);
         //#endif
       }
