@@ -45,8 +45,8 @@ namespace ecolab
     };
 
     Slot slots[size];
-    unsigned head=size, tail=0;
-
+    unsigned head=size, tail=0, pushing=0;
+    
     using Atomic=sycl::atomic_ref<unsigned,sycl::memory_order::seq_cst,sycl::memory_scope::device>;
 
   public:
@@ -60,60 +60,61 @@ namespace ecolab
     
     void enqueue(unsigned x)
     {
-      Atomic t(tail);
-      slots[--t].value=x;
-//      while (true)
-//      {
-//        Atomic headAtomic(head);
-//        unsigned pos=headAtomic.load();
-//        Slot& slot=slots[pos & mask];
-//        Atomic seqAtomic(slot.seq);
-//        unsigned seq=seqAtomic.load(sycl::memory_order::acquire);
-//        int diff=int(seq)-int(pos);
-//
-//        if (diff==0 && headAtomic.compare_exchange_strong(pos,pos+1))
-//          {
-//            slot.value=x;
-//            Atomic publish(slot.seq);
-//            publish.store(pos+1,sycl::memory_order::release);
-//            return;
-//          }
-//      }
+//      Atomic t(tail), p(pushing);
+//      slots[--t].value=x;
+      while (true)
+      {
+        Atomic headAtomic(head);
+        unsigned pos=headAtomic.load();
+        Slot& slot=slots[pos & mask];
+        Atomic seqAtomic(slot.seq);
+        unsigned seq=seqAtomic.load(sycl::memory_order::acquire);
+        int diff=int(seq)-int(pos);
+
+        if (diff==0 && headAtomic.compare_exchange_strong(pos,pos+1))
+          {
+            slot.value=x;
+            Atomic publish(slot.seq);
+            publish.store(pos+1,sycl::memory_order::release);
+            return;
+          }
+      }
     }
 
     unsigned dequeue()
     {
-      Atomic t(tail);
-      unsigned pos=t;
-      // updating tail in a cas loop avoids the race condition
-      // between the test and increment
-      while (true)
-        {
-          if (pos>=size) return ~0; // stack empty
-          if (t.compare_exchange_weak(pos,pos+1))
-            return slots[pos].value;
-        }
+//      Atomic t(tail);
+//      unsigned pos=t;
+//      // updating tail in a cas loop avoids the race condition
+//      // between the test and increment
 //      while (true)
-//      {
-//        Atomic tailAtomic(tail);
-//        unsigned pos=tailAtomic.load();
-//        Slot& slot=slots[pos & mask];
-//        Atomic seqAtomic(slot.seq);
-//        unsigned seq=seqAtomic.load(sycl::memory_order::acquire);
-//        int diff=int(seq)-int(pos+1);
-//
-//        if (diff==0 && tailAtomic.compare_exchange_strong(pos,pos+1))
-//          {
-//            unsigned v=slot.value;
-//            Atomic release(slot.seq);
-//            release.store(pos+size,sycl::memory_order::release);
-//            return v;
-//          }
-//        if (diff<0)
 //        {
-//          return ~0U; // signal buffer empty, don't wait
+//          if (p)
+//          if (pos>=size) return ~0; // stack empty
+//          if (t.compare_exchange_weak(pos,pos+1))
+//            return slots[pos].value;
 //        }
-//      }
+      while (true)
+      {
+        Atomic tailAtomic(tail);
+        unsigned pos=tailAtomic.load();
+        Slot& slot=slots[pos & mask];
+        Atomic seqAtomic(slot.seq);
+        unsigned seq=seqAtomic.load(sycl::memory_order::acquire);
+        int diff=int(seq)-int(pos+1);
+
+        if (diff==0 && tailAtomic.compare_exchange_strong(pos,pos+1))
+          {
+            unsigned v=slot.value;
+            Atomic release(slot.seq);
+            release.store(pos+size,sycl::memory_order::release);
+            return v;
+          }
+        if (diff<0)
+        {
+          return ~0U; // signal buffer empty, don't wait
+        }
+      }
     }
   };
 
