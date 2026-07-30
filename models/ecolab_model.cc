@@ -304,8 +304,8 @@ EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
   UnsignedArray offsets(nsp+1,density.allocator());
   unsigned* offs_p=offsets.data();
   const unsigned* sp_p=speciations.data();
-  //#ifdef __SYCL_DEVICE_ONLY__
-#if 0
+#ifdef __SYCL_DEVICE_ONLY__
+  //#if 0
   sycl::joint_exclusive_scan(syclGroup(),sp_p,sp_p+nsp,offs_p,sycl::plus<unsigned>());
 #else
   if (groupLeader())
