@@ -29,10 +29,10 @@ def randomList(num, min, max):
 
 ecolab.species(range(nsp))
 
-numX=12
-numY=12
-numX=2
-numY=2
+numX=8
+numY=8
+#numX=2
+#numY=2
 ecolab.setGrid(numX,numY)
 ecolab.partitionObjects()
 
@@ -64,7 +64,7 @@ extinctions=0
 migrations=0
 def stepImpl():
     #print("b4 generate")
-    ecolab.generate(100)
+    ecolab.generate(1)
     #print("b4 mutate")
     ecolab.mutate()
 
@@ -77,7 +77,7 @@ def stepImpl():
     global extinctions, migrations
     #migrations+=ecolab.migrate()
     #print("b4 condense")
-    extinctions+=ecolab.condense()
+    #extinctions+=ecolab.condense()
     #print(ecolab.nsp()())
     #ecolab.syncThreads()
     #ecolab.gather()

@@ -14,6 +14,7 @@ using classdesc::Object;
 #include <random>
 #include <vector>
 #include <pack_stl.h>
+#include "DeviceAllocator.h"
 
 #ifdef USE_FLOAT
 using Float=float;

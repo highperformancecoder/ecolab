@@ -183,7 +183,7 @@ namespace ecolab
       size_t wg_per_compute_unit = max_slm_size / LocalAllocatorSize;
       // To maximize latency hiding, it's often beneficial to double or triple this 
       // so the GPU can switch to a waiting wave while another wave is blocked by a barrier.
-      size_t num_work_groups = max_compute_units * wg_per_compute_unit;
+      size_t num_work_groups = max_compute_units;
 
       num_work_groups=std::min(num_work_groups,this->size());
       //std::cout<<max_slm_size<<" max_slm_size "<<max_compute_units<<" max_compute_units "<<num_work_groups<<" work groups of "<<workGroupSize<<" threads"<<std::endl;
@@ -209,6 +209,7 @@ namespace ecolab
           });
         });
       syclQ().wait_and_throw();
+      deviceAllocator().recycleDiscardPile();
       if (*fatalError)
         throw std::runtime_error("Local Allocator Exhausted");
 #else

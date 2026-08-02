@@ -131,8 +131,8 @@ void EcolabPoint::condense(const ModelData::BoolArray& mask, size_t mask_true)
     density.clear();
     return;
   }
-  LocalArray tmp(mask_true);
-  //UnsignedArray tmp(mask_true,density.allocator());
+  //LocalArray tmp(mask_true);
+  UnsignedArray tmp(mask_true,density.allocator());
   if (groupLeader())
     for (size_t i=0, j=0; i<density.size(); ++i)
       if (mask[i] && j<mask_true) 

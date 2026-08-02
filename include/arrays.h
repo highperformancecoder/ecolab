@@ -1609,7 +1609,6 @@ namespace ecolab
 #else
             memcpy(dt->dt,oldData->dt,sz*sizeof(T));
 #endif
-            free(oldData);
           }
       }
 
@@ -1664,13 +1663,17 @@ namespace ecolab
       void resize(size_t s, bool copy) {
         if (s==size()) return;
         groupBarrier();
-        if (!dt || s>dt->sz /*|| ref()>1*/)
+        if (!dt || s>dt->sz || ref()>1)
           {
             array tmp(s,m_allocator);
-            if (dt && copy) asg_v(tmp.dt->dt,std::min(s,dt->sz),dt->dt);
+            if (dt && tmp.dt && copy) asg_v(tmp.dt->dt,std::min(s,dt->sz),dt->dt);
             swap(tmp);
-          } 
-        groupBarrier();
+            groupBarrier();
+          }
+#ifdef __SYCL_DEVICE_ONLY__
+        // assert all pointers are the same
+        assert(sycl::reduce_over_group(syclGroup(),size_t(dt),sycl::minimum<size_t>())==size_t(dt));
+#endif
         if (groupLeader() && dt) dt->sz=s; // in case s is smaller
         groupBarrier();
       } 

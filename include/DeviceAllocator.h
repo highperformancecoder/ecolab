@@ -40,81 +40,95 @@ namespace ecolab
 
     struct Slot
     {
-      unsigned seq;
+      uint64_t seq;
       unsigned value;
     };
 
     Slot slots[size];
-    unsigned head=size, tail=0, pushing=0;
+    uint64_t head=0, tail=size, pushing=0;
     
-    using Atomic=sycl::atomic_ref<unsigned,sycl::memory_order::seq_cst,sycl::memory_scope::device>;
+    template <class T> using Atomic=sycl::atomic_ref<T,sycl::memory_order::acq_rel,sycl::memory_scope::device>;
 
   public:
     void init() {
+      tail=0;
       for (unsigned i=syclItem().get_global_linear_id(); i<size;
            i+=syclItem().get_global_range().size()) {
-        slots[i].value=i;
-        slots[i].seq=i+1;
-      }
+          slots[i].value=i;
+          slots[i].seq=i+1;
+        }
     }
     
     void enqueue(unsigned x)
     {
-//      Atomic t(tail), p(pushing);
-//      slots[--t].value=x;
-      while (true)
-      {
-        Atomic headAtomic(head);
-        unsigned pos=headAtomic.load();
-        Slot& slot=slots[pos & mask];
-        Atomic seqAtomic(slot.seq);
-        unsigned seq=seqAtomic.load(sycl::memory_order::acquire);
-        int diff=int(seq)-int(pos);
-
-        if (diff==0 && headAtomic.compare_exchange_strong(pos,pos+1))
-          {
-            slot.value=x;
-            Atomic publish(slot.seq);
-            publish.store(pos+1,sycl::memory_order::release);
-            return;
-          }
-      }
+      Atomic<uint64_t> t(tail), p(pushing);
+      slots[--t].value=x;
+//      for (bool published=false; !published;)
+//      {
+//        if (localThreadId()==0)
+//          {
+//            Atomic<uint64_t> headAtomic(head);
+//            auto pos=headAtomic.load();
+//            Slot& slot=slots[pos & mask];
+//            Atomic<uint64_t> seqAtomic(slot.seq);
+//            auto seq=seqAtomic.load(sycl::memory_order::acquire);
+//            auto diff=int64_t(seq)-int64_t(pos);
+//
+//            if (diff==0 && headAtomic.compare_exchange_weak(pos,pos+1))
+//              {
+//                Atomic<unsigned> valueAtomic(slot.value);
+//                valueAtomic=x;
+//                seqAtomic=pos+1;
+//                published=true;
+//              }
+//          }
+//#ifdef __SYCL_DEVICE_ONLY__
+//        sycl::atomic_fence(sycl::memory_order::seq_cst, sycl::memory_scope::device);
+//        published=sycl::group_broadcast(syclGroup(),published,0);
+//#endif
+//      }
     }
 
     unsigned dequeue()
     {
-//      Atomic t(tail);
-//      unsigned pos=t;
-//      // updating tail in a cas loop avoids the race condition
-//      // between the test and increment
-//      while (true)
-//        {
-//          if (p)
-//          if (pos>=size) return ~0; // stack empty
-//          if (t.compare_exchange_weak(pos,pos+1))
-//            return slots[pos].value;
+      Atomic<uint64_t> t(tail);
+      // updating tail in a cas loop avoids the race condition
+      // between the test and increment
+      uint64_t p=++t;
+      if (p>=size) {t=size; return ~0;} // stack empty
+      return slots[p].value;
+//      unsigned v=~0U-1;
+//      unsigned niter=0;
+//      while (v==~0U-1)
+//      {
+//        if (localThreadId()==0)
+//          {
+//            Atomic<uint64_t> tailAtomic(tail);
+//            auto pos=tailAtomic.load();
+//            Slot& slot=slots[pos & mask];
+//            Atomic<uint64_t> seqAtomic(slot.seq);
+//            auto seq=seqAtomic.load(sycl::memory_order::acquire);
+//            auto diff=int64_t(seq)-int64_t(pos+1);
+//
+//            if (diff==0 && tailAtomic.compare_exchange_weak(pos,pos+1))
+//              {
+//                Atomic<unsigned> valueAtomic(slot.value);
+//                v=valueAtomic;
+//                Atomic<uint64_t> release(slot.seq);
+//                release.store(pos+size,sycl::memory_order::release);
+//              }
+//            if (diff<0) v=~0U; // empty queue
+//          }
+//#ifdef __SYCL_DEVICE_ONLY__
+//        sycl::atomic_fence(sycl::memory_order::seq_cst, sycl::memory_scope::device);
+//        v=sycl::group_broadcast(syclGroup(),v,0);
+//#endif
+//        if (niter++>10) {
+//          break;
+//          if (groupLeader()) printf("enqueue failed\n",0);
 //        }
-      while (true)
-      {
-        Atomic tailAtomic(tail);
-        unsigned pos=tailAtomic.load();
-        Slot& slot=slots[pos & mask];
-        Atomic seqAtomic(slot.seq);
-        unsigned seq=seqAtomic.load(sycl::memory_order::acquire);
-        int diff=int(seq)-int(pos+1);
-
-        if (diff==0 && tailAtomic.compare_exchange_strong(pos,pos+1))
-          {
-            unsigned v=slot.value;
-            Atomic release(slot.seq);
-            release.store(pos+size,sycl::memory_order::release);
-            return v;
-          }
-        if (diff<0)
-        {
-          return ~0U; // signal buffer empty, don't wait
-        }
-      }
+//      }
+//      return v;
     }
   };
 
@@ -134,6 +148,7 @@ namespace ecolab
     }
     void deallocate(void* p, size_t) {sycl::ext::oneapi::experimental::printf("%p leaked on device\n",p);}
     void init() {}
+    void recycleDiscardPile() {}
   };
 
   template <unsigned order=minOrder> class DeviceAllocator
@@ -141,6 +156,7 @@ namespace ecolab
     constexpr static unsigned pageSize=1<<order;
     constexpr static unsigned numPages=poolSize/pageSize;
     Queue<numPages> queue;
+    Queue<numPages> discard;
     char memory[poolSize];
     DeviceAllocator<order+2> nextAllocator; // next size up allocator
   public:
@@ -151,18 +167,25 @@ namespace ecolab
                            [this](size_t) {queue.init();});
       nextAllocator.init();
     }
+    void recycleDiscardPile() {
+      for (auto v=discard.dequeue(); v!=~0U; v=discard.dequeue())
+        queue.enqueue(v);
+      nextAllocator.recycleDiscardPile();
+    }
     // all members of group get the same pointer
     void* allocate(size_t size) {
       if (size==0) return nullptr;
       if (size<=pageSize) {
         unsigned offs=~0U;
-        groupBarrier();
         if (localThreadId()==0) offs=queue.dequeue();
 #ifdef __SYCL_DEVICE_ONLY__
         offs=sycl::group_broadcast(syclGroup(),offs,0);
-        if (groupLeader()) printf("alloc pageSize=%u offs=%u on group %u\n",
-                                  pageSize,offs,syclGroup().get_group_linear_id());
 #endif
+       
+//#ifdef __SYCL_DEVICE_ONLY__
+//        if (groupLeader()) printf("alloc pageSize=%u offs=%u on group %u\n",
+//                                  pageSize,offs,syclGroup().get_group_linear_id());
+//#endif
         if (offs!=~0U)
           return memory+(offs<<order);
       }
@@ -171,10 +194,12 @@ namespace ecolab
     void deallocate(void* p, size_t size) {
       if (!p) return;
       if (p>=memory && p<memory+poolSize) {
-        groupBarrier();
-        if (groupLeader()) {
-          queue.enqueue((reinterpret_cast<char*>(p)-memory)>>order);
-        }
+#ifdef __SYCL_DEVICE_ONLY__
+        if (groupLeader())
+          discard.enqueue((reinterpret_cast<char*>(p)-memory)>>order);
+#else
+        queue.enqueue((reinterpret_cast<char*>(p)-memory)>>order);
+#endif
         return;
       }
       nextAllocator.deallocate(p,size);
