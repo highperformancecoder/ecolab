@@ -94,7 +94,7 @@ namespace ecolab
       Atomic<uint64_t> t(tail);
       // updating tail in a cas loop avoids the race condition
       // between the test and increment
-      uint64_t p=++t;
+      uint64_t p=t++;
       if (p>=size) {t=size; return ~0;} // stack empty
       return slots[p].value;
 //      unsigned v=~0U-1;

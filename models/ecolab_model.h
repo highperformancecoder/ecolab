@@ -90,7 +90,7 @@ public:
   
   void generate(unsigned niter, const ModelData&);
   void condense(const ModelData::BoolArray& mask, size_t mask_true);
-  template <class E> UnsignedArray mutate(const E&);
+  template <class E> LocalArray mutate(const E&);
   unsigned nsp() const; ///< number of living species in this cell
   /// Rounding function, randomly round up or down, in the range 0..INT_MAX
   int ROUND(Float x);

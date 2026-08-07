@@ -131,8 +131,8 @@ void EcolabPoint::condense(const ModelData::BoolArray& mask, size_t mask_true)
     density.clear();
     return;
   }
-  //LocalArray tmp(mask_true);
-  UnsignedArray tmp(mask_true,density.allocator());
+  LocalArray tmp(mask_true);
+  //UnsignedArray tmp(mask_true,density.allocator());
   if (groupLeader())
     for (size_t i=0, j=0; i<density.size(); ++i)
       if (mask[i] && j<mask_true) 
@@ -285,23 +285,28 @@ void SpatialModel::mutate()
   // set the new species density to 1 for those created on this cell
   groupedForAll([cell_ids=&*cell_ids](EcolabCell& c,size_t) {
     c.density <<= (*cell_ids)==c.id;
+    //auto oldSize=c.density.size();
+    //groupBarrier();
+    //c.density.resize(c.density.size()+cell_ids->size());
+    //groupBarrier();
+    //array_ns::asg_v(c.density.data()+oldSize, cell_ids->size(), (*cell_ids)==c.id);
     assert(all(c.density>=0));
   });
 }
 
 template <class E>
-EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
+EcolabPoint::LocalArray EcolabPoint::mutate(const E& mut_scale)
 {
   /* calculate the number of mutants each species produces */
-  if (density.size()==0) return {density.allocator()};
+  if (density.size()==0) return {};//{density.allocator()};
   //#ifdef __SYCL_DEVICE_ONLY__
 #if 1
-  //LocalArray speciations=roundArray(mut_scale * density);
-  UnsignedArray speciations(roundArray(mut_scale * density), density.allocator());
+  LocalArray speciations=roundArray(mut_scale * density);
+  //UnsignedArray speciations(roundArray(mut_scale * density), density.allocator());
   auto nsp=density.size();
 //  //  auto new_sp = gen_index(speciations);
-  //LocalArray offsets(nsp+1);
-  UnsignedArray offsets(nsp+1,density.allocator());
+  LocalArray offsets(nsp+1);
+  //UnsignedArray offsets(nsp+1,density.allocator());
   unsigned* offs_p=offsets.data();
   const unsigned* sp_p=speciations.data();
 #ifdef __SYCL_DEVICE_ONLY__
@@ -316,19 +321,22 @@ EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
     }
 #endif
   groupBarrier();
-  if (groupLeader()) {
+  unsigned numSpeciations=0;
+  if (localThreadId()==0) {
     // do not do array operations: data(), operator[] when not in full
     // group scope, because of COW semantics
-    offs_p[nsp]=offs_p[nsp-1]+sp_p[nsp-1];
+    numSpeciations=offs_p[nsp]=offs_p[nsp-1]+sp_p[nsp-1];
   }
-  groupBarrier();
-  auto numSpeciations=offs_p[nsp];
+#ifdef __SYCL_DEVICE_ONLY__
+  numSpeciations=sycl::group_broadcast(syclGroup(),numSpeciations,0);
+#endif
   
-  if (numSpeciations==0) return {density.allocator()};
+  if (numSpeciations==0) return {};//{density.allocator()};
   
   density-=speciations;
 
-  UnsignedArray new_sp(numSpeciations, density.allocator());
+  LocalArray new_sp(numSpeciations);
+  //UnsignedArray new_sp(numSpeciations, density.allocator());
   array_ns::map(nsp, [offs_p,new_sp=new_sp.data()](size_t i) {
     for (auto j=offs_p[i]; j<offs_p[i+1]; ++j)
       new_sp[j]=i;

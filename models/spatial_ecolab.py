@@ -21,7 +21,7 @@ ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
 ecolab.odiag_min(-1e-5)
 ecolab.odiag_max(1e-5)
-ecolab.mut_max(1e-3)
+ecolab.mut_max(1e-5)
 ecolab.sp_sep(0.1)
 
 def randomList(num, min, max):
@@ -64,7 +64,7 @@ extinctions=0
 migrations=0
 def stepImpl():
     #print("b4 generate")
-    ecolab.generate(1)
+    ecolab.generate(100)
     #print("b4 mutate")
     ecolab.mutate()
 
@@ -77,7 +77,7 @@ def stepImpl():
     global extinctions, migrations
     #migrations+=ecolab.migrate()
     #print("b4 condense")
-    #extinctions+=ecolab.condense()
+    extinctions+=ecolab.condense()
     #print(ecolab.nsp()())
     #ecolab.syncThreads()
     #ecolab.gather()
