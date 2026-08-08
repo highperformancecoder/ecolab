@@ -27,108 +27,53 @@ namespace ecolab
   };
   
   inline __attribute__((noinline)) bool& fatalErrorFlag() {
+#ifdef  SYCL_LANGUAGE_VERSION
     return sycl::ext::oneapi::group_local_memory<FatalErrorFlag>(syclGroup(),false)->flag;
+#else
+    static bool flag;
+    return flag;
+#endif
   }
   
   // Bounded MPMC circular buffer queue for SYCL using per-slot sequence numbers.
   // dequeue() returns ~0U when queue appears empty (non-blocking empty signal).
   template <unsigned size>
-  class Queue
+  class Stack
   {
     static_assert((size&(size-1))==0,"size must be power of two");
     constexpr static unsigned mask=size-1;
 
-    struct Slot
-    {
-      uint64_t seq;
-      unsigned value;
-    };
+    unsigned slots[size];
+    unsigned top=size; //empty stack, stack grows down
 
-    Slot slots[size];
-    uint64_t head=0, tail=size, pushing=0;
+    using Atomic=sycl::atomic_ref<unsigned,sycl::memory_order::acq_rel,sycl::memory_scope::device>;
     
-    template <class T> using Atomic=sycl::atomic_ref<T,sycl::memory_order::acq_rel,sycl::memory_scope::device>;
-
   public:
     void init() {
-      tail=0;
+      top=0; // full stack
       for (unsigned i=syclItem().get_global_linear_id(); i<size;
-           i+=syclItem().get_global_range().size()) {
-          slots[i].value=i;
-          slots[i].seq=i+1;
-        }
+           i+=syclItem().get_global_range().size()) 
+          slots[i]=i;
     }
     
-    void enqueue(unsigned x)
+    void push(unsigned x)
     {
-      Atomic<uint64_t> t(tail), p(pushing);
-      slots[--t].value=x;
-//      for (bool published=false; !published;)
-//      {
-//        if (localThreadId()==0)
-//          {
-//            Atomic<uint64_t> headAtomic(head);
-//            auto pos=headAtomic.load();
-//            Slot& slot=slots[pos & mask];
-//            Atomic<uint64_t> seqAtomic(slot.seq);
-//            auto seq=seqAtomic.load(sycl::memory_order::acquire);
-//            auto diff=int64_t(seq)-int64_t(pos);
-//
-//            if (diff==0 && headAtomic.compare_exchange_weak(pos,pos+1))
-//              {
-//                Atomic<unsigned> valueAtomic(slot.value);
-//                valueAtomic=x;
-//                seqAtomic=pos+1;
-//                published=true;
-//              }
-//          }
-//#ifdef __SYCL_DEVICE_ONLY__
-//        sycl::atomic_fence(sycl::memory_order::seq_cst, sycl::memory_scope::device);
-//        published=sycl::group_broadcast(syclGroup(),published,0);
-//#endif
-//      }
+      slots[--Atomic(top)]=x;
     }
 
-    unsigned dequeue()
+    unsigned pop()
     {
-      Atomic<uint64_t> t(tail);
-      // updating tail in a cas loop avoids the race condition
-      // between the test and increment
-      uint64_t p=t++;
+      Atomic t(top);
+      unsigned p=t++;
       if (p>=size) {t=size; return ~0;} // stack empty
-      return slots[p].value;
-//      unsigned v=~0U-1;
-//      unsigned niter=0;
-//      while (v==~0U-1)
-//      {
-//        if (localThreadId()==0)
-//          {
-//            Atomic<uint64_t> tailAtomic(tail);
-//            auto pos=tailAtomic.load();
-//            Slot& slot=slots[pos & mask];
-//            Atomic<uint64_t> seqAtomic(slot.seq);
-//            auto seq=seqAtomic.load(sycl::memory_order::acquire);
-//            auto diff=int64_t(seq)-int64_t(pos+1);
-//
-//            if (diff==0 && tailAtomic.compare_exchange_weak(pos,pos+1))
-//              {
-//                Atomic<unsigned> valueAtomic(slot.value);
-//                v=valueAtomic;
-//                Atomic<uint64_t> release(slot.seq);
-//                release.store(pos+size,sycl::memory_order::release);
-//              }
-//            if (diff<0) v=~0U; // empty queue
-//          }
-//#ifdef __SYCL_DEVICE_ONLY__
-//        sycl::atomic_fence(sycl::memory_order::seq_cst, sycl::memory_scope::device);
-//        v=sycl::group_broadcast(syclGroup(),v,0);
-//#endif
-//        if (niter++>10) {
-//          break;
-//          if (groupLeader()) printf("enqueue failed\n",0);
-//        }
-//      }
-//      return v;
+      return slots[p];
+    }
+
+    // move contents of \a x onto this. Not threadsafe, call from host
+    void appendAndDiscard(Stack& x) {
+      top-=size-x.top;
+      memcpy(slots+top, x.slots+x.top, (size-x.top)*sizeof(slots[0]));
+      x.top=size;
     }
   };
 
@@ -155,8 +100,8 @@ namespace ecolab
   {
     constexpr static unsigned pageSize=1<<order;
     constexpr static unsigned numPages=poolSize/pageSize;
-    Queue<numPages> queue;
-    Queue<numPages> discard;
+    Stack<numPages> queue;
+    Stack<numPages> discard; // discard pile
     char memory[poolSize];
     DeviceAllocator<order+2> nextAllocator; // next size up allocator
   public:
@@ -168,8 +113,7 @@ namespace ecolab
       nextAllocator.init();
     }
     void recycleDiscardPile() {
-      for (auto v=discard.dequeue(); v!=~0U; v=discard.dequeue())
-        queue.enqueue(v);
+      queue.appendAndDiscard(discard);
       nextAllocator.recycleDiscardPile();
     }
     // all members of group get the same pointer
@@ -177,15 +121,10 @@ namespace ecolab
       if (size==0) return nullptr;
       if (size<=pageSize) {
         unsigned offs=~0U;
-        if (localThreadId()==0) offs=queue.dequeue();
+        if (localThreadId()==0) offs=queue.pop();
 #ifdef __SYCL_DEVICE_ONLY__
         offs=sycl::group_broadcast(syclGroup(),offs,0);
 #endif
-       
-//#ifdef __SYCL_DEVICE_ONLY__
-//        if (groupLeader()) printf("alloc pageSize=%u offs=%u on group %u\n",
-//                                  pageSize,offs,syclGroup().get_group_linear_id());
-//#endif
         if (offs!=~0U)
           return memory+(offs<<order);
       }
@@ -196,9 +135,12 @@ namespace ecolab
       if (p>=memory && p<memory+poolSize) {
 #ifdef __SYCL_DEVICE_ONLY__
         if (groupLeader())
-          discard.enqueue((reinterpret_cast<char*>(p)-memory)>>order);
+          // push onto discard pile to avoid race condition
+          discard.push((reinterpret_cast<char*>(p)-memory)>>order);
 #else
-        queue.enqueue((reinterpret_cast<char*>(p)-memory)>>order);
+        // on host, we can push back onto stack. Note this is not
+        // threadsafe, so not to be used with OpenMP.
+        queue.push((reinterpret_cast<char*>(p)-memory)>>order);
 #endif
         return;
       }
@@ -209,15 +151,10 @@ namespace ecolab
   };
   
   inline DeviceAllocator<>& deviceAllocator() {
-//#ifdef __SYCL_DEVICE_ONLY__
-//    printf("deviceAllocator() illegally called on device\n",0);
-//    return *reinterpret_cast<DeviceAllocator<>*>(0);
-//#else
     static DeviceType<DeviceAllocator<>> deviceAllocator;
     static int dummy=
       (deviceAllocator->init(), syclQ().wait_and_throw(), 0);      
     return *deviceAllocator;
-    //#endif
   }
 
   /// Allocator wrapping the DeviceAllocator singleton

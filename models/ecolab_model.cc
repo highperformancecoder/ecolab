@@ -88,7 +88,7 @@ void EcolabPoint::generate(unsigned niter, const ModelData& model)
   //array<int,LocalAllocator<int>> lDensity(density), tmp(density.size());
   //array<int,Allocator<int>> lDensity(density), tmp(density.size(), density.allocator());
   auto& lDensity=density;
-  array<int,GlobalDeviceAllocator<int>> tmp(density.size(), density.allocator());
+  array<int,Allocator<int>> tmp(density.size(), density.allocator());
   
   for (unsigned step=0; step<niter; step++)
     {

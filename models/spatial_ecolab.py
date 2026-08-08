@@ -56,16 +56,20 @@ ecolab.migration(nsp*[1e-1])
                   
 from plot import plot
 from GUI import gui, statusBar, windows
+from time import perf_counter
 
 epoch=2000000
 mut_factor=1000
 
 extinctions=0
 migrations=0
+
+out=open("time.dat","w")
+
 def stepImpl():
-    #print("b4 generate")
+    start=perf_counter()
+    nsp=len(ecolab.species)
     ecolab.generate(100)
-    #print("b4 mutate")
     ecolab.mutate()
 
     epochTs=ecolab.tstep()%epoch
@@ -76,8 +80,9 @@ def stepImpl():
 
     global extinctions, migrations
     #migrations+=ecolab.migrate()
-    #print("b4 condense")
     extinctions+=ecolab.condense()
+    timePerStep=perf_counter()-start
+    print(nsp,timePerStep,file=out,flush=True)
     #print(ecolab.nsp()())
     #ecolab.syncThreads()
     #ecolab.gather()

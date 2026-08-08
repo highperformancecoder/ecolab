@@ -14,7 +14,9 @@ using classdesc::Object;
 #include <random>
 #include <vector>
 #include <pack_stl.h>
+#ifdef SYCL_LANGUAGE_VERSION
 #include "DeviceAllocator.h"
+#endif
 
 #ifdef USE_FLOAT
 using Float=float;

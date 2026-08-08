@@ -29,6 +29,8 @@ namespace ecolab
   
   template <class E, ecolab::USMAlloc UA>
   struct SyclRandomEngine: public E {};
+  
+  template <class T> using LocalAllocator=std::allocator<T>;
 
 }
 #endif
