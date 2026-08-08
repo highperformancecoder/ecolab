@@ -295,10 +295,10 @@ void SpatialModel::mutate()
 }
 
 template <class E>
-EcolabPoint::LocalArray EcolabPoint::mutate(const E& mut_scale)
+EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
 {
   /* calculate the number of mutants each species produces */
-  if (density.size()==0) return {};//{density.allocator()};
+  if (density.size()==0) return {density.allocator()};
   //#ifdef __SYCL_DEVICE_ONLY__
 #if 1
   LocalArray speciations=roundArray(mut_scale * density);
@@ -331,12 +331,12 @@ EcolabPoint::LocalArray EcolabPoint::mutate(const E& mut_scale)
   numSpeciations=sycl::group_broadcast(syclGroup(),numSpeciations,0);
 #endif
   
-  if (numSpeciations==0) return {};//{density.allocator()};
+  if (numSpeciations==0) return {density.allocator()};
   
   density-=speciations;
 
-  LocalArray new_sp(numSpeciations);
-  //UnsignedArray new_sp(numSpeciations, density.allocator());
+  //LocalArray new_sp(numSpeciations);
+  UnsignedArray new_sp(numSpeciations, density.allocator());
   array_ns::map(nsp, [offs_p,new_sp=new_sp.data()](size_t i) {
     for (auto j=offs_p[i]; j<offs_p[i+1]; ++j)
       new_sp[j]=i;
