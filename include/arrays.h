@@ -1580,17 +1580,10 @@ namespace ecolab
       void asgV(size_t size, const E& x)
       {
         // copy into temporary data, as E may contain references to this
-//#ifdef __SYCL_DEVICE_ONLY__
-//        array tmp(size,m_allocator);
-//        asg_v(tmp.data(),size,x);
-//        resize(size, false);
-//        asg_v(data(),size,tmp);
-//#else
         array tmp(size,m_allocator);
         asg_v(tmp.data(),size,x);
         groupBarrier();
         swap(tmp);
-        //#endif
       }
       
       void copy() //any nonconst method needs to call this
@@ -1683,27 +1676,11 @@ namespace ecolab
       template <class V>
       void resizeAndInit(size_t s, const V& val) {resize(s,false); operator=(val);}
 
-      bool onDevice() const {
-#ifdef SYCL_LANGUAGE_VERSION
-      // true if created in a parallel section
-      return sycl::address_space_cast
-        <sycl::access::address_space::private_space,
-         sycl::access::decorated::yes>(this).get();
-#else
-      return false;
-#endif
-       }
-      
       void swap(array& x) {
 #ifndef __SYCL_DEVICE_ONLY__
         std::swap(dt, x.dt);
         std::swap(m_allocator,x.m_allocator);
 #else
-        // this code still doesn't work, even on the revised onDevice test above
-        if (onDevice() && x.onDevice()) {
-          std::swap(dt, x.dt);
-          std::swap(m_allocator,x.m_allocator);
-          } else {
           // assumption here is these array may be per thread, or
           // maybe shared by all threads in a group, hence std::swap as above won't work
           auto lhs=dt, rhs=x.dt;
@@ -1714,7 +1691,6 @@ namespace ecolab
           m_allocator=ralloc;
           x.m_allocator=lalloc;
           groupBarrier();
-        }
 #endif
       }
     
@@ -1733,7 +1709,7 @@ namespace ecolab
         if (x.dt==dt) return *this;
         if (m_allocator==x.m_allocator) {
           release();
-          if (groupLeader()||onDevice()) {
+          /*if (groupLeader()||onDevice())*/ {
             dt=x.dt;
           }
           incrRef();

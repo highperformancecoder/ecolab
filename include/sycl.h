@@ -150,13 +150,6 @@ namespace ecolab
     return 0;
 #endif
   }
-  
-  inline bool onDevice() {
-#ifdef __SYCL_DEVICE_ONLY__
-    return true;
-#endif
-    return false;
-  }
 }
 
 

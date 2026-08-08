@@ -73,11 +73,7 @@ struct RoundArray
   RoundArray(P& point, const E& expr): expr(expr), point(point) {}
   using value_type=int;
   size_t size() const {return expr.size();}
-  int operator[](size_t i) const //{return point.ROUND(expr[i]);}
-  {
-    auto r=point.ROUND(expr[i]);
-    return r;
-  }
+  int operator[](size_t i) const {return point.ROUND(expr[i]);}
 };
 
 namespace ecolab::array_ns
@@ -132,7 +128,6 @@ void EcolabPoint::condense(const ModelData::BoolArray& mask, size_t mask_true)
     return;
   }
   LocalArray tmp(mask_true);
-  //UnsignedArray tmp(mask_true,density.allocator());
   if (groupLeader())
     for (size_t i=0, j=0; i<density.size(); ++i)
       if (mask[i] && j<mask_true) 
@@ -248,14 +243,12 @@ void SpatialModel::mutate()
     }
 
   // deallocate on device
-  //cout<<"deallocate"<<endl;
   groupedForAll([newSp=newSp.data()](EcolabCell& c,size_t i) {
     newSp[i].clear();
     assert(newSp[i].refCnt()==0);
   });
    
 
-  //cout<<"ModelData::mutate"<<endl;
 #ifdef MPI_SUPPORT
   MPIbuf b; b<<new_sp<<(*cell_ids); b.gather(0);
   if (myid()==0)
@@ -276,20 +269,13 @@ void SpatialModel::mutate()
 #endif
   if (new_sp.size()==0) return;
 
-  //cout<<"computeODiagIdx"<<endl;
   computeODiagIdx();
   mut_scale->clear();
   newSp.clear();
 
-  //cout<<"set 1"<<endl;
   // set the new species density to 1 for those created on this cell
   groupedForAll([cell_ids=&*cell_ids](EcolabCell& c,size_t) {
     c.density <<= (*cell_ids)==c.id;
-    //auto oldSize=c.density.size();
-    //groupBarrier();
-    //c.density.resize(c.density.size()+cell_ids->size());
-    //groupBarrier();
-    //array_ns::asg_v(c.density.data()+oldSize, cell_ids->size(), (*cell_ids)==c.id);
     assert(all(c.density>=0));
   });
 }
@@ -299,8 +285,7 @@ EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
 {
   /* calculate the number of mutants each species produces */
   if (density.size()==0) return {density.allocator()};
-  //#ifdef __SYCL_DEVICE_ONLY__
-#if 1
+#ifdef __SYCL_DEVICE_ONLY__
   LocalArray speciations=roundArray(mut_scale * density);
   //UnsignedArray speciations(roundArray(mut_scale * density), density.allocator());
   auto nsp=density.size();
@@ -309,17 +294,7 @@ EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
   //UnsignedArray offsets(nsp+1,density.allocator());
   unsigned* offs_p=offsets.data();
   const unsigned* sp_p=speciations.data();
-#ifdef __SYCL_DEVICE_ONLY__
-  //#if 0
   sycl::joint_exclusive_scan(syclGroup(),sp_p,sp_p+nsp,offs_p,sycl::plus<unsigned>());
-#else
-  if (groupLeader())
-    {
-      // sequential version for diagnostic purposes
-      offs_p[0]=0;
-      for (size_t i=0; i<nsp; ++i) offs_p[i+1]=offs_p[i]+sp_p[i];
-    }
-#endif
   groupBarrier();
   unsigned numSpeciations=0;
   if (localThreadId()==0) {
@@ -327,9 +302,7 @@ EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
     // group scope, because of COW semantics
     numSpeciations=offs_p[nsp]=offs_p[nsp-1]+sp_p[nsp-1];
   }
-#ifdef __SYCL_DEVICE_ONLY__
   numSpeciations=sycl::group_broadcast(syclGroup(),numSpeciations,0);
-#endif
   
   if (numSpeciations==0) return {density.allocator()};
   
