@@ -138,7 +138,6 @@ namespace ecolab
   inline bool groupLeader() {
 #ifdef __SYCL_DEVICE_ONLY__
     return syclGroup().leader();
-    //return syclGroup().get_local_linear_id()==0;
 #endif
     return true;
   }

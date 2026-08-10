@@ -1594,6 +1594,7 @@ namespace ecolab
             decrRef();
             auto sz=size();
             dt=alloc(sz);
+            if (!dt) return;
 #ifdef __SYCL_DEVICE_ONLY__
             asg_v(dt->dt,sz,oldData->dt);
 #else
