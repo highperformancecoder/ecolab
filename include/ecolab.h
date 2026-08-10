@@ -147,10 +147,13 @@ namespace ecolab
           }
         });
       });
+      syclQ().wait_and_throw();
 #else
       hostForAll(f);
 #endif
     }
+
+    // TODO - we need a const version as well. Implement via a free template function for the this pointer, and ensure constness is passed through to the arguments of the functional
     
     /// apply a functional to all local cells of this processor in
     /// parallel, where each cell is allocated SIMD parallel computer
@@ -182,7 +185,7 @@ namespace ecolab
       size_t wg_per_compute_unit = max_slm_size / LocalAllocatorSize;
       // To maximize latency hiding, it's often beneficial to double or triple this 
       // so the GPU can switch to a waiting wave while another wave is blocked by a barrier.
-      size_t num_work_groups = max_compute_units * wg_per_compute_unit;
+      size_t num_work_groups = max_compute_units;
 
       num_work_groups=std::min(num_work_groups,this->size());
       //std::cout<<max_slm_size<<" max_slm_size "<<max_compute_units<<" max_compute_units "<<num_work_groups<<" work groups of "<<workGroupSize<<" threads"<<std::endl;
@@ -204,10 +207,11 @@ namespace ecolab
             }
             // flag fatal error to throw afterwards.
             if (fatalErrorFlag())
-              sycl::atomic_ref<int,sycl::memory_order::relaxed,sycl::memory_scope::device>(*fatalError).fetch_or(1);
+              sycl::atomic_ref<int,sycl::memory_order::seq_cst,sycl::memory_scope::device>(*fatalError).fetch_or(1);
           });
         });
       syclQ().wait_and_throw();
+      deviceAllocator().recycleDiscardPile();
       if (*fatalError)
         throw std::runtime_error("Local Allocator Exhausted");
 #else

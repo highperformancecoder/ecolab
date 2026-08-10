@@ -27,87 +27,59 @@ namespace ecolab
   };
   
   inline __attribute__((noinline)) bool& fatalErrorFlag() {
+#ifdef  SYCL_LANGUAGE_VERSION
     return sycl::ext::oneapi::group_local_memory<FatalErrorFlag>(syclGroup(),false)->flag;
+#else
+    static bool flag;
+    return flag;
+#endif
   }
   
   // Bounded MPMC circular buffer queue for SYCL using per-slot sequence numbers.
   // dequeue() returns ~0U when queue appears empty (non-blocking empty signal).
   template <unsigned size>
-  class Queue
+  class Stack
   {
     static_assert((size&(size-1))==0,"size must be power of two");
     constexpr static unsigned mask=size-1;
 
-    struct Slot
-    {
-      unsigned seq;
-      unsigned value;
-    };
+    unsigned slots[size];
+    unsigned top=size; //empty stack, stack grows down
 
-    Slot slots[size];
-    unsigned head=size, tail=0;
-
-    using Atomic=sycl::atomic_ref<unsigned,sycl::memory_order::relaxed,sycl::memory_scope::device>;
-
+    using Atomic=sycl::atomic_ref<unsigned,sycl::memory_order::acq_rel,sycl::memory_scope::device>;
+    CLASSDESC_ACCESS(Stack);
   public:
     void init() {
+      top=0; // full stack
       for (unsigned i=syclItem().get_global_linear_id(); i<size;
-           i+=syclItem().get_global_range().size()) {
-        slots[i].value=i;
-        slots[i].seq=i+1;
-      }
+           i+=syclItem().get_global_range().size()) 
+          slots[i]=i;
     }
     
-    void enqueue(unsigned x)
+    void push(unsigned x)
     {
-      while (true)
-      {
-        Atomic headAtomic(head);
-        unsigned pos=headAtomic.load();
-        Slot& slot=slots[pos & mask];
-        Atomic seqAtomic(slot.seq);
-        unsigned seq=seqAtomic.load(sycl::memory_order::acquire);
-        int diff=int(seq)-int(pos);
-
-        if (diff==0 && headAtomic.compare_exchange_strong(pos,pos+1))
-          {
-            slot.value=x;
-            Atomic publish(slot.seq);
-            publish.store(pos+1,sycl::memory_order::release);
-            return;
-          }
-      }
+      slots[--Atomic(top)]=x;
     }
 
-    unsigned dequeue()
+    unsigned pop()
     {
-      while (true)
-      {
-        Atomic tailAtomic(tail);
-        unsigned pos=tailAtomic.load();
-        Slot& slot=slots[pos & mask];
-        Atomic seqAtomic(slot.seq);
-        unsigned seq=seqAtomic.load(sycl::memory_order::acquire);
-        int diff=int(seq)-int(pos+1);
+      Atomic t(top);
+      unsigned p=t++;
+      if (p>=size) {t=size; return ~0;} // stack empty
+      return slots[p];
+    }
 
-        if (diff==0 && tailAtomic.compare_exchange_strong(pos,pos+1))
-          {
-            unsigned v=slot.value;
-            Atomic release(slot.seq);
-            release.store(pos+size,sycl::memory_order::release);
-            return v;
-          }
-        if (diff<0)
-        {
-          return ~0U; // signal buffer empty, don't wait
-        }
-      }
+    // move contents of \a x onto this. Not threadsafe, call from host
+    void appendAndDiscard(Stack& x) {
+      top-=size-x.top;
+      memcpy(slots+top, x.slots+x.top, (size-x.top)*sizeof(slots[0]));
+      x.top=size;
     }
   };
 
   template <unsigned order> class DeviceAllocator;
   /// empty allocator to terminate template recursion
-  template <> class DeviceAllocator<maxOrder> {
+  template <> class DeviceAllocator<ecolab::maxOrder> {
   public:
     void* allocate(size_t sz) {
       if (groupLeader())
@@ -121,30 +93,38 @@ namespace ecolab
     }
     void deallocate(void* p, size_t) {sycl::ext::oneapi::experimental::printf("%p leaked on device\n",p);}
     void init() {}
+    void recycleDiscardPile() {}
   };
 
   template <unsigned order=minOrder> class DeviceAllocator
   {
     constexpr static unsigned pageSize=1<<order;
     constexpr static unsigned numPages=poolSize/pageSize;
-    Queue<numPages> queue;
+    Stack<numPages> queue;
+    Stack<numPages> discard; // discard pile
     char memory[poolSize];
     DeviceAllocator<order+2> nextAllocator; // next size up allocator
+    CLASSDESC_ACCESS(DeviceAllocator);
   public:
     void init() {
-      for (int pagesLeftToInit=numPages; pagesLeftToInit>0; pagesLeftToInit-=workGroupSize) 
-        syclQ().parallel_for(std::min(workGroupSize,unsigned(pagesLeftToInit)),
-                             [this](size_t) {queue.init();});
+      auto chunkOWork=syclQ().get_device().
+        get_info<sycl::info::device::max_compute_units>()*workGroupSize;
+      syclQ().parallel_for(std::min(chunkOWork,unsigned(numPages)),
+                           [this](size_t) {queue.init();});
       nextAllocator.init();
+    }
+    void recycleDiscardPile() {
+      queue.appendAndDiscard(discard);
+      nextAllocator.recycleDiscardPile();
     }
     // all members of group get the same pointer
     void* allocate(size_t size) {
       if (size==0) return nullptr;
       if (size<=pageSize) {
-        unsigned offs;
-        if (groupLeader()) offs=queue.dequeue();
+        unsigned offs=~0U;
+        if (localThreadId()==0) offs=queue.pop();
 #ifdef __SYCL_DEVICE_ONLY__
-        offs=sycl::group_broadcast(syclGroup(),offs);
+        offs=sycl::group_broadcast(syclGroup(),offs,0);
 #endif
         if (offs!=~0U)
           return memory+(offs<<order);
@@ -154,9 +134,15 @@ namespace ecolab
     void deallocate(void* p, size_t size) {
       if (!p) return;
       if (p>=memory && p<memory+poolSize) {
-        groupBarrier();
+#ifdef __SYCL_DEVICE_ONLY__
         if (groupLeader())
-          queue.enqueue((reinterpret_cast<char*>(p)-memory)>>order);
+          // push onto discard pile to avoid race condition
+          discard.push((reinterpret_cast<char*>(p)-memory)>>order);
+#else
+        // on host, we can push back onto stack. Note this is not
+        // threadsafe, so not to be used with OpenMP.
+        queue.push((reinterpret_cast<char*>(p)-memory)>>order);
+#endif
         return;
       }
       nextAllocator.deallocate(p,size);
@@ -182,9 +168,14 @@ namespace ecolab
     using difference_type=std::ptrdiff_t;
     using propagate_on_container_move_assignment=std::true_type;
 
-    DeviceAllocator<>* allocator=&deviceAllocator();
+    DeviceAllocator<>* allocator;
     
-    GlobalDeviceAllocator() = default; // note: default constructor must be called on host
+#ifdef __SYCL_DEVICE_ONLY__
+    GlobalDeviceAllocator(): allocator(nullptr) {} // = delete;
+#else
+    GlobalDeviceAllocator() // note: default constructor must be called on host
+    {allocator=&deviceAllocator();}
+#endif
     template <class U>
     GlobalDeviceAllocator(const GlobalDeviceAllocator<U>& other):
       allocator(other.allocator) {}
@@ -206,7 +197,7 @@ namespace ecolab
     bool operator==(const HostSharedAllocator&) const {return true;}
   };
 
-  constexpr static unsigned LocalAllocatorSize=30*1024; // 32KiB = half typical local storage
+  constexpr static unsigned LocalAllocatorSize=8*1024; // 32KiB = half typical local storage
 
   struct LocalAllocatorBuffer
   {
@@ -226,10 +217,11 @@ namespace ecolab
   /**
      A Local allocator allocates memory from device local memory,
      which is shared between threads of a work group, and has the same
-     lifetime as the kernel
+     lifetime as the kernel.
+     LocalAllocatorT so we can expose LocalAllocator as a template alias on both host and device branches
   */
   template <class T>
-  class LocalAllocator
+  class LocalAllocatorT
   {
   public:
     using value_type=T;
@@ -253,12 +245,18 @@ namespace ecolab
       char* alloc=b.buffer+offs;
       return reinterpret_cast<T*>(alloc);
     }
-    void deallocate(T*,size_t) {} // cleaned up when group exits
-    template<class U> struct rebind {using other=LocalAllocator<U>;};
+    void deallocate(T*p,size_t) {} // cleaned up when group exits
+    template<class U> struct rebind {using other=LocalAllocatorT<U>;};
     // allocator is stateless
-    bool operator==(const LocalAllocator&) const {return true;}
+    bool operator==(const LocalAllocatorT&) const {return true;}
   };
+  template <class T> using LocalAllocator=LocalAllocatorT<T>;
+#else
+  template <class T> class LocalAllocatorT {};
+  template <class T> using LocalAllocator=std::allocator<T>;
 #endif
    
 }
+
+#include "DeviceAllocator.cd"
 #endif

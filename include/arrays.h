@@ -1473,9 +1473,6 @@ namespace ecolab
     {
       array_data<T> *dt=nullptr;
       A m_allocator;
-#ifdef SYCL_LANGUAGE_VERSION
-      bool onDevice=ecolab::onDevice(); // true if created in a parallel section
-#endif
       
       friend class WhereContext;
 
@@ -1523,10 +1520,15 @@ namespace ecolab
 
       void set_size(size_t s) {dt = alloc(s);}
 
-      unsigned& ref() // access reference counter
+#ifdef __SYCL_DEVICE_ONLY__
+      using Ref=sycl::atomic_ref<unsigned,sycl::memory_order::acq_rel,sycl::memory_scope::work_group>;
+#else
+      using Ref=unsigned&;
+#endif
+      Ref ref() // access reference counter
       {
         assert(dt);
-        return dt->cnt;
+        return Ref(dt->cnt);
       }
 
       // increment reference counter
@@ -1553,14 +1555,21 @@ namespace ecolab
       
       void release()
       {
+        groupBarrier();
         if (dt)
           {
-            if (ref()==1)
+            unsigned refCnt=ref();
+#ifdef __SYCL_DEVICE_ONLY__
+            // ensure absolute consistency of the reference count
+            refCnt=sycl::reduce_over_group(syclGroup(),refCnt,sycl::minimum<unsigned>());
+#endif
+            if (refCnt==1)
               {
                 free(dt);
-                return;
-              }
-            decrRef();
+                dt=nullptr;
+              } else
+              decrRef();
+            groupBarrier();
           }
       }
 
@@ -1571,16 +1580,10 @@ namespace ecolab
       void asgV(size_t size, const E& x)
       {
         // copy into temporary data, as E may contain references to this
-#ifdef __SYCL_DEVICE_ONLY__
-        array<T,LocalAllocator<T>> tmp(size);
-        asg_v(tmp.data(),size,x);
-        resize(size, false);
-        asg_v(data(),size,tmp);
-#else
         array tmp(size,m_allocator);
         asg_v(tmp.data(),size,x);
+        groupBarrier();
         swap(tmp);
-#endif
       }
       
       void copy() //any nonconst method needs to call this
@@ -1589,14 +1592,14 @@ namespace ecolab
           {
             array_data<T>* oldData=dt;
             decrRef();
-            bool freeMem=ref()==0;
-            dt=alloc(size());
+            auto sz=size();
+            dt=alloc(sz);
+            if (!dt) return;
 #ifdef __SYCL_DEVICE_ONLY__
-            asg_v(dt->dt,size(),oldData->dt);
+            asg_v(dt->dt,sz,oldData->dt);
 #else
-            memcpy(dt->dt,oldData->dt,size()*sizeof(T));
+            memcpy(dt->dt,oldData->dt,sz*sizeof(T));
 #endif
-            if (freeMem) free(oldData);
           }
       }
 
@@ -1605,7 +1608,8 @@ namespace ecolab
       typedef size_t size_type; 
       using Allocator=A;
 
-      array(const Allocator& alloc={}): m_allocator(alloc) {}
+      array()=default;
+      array(const Allocator& alloc): m_allocator(alloc) {}
       explicit array(size_t s, const Allocator& alloc=Allocator()): m_allocator(alloc)
       {
         set_size(s);
@@ -1621,7 +1625,6 @@ namespace ecolab
       {
         dt=x.dt;
         incrRef();
-          
       }
 
       template <class expr>
@@ -1649,17 +1652,21 @@ namespace ecolab
       
       /// resize array to \a s elements. Id \a copy is true, then ensure data is retained
       void resize(size_t s, bool copy) {
+        if (s==size()) return;
+        groupBarrier();
         if (!dt || s>dt->sz || ref()>1)
           {
-//            array tmp(*this);
-//            release();
-//            dt = alloc(s);
-//            if (dt && copy) asg_v(dt->dt,std::min(s,tmp.size()),tmp.data());
             array tmp(s,m_allocator);
-            if (copy) asg_v(tmp.dt->dt,std::min(s,tmp.size()),dt->dt);
+            if (dt && tmp.dt && copy) asg_v(tmp.dt->dt,std::min(s,dt->sz),dt->dt);
             swap(tmp);
-          } 
-        if (dt) dt->sz=s; // in case s is smaller
+            groupBarrier();
+          }
+#ifdef __SYCL_DEVICE_ONLY__
+        // assert all pointers are the same
+        assert(sycl::reduce_over_group(syclGroup(),size_t(dt),sycl::minimum<size_t>())==size_t(dt));
+#endif
+        if (groupLeader() && dt) dt->sz=s; // in case s is smaller
+        groupBarrier();
       } 
 
       // note using default argument for copy above breaks classdesc::has_resize.
@@ -1675,10 +1682,6 @@ namespace ecolab
         std::swap(dt, x.dt);
         std::swap(m_allocator,x.m_allocator);
 #else
-        if (onDevice && x.onDevice) {
-          std::swap(dt, x.dt);
-          std::swap(m_allocator,x.m_allocator);
-        } else {
           // assumption here is these array may be per thread, or
           // maybe shared by all threads in a group, hence std::swap as above won't work
           auto lhs=dt, rhs=x.dt;
@@ -1688,7 +1691,7 @@ namespace ecolab
           x.dt=lhs;
           m_allocator=ralloc;
           x.m_allocator=lalloc;
-        }
+          groupBarrier();
 #endif
       }
     
@@ -1707,10 +1710,10 @@ namespace ecolab
         if (x.dt==dt) return *this;
         if (m_allocator==x.m_allocator) {
           release();
-          if (groupLeader()||onDevice) {
+          /*if (groupLeader()||onDevice())*/ {
             dt=x.dt;
-            incrRef();
           }
+          incrRef();
         } else
           asgV(x.size(), x);
         return *this;

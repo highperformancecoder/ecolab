@@ -14,6 +14,9 @@ using classdesc::Object;
 #include <random>
 #include <vector>
 #include <pack_stl.h>
+#ifdef SYCL_LANGUAGE_VERSION
+#include "DeviceAllocator.h"
+#endif
 
 #ifdef USE_FLOAT
 using Float=float;
@@ -89,7 +92,7 @@ public:
   
   void generate(unsigned niter, const ModelData&);
   void condense(const ModelData::BoolArray& mask, size_t mask_true);
-  template <class E> LocalArray mutate(const E&);
+  template <class E> UnsignedArray mutate(const E&);
   unsigned nsp() const; ///< number of living species in this cell
   /// Rounding function, randomly round up or down, in the range 0..INT_MAX
   int ROUND(Float x);
@@ -139,7 +142,7 @@ public:
   EcolabCell& cell(size_t x, size_t y) {
     return *objects[makeId(x,y)];
   }
-  array<unsigned> nsp() const;
+  array<unsigned> nsp();
   void makeConsistent();
   void seed(unsigned x) {groupedForAll([=](EcolabCell& cell,size_t){cell.rand.seed(x);});}
   void generate(unsigned niter);

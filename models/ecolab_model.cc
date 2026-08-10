@@ -73,11 +73,7 @@ struct RoundArray
   RoundArray(P& point, const E& expr): expr(expr), point(point) {}
   using value_type=int;
   size_t size() const {return expr.size();}
-  int operator[](size_t i) const //{return point.ROUND(expr[i]);}
-  {
-    auto r=point.ROUND(expr[i]);
-    return r;
-  }
+  int operator[](size_t i) const {return point.ROUND(expr[i]);}
 };
 
 namespace ecolab::array_ns
@@ -91,13 +87,13 @@ void EcolabPoint::generate(unsigned niter, const ModelData& model)
 {
   array<int,LocalAllocator<int>> lDensity(density), tmp(density.size());
   //auto& lDensity=density;
-  //array<int,GlobalDeviceAllocator<int>> tmp(density.size(), density.allocator());
+  //array<int,Allocator<int>> tmp(density.size(), density.allocator());
   
   for (unsigned step=0; step<niter; step++)
     {
       array_ns::map(lDensity.size(),  [&](size_t i){
         Float ir=model.interaction.diag[i]*lDensity[i];
-        for (auto& j: model.oDiagIdx[i])
+        for (auto j: model.oDiagIdx[i])
           ir+=model.interaction.val[j]*lDensity[model.interaction.col[j]];
         tmp[i]=ROUND(lDensity[i] + lDensity[i] * (model.repro_rate[i] + ir));
       });
@@ -114,10 +110,12 @@ void EcolabPoint::generate(unsigned niter, const ModelData& model)
 unsigned EcolabPoint::nsp() const
 {return sum(density!=0);}
 
-array<unsigned> SpatialModel::nsp() const
+array<unsigned> SpatialModel::nsp()
 {
-  array<unsigned> nsp;
-  for (auto& i: objects) nsp<<=i->nsp();
+  EcolabPoint::UnsignedArray nsp(size());
+  groupedForAll([nsp=nsp.data()](const EcolabCell& c,size_t i) {
+    nsp[i]=c.nsp();
+  });
   return nsp;
 }
 
@@ -219,16 +217,19 @@ void SpatialModel::mutate()
   assert(all(*mut_scale<=1));
   last_mut_tstep=tstep;
 
-  vector<EcolabPoint::UnsignedArray,ModelData::Allocator<EcolabPoint::UnsignedArray>> newSp(size());
-
+  // this bit of merde is because this line of code needs to compile
+  // in kernel code, even though it runs on the host.
+  auto deviceAllocator=cell(0,0).density.allocator();
+  vector<EcolabPoint::UnsignedArray,ModelData::Allocator<EcolabPoint::UnsignedArray>>
+    newSp(size(),EcolabPoint::UnsignedArray(deviceAllocator));
+ 
   groupedForAll([newSp=newSp.data(),mut_scale=&*mut_scale,this](EcolabCell& c,size_t i) {
     assert(all(c.density>=0));
     newSp[i]=c.mutate(*mut_scale);
   });
 
   array<unsigned> new_sp;
-  DeviceType<EcolabPoint::UnsignedArray> cell_ids;
-  syncThreads();
+  DeviceType<array<unsigned,ModelData::Allocator<unsigned>>> cell_ids;
   
   // TODO - this is a kind of scan - can it be done on device?
   size_t j=0;
@@ -267,38 +268,48 @@ void SpatialModel::mutate()
   if (new_sp.size()==0) return;
 
   computeODiagIdx();
-  
+  mut_scale->clear();
+  newSp.clear();
+
   // set the new species density to 1 for those created on this cell
   groupedForAll([cell_ids=&*cell_ids](EcolabCell& c,size_t) {
-    //hostForAll([cell_ids=&*cell_ids,this](EcolabCell& c,size_t) {
     c.density <<= (*cell_ids)==c.id;
+    assert(all(c.density>=0));
   });
 }
 
 template <class E>
-EcolabPoint::LocalArray EcolabPoint::mutate(const E& mut_scale)
+EcolabPoint::UnsignedArray EcolabPoint::mutate(const E& mut_scale)
 {
   /* calculate the number of mutants each species produces */
-  if (density.size()==0) return {};
+  if (density.size()==0) return {density.allocator()};
 #ifdef __SYCL_DEVICE_ONLY__
   LocalArray speciations=roundArray(mut_scale * density);
+  //UnsignedArray speciations(roundArray(mut_scale * density), density.allocator());
   auto nsp=density.size();
-  //  auto new_sp = gen_index(speciations);
+//  //  auto new_sp = gen_index(speciations);
   LocalArray offsets(nsp+1);
-  sycl::joint_exclusive_scan(syclGroup(),speciations.data(),speciations.data()+nsp,
-                             offsets.data(),sycl::plus<unsigned>());
+  //UnsignedArray offsets(nsp+1,density.allocator());
+  unsigned* offs_p=offsets.data();
+  const unsigned* sp_p=speciations.data();
+  sycl::joint_exclusive_scan(syclGroup(),sp_p,sp_p+nsp,offs_p,sycl::plus<unsigned>());
   groupBarrier();
-  if (groupLeader())
-    offsets[nsp]=offsets[nsp-1]+speciations[nsp-1];
-  groupBarrier();
-
-  if (offsets[nsp]==0) return {};
+  unsigned numSpeciations=0;
+  if (localThreadId()==0) {
+    // do not do array operations: data(), operator[] when not in full
+    // group scope, because of COW semantics
+    numSpeciations=offs_p[nsp]=offs_p[nsp-1]+sp_p[nsp-1];
+  }
+  numSpeciations=sycl::group_broadcast(syclGroup(),numSpeciations,0);
+  
+  if (numSpeciations==0) return {density.allocator()};
   
   density-=speciations;
 
-  LocalArray new_sp(offsets[nsp]);
-  array_ns::map(nsp, [offsets=offsets.data(),new_sp=new_sp.data()](size_t i) {
-    for (auto j=offsets[i]; j<offsets[i+1]; ++j)
+  //LocalArray new_sp(numSpeciations);
+  UnsignedArray new_sp(numSpeciations, density.allocator());
+  array_ns::map(nsp, [offs_p,new_sp=new_sp.data()](size_t i) {
+    for (auto j=offs_p[i]; j<offs_p[i+1]; ++j)
       new_sp[j]=i;
   });
   
@@ -577,6 +588,7 @@ bool ConnectionPlot::redraw(int x0, int y0, int width, int height)
   return true;
 }
 
+#ifndef __SYCL_DEVICE_ONLY__
 void SpatialModel::setGrid(size_t nx, size_t ny)
 {
   numX=nx; numY=ny;
@@ -603,6 +615,7 @@ void SpatialModel::setGrid(size_t nx, size_t ny)
   for (auto& i: objects)
     maxNbrs=std::max(maxNbrs, i->neighbours.size());
 }
+#endif
 
 void SpatialModel::generate(unsigned niter)
 {

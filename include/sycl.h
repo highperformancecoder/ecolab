@@ -129,10 +129,6 @@ namespace ecolab
     operator bool() const {return true;} // always defined
   };
 
-#ifndef __SYCL_DEVICE_ONLY__
-  template <class T> using LocalAllocator=std::allocator<T>;
-#endif
-  
   inline void groupBarrier() {
 #ifdef __SYCL_DEVICE_ONLY__
     sycl::group_barrier(syclGroup());
@@ -146,11 +142,12 @@ namespace ecolab
     return true;
   }
 
-  inline bool onDevice() {
+  inline size_t localThreadId() {
 #ifdef __SYCL_DEVICE_ONLY__
-    return true;
+    return syclGroup().get_local_linear_id();
+#else
+    return 0;
 #endif
-    return false;
   }
 }
 
