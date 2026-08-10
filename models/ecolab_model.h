@@ -142,7 +142,7 @@ public:
   EcolabCell& cell(size_t x, size_t y) {
     return *objects[makeId(x,y)];
   }
-  array<unsigned> nsp() const;
+  array<unsigned> nsp();
   void makeConsistent();
   void seed(unsigned x) {groupedForAll([=](EcolabCell& cell,size_t){cell.rand.seed(x);});}
   void generate(unsigned niter);

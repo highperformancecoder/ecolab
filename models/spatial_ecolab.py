@@ -69,7 +69,7 @@ out=open("time.dat","w")
 def stepImpl():
     start=perf_counter()
     nsp=len(ecolab.species)
-    ecolab.generate(100)
+    ecolab.generate(1000)
     ecolab.mutate()
 
     epochTs=ecolab.tstep()%epoch

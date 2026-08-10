@@ -152,6 +152,8 @@ namespace ecolab
       hostForAll(f);
 #endif
     }
+
+    // TODO - we need a const version as well. Implement via a free template function for the this pointer, and ensure constness is passed through to the arguments of the functional
     
     /// apply a functional to all local cells of this processor in
     /// parallel, where each cell is allocated SIMD parallel computer

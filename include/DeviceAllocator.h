@@ -47,7 +47,7 @@ namespace ecolab
     unsigned top=size; //empty stack, stack grows down
 
     using Atomic=sycl::atomic_ref<unsigned,sycl::memory_order::acq_rel,sycl::memory_scope::device>;
-    
+    CLASSDESC_ACCESS(Stack);
   public:
     void init() {
       top=0; // full stack
@@ -79,7 +79,7 @@ namespace ecolab
 
   template <unsigned order> class DeviceAllocator;
   /// empty allocator to terminate template recursion
-  template <> class DeviceAllocator<maxOrder> {
+  template <> class DeviceAllocator<ecolab::maxOrder> {
   public:
     void* allocate(size_t sz) {
       if (groupLeader())
@@ -104,6 +104,7 @@ namespace ecolab
     Stack<numPages> discard; // discard pile
     char memory[poolSize];
     DeviceAllocator<order+2> nextAllocator; // next size up allocator
+    CLASSDESC_ACCESS(DeviceAllocator);
   public:
     void init() {
       auto chunkOWork=syclQ().get_device().
@@ -170,7 +171,7 @@ namespace ecolab
     DeviceAllocator<>* allocator;
     
 #ifdef __SYCL_DEVICE_ONLY__
-    GlobalDeviceAllocator() = delete;
+    GlobalDeviceAllocator(): allocator(nullptr) {} // = delete;
 #else
     GlobalDeviceAllocator() // note: default constructor must be called on host
     {allocator=&deviceAllocator();}
@@ -216,10 +217,11 @@ namespace ecolab
   /**
      A Local allocator allocates memory from device local memory,
      which is shared between threads of a work group, and has the same
-     lifetime as the kernel
+     lifetime as the kernel.
+     LocalAllocatorT so we can expose LocalAllocator as a template alias on both host and device branches
   */
   template <class T>
-  class LocalAllocator
+  class LocalAllocatorT
   {
   public:
     using value_type=T;
@@ -244,13 +246,17 @@ namespace ecolab
       return reinterpret_cast<T*>(alloc);
     }
     void deallocate(T*p,size_t) {} // cleaned up when group exits
-    template<class U> struct rebind {using other=LocalAllocator<U>;};
+    template<class U> struct rebind {using other=LocalAllocatorT<U>;};
     // allocator is stateless
-    bool operator==(const LocalAllocator&) const {return true;}
+    bool operator==(const LocalAllocatorT&) const {return true;}
   };
+  template <class T> using LocalAllocator=LocalAllocatorT<T>;
 #else
+  template <class T> class LocalAllocatorT {};
   template <class T> using LocalAllocator=std::allocator<T>;
 #endif
    
 }
+
+#include "DeviceAllocator.cd"
 #endif

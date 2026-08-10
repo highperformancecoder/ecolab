@@ -85,20 +85,16 @@ RoundArray<E,EcolabPoint> EcolabPoint::roundArray(const E& expr)
 
 void EcolabPoint::generate(unsigned niter, const ModelData& model)
 {
-  //array<int,LocalAllocator<int>> lDensity(density), tmp(density.size());
-  //array<int,Allocator<int>> lDensity(density), tmp(density.size(), density.allocator());
-  auto& lDensity=density;
-  array<int,Allocator<int>> tmp(density.size(), density.allocator());
+  array<int,LocalAllocator<int>> lDensity(density), tmp(density.size());
+  //auto& lDensity=density;
+  //array<int,Allocator<int>> tmp(density.size(), density.allocator());
   
   for (unsigned step=0; step<niter; step++)
     {
       array_ns::map(lDensity.size(),  [&](size_t i){
         Float ir=model.interaction.diag[i]*lDensity[i];
-        //for (auto j: model.oDiagIdx[i])
-        for (size_t k=0; k<model.oDiagIdx[i].size(); ++k) {
-          unsigned j=model.oDiagIdx[i][k];
+        for (auto j: model.oDiagIdx[i])
           ir+=model.interaction.val[j]*lDensity[model.interaction.col[j]];
-        }
         tmp[i]=ROUND(lDensity[i] + lDensity[i] * (model.repro_rate[i] + ir));
       });
       groupBarrier(); // synchronises threads on each iteration
@@ -114,10 +110,12 @@ void EcolabPoint::generate(unsigned niter, const ModelData& model)
 unsigned EcolabPoint::nsp() const
 {return sum(density!=0);}
 
-array<unsigned> SpatialModel::nsp() const
+array<unsigned> SpatialModel::nsp()
 {
-  array<unsigned> nsp;
-  for (auto& i: objects) nsp<<=i->nsp();
+  EcolabPoint::UnsignedArray nsp(size());
+  groupedForAll([nsp=nsp.data()](const EcolabCell& c,size_t i) {
+    nsp[i]=c.nsp();
+  });
   return nsp;
 }
 
