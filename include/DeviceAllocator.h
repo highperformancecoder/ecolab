@@ -254,6 +254,7 @@ namespace ecolab
    
 }
 
+#include "DeviceAllocator.cd"
 #endif
 
 #ifndef __SYCL_DEVICE_ONLY__
@@ -264,5 +265,4 @@ namespace ecolab
 }
 #endif
 
-#include "DeviceAllocator.cd"
 #endif

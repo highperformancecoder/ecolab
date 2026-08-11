@@ -155,8 +155,6 @@ namespace ecolab
 
 #include "DeviceAllocator.h"
 
-
-
 #define CLASSDESC_RESTProcess___ecolab__DeviceType_M_
 #define CLASSDESC_json_pack___ecolab__DeviceType_M_
 #define CLASSDESC_json_unpack___ecolab__DeviceType_M_
