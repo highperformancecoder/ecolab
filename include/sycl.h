@@ -92,6 +92,8 @@ namespace ecolab
     unsigned max() const {return rngs[0].max();}
   };
 }
+
+
 #else // !SYCL
 #include "non-sycl.h"
 #endif
@@ -150,6 +152,9 @@ namespace ecolab
 #endif
   }
 }
+
+#include "DeviceAllocator.h"
+
 
 
 #define CLASSDESC_RESTProcess___ecolab__DeviceType_M_

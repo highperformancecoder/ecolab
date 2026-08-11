@@ -23,14 +23,7 @@ namespace ecolab
     operator T&() {return data;}
   };
   
-//  template <class T> struct GroupLocal: public std::unique_ptr<T>
-//  {
-//  };
-  
   template <class E, ecolab::USMAlloc UA>
   struct SyclRandomEngine: public E {};
-  
-  template <class T> using LocalAllocator=std::allocator<T>;
-
 }
 #endif

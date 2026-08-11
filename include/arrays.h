@@ -1710,9 +1710,7 @@ namespace ecolab
         if (x.dt==dt) return *this;
         if (m_allocator==x.m_allocator) {
           release();
-          /*if (groupLeader()||onDevice())*/ {
-            dt=x.dt;
-          }
+          dt=x.dt;
           incrRef();
         } else
           asgV(x.size(), x);

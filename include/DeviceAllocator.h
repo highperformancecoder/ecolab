@@ -8,6 +8,7 @@
 
 #ifndef DEVICE_ALLOCATOR_H
 #define DEVICE_ALLOCATOR_H
+#ifdef  SYCL_LANGUAGE_VERSION
 #include "sycl.h"
 #include "graphcode.h"
 
@@ -35,8 +36,6 @@ namespace ecolab
 #endif
   }
   
-  // Bounded MPMC circular buffer queue for SYCL using per-slot sequence numbers.
-  // dequeue() returns ~0U when queue appears empty (non-blocking empty signal).
   template <unsigned size>
   class Stack
   {
@@ -49,10 +48,9 @@ namespace ecolab
     using Atomic=sycl::atomic_ref<unsigned,sycl::memory_order::acq_rel,sycl::memory_scope::device>;
     CLASSDESC_ACCESS(Stack);
   public:
-    void init() {
+    void init(unsigned thread, unsigned numThreads) {
       top=0; // full stack
-      for (unsigned i=syclItem().get_global_linear_id(); i<size;
-           i+=syclItem().get_global_range().size()) 
+      for (unsigned i=thread; i<size; i+=numThreads) 
           slots[i]=i;
     }
     
@@ -109,8 +107,9 @@ namespace ecolab
     void init() {
       auto chunkOWork=syclQ().get_device().
         get_info<sycl::info::device::max_compute_units>()*workGroupSize;
-      syclQ().parallel_for(std::min(chunkOWork,unsigned(numPages)),
-                           [this](size_t) {queue.init();});
+      syclQ().parallel_for
+        (std::min(chunkOWork,numPages),
+         [this](const sycl::item<1>& item) {queue.init(item.get_id(0),item.get_range(0));});
       nextAllocator.init();
     }
     void recycleDiscardPile() {
@@ -251,12 +250,19 @@ namespace ecolab
     bool operator==(const LocalAllocatorT&) const {return true;}
   };
   template <class T> using LocalAllocator=LocalAllocatorT<T>;
-#else
-  template <class T> class LocalAllocatorT {};
-  template <class T> using LocalAllocator=std::allocator<T>;
 #endif
    
 }
+
+#endif
+
+#ifndef __SYCL_DEVICE_ONLY__
+namespace ecolab
+{
+  template <class T> class LocalAllocatorT {};
+  template <class T> using LocalAllocator=std::allocator<T>;
+}
+#endif
 
 #include "DeviceAllocator.cd"
 #endif

@@ -13,9 +13,6 @@
 #define ECOLAB_H
 
 #include "sycl.h"
-#ifdef SYCL_LANGUAGE_VERSION
-#include "DeviceAllocator.h"
-#endif
 
 #include <stdlib.h>
 #include "pythonBuffer.h"
