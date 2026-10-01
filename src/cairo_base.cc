@@ -8,13 +8,13 @@
 
 #include "classdesc.h"
 #include "cairo_base.h"
-#include "pango.h"
 #include "ecolab_epilogue.h"
+
+#if defined(CAIRO)
+#include "pango.h"
 
 const char *ecolab::Pango::defaultFamily=NULL;
 double ecolab::Pango::scaleFactor=1;
-
-#if defined(CAIRO)
 
 #if CAIRO_VERSION_MAJOR <= 1 && CAIRO_VERSION_MINOR < 10
 //#error "Cairo 1.10.x minimum required"

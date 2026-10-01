@@ -94,13 +94,16 @@ namespace ecolab
     void recycleDiscardPile() {}
   };
 
-  template <unsigned order=minOrder> class DeviceAllocator
+  /// maximum alignment guaranteed by the allocators
+  constexpr unsigned maxAlign=16;
+
+  template <unsigned order=minOrder> class alignas(maxAlign) DeviceAllocator
   {
     constexpr static unsigned pageSize=1<<order;
     constexpr static unsigned numPages=poolSize/pageSize;
     Stack<numPages> queue;
     Stack<numPages> discard; // discard pile
-    char memory[poolSize];
+    alignas(maxAlign) char memory[poolSize];
     DeviceAllocator<order+2> nextAllocator; // next size up allocator
     CLASSDESC_ACCESS(DeviceAllocator);
   public:
@@ -116,7 +119,7 @@ namespace ecolab
       queue.appendAndDiscard(discard);
       nextAllocator.recycleDiscardPile();
     }
-    // all members of group get the same pointer
+    // all members of group get the same pointer. \a size should be the same for all threads in a group
     void* allocate(size_t size) {
       if (size==0) return nullptr;
       if (size<=pageSize) {
@@ -180,7 +183,10 @@ namespace ecolab
       allocator(other.allocator) {}
     
     T* allocate(size_t n)
-    {return reinterpret_cast<T*>(allocator->allocate(n*sizeof(T)));}
+    {
+      static_assert(alignof(T)<=maxAlign,"over-aligned types not supported");
+      return reinterpret_cast<T*>(allocator->allocate(n*sizeof(T)));
+    }
     void deallocate(T* p, size_t n){allocator->deallocate(p,n*sizeof(T));}
     template<class U> struct rebind {using other=GlobalDeviceAllocator<U>;};
     // allocator is stateless
@@ -198,10 +204,10 @@ namespace ecolab
 
   constexpr static unsigned LocalAllocatorSize=8*1024; // 32KiB = half typical local storage
 
-  struct LocalAllocatorBuffer
+  struct alignas(maxAlign) LocalAllocatorBuffer
   {
     unsigned next;
-    char buffer[LocalAllocatorSize];
+    alignas(maxAlign) char buffer[LocalAllocatorSize];
   };
 
   /*
@@ -230,16 +236,21 @@ namespace ecolab
     using propagate_on_container_move_assignment=std::true_type;
 
     // no need for destructor, as Impl has nothing to tear down
+    // NB this must be called by all threads in the group for the same n
     T* allocate(size_t n) {
       auto& b=localAllocatorBuffer();
-      unsigned offs=b.next;
+      static_assert(alignof(T)<=maxAlign,"over-aligned types not supported");
+      // Round up to maxAlign, not just alignof(T): the block is raw storage
+      // that containers (eg array's array_data header, which holds size_t
+      // fields) place larger-aligned objects into.
+      unsigned offs=(b.next+maxAlign-1)&~(maxAlign-1);
       if (offs+n*sizeof(T)>LocalAllocatorSize)
         {
           fatalErrorFlag()=true;
           return nullptr;
         }
       sycl::group_barrier(syclGroup());
-      if (syclGroup().leader()) b.next+=n*sizeof(T);
+      if (syclGroup().leader()) b.next=offs+n*sizeof(T);
       sycl::group_barrier(syclGroup());
       char* alloc=b.buffer+offs;
       return reinterpret_cast<T*>(alloc);
@@ -254,15 +265,15 @@ namespace ecolab
    
 }
 
-#include "DeviceAllocator.cd"
-#endif
-
 #ifndef __SYCL_DEVICE_ONLY__
 namespace ecolab
 {
   template <class T> class LocalAllocatorT {};
   template <class T> using LocalAllocator=std::allocator<T>;
 }
+#endif
+
+#include "DeviceAllocator.cd"
 #endif
 
 #endif

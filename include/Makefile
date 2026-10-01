@@ -151,14 +151,20 @@ ifndef MXE
     # disable inclusion of mpi++.h in the MPICH case (don't know what the problem is here)
     FLAGS+=-UHAVE_MPI_CPP
   else
-    # Engage Intel OneAPI compiler
-    ifdef DPCPP
-      CPLUSPLUS=icpx
-      SYCL+=-fsycl
-      # -std=c++20 used to suppress warning messages
+    ifdef DPCPP_CUDA
+      CPLUSPLUS=dpclang++
+      SYCL+=-fsycl -fsycl-targets=nvptx64-nvidia-cuda -D__INTEL_LLVM_COMPILER
       FLAGS+=-std=c++20 -Wno-vla-cxx-extension
+    # Engage Intel OneAPI compiler
     else
-      CPLUSPLUS=g++
+     ifdef DPCPP
+       CPLUSPLUS=icpx
+       SYCL+=-fsycl
+       # -std=c++20 used to suppress warning messages
+       FLAGS+=-std=c++20 -Wno-vla-cxx-extension
+     else
+       CPLUSPLUS=g++
+     endif
     endif
     CC=gcc
     LINK=$(CPLUSPLUS) $(SYCL)
