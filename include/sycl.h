@@ -153,7 +153,19 @@ namespace ecolab
   }
 }
 
+#ifndef __SYCL_DEVICE_ONLY__
+// These types need to be defined for a non-SYCL build
+namespace ecolab
+{
+  template <class T> class LocalAllocatorT {};
+  template <class T> using LocalAllocator=std::allocator<T>;
+}
+#endif
+#ifdef SYCL_LANGUAGE_VERSION
 #include "DeviceAllocator.h"
+#endif
+
+
 
 #define CLASSDESC_RESTProcess___ecolab__DeviceType_M_
 #define CLASSDESC_json_pack___ecolab__DeviceType_M_

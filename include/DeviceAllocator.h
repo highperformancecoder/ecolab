@@ -265,14 +265,6 @@ namespace ecolab
    
 }
 
-#ifndef __SYCL_DEVICE_ONLY__
-namespace ecolab
-{
-  template <class T> class LocalAllocatorT {};
-  template <class T> using LocalAllocator=std::allocator<T>;
-}
-#endif
-
 #include "DeviceAllocator.cd"
 #endif
 

@@ -26,6 +26,7 @@ using array_ns::pcoord;
 
 #include "ecolab_epilogue.h"
 
+#include <atomic>
 
 using namespace classdesc;
 
@@ -220,24 +221,38 @@ void SpatialModel::mutate()
   // this bit of merde is because this line of code needs to compile
   // in kernel code, even though it runs on the host.
   auto deviceAllocator=cell(0,0).density.allocator();
-  vector<EcolabPoint::UnsignedArray,ModelData::Allocator<EcolabPoint::UnsignedArray>>
+  static vector<EcolabPoint::UnsignedArray,ModelData::Allocator<EcolabPoint::UnsignedArray>>
     newSp(size(),EcolabPoint::UnsignedArray(deviceAllocator));
- 
-  groupedForAll([newSp=newSp.data(),mut_scale=&*mut_scale,this](EcolabCell& c,size_t i) {
+
+  DeviceType<size_t> numNewSp(0);
+  groupedForAll([newSp=newSp.data(),mut_scale=&*mut_scale,numNewSp=&*numNewSp,this](EcolabCell& c,size_t i) {
     assert(all(c.density>=0));
     newSp[i]=c.mutate(*mut_scale);
+#ifdef __SYCL_DEVICE_ONLY__
+    if (groupLeader())
+      sycl::atomic_ref<size_t,sycl::memory_order::acq_rel,sycl::memory_scope::device>
+        (*numNewSp)+=newSp[i].size();
+#else
+#ifdef _OPENMP
+#pragma omp atomic
+#endif
+    *numNewSp+=newSp[i].size();
+#endif
   });
 
   array<unsigned> new_sp;
-  DeviceType<array<unsigned,ModelData::Allocator<unsigned>>> cell_ids;
+  
+  DeviceType<array<unsigned,ModelData::Allocator<unsigned>>> cell_ids(*numNewSp);
   
   // TODO - this is a kind of scan - can it be done on device?
-  size_t j=0;
+  size_t j=0, offs=0;
   for (auto& i: *this)
     {
       auto& nsp=newSp[j++];
       new_sp<<=nsp;
-      (*cell_ids)<<= array<unsigned>(nsp.size(),i.id());
+      for (size_t k=0; k<nsp.size(); ++k)
+        (*cell_ids)[offs+k]=i.id();
+      offs+=nsp.size();
     }
 
   // deallocate on device
@@ -730,9 +745,11 @@ void ModelData::makeConsistent(size_t nsp)
 
 void ModelData::computeODiagIdx()
 {
-  oDiagIdx.clear(); oDiagIdx.resize(species.size());
+  vector<array<unsigned>> oDiagIdxTmp(species.size());
   for (unsigned i=0; i<interaction.row.size(); ++i)
-    oDiagIdx[interaction.row[i]]<<=i;
+    oDiagIdxTmp[interaction.row[i]]<<=i;
+  oDiagIdx.reserve(species.size());
+  oDiagIdx.assign(oDiagIdxTmp.begin(),oDiagIdxTmp.end());
 }
 
 void SpatialModel::makeConsistent()
