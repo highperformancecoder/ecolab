@@ -208,6 +208,7 @@ void PanmicticModel::mutate()
   array<unsigned> new_sp;
   new_sp <<= EcolabPoint::mutate(mut_scale);
   ModelData::mutate(new_sp);
+  computeODiagIdx();
   density<<=array<int>(new_sp.size(),1);
 }
 

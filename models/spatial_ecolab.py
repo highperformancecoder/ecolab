@@ -107,14 +107,14 @@ def step():
     if myid()==0:
         nsp=len(ecolab.species)
         statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
-#        plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))
-#        #plot('No. species',ecolab.tstep(),nsp)
-#        plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())
-#        plot('Extinctions',ecolab.tstep(),extinctions)
-#        plot('Migration',ecolab.tstep(),migrations)
-#        for i in range(numX):
-#            for j in range(numY):
-#                plot(f'Density({i},{j})',ecolab.tstep(),ecolab.cell(i,j).density(), pens=ecolab.species())
+        plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))
+        #plot('No. species',ecolab.tstep(),nsp)
+        plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())
+        plot('Extinctions',ecolab.tstep(),extinctions)
+        plot('Migration',ecolab.tstep(),migrations)
+        for i in range(numX):
+            for j in range(numY):
+                plot(f'Density({i},{j})',ecolab.tstep(),ecolab.cell(i,j).density(), pens=ecolab.species())
 
 gui(step,ecolab)
 

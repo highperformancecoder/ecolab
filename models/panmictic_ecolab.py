@@ -1,6 +1,7 @@
 from ecolab_model import panmictic_ecolab as ecolab
 from random import random
 import math
+
 # initial number of species
 nsp=100
 
@@ -8,7 +9,6 @@ ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
 ecolab.odiag_min(-1e-4)
 ecolab.odiag_max(1e-4)
-#ecolab.mut_max(1e-4)
 ecolab.mut_max(1e-3)
 ecolab.sp_sep(0.1)
 ecolab.gen_bias(0.0)
@@ -44,19 +44,27 @@ from ecolab import ecolabHome
 
 out=open('nsp-connectivity',"w")
 print("#nsp connectivity",file=out,flush=True)
+extinctionCascades=[]
+
+lifetimes=open('lifetimes','w')
+
 def step():
     ecolab.generate(100)
     b4mutConn=ecolab.connectivity()
     ecolab.mutate()
     b4ExtConn=ecolab.connectivity()
 #    ecolab.updateConnectionPlot()
+    extinctions=len(ecolab.species)-ecolab.nsp()
+    for l in ecolab.lifetimes()():
+        print(l,file=lifetimes)
+    lifetimes.flush()
     ecolab.condense()
     conn=ecolab.connectivity()
     nsp=len(ecolab.species)
     statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
     if ecolab.tstep()<20000: return
-    print(ecolab.tstep(),nsp,conn,b4ExtConn-b4mutConn,conn-b4ExtConn)
-    print(ecolab.tstep(),nsp,conn,b4ExtConn-b4mutConn,b4ExtConn-conn,file=out,flush=True)
+    print(ecolab.tstep(),nsp,conn,extinctions,b4ExtConn-b4mutConn,conn-b4ExtConn)
+    print(ecolab.tstep(),nsp,conn,extinctions,b4ExtConn-b4mutConn,b4ExtConn-conn,file=out,flush=True)
     #plot('No. species',ecolab.tstep(),nsp)
     #plot('Connectivity',ecolab.tstep(),[ecolab.connectivity(),mutConn-extConn])
     #    #plot('Density',ecolab.tstep(),ecolab.density(), pens=ecolab.species())
