@@ -106,7 +106,10 @@ namespace ecolab
         recomputeSizes=width<0 || height<0;
         return m_surface;
       }
-      
+      void renewCairo() {
+        if (m_cairo) cairo_destroy(m_cairo);
+        m_cairo = m_surface? cairo_create(m_surface): nullptr;
+      }
       cairo_t* cairo() const {return m_cairo;}
       virtual double width() const {computeSizes(); return m_width;}
       virtual double height() const {computeSizes(); return m_height;}

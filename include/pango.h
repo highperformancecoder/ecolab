@@ -53,6 +53,7 @@ namespace ecolab
         throw std::runtime_error(cairo_status_to_string(status));
     }
     double scale;
+    CLASSDESC_ACCESS(Pango);
   public:
     double angle; // angle the text
     static const char *defaultFamily;
@@ -147,6 +148,7 @@ namespace ecolab
     double top() const {return scale*double(bbox.y)/PANGO_SCALE;}
  };
 }
+#include "pango.cd"
 #else // fall back to basic Cairo text handling
 #include "noPango.h"
 #endif
