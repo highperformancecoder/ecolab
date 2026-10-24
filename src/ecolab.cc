@@ -13,6 +13,7 @@
 #include "cairoSurfaceImage.h"
 #undef None
 #include "plot.h"
+#include "analysis.h"
 #include "pythonBuffer.h"
 #include "ecolab.h"
 #include "random.h"
@@ -241,6 +242,7 @@ namespace ecolab
   namespace python
   {
     using Plot=PlotSurface;
+    CLASSDESC_DECLARE_TYPE(HistoStats);
     CLASSDESC_DECLARE_TYPE(Plot);
     CLASSDESC_DECLARE_TYPE(urand);
 #ifdef UNURAN

@@ -42,6 +42,8 @@ namespace ecolab
       max=-std::numeric_limits<float>::max();
       min=std::numeric_limits<float>::max();
     }
+    void appendData(float x) {*this<<=x;}
+    //void appendData(const array<float>& x) {*this<<=x;}
     double av() {return sum/size();} ///<average
     double median() {
       std::nth_element(begin(),begin()+size()/2,end());
@@ -89,7 +91,8 @@ namespace ecolab
         @returns \f$a\f$ and \f$x_\mathrm{min}\f$
         @param \f$x_\mathrm{min}\f$ (optional) 
     */
-    //array_ns::array<double> fitPowerLaw(TCL_args); 
+    std::tuple<double,double> fitPowerLaw(double xmin); 
+    std::tuple<double,double> fitPowerLaw(); 
 
     /// fit \f$\exp(-x/a)\f$ - return \f$a\f$ 
     double fitExponential() {return av();} 
@@ -100,7 +103,7 @@ namespace ecolab
     }
 
     /// fit \f$\exp(-(\ln(x)-\ln m)^2/2s\f$, return \f$m\f$, \f$s\f$
-    array_ns::array<double> fitLogNormal();   
+    std::tuple<double,double> fitLogNormal();   
   };
 
   struct NetworkFromTimeSeries: public std::vector<Stats>

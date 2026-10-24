@@ -347,7 +347,7 @@ unsigned mini(double xmin, const ecolab::array<float>& x)
 
 unsigned maxi(double xmax, const ecolab::array<float>& x)
 {
-  // find location of first data > xmin
+  // find location of first data > xmax
   unsigned maxi;
   for (maxi=x.size(); maxi>0 && x[maxi-1]>xmax; maxi--);
   return maxi;
@@ -441,47 +441,42 @@ public:
   }
 };
 
-//array_ns::array<double> HistoStats::fitPowerLaw(TCL_args args)
-//{
-//  array_ns::array<double> ret(2);
-//  double& slope=ret[0], &xmin=ret[1];
-//  array<float>& data=*this;
-//  // we must have positive numbers here
-//  double m0=log(std::max(array_ns::min(data), std::numeric_limits<float>::min())); 
-//  double m1=log(std::max(array_ns::max(data), std::numeric_limits<float>::min()));
-//  sort(begin(),end());
-//
-//  if (args.count==0)
-//    {
-//      // Do binary search on the interval x_min in [e^m0,e^m1] for min of maxDiff
-//      do
-//        {
-//          double left=maxDiff( exp((m1-m0)*0.25+m0), *this), 
-//            right=maxDiff( exp((m1-m0)*0.75+m0), *this);
-//          if (left < right)
-//            m1 -= (m1-m0)/2;
-//          else
-//            m0 += (m1-m0)/2;
-//        }
-//      while (m1-m0 > 0.01);
-//      xmin = exp((m1-m0)/2+m0);
-//    }
-//  else
-//    xmin=args;  //xmin specified by user
-//
-//  unsigned start=mini(xmin,data);
-//  slope=bestslope(xmin,size()-start,begin()+start);
-//  return ret;
-//}
-
-array_ns::array<double> HistoStats::fitLogNormal()
+std::tuple<double,double> HistoStats::fitPowerLaw(double xmin)
 {
-  array_ns::array<double> ret(2);
-  double& mu=ret[0], &sigma=ret[1];
+  sort(begin(),end());
+
+  unsigned start=mini(xmin,*this);
+  return {bestslope(xmin,size()-start,begin()+start), xmin};
+}
+std::tuple<double,double> HistoStats::fitPowerLaw()
+{
+  array<float>& data=*this;
+  // we must have positive numbers here
+  double m0=log(std::max(array_ns::min(data), std::numeric_limits<float>::min())); 
+  double m1=log(std::max(array_ns::max(data), std::numeric_limits<float>::min()));
+  sort(begin(),end());
+
+  // Do binary search on the interval x_min in [e^m0,e^m1] for min of maxDiff
+  do
+    {
+      double left=maxDiff( exp((m1-m0)*0.25+m0), *this), 
+        right=maxDiff( exp((m1-m0)*0.75+m0), *this);
+      if (left < right)
+        m1 -= (m1-m0)/2;
+      else
+        m0 += (m1-m0)/2;
+    }
+  while (m1-m0 > 0.01);
+  return fitPowerLaw(exp((m1-m0)/2+m0));
+}
+
+std::tuple<double,double> HistoStats::fitLogNormal()
+{
+  double mu, sigma;
   Stats logstats; logstats <<= array<float>(log(static_cast<array<float>&>(*this)));
   mu=logstats.av(); sigma=logstats.stddev();
 
-  return ret;
+  return {mu, sigma};
 }
 
 #include <memory>
