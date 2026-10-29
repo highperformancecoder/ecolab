@@ -329,14 +329,6 @@ ecolab::array<double> HistoStats::bins()
   return x;
 }
 
-//* Hill estimator 
-double bestslope(double xmin, unsigned n, const float *x)
-{
-  double sumlog=0;
-  for (unsigned i=0; i<n; i++) sumlog+=log(x[i]);
-  return 1+n/(sumlog-n*log(xmin));
-}
-
 unsigned mini(double xmin, const ecolab::array<float>& x)
 {
   // find location of first data > xmin
@@ -353,10 +345,38 @@ unsigned maxi(double xmax, const ecolab::array<float>& x)
   return maxi;
 }
 
+//* Hill estimator 
 double bestslope(double xmin, const ecolab::array<float>& x)
 {
-  unsigned n=mini(xmin,x);
-  return bestslope(xmin,x.size()-n,x.begin()+n);
+  double sumlog=0;
+  unsigned n=0, N=x.size();
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:sumlog,n)
+#endif
+  for (unsigned i=0; i<N; i++)
+    if (x[i]>=xmin)
+      {
+        sumlog+=log(x[i]);
+        ++n;
+      }
+  return 1+n/(sumlog-n*log(xmin));
+}
+
+//* Hill estimator for fat power laws
+double bestFatSlope(double xmax, const ecolab::array<float>& x)
+{
+  double sumlog=0;
+  unsigned n=0, N=x.size();
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:sumlog,n)
+#endif
+  for (unsigned i=0; i<N; i++)
+    if (x[i]<=xmax)
+      {
+        sumlog+=log(x[i]);
+        ++n;
+      }
+  return 1+n/(sumlog-n*log(xmax));
 }
 
 // return maximum difference between cumulative distributions of
@@ -367,7 +387,7 @@ double maxDiff(double xmin, const array_ns::array<float>& data)
   unsigned n=mini(xmin,data);
   if (n==data.size()) return std::numeric_limits<double>::max();
 
-  double maxDiff=0, slope=bestslope(xmin, data.size()-n, data.begin()+n);
+  double maxDiff=0, slope=bestslope(xmin, data);
   for (unsigned i=n; i<data.size(); i++)
     {
       assert (data[i]>=xmin);
@@ -443,10 +463,7 @@ public:
 
 std::tuple<double,double> HistoStats::fitPowerLaw(double xmin)
 {
-  sort(begin(),end());
-
-  unsigned start=mini(xmin,*this);
-  return {bestslope(xmin,size()-start,begin()+start), xmin};
+  return {bestslope(xmin,*this), xmin};
 }
 std::tuple<double,double> HistoStats::fitPowerLaw()
 {
@@ -470,7 +487,18 @@ std::tuple<double,double> HistoStats::fitPowerLaw()
   return fitPowerLaw(exp((m1-m0)/2+m0));
 }
 
-std::tuple<double,double> HistoStats::fitLogNormal()
+std::tuple<double,double> HistoStats::fitFatPowerLaw(double xmax)
+{
+  return {bestFatSlope(xmax,*this), xmax};
+}
+std::tuple<double,double> HistoStats::fitFatPowerLaw()
+{
+  array<float>& data=*this;
+  double xmax=array_ns::max(data);
+  return {bestFatSlope(xmax,data), xmax};
+}
+
+  std::tuple<double,double> HistoStats::fitLogNormal()
 {
   double mu, sigma;
   Stats logstats; logstats <<= array<float>(log(static_cast<array<float>&>(*this)));
@@ -535,110 +563,6 @@ AUTOPTR<logdist> distribution(char *distrname, float xmin)
 //  
 //
 //}
-
-
-#ifdef BLT
-/* 
-
-Some new histogram routines, storing temporary data in memory, rather
-than a file. This should be OK, as most modern machines have multi MB
-of RAM, and this is so much faster then disk I/O.
-
-*/
-
-TCLTYPE(histogram_data);
-
-void histogram_data::init_BLT_vects(TCL_args args)
-{
-  name=(char*)args;
-  if (Blt_GetVector(interp(),
-                    const_cast<char*>((std::string("::")+name+"::x").c_str()),
-                    &x)!=TCL_OK) 
-    throw error(interp()->result);
-  if (Blt_GetVector(interp(),
-                    const_cast<char*>((std::string("::")+name+"::y").c_str()),
-                    &y)!=TCL_OK) 
-    throw error(interp()->result);
-}  
-
-void histogram_data::clear()
-{
-  data.clear();
-  reread();
-}
-
-void histogram_data::reread()
-{
-  int i;
-  if (Blt_ResizeVector(y,nbins)!=TCL_OK) 
-    throw error(interp()->result);
-  if (Blt_ResizeVector(x,nbins)!=TCL_OK) 
-    throw error(interp()->result);
-  array<double> hist=data.histogram();
-  for (i=0; i<nbins; i++) y->valueArr[i]=hist[i];
-
-  if (xlogison && data.size())
-    {
-      float log10=log(10.0);
-      float delta=(log(max)-data.logmin)/(data.nbins-0.1);
-      (tclcmd() |"."|name|".graph configure -barwidth") << 
-	delta/log(10.0)<<"\n"; 
-      (tclcmd() | "."|name|".graph xaxis configure -stepsize") << 
-	delta*nbins/5.0/log(10.0)<<"\n"; 
-      for (i=0; i<nbins; i++) 
-	x->valueArr[i]=(i*delta+data.logmin)/log10;
-    }
-  else
-    {
-      double delta=(max-min)/(nbins-0.1);
-      (tclcmd() | "."|name|".graph configure -barwidth") << 
-	delta<<"\n"; 
-      (tclcmd() | "."|name|".graph xaxis configure -stepsize") << 
-	delta*nbins/5.0<<"\n"; 
-      for (i=0; i<nbins; i++) 
-	x->valueArr[i]=i*delta+min;
-    }
-}
-
-void histogram_data::add_data(TCL_args args)
-{
-
-  double value=args;
-  data<<=value;
-  if (value<min) {min=value; reread();}
-  if (value>max) {max=value; reread();}
-
-  if (xlogison && value > 0)
-    {
-      float logmax=log(max);
-      if (logmax>data.logmin)
-        {
-          double delta=(logmax-data.logmin)/(data.nbins-0.1);
-          int idx=(log(value)-data.logmin)/delta;
-          y->valueArr[idx]+=exp(-idx*delta)/(exp(delta)-1);
-        }
-    }
-  else
-    {
-      double invdelta=max>min? (nbins-0.1)/(max-min): 0;
-      y->valueArr[(size_t)((value-min)*invdelta)]+=1;
-    }
-
-  if (Blt_ResizeVector(y,nbins)!=TCL_OK) //refresh display 
-    throw error(interp()->result);
-}
-
-void histogram_data::outputdat(TCL_args args)
-{
-  FILE *f=fopen(args,"w");
-  double log10=log(10.0);
-  assert(x->numValues==y->numValues);
-  for (int i=0; i<x->numValues; i++)
-    fprintf(f,"%g %g\n",xlogison? exp(log(10.0)*x->valueArr[i]): x->valueArr[i],
-	    y->valueArr[i]);
-  fclose(f);
-}
-#endif
 
 namespace ecolab 
 {

@@ -86,13 +86,21 @@ namespace ecolab
         @param \f$x_\mathrm{min}\f$
     */
     //double loglikelihood(TCL_args args); 
-    /** \brief fit \f$x^{-a}\$
+    /** \brief fit \f$x^{-a}\$ for $a>1$
 
         @returns \f$a\f$ and \f$x_\mathrm{min}\f$
         @param \f$x_\mathrm{min}\f$ (optional) 
     */
     std::tuple<double,double> fitPowerLaw(double xmin); 
-    std::tuple<double,double> fitPowerLaw(); 
+    std::tuple<double,double> fitPowerLaw();
+    
+    /** \brief fit \f$x^{-a}\$ for $a<1$
+
+        @returns \f$a\f$ and \f$x_\mathrm{max}\f$
+        @param \f$x_\mathrm{max}\f$ (optional) 
+    */
+    std::tuple<double,double> fitFatPowerLaw(double xmax); 
+    std::tuple<double,double> fitFatPowerLaw(); 
 
     /// fit \f$\exp(-x/a)\f$ - return \f$a\f$ 
     double fitExponential() {return av();} 
