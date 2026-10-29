@@ -18,6 +18,7 @@
 #include <cmath>
 #include <limits>
 
+#include <bit>
 #include <set>
 #include <vector>
 #include <iostream>
@@ -1458,6 +1459,7 @@ namespace ecolab
     {
       T *allocated_pointer; //actual pointer allocated (for alignment purposes)
       std::size_t sz; //array size
+      std::size_t reserved; //array size
       std::size_t allocation; // actual allocation
       unsigned cnt;   //reference count
       static const unsigned debug_display=10; //allows debuggers to see first debug_display elem
@@ -1506,7 +1508,7 @@ namespace ecolab
 #endif
         r->allocated_pointer=p;
         r->allocation=allocation;
-        r->sz=n;
+        r->reserved=r->sz=n;
         r->cnt=1;
         return r;
       }
@@ -1654,9 +1656,11 @@ namespace ecolab
       void resize(size_t s, bool copy) {
         if (s==size()) return;
         groupBarrier();
-        if (!dt || s>dt->sz || ref()>1)
+        if (!dt || s>dt->reserved || ref()>1)
           {
-            array tmp(s,m_allocator);
+            // allocate next power of 2 to optimise resizing on growing arrays
+            array tmp(std::bit_ceil(s),m_allocator);
+            if (tmp.dt) tmp.dt->sz=s;
             if (dt && tmp.dt && copy) asg_v(tmp.dt->dt,std::min(s,dt->sz),dt->dt);
             swap(tmp);
             groupBarrier();

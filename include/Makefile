@@ -52,7 +52,7 @@ ifdef MXE
   endif
 endif
 
-FLAGS+=-DECOLAB_HOME=\"$(ECOLAB_HOME)\"
+FLAGS+=-DECOLAB_HOME=\"$(ECOLAB_HOME)\" -std=c++20 
 
 ifdef MPI_DEBUG
 MPI=1

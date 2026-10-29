@@ -464,12 +464,13 @@ void ModelData::mutate(const array<int>& new_sp)
       s=sum(tmp1+tmp2,mask)+interaction.diag[i];
       if (s>0)
 	{
-	  int nadj;
-	  array<int> m1( mask && tmp1!=0.0 );
-	  array<int> m2( mask && tmp2!=0.0 );
-	  nadj = sum(m1 || m2);
-	  tmp1=merge(m1,tmp1-s/nadj,tmp1);
-	  tmp2=merge(m2,tmp2-s/nadj,tmp2);
+          interaction.diag[i]-=s;
+//	  int nadj;
+//	  array<int> m1( mask && tmp1!=0.0 );
+//	  array<int> m2( mask && tmp2!=0.0 );
+//	  nadj = sum(m1 || m2);
+//	  tmp1=merge(m1,tmp1-s/nadj,tmp1);
+//	  tmp2=merge(m2,tmp2-s/nadj,tmp2);
 	}
 
       /* pack up to add to interaction */
@@ -504,7 +505,7 @@ array<Float> PanmicticModel::lifetimes()
 
   for (size_t i=0; i<species.size(); i++) 
     {
-      if (create[i]==0 && density[i]>10) 
+      if (create[i]==0 && density[i]>0) 
 	create[i] = tstep;
       else if (create[i]>0 && density[i]==0) 
 	/* extinction */
