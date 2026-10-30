@@ -43,6 +43,7 @@ namespace ecolab
       min=std::numeric_limits<float>::max();
     }
     void appendData(float x) {*this<<=x;}
+    void appendDataFromFile(const char* filename);
     //void appendData(const array<float>& x) {*this<<=x;}
     double av() {return sum/size();} ///<average
     double median() {

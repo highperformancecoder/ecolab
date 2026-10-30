@@ -289,6 +289,17 @@ void display(std::string display, double tstep,
     return *this;
   }
 
+void Stats::appendDataFromFile(const char* filename)
+{
+  ifstream f(filename);
+  if (!f) throw runtime_error(string(filename)+" not found");
+  long i=0;
+  float x;
+  while (f>>x)
+    {
+      (*this)<<=x;
+    }
+}
 
 ecolab::array<double> HistoStats::histogram()
 {

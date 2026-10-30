@@ -6,14 +6,15 @@ import matplotlib.pyplot as plt
 
 hist=HistoStats()
 i=0
-with open(argv[1],"r") as f:
-    for line in f:
-        x=float(line.rstrip())
-        hist.appendData(float(line.rstrip()))
-        i+=1
-        if i % 10000 == 0:
-            print(i,end='\r')
-        
+#with open(argv[1],"r") as f:
+#    for line in f:
+#        x=float(line.rstrip())
+#        hist.appendData(float(line.rstrip()))
+#        i+=1
+#        if i % 10000 == 0:
+#            print(i,end='\r')
+hist.appendDataFromFile(argv[1])
+
 [alpha,xmin]=hist.fitFatPowerLaw(1e6)();
 print(alpha,xmin)
 [alpha,xmin]=hist.fitPowerLaw(1000)();
