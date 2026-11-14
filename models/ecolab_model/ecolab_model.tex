@@ -1,0 +1,541 @@
+\documentclass{article}
+\usepackage{amssymb}
+\title{The EcoLab Model}
+\author{Russell K. Standish}
+
+\newcommand{\br}{\mbox{${\bf r}$}} %reproductive rate
+\newcommand{\bbeta}{\mbox{\boldmath{$\beta$}}}   %interaction matrix
+\newcommand{\bgamma}{\mbox{\boldmath{$\gamma$}}} %dispersal
+\newcommand{\bmu}{\mbox{\boldmath{$\mu$}}}       %mutation rate
+\newcommand{\bn}{\mbox{\boldmath{$n$}}}          %species density
+\newcommand{\nsp}{\mbox{$n_{\rm sp}$}}           %no. of species           
+
+\providecommand{\reals}{\mathbb{R}}
+\providecommand{\naturals}{\mathbb{N}}
+
+\newcommand{\EcoLab}{{\sffamily\slshape
+    \mbox{\raisebox{.5ex}{Eco}\hspace{-.4em}{\makebox[.5em]{L}ab}}}}
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  This article documents the EcoLab model, and serves as a repository
+  of key behavioural results that may or may not have been published
+  in the scientific literature. Earlier versions of this document can
+  be found as a section within the official manual of the \EcoLab{}
+  platform. It is sometimes referred to as the ``EcoLab Technical Report''.
+\end{abstract}
+
+\section{Introduction}
+
+Earlier versions of this paper can be found as a section in the user
+manual for the \EcoLab{} simulation system, which provides a reference
+implementation of this model.
+
+We start with a generalised form of the Lotka-Volterra equation 
+\begin{equation}\label{lotka-volterra}
+\dot{\bn} = \br*\bn + \bn*\bbeta\bn.
+\end{equation}
+Here $\bn\in\reals^n_+$ is the population density, the component
+$n_i\ge0$ being the number of individuals of species $i$, \br\ is the
+difference between reproduction and death, \bbeta\ is the interaction
+matrix, with $\beta_{ij}$ being the interaction between species $i$
+and $j$, * referring to elementwise multiplication.
+
+\subsection{Lotka-Volterra Dynamics}
+
+The most obvious thing about equation (\ref{lotka-volterra}) is its
+fixed point 
+\begin{equation}\label{fixed point}
+\hat{\bn} = -\bbeta^{-1}\br,
+\end{equation}
+where $\dot{\bn}=0$. For this point to be biologically meaningful, all
+components of $\hat{\bn}$ must be positive, giving rise to the following
+inequalities:
+\begin{equation}\label{positive species}
+\hat n_i = \left(\bbeta^{-1}\br\right)_i>0, \forall i
+\end{equation}
+The stability of this point is related to the
+negative definiteness of derivative of $\dot{\bn}$ at $\hat{\bn}$. The
+components of the derivative are given by
+\begin{equation}\label{derivative}
+\frac{\partial\dot{n}_i}{\partial n_j} =
+\delta_{ij}\left(r_i+\sum_k\beta_{ik}n_k\right) + \beta_{ij}n_i
+\end{equation}
+Substituting eq (\ref{fixed point}) gives
+\begin{equation}
+\left.\frac{\partial\dot{n}_i}{\partial n_j}\right|_{\hat{\bn}}=
+-\beta_{ij}\left(\bbeta^{-1}\br\right)_i
+\end{equation}
+
+Stability of the fixed point requires that this matrix should be
+negative definite. Since the $\left(\bbeta^{-1}\br\right)_i$ are
+all negative by virtue of (\ref{positive species}), each minor
+determinant of this matrix is equal to a minor determinant of \bbeta\
+multiplied by a positive number, stability of the equilibrium is
+equivalent to \bbeta\ being negative definite.
+
+A weaker condition is to require that the system remain bounded with
+time:
+\begin{equation}\label{boundedness}
+\sum_i\dot{n_i}=\br\cdot\bn + \bn\cdot\bbeta\bn < 0, \;\forall \bn:
+\sum_in_i>N \;\exists N
+\end{equation}
+
+As \bn\ becomes large in any direction, this functional is dominated
+by the quadratic term, so this implies that  $\bn\cdot\bbeta\bn\leq0
+\; \forall\bn\in\reals^n_+$. Negative definiteness of \bbeta\ is sufficient,
+but not necessary for this condition. Positive eigenvalues of \bbeta\
+are possible, provided the associated eigenvectors are not in the
+positive cone $\reals^n_+$. For example, the predator-prey
+relations (heavily normalised) have the following matrix as \bbeta:
+\begin{math}
+\bbeta=\left(\begin{array}{cc}
+-1 & 2\\
+-2 & 0\\
+\end{array}\right)
+\end{math}
+which has eigenvalues $3/2, -5/2$. If we let $\bn=(x,y), x,y\geq0$, then
+$\bn\cdot\bbeta\bn=-2x^2$, which is clearly non-positive
+for all $x$.
+
+Consider adding a new row and column to \bbeta. What is condition is
+the new row and column required to satisfy such that equation
+(\ref{boundedness}) is satisfied. Break up \bbeta\ in the following
+way:
+\begin{displaymath}
+\left(
+  \mbox{
+     \begin{tabular}{c|c}
+       $\begin{array}{ccc}\ddots\\&{\bf A}\\&&\ddots\end{array}$ & 
+       $\begin{array}{c}\vdots\\{\bf B}\\\vdots\end{array}$ \\
+       \hline
+       $\begin{array}{ccc}\cdots&{\bf C}&\cdots\end{array}$ & D
+     \end{tabular}
+   }
+\right)
+\left(
+  \mbox{
+     \begin{tabular}{c}
+     $\begin{array}{c}\vdots\\{\bf n_1}\\\vdots\end{array}$\\
+     \hline
+     $n_2$
+     \end{tabular}
+    }
+\right)
+\end{displaymath}
+
+Condition (\ref{boundedness}) becomes:
+\begin{equation}
+{\bf n_1}\cdot{\bf A}{\bf n_1} + {\bf n_1}\cdot({\bf B}+{\bf C})n_2 +
+Dn_2^2 \leq 0
+\end{equation}
+
+Proceeding inductively, by construction,
+${\bf n_1}\cdot{\bf A}{\bf n_1}<0$ and dominate quadratically as
+$|{\bf n_1}|\rightarrow\infty$, so it is sufficient to assert, for
+$|n_1|=1$:
+\begin{equation}\label{boundedness2}
+  {\bf n_1}\cdot({\bf B}+{\bf C}) +  Dn_2 \leq 0
+\end{equation}
+
+\section{Extinction dynamics}
+
+The original Lotke-Volterra equations (\ref{lotka-volterra}) never
+allow for the possibility of extinction, and species density \bn\ can
+approach zero arbitrarily closely. In order to simulate actual
+extinctions, the EcoLab model uses natural numbers for the density
+vector, ie $\bn\in\naturals^n$. Then how to interpret the update
+equation (\ref{lotka-volterra})? The EcoLab model is using Euler
+integration, with random conversion from real values to the
+integers. So, calculate:
+\begin{equation}
+  \Delta \bn = \br*\bn + \bn*\bbeta\bn
+\end{equation}
+then for example a value of 4.3 is probabilistically converted to 4
+70\% of the time, and to 5 30\% of the time, before being added to the
+density vector \bn.
+
+The main alternative scheme for implementing extinction dynamics is to
+specify a threshold, under which a species with that density value is
+considered extinct. It is unclear what difference this choice of
+extinction dynamics makes to the model behaviour, but the
+probabilistic approach taken by EcoLab is probably closer to the messy
+probabilistic processes found in Nature.
+
+\section{Mutation}\label{mutation}
+
+With mutation, equation (\ref{lotka-volterra}) reads
+\begin{equation}
+\dot{\bn} = \br*\bn + \bn*\bbeta\bn + {\tt mutate}(\bmu,\br,\bn).
+\end{equation}
+
+
+The difficulty with adding mutation to this model is how to define the
+mapping between genotype space and phenotype space, or in other words,
+what defines the {\em embryology}. A few studies, including Ray's
+Tierra world\cite{Ray91}, do this with an explicit mapping from the
+genotype to to some particular organism property (e.g. interpreted as
+machine language instructions, or as weight in a neural net). These
+organisms then interact with one another to determine the population
+dynamics. In this model, however, we are doing away with the
+organismal layer, and so an explicit embryology is impossible. The
+only possibility left is to use a statistical model of embryology. The
+mapping between genotype space and the population parameters $\br$,
+$\bbeta{}$ is expected to look like a rugged landscape, however, if
+two genotypes are close together (in a Hamming sense) then one might
+expect that the phenotypes are likely to be similar, as would the
+population parameters. This I call {\em random embryology with
+  locality}.
+
+In the simple case of point mutations, the probability $P(x)$ of any
+child lying distance $x$ in genotype space from its parent follows a
+Poisson distribution. Random embryology with locality implies that the
+phenotypic parameters are distributed randomly about the parent
+species, with a standard deviation that depends monotonically on the
+genotypic displacement. The simplest such model is to distribute the
+phenotypic parameters in a Gaussian fashion about the parent's values,
+with standard deviation proportional to the genotypic displacement.
+This constant of proportionality can be conflated with the species'
+intrinsic mutation rate, to give rise another phenotypic parameter
+$\bmu$.  It is assumed that the probability of a mutation generating a
+previously existing species is negligible, and can be ignored. We also
+need another arbitrary parameter $\rho$, ``species radius'', or
+\verb+ecolab.sp_sep+,\index{sp\_sep} which can be understood as the
+minimum genotypic distance separating species, conflated with the same
+constant of proportionality as $\bmu$.
+
+In summary, the mutation algorithm is as follows:
+\begin{enumerate}
+\item The number of mutant species arising from species $i$ within a
+timestep is $\mu_i\alpha_in_i/\rho$. This number is rounded
+stochastically to the nearest integer, e.g. 0.25 is rounded up to 1
+25\% of the time and down to 0 75\% of the time.
+
+\item Roll a random number from a Poisson distribution
+$e^{-x/\mu+\rho}$ to determine the standard deviation $\sigma$ of phenotypic
+variation. 
+
+\item Vary $\br$ according to a Gaussian distribution about the
+  parents' values, with $\sigma\alpha_0$ as the standard deviation,
+  where $\alpha_0$ is the range of values that $\br$ is initialised to,
+  ie $\alpha_0$=\verb|ecolab.repro_max|\index{ecolab.repro\_max}$-$
+  \verb|ecolab.repro_min|\index{ecolab.repro\_min}
+
+\item The diagonal part of $\bbeta$ must be negative, so vary $\bbeta$
+according to a log-normal distribution. This means that if the old
+value is $\beta$, the new value becomes
+$\beta'=-\exp(\log_e(\beta)+\sigma)$. These values cannot become
+arbitrarily small, however, as this would imply that some species make
+arbitrarily small demands on the environment, and will become infinite
+in number. In EcoLab, the diagonal interactions terms are prevented from
+becoming larger than $-r/(.1*{\tt INT\_MAX})$.
+
+\item The offdiagonal components of $\bbeta$, are varied in a similar
+fashion to $\br$. However new connections are added, or old ones
+removed according to $\lfloor 1/r\rfloor$, where $r\in(-2,2)$ is
+chosen from a stepped uniform distribution 
+\begin{displaymath}
+P(x)=\left\{
+\begin{array}{ll}
+0.25(1-g) & \mathrm{if}\; x\leq0\\
+0.25(1+g) & \mathrm{if}\; x>0\\
+\end{array}
+\right.
+\end{displaymath}
+where $g\in[-1,1]$ (default of 0) is specified by 
+\verb+ecolab.gen_bias+\index{generalization\_bias}. The values on
+the new connections are chosen from the same initial distribution that
+the offdiagonal values where originally set with, ie the range
+\verb|ecolab.odiag_min|\index{ecolab.odiag\_min} to
+\verb|ecolab.odiag_max|\index{ecolab.odiag\_max}. 
+
+To convert  condition (\ref{boundedness2}) into something tractable for the mutation
+operator, we make use of the fact that $n\in\naturals^n$.
+
+Let 
+\begin{displaymath}
+b=\sum_{i: B_i+C_i>0}B_i+C_i.
+\end{displaymath}
+Then a sufficient but
+not necessary condition for condition (\ref{boundedness2}) is
+\begin{displaymath}
+b+Dn_2\leq0
+\end{displaymath}
+
+Since $D<0$, the maximum of $b+Dn_2$ for
+$n_2\in\naturals$ occurs for $n_2=1$, so the condition becomes:
+\begin{equation}\label{final-condition}
+  D<-b.
+\end{equation}
+
+Originally, this condition was achieved by adjusting the values of the
+offdiagonal components added to the interaction matrix \bbeta, but
+this had the unfortunate effect of gradually reducing the connectivity
+over simulation time, leading to a natural growth in diversity (see
+\S\ref{nsp-connectivity}). So now, we adjust the newly added diagonal
+term $D$ to be strictly less than $\max\{-b, 0\}$, retaining a natural
+conservation of connectivity under mutation dynamics.
+
+\item $\bmu$ must be positive, so should evolve according to the
+  log-normal distribution like the diagonal components of $\bbeta$.
+  Similar to $\bbeta$, it is a catastrophe to allow $\bmu$ to become
+  arbitrarily large. In the real world, mutation normally exists at
+  some fixed background rate --- species can reduce the level of
+  mutation by improving their genetic repair algorithms. In the EcoLab
+  model, this ceiling on $\bmu$ is given by the
+  \verb|ecolab.mut_max|\index{ecolab.mut\_max} variable.
+
+\end{enumerate}
+
+\section{Criticality}
+
+Robert May\cite{May72} noted that the phase space spanned by
+connectivity
+\begin{equation}
+\sigma^2=\sum_{i,j: i\ne j}
+\frac{\beta_{ij}^2}{\beta_{ii}\beta_{jj}n_\mathrm{sp}(n_\mathrm{sp}-1)}
+\end{equation}
+and diversity
+$n_\mathrm{sp}$ had a hyperbolic critical line
+\begin{equation}
+  n_\mathrm{sp}=1/\sigma^2
+\end{equation}
+under which the fixed point $\hat{\bn}$ is
+most likely to be stable, and above which it is most likely to be
+unstable.
+
+Stability of the fixed is not really the right concept with these
+dynamics, after all the classic Lotka-Volterra systems has an unstable
+fixed point, but a limit cycle instead. Systems with more than 3
+dimension can have strange attractors as well.
+
+Persistence is a more relevant concept. Persistence is the property
+that no species in the ecosystem goes extinct under conditions of no
+mutation ($\bmu=0$). 
+
+However, the EcoLab model does exhibit a similar critical
+
+\section{Input Parameters}\label{input parameters}
+
+The model's parameters are set in the python scripts.
+The actual data structures of the model are initialised the first time
+the model's generate step is called. An example input set is:
+\begin{verbatim}
+from ecolab_model import panmictic_ecolab as ecolab
+ecolab.species([1,2])
+ecolab.density([100,100]) 
+ecolab.create([0,0])
+ecolab.repro_rate([.1,-.1])
+ecolab.interaction.diag([-.0001,-1e-5])
+ecolab.interaction.val([-0.001,0.001])
+ecolab.interaction.row([0,1])
+ecolab.interaction.col([1,0])
+ecolab.mutation([.01,.01])
+ecolab.sp_sep(.1)
+ecolab.repro_min(-.1)
+ecolab.repro_max(.1)
+ecolab.odiag_min(-1e-3)
+ecolab.odiag_max(1e-3)
+ecolab.mut_max(.01)
+\end{verbatim}
+
+Model variables define a python method of the same name as they appear
+in the C++ source. So in the EcoLab model, the C++ object {\tt
+  ecolab} defines a set of python methods such as {\tt ecolab.density}
+that can be used for setting or querying the values of {\tt ecolab}'s
+members.  If an argument is specified, then that argument is used to
+set the variable's value, otherwise, the variable's value is returned.
+Array members in the model are initialised by specifying a python
+array argument to the variables name, and return python objects when
+no argument is specified that can be converted to python arrays by
+calling them. For example \verb+ecolab.density()()+ returns the
+current density array. The above example starts the ecology off with a
+single predator and prey (based on {\tt
+  pred-prey.py}\index{pred-prey.py}).
+
+\section{EcoLab Model commands}
+
+Archetypal EcoLab experimental scripts can be found at
+\verb+panmictic_ecolab.py+ for no spatial variance, and
+\verb+spatial_ecolab.py+ for the spatial model. EcoLab provides a
+static object for each type: \verb+panmictic_ecolab+ and \verb+spatial_ecolab+.
+
+\subsection{generate}\index{generate}
+
+This implements the basic Lotka-Volterra equations:
+
+\begin{math}
+\dot{\bn} = \br*\bn + \bn*\bbeta\bn
+\end{math}
+
+with \br\ being the reproduction rate and \bbeta\ being the
+interspecies interaction. This can be implemented as a single line:
+\begin{verbatim}
+  density += repro_rate * density + (interaction * density) * density;
+\end{verbatim}
+although for performance reasons on GPUs, the implementation is more
+complicated.
+
+This command also increments the timestep counter {\tt tstep}.
+
+An optional argument specifies a number of timesteps to run the
+generate step. This improves the speed by amortising the real to
+integer conversion operation over a number of timesteps. The downside
+is that computation may fail if the problem is ill-conditioned
+(offdiagonal elements of \bbeta\ too large with respect to the
+diagonal elements).
+
+\subsection{condense}\label{condense}\index{condense}
+
+This command compacts the systems of equations by removing extinct
+species where $n_i=0$. It returns the number of extinctions.
+
+\subsection{mutate}\label{mutate}\index{mutate}
+
+This applies the point mutations to the system. The precise algorithm
+is described in \S\ref{mutation}. 
+
+\subsection{migrate}\label{migrate}\index{migrate}
+
+This operator implements migration within cellular \EcoLab{}. This
+updates density values according to the difference with the 4 nearest
+neighbours: $\bn=\bn+\bgamma*(0.25(\bn_n+\bn_e+\bn_s+\bn_w)-\bn)$, where the
+$n,e,s,w$ index the north, east, south and west neigbouring cells.
+
+\subsection{lifetimes}\label{lifetimes}\index{lifetimes}
+
+\verb|lifetimes| records the timestep when a species is created in the
+{\tt create}\index{create} iarray. If a species has gone extinct, the
+value in {\tt create} is zero. Upon return, this routine returns the
+lifetime of the species that have gone extinct. This can then be
+passed to a histogram routine, or written to a file.
+
+\subsection{random\_interaction(conn, sigma)}\label{random_interaction}
+\index{random\_interaction}
+
+Calls {\protect\tt sparse\_mat::init\_rand()} (\S\ref{sparse_mat}) to randomly initialising the nonzero pattern of
+the offdiagonal elements. The average number of nonzeros per row is
+{\tt conn}, and the standard deviation of the number of nonzeros is
+{\tt sigma}.
+
+\subsection{seed({\em seed})}
+
+Sets the global random number seed used for initialisation and
+rounding floating values to integers, eg in the {\bf generate} step.
+
+\subsection{complexity}
+
+Returns the complexity of the foodweb, using the algorithm described
+in \cite{Standish10b}.
+
+\subsection{connectivity $\sigma^2$}
+
+Returns the connectivity of the interaction matrix, defined
+analogously to \cite{May72} as the variance of offdiagonal components
+of the interaction matrix \bbeta, normalised so that the diagonal
+coefficients are unity.
+
+\begin{equation}
+  \sigma^2=\sum_{i,j: i\ne j} \frac{\beta_{ij}^2}{\beta_{ii}\beta_{jj}n_\mathrm{sp}(n_\mathrm{sp}-1)}
+\end{equation}
+\subsection{setGrid}
+
+Synopsis
+
+{\tt ecolab.setGrid}({\em x}, {\em y})
+
+\noindent Set up an $x\times y$ grid in the spatial EcoLab model. See
+\verb+spatial_ecolab.py+ for an example using this.
+
+\subsubsection{cell}
+
+Synopsis
+
+{\tt ecolab.cell}({\em x}, {\em y})
+
+\noindent Creates a python reference to the cell located at $x$ and
+$y$. For example
+\begin{verbatim}
+c=ecolab.cell(1,0)
+print(c.density()())
+\end{verbatim}
+
+\subsection{nsp}
+
+Returns the array of diversities (number of species) of each cell.
+
+\section{ConnectionPlot}
+
+The connectionPlot member of the panmictic model visualises the
+interaction matrix, with each element coloured by the connected group
+it belongs to. Extinct species are coloured in buff. To display the
+contents requires a little setup, but is an example of how to
+implement custom visualisers in \EcoLab.
+
+\begin{verbatim}
+connectionPlot=Tk()
+connectionPlot.wm_title('Connections')
+connectionPlot.eval('load '+ecolabHome()+'/lib/ecolab.so')
+connectionPlot.eval('image create cairoSurface connectionCanvas '+
+   '-surface ecolab_model panmictic_ecolab.connectionPlot')
+ttk.Label(connectionPlot, image='connectionCanvas').
+  pack(fill='both',expand=True)
+windows.append(ref(connectionPlot))
+ecolab.updateConnectionPlot()
+\end{verbatim}
+
+Subsequent calls to \verb+updateConnectionPlot+ redraws the image from
+the current state of the interaction marix \bbeta.
+
+\section{Checkpoint/restart}
+
+The EcoLab model, like all \EcoLab{} models, supports long running
+simulations with the ability to write a checkpoint, then later restart
+the simulation from that checkpoint. The \verb+checkpoint+ and
+\verb+restart+ commands take a filename to write or read the
+checkpoint.
+
+\section{Spatial Variation}\label{spatial}
+
+The ecolab model can run in multicellular mode by importing the
+\verb+spatial_ecolab+ static variable into Python, and calling
+\verb+setGrid+ to set the dimensions of the grid:
+\begin{verbatim}
+from ecolab_model import spatial_ecolab as ecolab
+numX=8
+numY=8
+ecolab.setGrid(numX,numY)
+\end{verbatim}
+
+Only population density varies between the cells --- all other
+variables are members of the ecolab variable so can be set or queried
+in the usual way.
+
+The usual ecolab model methods (generate, mutate, condense and
+lifetimes)\index{generate}\index{mutate}\index{condense}\index{lifetimes}
+can now be called, but operate on the entire grid. A new {\tt
+migrate}\index{migrate} method is defined to handle migration between
+cells.
+
+Access to the individual cells can obtained by calling \verb+cell+ on
+the SpatialEcolab object.
+
+\subsection{Parallel Execution}
+
+Since the cells are pins in a graphcode Graph (\S\ref{}{graphcode}),
+they are distributed over parallel processes if available.
+
+Remember to call the \verb+gather+\index{gather} method to ensure node
+0 is updated before running a visualiser on global data.
+
+\begin{description}
+\item[ecolab.gather] Bring processor 0's data up to date with the rest
+  of the grid
+\item[ecolab.distributeObjects] Broadcast processor 0's data out to the
+  rest of the grid.
+\end{description}
+
+\end{document}
