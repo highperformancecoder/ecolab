@@ -61,7 +61,7 @@ def step():
     ecolab.condense()
     conn=ecolab.connectivity()
     nsp=len(ecolab.species)
-    statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
+    statusBar.configure(text='t=%e nsp=%d'%(ecolab.tstep(),nsp))
     if ecolab.tstep()<20000: return
     print(ecolab.tstep(),nsp,conn,extinctions,b4ExtConn-b4mutConn,conn-b4ExtConn)
     print(ecolab.tstep(),nsp,conn,extinctions,b4ExtConn-b4mutConn,b4ExtConn-conn,file=out,flush=True)

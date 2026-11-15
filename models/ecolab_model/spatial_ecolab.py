@@ -106,7 +106,7 @@ def step():
 #    #print('migrations=',migrations,' extinctions=',extinctions)
     if myid()==0:
         nsp=len(ecolab.species)
-        statusBar.configure(text=f't={ecolab.tstep()} nsp:{nsp}')
+        statusBar.configure(text='t=%e nsp=%d'%(ecolab.tstep(),nsp))
         plot('No. species',ecolab.tstep(),nsp,200*(ecolab.tstep()%epoch<0.5*epoch))
         #plot('No. species',ecolab.tstep(),nsp)
         plot('No. species by cell',ecolab.tstep(),ecolab.nsp()())
