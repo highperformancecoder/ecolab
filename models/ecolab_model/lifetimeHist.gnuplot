@@ -1,6 +1,8 @@
 set logscale x
 set logscale y
-alpha=0.923
-#plot 'lifetimes' using 1:(100) smooth frequency with boxes, 50000*1000**alpha*x**-alpha
-plot 'lifetimes' using 1:(100) smooth frequency with line, 50000*1000**alpha*x**-alpha
+alpha=1.25
+C=80000
+binwidth=1000
+bin(val)=ceil(val/binwidth)
+plot 'lifetimes' using (bin($1)) smooth frequency with line, C*(1000/x)**alpha
 #pause -1
