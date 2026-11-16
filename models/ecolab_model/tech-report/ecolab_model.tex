@@ -1,5 +1,5 @@
 \documentclass{article}
-\usepackage{amssymb}
+\usepackage{amssymb,graphics,pstricks}
 \title{The EcoLab Model}
 \author{Russell K. Standish}
 
@@ -300,7 +300,7 @@ connectivity
 \end{equation}
 and diversity
 $n_\mathrm{sp}$ had a hyperbolic critical line
-\begin{equation}
+\begin{equation}\label{May-criterion}
   n_\mathrm{sp}=1/\sigma^2
 \end{equation}
 under which the fixed point $\hat{\bn}$ is
@@ -316,7 +316,79 @@ Persistence is a more relevant concept. Persistence is the property
 that no species in the ecosystem goes extinct under conditions of no
 mutation ($\bmu=0$). 
 
-However, the EcoLab model does exhibit a similar critical
+However, the EcoLab model does exhibit a similar critical critical
+surface to (\ref{May-criterion}). Figure \ref{nsp-connectivity} shows
+a typical run with specialisation\cite{Standish02}.
+
+\begin{figure}
+  \includegraphics{conn-div.eps}
+  \caption{Connectivity vs Diversity for with $g=-0.9$. The dashed curve is $8/D$.}
+  \label{nsp-connectivity}
+\end{figure}
+
+%% Todo - how does the nsp-conn curve change as a function of g?
+
+As mutation builds diversity, eventually the critical threshold is
+crossed, causing an extinction avalanche. This is exactly analogous to
+Per Bak's sandpile model\cite{Bak-etal88}, called {\em self-organised
+  criticality} (SOC). What evidence is there that the EcoLab model
+exhibits SOC? In the sandpile model, a power law distribution of
+avalanches is taken to be a signature of SOC. In ecosystems, because
+diversity is bounded, a fat-tailed distribution of extinction
+avalanches is impossible --- avalanches larger than the system
+diversity are physically impossible. Typical EcoLab runs have
+diversities in the range of a few 100s to thousands of species, there
+is insufficient range of avalanche size. Instead, the distribution of
+species lifetimes is examined instead \cite{Bak-Sneppen93}.
+
+Figure \ref{lifetime-logbin-mu=1e-5}
+shows the distribution of species lifetimes on a log-log plot, with
+the fitted line given by the Hill estimator\cite{Clauset-etal07}. The
+histograms were computed using bins evenly distributed on the
+logarithmic scale, which requires the values to be corrected by
+dividing by the bin size, as implemented in \EcoLab's Histogram
+class. Figure
+\ref{lifetime-linbin-mu=1e-5} shows the
+same data, using equal-sized bins, computed using GNUPlot.
+
+As $\mu_\mathrm{max}\rightarrow0$, the power law regime increases, as
+expected of a system exhibiting self-orgamised criticality, and the
+power law exponent increases towards $-1$. Note the ``hump'' at
+approximately $1/\mu_\mathrm{max}$, indicating this is a feature of
+having a finite mutation rate.
+
+\begin{figure}\label{lifetime-logbin-mu=1e-5}
+  {\tiny
+  \psset{unit=.5\textwidth}\hspace*{-5ex}
+  \input{lifetimes-mu=1e-5-logbin}\hfill
+  \input{lifetimes-mu=1e-7-logbin}
+  }
+  \caption{Species lifetime distribution, logarithmically spaced
+    bins, with $\mu_\mathrm{max}=10^{-5}$ (left) and $10^{-7}$ (right)}
+\end{figure}
+
+\begin{figure}\label{lifetime-linbin-mu=1e-5}
+  {\tiny
+  \psset{unit=.5\textwidth}
+  \input{lifetimes-mu=1e-5-linbin}\hfill
+  \input{lifetimes-mu=1e-7-linbin}
+}
+
+  \caption{Species lifetime distribution, equally spaced bins, with
+    $\mu_\mathrm{max}=10^{-5}$ (left) and $10^{-7}$ (right)}
+\end{figure}
+
+\section{Species-Area rule}
+
+The theory of island biogeography\cite{MacArthur-Wilson67} posits that
+all else being equal, diversity of an ecosystem will be proportional
+to a power of the area occupied by the ecosystem:
+\begin{equation}
+  n_\mathrm{sp}\propto A^z
+\end{equation}
+where $z$ is typically around 0.27.\cite{?}
+
+
 
 \section{Input Parameters}\label{input parameters}
 
@@ -537,5 +609,9 @@ Remember to call the \verb+gather+\index{gather} method to ensure node
 \item[ecolab.distributeObjects] Broadcast processor 0's data out to the
   rest of the grid.
 \end{description}
+
+
+\bibliographystyle{plain}
+\bibliography{rus}
 
 \end{document}
