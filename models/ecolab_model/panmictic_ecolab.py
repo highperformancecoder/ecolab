@@ -9,7 +9,7 @@ ecolab.repro_min(-0.1)
 ecolab.repro_max(0.1)
 ecolab.odiag_min(-1e-4)
 ecolab.odiag_max(1e-4)
-ecolab.mut_max(1e-5)
+ecolab.mut_max(1e-7)
 ecolab.sp_sep(0.1)
 ecolab.gen_bias(0.0)
 
@@ -61,7 +61,7 @@ def step():
     ecolab.condense()
     conn=ecolab.connectivity()
     nsp=len(ecolab.species)
-    statusBar.configure(text='t=%e nsp=%d'%(ecolab.tstep(),nsp))
+    statusBar.configure(text='t=%e nsp=%d'%(ecolab.tstep(), nsp))
     if ecolab.tstep()<20000: return
     print(ecolab.tstep(),nsp,conn,extinctions,b4ExtConn-b4mutConn,conn-b4ExtConn)
     print(ecolab.tstep(),nsp,conn,extinctions,b4ExtConn-b4mutConn,b4ExtConn-conn,file=out,flush=True)

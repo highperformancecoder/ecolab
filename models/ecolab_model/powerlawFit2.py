@@ -1,5 +1,6 @@
 from sys import path, argv
-path.append('../lib')
+from pathlib import Path
+path.append(str(Path(argv[0]).resolve().parent.parent/'lib'))
 from ecolab import HistoStats, Plot
 import numpy
 import matplotlib.pyplot as plt
